@@ -2144,7 +2144,16 @@
 
     let ttsQueue = [];
     let isPlayingTTS = false;
-    const TTS_URL = "http://" + window.location.hostname + ":8001/api/tts";
+    function getTtsUrl() {
+        const ollamaIpStr = localStorage.getItem("ollama_ip");
+        if (ollamaIpStr && ollamaIpStr.startsWith("http")) {
+            try {
+                const urlObj = new URL(ollamaIpStr);
+                return `http://${urlObj.hostname}:8001/api/tts`;
+            } catch(e) {}
+        }
+        return "http://" + window.location.hostname + ":8001/api/tts";
+    }
 
     function playNextTTS() {
         if (!isSpeakerOn || ttsQueue.length === 0) {
@@ -2212,7 +2221,7 @@
         if (expectedVoiceId === 'male_edge_tolga') vName = 'edge_male_tolga';
         if (expectedVoiceId === 'male_gtts') vName = 'gtts_male';
         
-        const url = TTS_URL + "?voice=" + vName + "&text=" + encodeURIComponent(cleanText);
+        const url = getTtsUrl() + "?voice=" + vName + "&text=" + encodeURIComponent(cleanText);
         
         // Mobil uyumluluk: Sürekli yeni Audio yaratmak autoplay engeline takılır,
         // bu yüzden tek bir global Audio nesnesini geri dönüştürüyoruz.
@@ -2255,7 +2264,7 @@
                 if (voiceSelect.value === 'male_edge_tolga') vName = 'edge_male_tolga';
                 if (voiceSelect.value === 'male_gtts') vName = 'gtts_male';
                 
-                const url = TTS_URL + "?voice=" + vName + "&text=" + encodeURIComponent(cleanText);
+                const url = getTtsUrl() + "?voice=" + vName + "&text=" + encodeURIComponent(cleanText);
                 fetch(url).catch(e=>{}); // Arka planda indirip tarayıcı önbelleğine (cache) atar
             }
         }
