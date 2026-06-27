@@ -671,6 +671,17 @@
         </div>
         <input type="text" id="ttsUrlInput" placeholder="https://cinocode-tts.onrender.com/api/tts" style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:10px; border-radius:8px; margin-bottom: 15px; box-sizing: border-box; outline: none;">
         
+        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+            <div style="flex: 1; text-align: left;">
+                <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 10px;">Azure Speech Key (Opsiyonel):</div>
+                <input type="password" id="azureKeyInput" placeholder="Azure Key (F0 Free)" style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:10px; border-radius:8px; box-sizing: border-box; outline: none;">
+            </div>
+            <div style="flex: 1; text-align: left;">
+                <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 10px;">Azure Bölge (Region):</div>
+                <input type="text" id="azureRegionInput" placeholder="e.g. westeurope" style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:10px; border-radius:8px; box-sizing: border-box; outline: none;">
+            </div>
+        </div>
+        
         <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 10px; text-align: left;">
             Groq API Anahtarınız (Bulut modelleri için):
         </div>
@@ -1180,6 +1191,12 @@
         const currentTtsUrl = localStorage.getItem('tts_url') || "";
         document.getElementById('ttsUrlInput').value = currentTtsUrl;
 
+        const currentAzureKey = localStorage.getItem('azure_speech_key') || "";
+        document.getElementById('azureKeyInput').value = currentAzureKey;
+
+        const currentAzureRegion = localStorage.getItem('azure_speech_region') || "";
+        document.getElementById('azureRegionInput').value = currentAzureRegion;
+
         const currentVideoMode = localStorage.getItem('video_mode') || "fast";
         document.getElementById('videoModeSelect').value = currentVideoMode;
         
@@ -1207,6 +1224,12 @@
 
         const ttsUrl = document.getElementById('ttsUrlInput').value.trim();
         localStorage.setItem('tts_url', ttsUrl);
+
+        const azureKey = document.getElementById('azureKeyInput').value.trim();
+        localStorage.setItem('azure_speech_key', azureKey);
+
+        const azureRegion = document.getElementById('azureRegionInput').value.trim();
+        localStorage.setItem('azure_speech_region', azureRegion);
 
         const videoMode = document.getElementById('videoModeSelect').value;
         localStorage.setItem('video_mode', videoMode);
@@ -2227,18 +2250,29 @@
         if (expectedVoiceId === 'male_edge_tolga') vName = 'edge_male_tolga';
         if (expectedVoiceId === 'male_gtts') vName = 'gtts_male';
         
-        const url = getTtsUrl() + "?voice=" + vName + "&text=" + encodeURIComponent(cleanText);
+        const azureKey = localStorage.getItem("azure_speech_key") || "";
+        const azureRegion = localStorage.getItem("azure_speech_region") || "";
+        
+        let url = getTtsUrl() + "?voice=" + vName + "&text=" + encodeURIComponent(cleanText);
+        if (azureKey && azureRegion) {
+            url += "&azure_key=" + encodeURIComponent(azureKey) + "&azure_region=" + encodeURIComponent(azureRegion);
+        }
         
         if (!window.sharedAudio) window.sharedAudio = new Audio();
         const audio = window.sharedAudio;
         audio.src = url;
         window.currentAudio = audio;
         
-        // Google TTS sesini manipüle ederek 5 farklı karakter yaratıyoruz
+        // Google TTS (gTTS) fallback durumunda sesleri değiştirmek için rate kullanıyoruz, 
+        // ama eğer Azure kullanılıyorsa sesler zaten sunucu tarafında (Ahmet, Emel vb.) farklı üretildiği için rate = 1.0 olmalı.
         let rate = 1.0;
-        if (expectedVoiceId === 'female_edge') rate = 1.18;      // Cino (Tiz/Hızlı)
-        else if (expectedVoiceId === 'male_gtts') rate = 0.82;    // Cüneyt (Bas/Yavaş)
-        else if (expectedVoiceId === 'male_edge_tolga') rate = 0.92; // Tolga (Hafif kalın)
+        const isAzureEnabled = azureKey.trim() !== "" && azureRegion.trim() !== "";
+        
+        if (!isAzureEnabled) {
+            if (expectedVoiceId === 'female_edge') rate = 1.18;      // Cino (Tiz/Hızlı)
+            else if (expectedVoiceId === 'male_gtts') rate = 0.82;    // Cüneyt (Bas/Yavaş)
+            else if (expectedVoiceId === 'male_edge_tolga') rate = 0.92; // Tolga (Hafif kalın)
+        }
         
         audio.defaultPlaybackRate = rate;
         audio.playbackRate = rate;
