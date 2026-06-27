@@ -40,18 +40,23 @@ GOOGLE_VOICE_CONFIG = {
     },
     'male_wavenet_d': {
         'languageCode': 'tr-TR',
-        'name': 'tr-TR-Wavenet-D',
+        'name': 'tr-TR-Wavenet-B',
         'ssmlGender': 'MALE'
     }
+}
+
+VOICE_AUDIO_CONFIG = {
+    'male_wavenet_d': {"audioEncoding": "MP3", "speakingRate": 0.9, "pitch": -3.0}
 }
 
 
 def google_tts(text, voice_key, api_key):
     voice_cfg = GOOGLE_VOICE_CONFIG.get(voice_key, GOOGLE_VOICE_CONFIG['female_gtts'])
+    audio_cfg = VOICE_AUDIO_CONFIG.get(voice_key, {"audioEncoding": "MP3", "speakingRate": 1.0, "pitch": 0.0})
     payload = {
         "input": {"text": text},
         "voice": voice_cfg,
-        "audioConfig": {"audioEncoding": "MP3", "speakingRate": 1.0, "pitch": 0.0}
+        "audioConfig": audio_cfg
     }
     resp = requests.post(f"{GOOGLE_TTS_URL}?key={api_key}", json=payload, timeout=15)
     resp.raise_for_status()
