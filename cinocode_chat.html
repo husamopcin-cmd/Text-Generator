@@ -2169,9 +2169,17 @@
     let isPlayingTTS = false;
 
     function getTtsUrl() {
-        const savedTtsUrl = localStorage.getItem("tts_url");
+        let savedTtsUrl = localStorage.getItem("tts_url");
         if (savedTtsUrl && savedTtsUrl.trim() !== "") {
-            return savedTtsUrl.trim();
+            let url = savedTtsUrl.trim();
+            if (!url.includes("/api/tts")) {
+                if (url.endsWith("/")) {
+                    url += "api/tts";
+                } else {
+                    url += "/api/tts";
+                }
+            }
+            return url;
         }
         const ollamaIpStr = localStorage.getItem("ollama_ip");
         if (ollamaIpStr && ollamaIpStr.startsWith("http")) {
