@@ -94,43 +94,16 @@ async def save_edge_tts(text, voice, out_file, pitch=None):
 @app.route('/api/tts')
 def tts():
     text = request.args.get('text', '').strip()
-    voice = request.args.get('voice', 'gtts_male')
     if not text:
         return "No text", 400
         
-    out_file = f"temp_speech_{uuid.uuid4().hex}.mp3"
     try:
-        if voice == 'edge_female':
-            # Edge-TTS (Emel Neural - Gercek Kadin Sesi)
-            asyncio.run(save_edge_tts(text, "tr-TR-EmelNeural", out_file))
-            
-            with open(out_file, "rb") as f:
-                data = f.read()
-            return send_file(io.BytesIO(data), mimetype="audio/mpeg", as_attachment=False, download_name="speech.mp3")
-            
-        elif voice == 'female_gtts':
-            # gTTS (Google'in Varsayilan Kadin Sesi - Ayse Abla)
-            tts_engine = gTTS(text=text, lang='tr')
-            mp3_fp = io.BytesIO()
-            tts_engine.write_to_fp(mp3_fp)
-            mp3_fp.seek(0)
-            return send_file(mp3_fp, mimetype="audio/mpeg", as_attachment=False, download_name="speech.mp3")
-            
-        elif voice == 'edge_male_tolga':
-            # edge-tts (Ahmet Neural - Pitch -15Hz - Tolga)
-            asyncio.run(save_edge_tts(text, "tr-TR-AhmetNeural", out_file, pitch="-15Hz"))
-            
-            with open(out_file, "rb") as f:
-                data = f.read()
-            return send_file(io.BytesIO(data), mimetype="audio/mpeg", as_attachment=False, download_name="speech.mp3")
-            
-        else:
-            # edge-tts (Ahmet Neural - Gercek Erkek Sesi - Cuneyt Abi)
-            asyncio.run(save_edge_tts(text, "tr-TR-AhmetNeural", out_file))
-            
-            with open(out_file, "rb") as f:
-                data = f.read()
-            return send_file(io.BytesIO(data), mimetype="audio/mpeg", as_attachment=False, download_name="speech.mp3")
+        # Google'ın Varsayılan Türkçe Sesi (Engellenmez, stabil ve hızlıdır)
+        tts_engine = gTTS(text=text, lang='tr')
+        mp3_fp = io.BytesIO()
+        tts_engine.write_to_fp(mp3_fp)
+        mp3_fp.seek(0)
+        return send_file(mp3_fp, mimetype="audio/mpeg", as_attachment=False, download_name="speech.mp3")
     except Exception as e:
         print("TTS Error:", e)
         return str(e), 500
