@@ -19,7 +19,7 @@ EDGE_VOICE_MAP = {
 EDGE_TO_GOOGLE_FALLBACK = {
     'edge_female': 'female_gtts',
     'edge_male':   'male_gtts',
-    'edge_tolga':  'male_gtts',
+    'edge_tolga':  'male_local',
 }
 
 GOOGLE_VOICE_CONFIG = {
