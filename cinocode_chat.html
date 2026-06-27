@@ -2239,13 +2239,13 @@
             else isPlayingTTS = false; 
         };
         
-        audio.onerror = () => {
-            console.warn("TTS sunucu hatası, yerel ses motoruna düşülüyor.");
+        audio.onerror = (err) => {
+            console.warn("TTS sunucu hatası, yerel ses motoruna düşülüyor. Denenen URL:", url, "Hata:", err);
             speakWithLocalVoice(cleanText, expectedRunId, expectedVoiceId);
         };
         
         audio.play().catch(e => {
-            console.warn("TTS oynatılamadı, yerel ses motoruna düşülüyor:", e);
+            console.warn("TTS oynatılamadı, yerel ses motoruna düşülüyor. Hata:", e, "Denenen URL:", url);
             speakWithLocalVoice(cleanText, expectedRunId, expectedVoiceId);
         });
     }
