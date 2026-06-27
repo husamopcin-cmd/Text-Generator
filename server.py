@@ -42,6 +42,11 @@ GOOGLE_VOICE_CONFIG = {
         'languageCode': 'tr-TR',
         'name': 'tr-TR-Wavenet-D',
         'ssmlGender': 'MALE'
+    },
+    'female_gtts2': {
+        'languageCode': 'tr-TR',
+        'name': 'tr-TR-Wavenet-A',
+        'ssmlGender': 'FEMALE'
     }
 }
 
