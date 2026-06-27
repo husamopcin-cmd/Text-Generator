@@ -1,80 +1,90 @@
 from flask import Flask, request, send_file, jsonify
-from gtts import gTTS
+import requests
 import os
 import io
-import requests
+import base64
 
 app = Flask(__name__)
+
+GOOGLE_TTS_URL = "https://texttospeech.googleapis.com/v1/text:synthesize"
+
+# Ses konfigürasyonları
+VOICE_CONFIG = {
+    'female_gtts': {
+        'languageCode': 'tr-TR',
+        'name': 'tr-TR-Wavenet-E',
+        'ssmlGender': 'FEMALE'
+    },
+    'edge_female': {
+        'languageCode': 'tr-TR', 
+        'name': 'tr-TR-Wavenet-E',
+        'ssmlGender': 'FEMALE'
+    },
+    'male_gtts': {
+        'languageCode': 'tr-TR',
+        'name': 'tr-TR-Wavenet-B',
+        'ssmlGender': 'MALE'
+    },
+    'edge_male_tolga': {
+        'languageCode': 'tr-TR',
+        'name': 'tr-TR-Wavenet-B', 
+        'ssmlGender': 'MALE'
+    },
+    'male_local': {
+        'languageCode': 'tr-TR',
+        'name': 'tr-TR-Standard-B',
+        'ssmlGender': 'MALE'
+    }
+}
 
 @app.route('/')
 def index():
     return jsonify({"status": "CinoCode TTS Sunucusu çalışıyor! 🎙️"})
 
-def speak_azure(text, voice, api_key, region, pitch=None):
-    url = f"https://{region}.tts.speech.microsoft.com/cognitiveservices/v1"
-    headers = {
-        'Ocp-Apim-Subscription-Key': api_key,
-        'Content-Type': 'application/ssml+xml',
-        'User-Agent': 'CinoCodeTTS',
-        'X-Microsoft-OutputFormat': 'audio-16khz-128kbitrate-mono-mp3'
-    }
-    
-    if pitch:
-        ssml = f"<speak version='1.0' xml:lang='tr-TR'><voice xml:lang='tr-TR' name='{voice}'><prosody pitch='{pitch}'>{text}</prosody></voice></speak>"
-    else:
-        ssml = f"<speak version='1.0' xml:lang='tr-TR'><voice xml:lang='tr-TR' name='{voice}'>{text}</voice></speak>"
-        
-    response = requests.post(url, headers=headers, data=ssml.encode('utf-8'))
-    if response.status_code == 200:
-        return response.content
-    else:
-        raise Exception(f"Azure TTS failed: {response.status_code} - {response.text}")
-
 @app.route('/api/tts')
 def tts():
     text = request.args.get('text', '').strip()
     voice = request.args.get('voice', 'female_gtts')
-    api_key = request.args.get('azure_key', '').strip()
-    region = request.args.get('azure_region', '').strip()
+    api_key = os.environ.get('GOOGLE_TTS_KEY', '')
     
     if not text:
         return "No text", 400
+    
+    if not api_key:
+        return "API key eksik", 500
 
-    if api_key and region:
-        try:
-            azure_voice = "tr-TR-AhmetNeural"
-            pitch = None
-            
-            if voice == 'edge_female':
-                azure_voice = "tr-TR-EmelNeural"
-            elif voice == 'female_gtts':
-                azure_voice = "tr-TR-DilaraNeural"
-            elif voice == 'edge_male_tolga':
-                azure_voice = "tr-TR-AhmetNeural"
-                pitch = "-15Hz"
-            elif voice == 'gtts_male':
-                azure_voice = "tr-TR-AhmetNeural"
-                
-            audio_data = speak_azure(text, azure_voice, api_key, region, pitch)
-            return send_file(io.BytesIO(audio_data), mimetype="audio/mpeg", as_attachment=False, download_name="speech.mp3")
-        except Exception as e:
-            print("Azure TTS Error, falling back to gTTS:", e)
-            pass
+    voice_cfg = VOICE_CONFIG.get(voice, VOICE_CONFIG['female_gtts'])
+    
+    payload = {
+        "input": {"text": text},
+        "voice": voice_cfg,
+        "audioConfig": {
+            "audioEncoding": "MP3",
+            "speakingRate": 1.0,
+            "pitch": 0.0
+        }
+    }
+    
+    # Tolga için pitch ayarı
+    if voice == 'edge_male_tolga':
+        payload["audioConfig"]["pitch"] = -4.0
+        payload["audioConfig"]["speakingRate"] = 0.9
 
     try:
-        # Hepsi gTTS ile - edge-tts Render'da çalışmıyor (Microsoft engeli)
-        lang = 'tr'
-        slow = False
-        
-        if voice == 'edge_male_tolga':
-            slow = True  # Tolga = yavaş/bas efekti
-        
-        tts_engine = gTTS(text=text, lang=lang, slow=slow)
-        mp3_fp = io.BytesIO()
-        tts_engine.write_to_fp(mp3_fp)
-        mp3_fp.seek(0)
-        return send_file(mp3_fp, mimetype="audio/mpeg", as_attachment=False, download_name="speech.mp3")
-
+        resp = requests.post(
+            f"{GOOGLE_TTS_URL}?key={api_key}",
+            json=payload,
+            timeout=15
+        )
+        resp.raise_for_status()
+        audio_b64 = resp.json()['audioContent']
+        audio_data = base64.b64decode(audio_b64)
+        return send_file(
+            io.BytesIO(audio_data),
+            mimetype="audio/mpeg",
+            as_attachment=False,
+            download_name="speech.mp3"
+        )
     except Exception as e:
         print("TTS Error:", e)
         return str(e), 500
