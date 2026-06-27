@@ -653,7 +653,7 @@
         <!-- Gizli Inputlar -->
         <input type="file" id="imageUpload" accept="image/*" style="display:none;" onchange="handleImageSelect(event)">
         <input type="file" id="cameraUpload" accept="image/*" capture="environment" style="display:none;" onchange="handleImageSelect(event)">
-        <input type="file" id="docUpload" accept=".txt,.js,.py,.html,.css,.md,.csv,.json,text/*" style="display:none;" onchange="handleDocSelect(event)">
+        <input type="file" id="docUpload" accept=".pdf,.txt,.js,.py,.html,.css,.md,.csv,.json,text/*" style="display:none;" onchange="handleDocSelect(event)">
     </div>
 
     <!-- Settings Modal -->
@@ -882,20 +882,18 @@
     };
 
     let selectedImageBase64 = null;
+    let selectedStudyFileName = "";
 
     function handleImageSelect(event) {
         const file = event.target.files[0];
         if (!file) return;
-        processImageFile(file);
+        selectedStudyFileName = file.name;
+        processFileAsBase64(file, true);
     }
 
-    function processImageFile(file) {
+    function processFileAsBase64(file, isImage) {
         const reader = new FileReader();
         reader.onload = function(e) {
-            document.getElementById('imagePreview').src = e.target.result;
-            document.getElementById('imagePreviewContainer').style.display = 'inline-block';
-            selectedImageBase64 = e.target.result; // Artık tam data URL'yi saklıyoruz
-            document.getElementById('modelSelect').value = 'llava';
             
             // Eğer video modundaysak, doğrudan fotoğraftan sinematik WebM üretimine başla
             if (currentMode === "video") {
@@ -1143,6 +1141,13 @@
         const file = event.target.files[0];
         if (!file) return;
         
+        // Yeni Ders Çalışma Modu: PDF'leri Base64 olarak Gemini'ye yolla
+        if (file.type === "application/pdf") {
+            selectedStudyFileName = file.name;
+            processFileAsBase64(file, false);
+            return;
+        }
+
         // Boyut kontrolü (Max 2MB)
         if (file.size > 2 * 1024 * 1024) {
             alert("Dosya çok büyük! Lütfen 2MB'dan küçük metin dosyaları yükleyin.");
@@ -2998,7 +3003,7 @@ Eğer kullanıcı "bu ne", "nerede", "adam kim", "bunu istemedim", "düzelt", "y
                     if (msg.content) parts.push({ text: msg.content });
                     if (msg.images && msg.images.length > 0) {
                         for (let img of msg.images) {
-                            let base64Data = img.replace(/^data:image\/[a-zA-Z0-9+]+;base64,/, '');
+                            let base64Data = img.split(',')[1] || img;
                             let mimeType = img.match(/^data:([^;]+);/)?.[1] || 'image/jpeg';
                             parts.push({ inline_data: { mime_type: mimeType, data: base64Data } });
                         }
