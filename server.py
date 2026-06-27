@@ -1,24 +1,95 @@
 from flask import Flask, request, send_file, jsonify
 from gtts import gTTS
-import edge_tts
-import asyncio
 import os
 import io
+import sqlite3
+import hashlib
+import uuid
+import asyncio
+import edge_tts
 
 app = Flask(__name__)
 
-async def edge_tts_generate(text, voice, rate="+0%", pitch="+0Hz"):
-    communicate = edge_tts.Communicate(text, voice, rate=rate, pitch=pitch)
-    mp3_fp = io.BytesIO()
-    async for chunk in communicate.stream():
-        if chunk["type"] == "audio":
-            mp3_fp.write(chunk["data"])
-    mp3_fp.seek(0)
-    return mp3_fp
+# --- DATABASE SETUP ---
+DB_FILE = 'users.db'
 
-@app.route('/')
-def index():
-    return jsonify({"status": "CinoCode TTS Sunucusu çalışıyor! 🎙️"})
+def init_db():
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE NOT NULL,
+            password_hash TEXT NOT NULL
+        )
+    ''')
+    conn.commit()
+    conn.close()
+
+init_db()
+
+def hash_password(password):
+    return hashlib.sha256(password.encode('utf-8')).hexdigest()
+
+# --- AUTH ENDPOINTS ---
+
+@app.route('/api/register', methods=['POST', 'OPTIONS'])
+def register():
+    if request.method == 'OPTIONS':
+        return '', 200
+    data = request.json
+    if not data or not data.get('username') or not data.get('password'):
+        return jsonify({'error': 'Kullanıcı adı ve şifre gereklidir.'}), 400
+    
+    username = data['username'].strip()
+    password = data['password']
+    
+    if len(username) < 3:
+        return jsonify({'error': 'Kullanıcı adı en az 3 karakter olmalıdır.'}), 400
+    
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    try:
+        c.execute('INSERT INTO users (username, password_hash) VALUES (?, ?)', (username, hash_password(password)))
+        conn.commit()
+        return jsonify({'success': True, 'message': 'Kayıt başarılı!'})
+    except sqlite3.IntegrityError:
+        return jsonify({'error': 'Bu kullanıcı adı zaten alınmış.'}), 400
+    finally:
+        conn.close()
+
+@app.route('/api/login', methods=['POST', 'OPTIONS'])
+def login():
+    if request.method == 'OPTIONS':
+        return '', 200
+    data = request.json
+    if not data or not data.get('username') or not data.get('password'):
+        return jsonify({'error': 'Kullanıcı adı ve şifre gereklidir.'}), 400
+        
+    username = data['username'].strip()
+    password = data['password']
+    
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    c.execute('SELECT password_hash FROM users WHERE username = ?', (username,))
+    row = c.fetchone()
+    conn.close()
+    
+    if row and row[0] == hash_password(password):
+        return jsonify({'success': True, 'username': username})
+    else:
+        return jsonify({'error': 'Geçersiz kullanıcı adı veya şifre.'}), 401
+
+
+# --- TTS HELPERS ---
+async def save_edge_tts(text, voice, out_file, pitch=None):
+    if pitch:
+        communicate = edge_tts.Communicate(text, voice, pitch=pitch)
+    else:
+        communicate = edge_tts.Communicate(text, voice)
+    await communicate.save(out_file)
+
+# --- TTS ENDPOINT ---
 
 @app.route('/api/tts')
 def tts():
@@ -26,34 +97,49 @@ def tts():
     voice = request.args.get('voice', 'gtts_male')
     if not text:
         return "No text", 400
-
+        
+    out_file = f"temp_speech_{uuid.uuid4().hex}.mp3"
     try:
-        if voice == 'female_gtts':
-            # Ayşe Abla - gTTS Google Kadın Sesi
+        if voice == 'edge_female':
+            # Edge-TTS (Emel Neural - Gercek Kadin Sesi)
+            asyncio.run(save_edge_tts(text, "tr-TR-EmelNeural", out_file))
+            
+            with open(out_file, "rb") as f:
+                data = f.read()
+            return send_file(io.BytesIO(data), mimetype="audio/mpeg", as_attachment=False, download_name="speech.mp3")
+            
+        elif voice == 'female_gtts':
+            # gTTS (Google'in Varsayilan Kadin Sesi - Ayse Abla)
             tts_engine = gTTS(text=text, lang='tr')
             mp3_fp = io.BytesIO()
             tts_engine.write_to_fp(mp3_fp)
             mp3_fp.seek(0)
             return send_file(mp3_fp, mimetype="audio/mpeg", as_attachment=False, download_name="speech.mp3")
-
-        elif voice == 'edge_female':
-            # Cino Abla - Edge TTS Emel Neural (HD Kadın)
-            mp3_fp = asyncio.run(edge_tts_generate(text, "tr-TR-EmelNeural"))
-            return send_file(mp3_fp, mimetype="audio/mpeg", as_attachment=False, download_name="speech.mp3")
-
+            
         elif voice == 'edge_male_tolga':
-            # Tolga - Edge TTS Ahmet Neural bas pitch
-            mp3_fp = asyncio.run(edge_tts_generate(text, "tr-TR-AhmetNeural", pitch="-15Hz"))
-            return send_file(mp3_fp, mimetype="audio/mpeg", as_attachment=False, download_name="speech.mp3")
-
+            # edge-tts (Ahmet Neural - Pitch -15Hz - Tolga)
+            asyncio.run(save_edge_tts(text, "tr-TR-AhmetNeural", out_file, pitch="-15Hz"))
+            
+            with open(out_file, "rb") as f:
+                data = f.read()
+            return send_file(io.BytesIO(data), mimetype="audio/mpeg", as_attachment=False, download_name="speech.mp3")
+            
         else:
-            # Cüneyt Abi - Edge TTS Ahmet Neural (HD Erkek)
-            mp3_fp = asyncio.run(edge_tts_generate(text, "tr-TR-AhmetNeural"))
-            return send_file(mp3_fp, mimetype="audio/mpeg", as_attachment=False, download_name="speech.mp3")
-
+            # edge-tts (Ahmet Neural - Gercek Erkek Sesi - Cuneyt Abi)
+            asyncio.run(save_edge_tts(text, "tr-TR-AhmetNeural", out_file))
+            
+            with open(out_file, "rb") as f:
+                data = f.read()
+            return send_file(io.BytesIO(data), mimetype="audio/mpeg", as_attachment=False, download_name="speech.mp3")
     except Exception as e:
         print("TTS Error:", e)
         return str(e), 500
+    finally:
+        if os.path.exists(out_file):
+            try:
+                os.remove(out_file)
+            except Exception:
+                pass
 
 @app.after_request
 def add_cors(response):
@@ -63,5 +149,9 @@ def add_cors(response):
     return response
 
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 8001))
-    app.run(host='0.0.0.0', port=port)
+    print("==========================================")
+    print(" CinoCode Coklu Ses Sunucusu Basladi!     ")
+    print(" Lutfen bu pencereyi KAPATMAYIN!          ")
+    print("==========================================")
+    port = int(os.environ.get("PORT", 8001))
+    app.run(host='0.0.0.0', port=port, threaded=True)
