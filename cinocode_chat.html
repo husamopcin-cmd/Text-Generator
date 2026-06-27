@@ -1638,37 +1638,35 @@
 
         try {
             const savedMode = localStorage.getItem('video_mode') || 'fast';
-            let SCENE_COUNT = 4;
-            let SCENE_DURATION = 3000; // Hızlı Mod: Sahnede 3 saniye
-            let FPS = 20;
-            let WIDTH = 512;
-            let HEIGHT = 512;
+            let SCENE_COUNT = 3;
+            let SCENE_DURATION = 3500; 
+            let FPS = 15;
+            let WIDTH = 384;
+            let HEIGHT = 384;
             let modeLabel = "Hızlı";
 
             if (savedMode === 'turbo') {
-                SCENE_COUNT = 5;
-                SCENE_DURATION = 3000;
-                FPS = 10;
+                SCENE_COUNT = 4;
+                SCENE_DURATION = 2500;
+                FPS = 12;
                 WIDTH = 384;
                 HEIGHT = 384;
                 modeLabel = "Turbo";
             } else if (savedMode === 'standard') {
-                SCENE_COUNT = 8;
-                SCENE_DURATION = 4000; // Standart Mod: Sahnede 4 saniye
+                SCENE_COUNT = 5;
+                SCENE_DURATION = 4000; 
+                FPS = 20;
+                WIDTH = 512;
+                HEIGHT = 512;
                 modeLabel = "Standart";
             } else if (savedMode === 'cinematic') {
-                SCENE_COUNT = 12;
-                SCENE_DURATION = 5000; // Sinematik Mod: Sahnede 5 saniye
-                FPS = 15; // Uzun videoda tarayıcı yorulmasın diye FPS'i biraz düşür
+                SCENE_COUNT = 8;
+                SCENE_DURATION = 4500; 
+                FPS = 24; 
+                WIDTH = 512;
+                HEIGHT = 512;
                 modeLabel = "Sinematik";
             }
-
-            // TEMPORARY DEBUG: Force 2 scenes for guaranteed loading debug
-            SCENE_COUNT = 2;
-            WIDTH = 384;
-            HEIGHT = 384;
-            FPS = 10;
-            SCENE_DURATION = 2000;
 
             const videoDurationSec = Math.round((SCENE_COUNT * SCENE_DURATION) / 1000);
 
@@ -1683,8 +1681,8 @@
                 'high contrast moody lighting', 'vibrant colorful landscape'
             ];
 
-            // 2 veya 3'lü batch halinde indir
-            const batchSize = savedMode === 'fast' ? 2 : 3;
+            // Bütün sahneleri aynı anda indir (Paralel işlem hızı!)
+            const batchSize = SCENE_COUNT;
             for (let batch = 0; batch < SCENE_COUNT; batch += batchSize) {
                 const batchPromises = [];
                 const batchEnd = Math.min(batch + batchSize, SCENE_COUNT);
