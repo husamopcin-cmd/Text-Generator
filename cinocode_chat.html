@@ -1157,41 +1157,16 @@
         const file = event.target.files[0];
         if (!file) return;
         
-        // Yeni Ders Çalışma Modu: PDF'leri Base64 olarak Gemini'ye yolla
-        if (file.type === "application/pdf") {
-            selectedStudyFileName = file.name;
-            processFileAsBase64(file, false);
-            return;
-        }
-
-        // Boyut kontrolü (Max 2MB)
-        if (file.size > 2 * 1024 * 1024) {
-            alert("Dosya çok büyük! Lütfen 2MB'dan küçük metin dosyaları yükleyin.");
+        if (file.size > 5 * 1024 * 1024) {
+            alert("Dosya çok büyük! Lütfen 5MB'dan küçük belgeler yükleyin.");
             if (event.target.id === 'docUpload') event.target.value = '';
             return;
         }
 
-        // Metin tabanlı dosya kontrolü
-        const validExts = ['.txt', '.js', '.py', '.html', '.css', '.md', '.csv', '.json', '.xml', '.yaml', '.yml', '.cpp', '.c', '.h', '.java'];
-        const isTextType = file.type.startsWith('text/') || file.type === 'application/json' || file.type === 'application/javascript';
-        const hasValidExt = validExts.some(ext => file.name.toLowerCase().endsWith(ext));
-
-        if (!isTextType && !hasValidExt) {
-            alert("Desteklenmeyen dosya formatı! Sadece metin tabanlı belgeler (txt, kod, json, md) yükleyebilirsiniz.");
-            if (event.target.id === 'docUpload') event.target.value = '';
-            return;
-        }
-
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const content = e.target.result;
-            const input = document.getElementById("userInput");
-            input.value += `\n\n[Belge İçeriği: ${file.name}]\n` + content + `\n\n`;
-            input.focus();
-            autoResize(input);
-            if (event.target.id === 'docUpload') event.target.value = ''; // ayni dosyayi tekrar secebilmek icin
-        };
-        reader.readAsText(file);
+        selectedStudyFileName = file.name;
+        processFileAsBase64(file, false);
+        
+        if (event.target.id === 'docUpload') event.target.value = '';
     }
 
     // ----- AYARLAR (SETTINGS) -----
