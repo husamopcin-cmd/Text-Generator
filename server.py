@@ -15,6 +15,13 @@ EDGE_VOICE_MAP = {
     'edge_tolga':  ('tr-TR-AhmetNeural', '-4Hz', '-10%'),
 }
 
+# Edge ses -> Google fallback mapping (cloud ortamında edge_tts 403 verirse)
+EDGE_TO_GOOGLE_FALLBACK = {
+    'edge_female': 'female_gtts',
+    'edge_male':   'male_gtts',
+    'edge_tolga':  'male_gtts',
+}
+
 GOOGLE_VOICE_CONFIG = {
     'female_gtts': {
         'languageCode': 'tr-TR',
@@ -94,8 +101,9 @@ def tts():
             return mp3_response(audio_data)
         except Exception as e:
             print(f"Edge TTS hata ({voice}), Google fallback: {e}")
+            fallback_voice = EDGE_TO_GOOGLE_FALLBACK.get(voice, 'female_gtts')
             try:
-                return mp3_response(google_tts(text, 'female_gtts', api_key))
+                return mp3_response(google_tts(text, fallback_voice, api_key))
             except Exception as e2:
                 print(f"Google fallback hata: {e2}")
                 return str(e2), 500
