@@ -2234,6 +2234,19 @@
         audio.src = url;
         window.currentAudio = audio;
         
+        // Google TTS sesini manipüle ederek 5 farklı karakter yaratıyoruz
+        let rate = 1.0;
+        if (expectedVoiceId === 'female_edge') rate = 1.18;      // Cino (Tiz/Hızlı)
+        else if (expectedVoiceId === 'male_gtts') rate = 0.82;    // Cüneyt (Bas/Yavaş)
+        else if (expectedVoiceId === 'male_edge_tolga') rate = 0.92; // Tolga (Hafif kalın)
+        
+        audio.defaultPlaybackRate = rate;
+        audio.playbackRate = rate;
+        
+        audio.onplay = () => {
+            audio.playbackRate = rate;
+        };
+        
         audio.onended = () => { 
             if(isSpeakerOn && speechRunId === expectedRunId && voiceSelect.value === expectedVoiceId) playNextTTS(); 
             else isPlayingTTS = false; 
