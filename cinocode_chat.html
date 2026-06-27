@@ -667,6 +667,11 @@
         <input type="text" id="ollamaIpInput" placeholder="http://192.168.1.X:11434" style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:10px; border-radius:8px; margin-bottom: 15px; box-sizing: border-box; outline: none;">
         
         <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 10px; text-align: left;">
+            Bulut Ses Sunucusu URL'si (Render/Railway vb. için - Opsiyonel):
+        </div>
+        <input type="text" id="ttsUrlInput" placeholder="https://cinocode-tts.onrender.com/api/tts" style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:10px; border-radius:8px; margin-bottom: 15px; box-sizing: border-box; outline: none;">
+        
+        <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 10px; text-align: left;">
             Groq API Anahtarınız (Bulut modelleri için):
         </div>
         <input type="text" id="groqApiKeyInput" placeholder="gsk_..." style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:10px; border-radius:8px; margin-bottom: 15px; box-sizing: border-box; outline: none;">
@@ -854,10 +859,10 @@
 
     // --- SES ve VİDEO İŞLEMLERİ (Önceden var olan fonksiyonların bir kısmı) ---
 
-    const systemPrompt = "Senin adın CinoCode. Samimi, esprili ve kanka gibi konuşan zeki bir yazılım asistanısın. Anadili Türkçe olan bir uzman gibi C2 seviyesinde mükemmel, akıcı, zengin kelime dağarcığına sahip ve tamamen doğal bir Türkçe kullanmalısın. Asla çeviri gibi kokan veya robotik cümleler kurma.";
+    const systemPrompt = "Senin adın CinoCode. Samimi, esprili ve kanka gibi konuşan zeki bir yazılım asistanısın. Varsayılan olarak anadili Türkçe olan bir uzman gibi C2 seviyesinde mükemmel, akıcı, zengin kelime dağarcığına sahip ve tamamen doğal bir Türkçe kullanmalısın. Ancak kullanıcı senden başka bir dilde (İngilizce, Almanca vb.) konuşmanı isterse veya o dilde soru sorup o dilde cevap vermeni talep ederse, kesinlikle kullanıcının istediği dilde cevap ver ve konuş. Asla robotik cümleler kurma.";
     
     const personas = {
-        "kanka": "Senin adın CinoCode. Samimi, esprili ve çok yakın bir insan 'kanka' gibi konuşan, zeki birisin. Anadili Türkçe olan bir uzman gibi C2 seviyesinde mükemmel, akıcı ve tamamen doğal bir sokak/günlük Türkçesi kullanmalısın. ASLA 'Ben sadece bir yapay zekayım', 'Ben bir yazılım asistanıyım' gibi klişe robotik cümleler kurma! Kendini kanlı canlı gerçek bir arkadaş gibi konumlandır. DİKKAT: Kullanıcı sana 'knk' yazarsa bu 'kanka' demektir, asla Koreli bir K-Pop müzik grubu falan zannetme!",
+        "kanka": "Senin adın CinoCode. Samimi, esprili ve çok yakın bir insan 'kanka' gibi konuşan, zeki birisin. Varsayılan olarak anadili Türkçe olan bir uzman gibi C2 seviyesinde mükemmel, akıcı ve tamamen doğal bir sokak/günlük Türkçesi kullanmalısın (Kullanıcı başka bir dilde konuşmanı talep etmedikçe). ASLA 'Ben sadece bir yapay zekayım', 'Ben bir yazılım asistanıyım' gibi klişe robotik cümleler kurma! Kendini kanlı canlı gerçek bir arkadaş gibi konumlandır. DİKKAT: Kullanıcı sana 'knk' yazarsa bu 'kanka' demektir, asla Koreli bir K-Pop müzik grubu falan zannetme!",
         "usta_yazilimci": "Sen efsanevi bir 'Usta Yazılımcı'sın (Claude Killer). Kullanıcının istediği oyunları, web sitelerini veya uygulamaları KUSURSUZ bir şekilde kodlarsın. Asla gereksiz açıklamalar yapma, uzun uzun konuşma. Kullanıcı kod veya uygulama istediğinde, kodları SADECE HTML, CSS ve JavaScript kullanarak TEK BİR ```html bloğu içine yazıp gönder! Bu kodlar CinoCode Artifact sistemiyle canlı çalıştırılacaktır. Profesyonel, az laf çok iş yapan bir zekasın.",
         "akademik_koc": "Sen bir 'Akademik Asistan ve Sınav Koçu'sun. Kullanıcının attığı notları veya sorduğu konuları önce '5 yaşındaki çocuğa anlatır gibi' son derece basit bir dille özetle. Ardından seviyeyi artırıp akademik boyuta taşı. En sonda da öğrenciye konuyu pekiştirmesi için A, B, C, D şıklı 1 veya 2 adet zorlayıcı test sorusu sor (cevapları hemen söyleme, önce o çözsün). Motive edici, sabırlı ve bilge bir öğretmensin.",
         "dil_kocu": "Sen bir 'Dil Koçu'sun (Language Tutor). Kullanıcı hangi dili öğrenmek istediğini söyleyecektir (İngilizce vb). Bundan sonra seninle O DİLDE pratik yapacak. SEN HER ZAMAN O DİLDE CEVAP VER. Ancak kullanıcının yaptığı gramer (dilbilgisi) hatalarını mesajının sonunda kibarca ve 'Türkçe olarak' düzelt ve açıkla. Her sohbetin sonunda kullanıcıya o dilde 3 yeni kelime öğret. Sabırlı ve cesaretlendirici ol.",
@@ -1172,6 +1177,9 @@
         const currentOllamaIp = localStorage.getItem('ollama_ip') || "";
         document.getElementById('ollamaIpInput').value = currentOllamaIp;
 
+        const currentTtsUrl = localStorage.getItem('tts_url') || "";
+        document.getElementById('ttsUrlInput').value = currentTtsUrl;
+
         const currentVideoMode = localStorage.getItem('video_mode') || "fast";
         document.getElementById('videoModeSelect').value = currentVideoMode;
         
@@ -1196,6 +1204,9 @@
 
         const ollamaIp = document.getElementById('ollamaIpInput').value.trim();
         localStorage.setItem('ollama_ip', ollamaIp);
+
+        const ttsUrl = document.getElementById('ttsUrlInput').value.trim();
+        localStorage.setItem('tts_url', ttsUrl);
 
         const videoMode = document.getElementById('videoModeSelect').value;
         localStorage.setItem('video_mode', videoMode);
@@ -2092,13 +2103,11 @@
         userInput.placeholder = "CinoCode'a bir şeyler sor...";
     }
 
-    let availableVoices = [];
     let isSpeakerOn = true;
     const synth = window.speechSynthesis;
 
-    // Üç farklı ses seçeneği: Yerel Tolga, İnternet Cüneyt Abi (gTTS), İnternet Cino Abla (edge-tts)
     function populateVoices() {
-        voiceSelect.innerHTML = `
+        let defaultHtml = `
             <option value="male_local">👨🏻‍🦱 Deniz (Cihazın Kendi Sesi)</option>
             <option value="male_edge_tolga">👨🏼‍🦱 Tolga (Standart Erkek)</option>
             <option value="female_gtts">👩🏼‍🦱 Ayşe Abla (Standart Kadın Sesi)</option>
@@ -2106,19 +2115,32 @@
             <option value="female_edge">👩🏻‍🦰 Cino Abla (HD Kadın Ses)</option>
         `;
 
-        // Eğer kaydedilmiş profil varsa seç
+        let voices = synth.getVoices();
+        if (voices.length > 0) {
+            defaultHtml += `<optgroup label="Cihaz Sesleri (Tüm Sesler)">`;
+            voices.forEach((v, idx) => {
+                let isTr = v.lang.includes("tr") ? "🇹🇷 " : "🌐 ";
+                defaultHtml += `<option value="native_${idx}">${isTr}${v.name}</option>`;
+            });
+            defaultHtml += `</optgroup>`;
+        }
+
+        voiceSelect.innerHTML = defaultHtml;
+
         const savedVoice = localStorage.getItem("cinocode_voice_idx");
-        if (savedVoice !== null) {
+        if (savedVoice !== null && voiceSelect.querySelector(`option[value="${savedVoice}"]`)) {
             voiceSelect.value = savedVoice;
         }
         
         voiceSelect.style.display = "block";
     }
 
-    // Sesler yüklendiğinde listeyi güncelle (Artık gerek yok ama dursun)
     if (speechSynthesis.onvoiceschanged !== undefined) {
-        speechSynthesis.onvoiceschanged = () => {};
+        speechSynthesis.onvoiceschanged = populateVoices;
     }
+    
+    // Anında çalıştır ki en azından varsayılan 5 seçenek hemen dolsun
+    populateVoices();
 
     function saveVoicePref() {
         localStorage.setItem("cinocode_voice_idx", voiceSelect.value);
@@ -2138,13 +2160,19 @@
                 sBtn.innerText = "🔇"; 
                 sBtn.classList.remove("active");
             }
+            voiceSelect.style.display = "none";
             stopSpeaking();
         }
     }
 
     let ttsQueue = [];
     let isPlayingTTS = false;
+
     function getTtsUrl() {
+        const savedTtsUrl = localStorage.getItem("tts_url");
+        if (savedTtsUrl && savedTtsUrl.trim() !== "") {
+            return savedTtsUrl.trim();
+        }
         const ollamaIpStr = localStorage.getItem("ollama_ip");
         if (ollamaIpStr && ollamaIpStr.startsWith("http")) {
             try {
@@ -2173,43 +2201,13 @@
         const currentSpeechRunId = speechRunId;
         const currentSelectedVoiceId = voiceSelect.value;
 
-        // Seçilen sese göre oynat
-        if (currentSelectedVoiceId === "male_local") {
+        if (currentSelectedVoiceId === "male_local" || currentSelectedVoiceId.startsWith("native_")) {
             speakWithLocalVoice(cleanText, currentSpeechRunId, currentSelectedVoiceId);
         } else {
             speakWithServer(cleanText, currentSpeechRunId, currentSelectedVoiceId);
         }
     }
 
-    // Yerel ses motoru
-    function speakWithLocalVoice(cleanText, expectedRunId, expectedVoiceId) {
-        if (!isSpeakerOn || speechRunId !== expectedRunId || voiceSelect.value !== expectedVoiceId) {
-            isPlayingTTS = false;
-            return;
-        }
-        const utterance = new SpeechSynthesisUtterance(cleanText);
-        let voices = synth.getVoices();
-        let trVoices = voices.filter(v => v.lang.includes("tr"));
-        if(trVoices.length > 0) utterance.voice = trVoices[0];
-        
-        utterance.onend = () => { 
-            if(isSpeakerOn && speechRunId === expectedRunId && voiceSelect.value === expectedVoiceId) playNextTTS(); 
-            else isPlayingTTS = false; 
-        };
-        utterance.onerror = () => { 
-            if(isSpeakerOn && speechRunId === expectedRunId && voiceSelect.value === expectedVoiceId) playNextTTS(); 
-            else isPlayingTTS = false; 
-        };
-        
-        // ÖNEMLİ BUG FIX: Safari/Chrome mobil tarayıcılarında Utterance nesnesi konuşma bitmeden
-        // çöp toplayıcıya (Garbage Collector) kurban giderse onend event'i ASLA tetiklenmez!
-        // Bu yüzden onu global bir değişkende hayatta tutuyoruz.
-        window.currentUtterance = utterance;
-        
-        synth.speak(utterance);
-    }
-
-    // TTS Sunucu sesi
     function speakWithServer(cleanText, expectedRunId, expectedVoiceId) {
         if (!isSpeakerOn || speechRunId !== expectedRunId || voiceSelect.value !== expectedVoiceId) {
             isPlayingTTS = false;
@@ -2223,8 +2221,6 @@
         
         const url = getTtsUrl() + "?voice=" + vName + "&text=" + encodeURIComponent(cleanText);
         
-        // Mobil uyumluluk: Sürekli yeni Audio yaratmak autoplay engeline takılır,
-        // bu yüzden tek bir global Audio nesnesini geri dönüştürüyoruz.
         if (!window.sharedAudio) window.sharedAudio = new Audio();
         const audio = window.sharedAudio;
         audio.src = url;
@@ -2236,14 +2232,81 @@
         };
         
         audio.onerror = () => {
-            console.warn("TTS sunucu hatası.");
-            isPlayingTTS = false;
+            console.warn("TTS sunucu hatası, yerel ses motoruna düşülüyor.");
+            speakWithLocalVoice(cleanText, expectedRunId, expectedVoiceId);
         };
         
         audio.play().catch(e => {
-            console.warn("TTS oynatılamadı:", e);
-            isPlayingTTS = false;
+            console.warn("TTS oynatılamadı, yerel ses motoruna düşülüyor:", e);
+            speakWithLocalVoice(cleanText, expectedRunId, expectedVoiceId);
         });
+    }
+
+    function speakWithLocalVoice(cleanText, expectedRunId, expectedVoiceId) {
+        if (!isSpeakerOn || speechRunId !== expectedRunId || voiceSelect.value !== expectedVoiceId) {
+            isPlayingTTS = false;
+            return;
+        }
+        const utterance = new SpeechSynthesisUtterance(cleanText);
+        let voices = synth.getVoices();
+        let trVoices = voices.filter(v => v.lang.includes("tr"));
+        
+        if (expectedVoiceId.startsWith("native_")) {
+            let idx = parseInt(expectedVoiceId.split("_")[1]);
+            if (voices[idx]) {
+                utterance.voice = voices[idx];
+            }
+        } else {
+            let selectedVoice = null;
+
+            // Yardımcı: İsimde geçen kelimelere göre ses bulma
+            const findVoice = (keywords) => trVoices.find(v => keywords.some(k => v.name.toLowerCase().includes(k)));
+
+            if (expectedVoiceId === "female_gtts" || expectedVoiceId === "female_edge") {
+                selectedVoice = findVoice(["yelda", "siri", "female", "kadın"]) || trVoices[0];
+            } else if (expectedVoiceId === "male_gtts" || expectedVoiceId === "male_edge_tolga") {
+                selectedVoice = findVoice(["cem", "erkek", "male"]) || (trVoices.length > 1 ? trVoices[1] : trVoices[0]);
+            } else {
+                selectedVoice = trVoices.length > 2 ? trVoices[2] : trVoices[0];
+            }
+            
+            if (selectedVoice) {
+                utterance.voice = selectedVoice;
+            } else if (trVoices.length > 0) {
+                utterance.voice = trVoices[0];
+            } else if (voices.length > 0) {
+                utterance.voice = voices[0];
+            }
+
+            if (expectedVoiceId === "female_gtts") {
+                utterance.pitch = 1.0;
+                utterance.rate = 0.95;
+            } else if (expectedVoiceId === "female_edge") {
+                utterance.pitch = 1.25;
+                utterance.rate = 1.05;
+            } else if (expectedVoiceId === "male_gtts") {
+                utterance.pitch = 0.75;
+                utterance.rate = 0.9;
+            } else if (expectedVoiceId === "male_edge_tolga") {
+                utterance.pitch = 0.95;
+                utterance.rate = 1.0;
+            } else if (expectedVoiceId === "male_local") {
+                utterance.pitch = 1.0;
+                utterance.rate = 1.0;
+            }
+        }
+        
+        utterance.onend = () => { 
+            if(isSpeakerOn && speechRunId === expectedRunId && voiceSelect.value === expectedVoiceId) playNextTTS(); 
+            else isPlayingTTS = false; 
+        };
+        utterance.onerror = () => { 
+            if(isSpeakerOn && speechRunId === expectedRunId && voiceSelect.value === expectedVoiceId) playNextTTS(); 
+            else isPlayingTTS = false; 
+        };
+        
+        window.currentUtterance = utterance;
+        synth.speak(utterance);
     }
 
     function speakText(text) {
@@ -2251,22 +2314,6 @@
         ttsQueue.push(text);
         if (!isPlayingTTS) {
             playNextTTS();
-        } else {
-            // Önbelleğe al (Prefetch) - Cümleler arası bekleme süresini (duraksamayı) sıfırlamak için
-            let cleanText = text.replace(/```[\s\S]*?```/g, " kod parçası ").replace(/`.*?`/g, "").replace(/[#*_-]/g, "");
-            cleanText = cleanText.replace(/\[GENERATE_IMAGE:.*?\]/g, " Resmi hazırlıyorum. ");
-            cleanText = cleanText.replace(/CinoCode/gi, "Cinokod").trim();
-            
-            if (cleanText && voiceSelect.value !== "male_local") {
-                let vName = 'gtts_male';
-                if (voiceSelect.value === 'female_edge') vName = 'edge_female';
-                if (voiceSelect.value === 'female_gtts') vName = 'female_gtts';
-                if (voiceSelect.value === 'male_edge_tolga') vName = 'edge_male_tolga';
-                if (voiceSelect.value === 'male_gtts') vName = 'gtts_male';
-                
-                const url = getTtsUrl() + "?voice=" + vName + "&text=" + encodeURIComponent(cleanText);
-                fetch(url).catch(e=>{}); // Arka planda indirip tarayıcı önbelleğine (cache) atar
-            }
         }
     }
     
@@ -2813,7 +2860,7 @@ Eğer kullanıcı "bu ne", "nerede", "adam kim", "bunu istemedim", "düzelt", "y
                 baseSystemPrompt += "\n\nKullanıcının giriş yaptığı hesap adı / ismi: '" + loggedUser + "'. Sohbet sırasında ona ara sıra (sürekli yapay bir şekilde değil, akışı bozmadan doğal olarak) bu isimle hitap et. Kullanıcı sana özellikle 'Bana şu isimle hitap et' demediği sürece bu ismi kullanmalısın.";
             }
 
-            baseSystemPrompt += "\n\nKESİN EMİR: Her zaman Türkçe cevap ver. Kullanıcı İngilizce istemedikçe kesinlikle İngilizce konuşma. Emin değilsen isim kullanma.";
+            baseSystemPrompt += "\n\nKURAL: Varsayılan olarak Türkçe cevap ver. Ancak kullanıcı senden başka bir dilde (İngilizce, Almanca vb.) konuşmanı isterse veya o dilde soru sorup o dilde cevap vermeni talep ederse, kesinlikle kullanıcının istediği dilde cevap ver ve konuş. Emin değilsen isim kullanma.";
 
             // UZUN SÜRELİ HAFIZA (MEMORY) ENJEKSİYONU
             let userMemory = localStorage.getItem('cinocode_memory_' + (loggedUser || "default"));
