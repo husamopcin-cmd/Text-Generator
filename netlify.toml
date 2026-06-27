@@ -1,0 +1,4 @@
+[[redirects]]
+  from = "/*"
+  to = "/cinocode_chat.html"
+  status = 200
