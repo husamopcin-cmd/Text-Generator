@@ -19,7 +19,7 @@ EDGE_VOICE_MAP = {
 EDGE_TO_GOOGLE_FALLBACK = {
     'edge_female': 'female_gtts',
     'edge_male':   'male_gtts',
-    'edge_tolga':  'male_local',
+    'edge_tolga':  'male_wavenet_d',
 }
 
 GOOGLE_VOICE_CONFIG = {
@@ -36,6 +36,11 @@ GOOGLE_VOICE_CONFIG = {
     'male_local': {
         'languageCode': 'tr-TR',
         'name': 'tr-TR-Standard-B',
+        'ssmlGender': 'MALE'
+    },
+    'male_wavenet_d': {
+        'languageCode': 'tr-TR',
+        'name': 'tr-TR-Wavenet-D',
         'ssmlGender': 'MALE'
     }
 }
