@@ -25,7 +25,7 @@ EDGE_TO_GOOGLE_FALLBACK = {
 GOOGLE_VOICE_CONFIG = {
     'female_gtts': {
         'languageCode': 'tr-TR',
-        'name': 'tr-TR-Wavenet-E',
+        'name': 'tr-TR-Wavenet-D',
         'ssmlGender': 'FEMALE'
     },
     'male_gtts': {
@@ -40,7 +40,7 @@ GOOGLE_VOICE_CONFIG = {
     },
     'male_wavenet_d': {
         'languageCode': 'tr-TR',
-        'name': 'tr-TR-Standard-B',
+        'name': 'tr-TR-Wavenet-E',
         'ssmlGender': 'MALE'
     },
     'female_gtts2': {
@@ -51,7 +51,9 @@ GOOGLE_VOICE_CONFIG = {
 }
 
 VOICE_AUDIO_CONFIG = {
-    'male_wavenet_d': {"audioEncoding": "MP3", "speakingRate": 0.9, "pitch": -3.0}
+    'male_wavenet_d': {"audioEncoding": "MP3", "speakingRate": 0.9, "pitch": -4.0},
+    'female_gtts2': {"audioEncoding": "MP3", "speakingRate": 1.0, "pitch": 4.0},
+    'female_gtts': {"audioEncoding": "MP3", "speakingRate": 1.0, "pitch": 0.0}
 }
 
 
