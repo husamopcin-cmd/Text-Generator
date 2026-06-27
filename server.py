@@ -40,7 +40,7 @@ GOOGLE_VOICE_CONFIG = {
     },
     'male_wavenet_d': {
         'languageCode': 'tr-TR',
-        'name': 'tr-TR-Wavenet-D',
+        'name': 'tr-TR-Standard-B',
         'ssmlGender': 'MALE'
     },
     'female_gtts2': {
