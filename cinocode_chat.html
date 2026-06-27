@@ -2244,11 +2244,11 @@
             isPlayingTTS = false;
             return;
         }
-        let vName = 'gtts_male';
+        let vName = 'male_gtts';
         if (expectedVoiceId === 'female_edge') vName = 'edge_female';
         if (expectedVoiceId === 'female_gtts') vName = 'female_gtts';
-        if (expectedVoiceId === 'male_edge_tolga') vName = 'edge_male_tolga';
-        if (expectedVoiceId === 'male_gtts') vName = 'gtts_male';
+        if (expectedVoiceId === 'male_edge_tolga') vName = 'edge_tolga';
+        if (expectedVoiceId === 'male_gtts') vName = 'male_gtts';
         
         const azureKey = localStorage.getItem("azure_speech_key") || "";
         const azureRegion = localStorage.getItem("azure_speech_region") || "";
