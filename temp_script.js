@@ -1,880 +1,14 @@
-<!DOCTYPE html>
-<html lang="tr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="referrer" content="no-referrer">
-    <meta name="theme-color" content="#1e1e2e">
-    <link rel="manifest" href="manifest.json">
-    <title>CinoCode V4.2 - Özel Sesler</title>
-    <!-- Marked.js (Markdown Ayrıştırıcı) -->
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <!-- Highlight.js (Kod Renklendirme) -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/tokyo-night-dark.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-    
-    <!-- PWA Cache Busting -->
-    <script>
+﻿
+
+
     console.log("CINOCODE_VERSION_0afe80e_voicefix");
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.getRegistrations().then(rs => {
         rs.forEach(r => r.unregister());
       });
     }
-    </script>
     
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Fira+Code&display=swap');
-        
-        * { box-sizing: border-box; }
-        
-        body {
-            font-family: 'Inter', sans-serif;
-            background: radial-gradient(circle at 50% -20%, #1e1e2e 0%, #11111b 80%);
-            color: #cdd6f4;
-            margin: 0;
-            display: flex;
-            height: 100dvh;
-            overflow: hidden;
-        }
 
-        
-        /* ----- ARTIFACTS SIDEBAR KALDIRILDI ----- */
-        .artifact-card {
-            background: #1e1e2e; border: 1px solid #313244; border-radius: 12px;
-            padding: 12px; cursor: pointer; transition: 0.2s; display: flex;
-            flex-direction: column; gap: 8px; position: relative;
-        }
-        .artifact-card:hover { border-color: #89b4fa; }
-        .artifact-card-title { font-size: 13px; font-weight: 600; color: #89b4fa; display: flex; align-items: center; gap: 6px; }
-        .artifact-card-desc { font-size: 11px; color: #a6adc8; }
-        .artifact-dl-btn {
-            background: #313244; color: #cdd6f4; border: none; padding: 4px 8px;
-            border-radius: 6px; font-size: 11px; cursor: pointer; align-self: flex-start;
-        }
-        .artifact-dl-btn:hover { background: #89b4fa; color: #11111b; }
-        
-        /* ----- WELCOME SCREEN ----- */
-        .welcome-screen {
-            flex: 1; display: flex; flex-direction: column; align-items: center;
-            justify-content: center; padding: 40px; text-align: center;
-            background: transparent;
-        }
-        .welcome-logo { font-size: 56px; margin-bottom: 10px; animation: float 3s ease-in-out infinite; }
-        @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0px); } }
-        .welcome-screen h2 { font-size: 26px; color: #cdd6f4; margin-bottom: 30px; font-weight: 600; text-shadow: 0 0 20px rgba(205,214,244,0.2); }
-        .welcome-actions { display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; max-width: 600px; }
-        .welcome-btn {
-            background: rgba(49, 50, 68, 0.3); border: 1px solid rgba(255,255,255,0.05); color: #cdd6f4;
-            padding: 12px 20px; border-radius: 20px; font-size: 14px; cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); display: flex; align-items: center; gap: 8px;
-            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-        }
-        .welcome-btn:hover { background: rgba(49, 50, 68, 0.6); border-color: #89b4fa; transform: translateY(-3px); box-shadow: 0 5px 15px rgba(137,180,250,0.2); }
-
-        /* ----- ATTACH MENU (POPUP) ----- */
-        .attach-menu {
-            position: absolute; bottom: 80px; left: 10%; transform: none;
-            width: 260px; background: #181825; box-shadow: 0 -5px 20px rgba(0,0,0,0.5);
-            border-radius: 16px; border: 1px solid #313244; padding: 10px;
-            z-index: 2001; display: flex; flex-direction: column; gap: 5px;
-            opacity: 0; pointer-events: none; transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        .attach-menu.active { opacity: 1; pointer-events: auto; bottom: 90px; }
-        .attach-menu-item {
-            padding: 10px 15px; font-size: 14px; background: transparent; border-radius: 8px;
-        }
-        .attach-menu-title { display: none; }
-        .attach-menu-close { display: none; }
-        
-        .chat-action-menu {
-            position: absolute; right: 0; top: 100%; background: #181825; border: 1px solid #313244;
-            border-radius: 8px; display: none; flex-direction: column; z-index: 100;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3); overflow: hidden;
-        }
-        .chat-action-menu.active { display: flex; }
-        .chat-action-menu button {
-            background: none; border: none; color: #cdd6f4; padding: 10px 15px;
-            text-align: left; cursor: pointer; font-size: 13px; display: flex; gap: 8px; align-items: center;
-        }
-        .chat-action-menu button:hover { background: #313244; }
-        .chat-item { position: relative; }
-
-        .mobile-drawer-overlay { display: none; }
-        .mobile-artifacts-btn { display: none !important; }
-        
-        @media (max-width: 768px) {
-            /* Mobile drawer CSS removed */
-            
-            .attach-menu { left: 5%; bottom: 60px; }
-            .attach-menu.active { bottom: 70px; }
-        }
-
-        /* ----- SIDEBAR (Geçmiş Sohbetler) ----- */
-        .sidebar {
-            width: 280px;
-            background: rgba(24, 24, 37, 0.65);
-            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-            border-right: 1px solid rgba(255,255,255,0.05);
-            display: flex;
-            flex-direction: column;
-            padding: 15px;
-            transition: all 0.3s;
-            z-index: 10;
-        }
-        
-        .new-chat-btn {
-            background: rgba(255,255,255,0.02);
-            border: 1px solid rgba(255,255,255,0.05);
-            color: #cdd6f4;
-            padding: 12px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-            margin-bottom: 20px;
-        }
-        .new-chat-btn:hover { background: rgba(49, 50, 68, 0.6); border-color: #89b4fa; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(137,180,250,0.15); }
-        
-        .chat-list {
-            flex: 1;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-        
-        .chat-item {
-            padding: 12px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            color: #a6adc8;
-            transition: 0.2s;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .chat-item:hover { background: #313244; color: #cdd6f4; }
-        .chat-item.active { background: #313244; color: #89b4fa; font-weight: 500; }
-        
-        .chat-item-title {
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 170px;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        
-        .chat-actions {
-            display: flex;
-            gap: 2px;
-            opacity: 0;
-            transition: 0.2s;
-        }
-        .chat-item:hover .chat-actions { opacity: 1; }
-        
-        .action-btn {
-            background: none; border: none; cursor: pointer; padding: 2px 4px;
-            border-radius: 4px; font-size: 13px; transition: 0.2s;
-        }
-        .action-btn:hover { background: rgba(255,255,255,0.1); }
-        .delete-chat-btn { color: #f38ba8; }
-        .rename-chat-btn { color: #f9e2af; }
-
-        .lib-sidebar-btn.active-lib {
-            box-shadow: 0 0 10px currentColor;
-            transform: scale(1.05);
-            z-index: 2;
-        }
-
-        /* ----- MAIN CHAT AREA ----- */
-        .main-chat {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            background: transparent;
-            position: relative;
-        }
-        
-        /* System Prompt Container */
-        .system-prompt-container {
-            padding: 10px 20px; border-bottom: 1px solid rgba(255,255,255,0.05);
-            background: rgba(0,0,0,0.2); backdrop-filter: blur(4px);
-        }
-
-        /* Attachment Menu Overlay */
-        .attach-menu-overlay {
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.4); z-index: 2000;
-            display: none; opacity: 0; transition: opacity 0.3s ease;
-            backdrop-filter: blur(3px);
-        }
-        .attach-menu-overlay.active { display: block; opacity: 1; }
-        
-        /* Attachment Menu Bottom Sheet */
-        .attach-menu {
-            position: fixed; bottom: -400px; left: 50%; transform: translateX(-50%);
-            width: 90%; max-width: 400px; background: rgba(20, 20, 35, 0.98);
-            border-radius: 20px 20px 0 0; border: 1px solid rgba(255,255,255,0.1);
-            border-bottom: none; padding: 25px 20px; z-index: 2001;
-            display: flex; flex-direction: column; gap: 15px;
-            transition: bottom 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            box-shadow: 0 -10px 30px rgba(0,0,0,0.5);
-        }
-        .attach-menu.active { bottom: 0; }
-        
-        .attach-menu-item {
-            display: flex; align-items: center; gap: 15px; padding: 12px 15px;
-            border-radius: 12px; cursor: pointer; color: #cdd6f4; font-size: 16px;
-            transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1); background: rgba(255,255,255,0.03);
-        }
-        .attach-menu-item:hover { background: rgba(255,255,255,0.08); transform: translateX(5px) scale(1.02); }
-        .attach-menu-item i { font-size: 22px; width: 30px; text-align: center; font-style: normal; }
-        
-        .attach-menu-title {
-            text-align: center; font-size: 14px; color: #a6adc8; margin-bottom: 10px;
-            text-transform: uppercase; letter-spacing: 1px; font-weight: bold;
-        }
-        .attach-menu-close {
-            position: absolute; top: 15px; right: 20px; background: none; border: none;
-            color: #f38ba8; font-size: 24px; cursor: pointer; transition: 0.2s;
-        }
-        .attach-menu-close:hover { transform: scale(1.2) rotate(90deg); text-shadow: 0 0 10px #f38ba8; }
-        
-        .header {
-            padding: 15px 25px;
-            background: rgba(17, 17, 27, 0.55);
-            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-            z-index: 5;
-        }
-        
-        .header-title {
-            font-size: 20px;
-            font-weight: 600;
-            color: #89b4fa;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .status-indicator {
-            width: 10px; height: 10px; border-radius: 50%;
-            background: #f38ba8; box-shadow: 0 0 10px #f38ba8;
-            transition: all 0.3s;
-        }
-        .status-indicator.online { background: #a6e3a1; box-shadow: 0 0 10px #a6e3a1; }
-        
-        .header-controls {
-            display: flex; gap: 10px; align-items: center;
-        }
-        
-        select {
-            background: #1e1e2e; color: #cdd6f4; border: 1px solid #45475a;
-            padding: 6px 12px; border-radius: 6px; outline: none; font-size: 13px;
-        }
-        
-        .icon-btn {
-            background: none; border: none; color: #a6adc8; cursor: pointer;
-            font-size: 18px; transition: 0.2s; border-radius: 8px; padding: 5px;
-        }
-        .icon-btn:hover { color: #cdd6f4; background: rgba(255,255,255,0.05); }
-        .speaker-btn.active { color: #a6e3a1; }
-        
-        /* Messages */
-        .messages {
-            flex: 1; padding: 25px; overflow-y: auto;
-            display: flex; flex-direction: column; gap: 20px; scroll-behavior: smooth;
-        }
-        
-        .message {
-            max-width: 85%; padding: 15px 20px; border-radius: 12px;
-            line-height: 1.6; font-size: 15px; word-wrap: break-word;
-        }
-        
-        .message.user {
-            align-self: flex-end; background: #89b4fa; color: #11111b;
-            border-bottom-right-radius: 2px;
-        }
-        
-        .message.bot {
-            align-self: flex-start; background: transparent; color: #cdd6f4; width: 100%;
-        }
-        
-        .message.bot pre {
-            background: #11111b; border-radius: 8px; margin: 15px 0;
-            border: 1px solid #313244;
-        }
-        .message.bot code { font-family: 'Fira Code', monospace; font-size: 13px; }
-        .message.bot :not(pre) > code {
-            background: #313244; padding: 2px 6px; border-radius: 4px; font-size: 0.9em;
-        }
-        
-        .code-header {
-            display: flex; justify-content: space-between; align-items: center;
-            background: #181825; padding: 5px 15px; border-top-left-radius: 8px;
-            border-top-right-radius: 8px; border-bottom: 1px solid #313244; font-size: 12px;
-        }
-        .copy-btn {
-            background: #313244; border: none; color: #cdd6f4;
-            padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;
-        }
-        .copy-btn:hover { background: #45475a; }
-        
-        /* Quick Start */
-        .quick-starts {
-            display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-bottom: 10px;
-        }
-        .quick-start-btn {
-            background: #1e1e2e; border: 1px solid #45475a; color: #a6adc8;
-            padding: 8px 15px; border-radius: 20px; font-size: 13px; cursor: pointer;
-        }
-        .quick-start-btn:hover { border-color: #89b4fa; color: #89b4fa; }
-
-        /* Input Area */
-        .input-wrapper {
-            position: relative; background: rgba(17, 17, 27, 0.6); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-            border-top: 1px solid rgba(255,255,255,0.05); padding: 20px 10%; z-index: 5;
-        }
-        .input-box {
-            display: flex; gap: 10px; align-items: flex-end; position: relative;
-            background: rgba(24, 24, 37, 0.7); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px;
-            padding: 10px; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); box-shadow: 0 5px 20px rgba(0,0,0,0.2);
-        }
-        .input-box:focus-within { border-color: rgba(137, 180, 250, 0.5); box-shadow: 0 0 15px rgba(137, 180, 250, 0.15), 0 5px 20px rgba(0,0,0,0.3); transform: translateY(-1px); }
-        
-        textarea {
-            flex: 1; background: transparent; border: none; color: #cdd6f4;
-            font-family: inherit; font-size: 15px; resize: none; padding: 8px;
-            max-height: 150px; outline: none; overflow-y: auto; line-height: 1.5;
-        }
-        
-        .mic-btn {
-            background: rgba(49, 50, 68, 0.5); border-radius: 50%; width: 40px; height: 40px; border: 1px solid rgba(255,255,255,0.05);
-            color: #cdd6f4; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); margin-bottom: 2px;
-        }
-        .mic-btn:hover { background: rgba(49, 50, 68, 0.9); transform: scale(1.05); }
-        .mic-btn.listening {
-            background: #f38ba8; color: #11111b; border-color: #f38ba8;
-            animation: pulse 1.5s infinite; box-shadow: 0 0 15px rgba(243, 139, 168, 0.5);
-        }
-        
-        .send-btn {
-            background: #89b4fa; color: #11111b; border: none; border-radius: 12px;
-            width: 40px; height: 40px; display: flex; justify-content: center;
-            align-items: center; cursor: pointer; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); flex-shrink: 0; margin-bottom: 2px;
-            box-shadow: 0 0 10px rgba(137, 180, 250, 0.3);
-        }
-        .send-btn:hover { background: #b4befe; transform: scale(1.1) translateY(-2px); box-shadow: 0 0 20px rgba(180, 190, 254, 0.6); }
-        
-        /* Web Search & Artifacts */
-        .web-search-btn.active { color: #89dceb; animation: pulse-blue 1.5s infinite; }
-        @keyframes pulse-blue { 0% { box-shadow: 0 0 0 0 rgba(137, 220, 235, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(137, 220, 235, 0); } 100% { box-shadow: 0 0 0 0 rgba(137, 220, 235, 0); } }
-        
-        .run-code-btn {
-            background: #a6e3a1; color: #11111b; border: none; padding: 5px 12px;
-            border-radius: 6px; font-weight: bold; cursor: pointer; margin-bottom: 5px;
-            font-size: 12px; display: inline-flex; align-items: center; gap: 5px; transition: 0.2s;
-        }
-        .run-code-btn:hover { background: #94e2d5; transform: scale(1.02); }
-        
-        .artifact-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(5px);
-            z-index: 1000; display: none; justify-content: center; align-items: center;
-        }
-        .artifact-modal {
-            background: #1e1e2e; width: 90%; height: 90%; border-radius: 12px;
-            display: flex; flex-direction: column; overflow: hidden;
-            border: 2px solid #89b4fa; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
-        .artifact-header {
-            background: #11111b; padding: 10px 20px; display: flex;
-            justify-content: space-between; align-items: center; border-bottom: 1px solid #313244;
-        }
-        .artifact-title { color: #89b4fa; font-weight: bold; }
-        .artifact-iframe { flex: 1; border: none; background: #fff; width: 100%; height: 100%; }
-        
-        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(243, 139, 168, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(243, 139, 168, 0); } 100% { box-shadow: 0 0 0 0 rgba(243, 139, 168, 0); } }
-        
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #45475a; border-radius: 4px; }
-
-        .suggestion-chip {
-            background: rgba(137, 180, 250, 0.1); border: 1px solid #89b4fa; color: #cdd6f4;
-            padding: 6px 12px; border-radius: 16px; font-size: 13px; cursor: pointer;
-            transition: all 0.2s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px;
-        }
-        .suggestion-chip:hover { background: rgba(137, 180, 250, 0.2); transform: translateY(-2px); }
-        .suggestion-refresh-btn {
-            background: #313244; border: 1px solid #45475a; color: #f9e2af;
-            padding: 6px 10px; border-radius: 16px; font-size: 13px; cursor: pointer;
-            transition: all 0.2s; display: flex; align-items: center; gap: 4px;
-        }
-        .suggestion-refresh-btn:hover { background: #45475a; border-color: #f9e2af; }
-        
-        /* Message Actions */
-        .msg-actions {
-            display: flex; gap: 8px; margin-top: 8px; opacity: 0; transition: opacity 0.2s; justify-content: flex-end;
-        }
-        .message:hover .msg-actions { opacity: 1; }
-        .msg-action-btn {
-            background: transparent; border: none; color: #a6adc8; cursor: pointer;
-            padding: 4px; border-radius: 4px; font-size: 14px; transition: 0.2s; display: flex; align-items: center; gap: 4px;
-        }
-        .msg-action-btn:hover { background: #313244; color: #cdd6f4; }
-        @media (max-width: 768px) {
-            .msg-actions { opacity: 1; }
-        }
-
-        /* Archive Grid Layout */
-        .archive-grid {
-            width: 100%;
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-            gap: 16px;
-            align-items: start;
-        }
-        
-        .archive-card {
-            width: 100%;
-            max-width: 260px;
-            margin: 0 auto; /* Center card in its grid cell */
-        }
-        
-        @media (max-width: 768px) {
-            .archive-grid {
-                grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-            }
-        }
-
-        /* Mobil Tasarım (Telefonlar) */
-        @media (max-width: 768px) {
-            body { flex-direction: column; height: 100dvh; }
-            .sidebar { display: none !important; }
-            .main-chat { width: 100% !important; padding: 0 !important; height: 100dvh !important; }
-            .header-controls { flex-wrap: wrap; gap: 5px; }
-            #modelSelect, #voiceSelect { max-width: 100px; font-size: 11px; padding: 4px 5px; }
-            .chat-container { padding: 10px; }
-            .input-container { padding: 5px; flex-wrap: wrap; }
-            #userInput { border-radius: 15px; padding: 10px; font-size: 14px; }
-            .action-btn { padding: 8px; font-size: 12px; }
-        }
-        @media print {
-            body { background: white !important; color: black !important; }
-            .sidebar, .header-controls, .input-wrapper, .attach-menu-overlay, .attach-menu, #artifactOverlay, .status-indicator { display: none !important; }
-            .main-chat { width: 100% !important; padding: 0 !important; height: auto !important; }
-            .chat-header { background: white !important; color: black !important; border-bottom: 2px solid black; }
-            .messages { height: auto !important; overflow: visible !important; flex: none !important; padding: 0 !important; }
-            .message.user { background: #f0f0f0 !important; color: black !important; align-self: flex-start !important; border: 1px solid #ccc !important; box-shadow: none !important; }
-            .message.assistant { background: white !important; color: black !important; border: 1px solid #ccc !important; box-shadow: none !important; }
-            code, pre { background: #f5f5f5 !important; color: black !important; border: 1px solid #ddd; white-space: pre-wrap !important; }
-        }
-        
-        /* SÜRÜKLE BIRAK EKRANI */
-        .input-box.drag-active {
-            border: 2px dashed #cba6f7 !important;
-            box-shadow: 0 0 20px rgba(203,166,247,0.2) !important;
-            background: rgba(203,166,247,0.1) !important;
-        }
-        .input-box.drag-active::after {
-            content: "📁 Dosyayı Buraya Bırakın";
-            position: absolute; top: -35px; left: 50%; transform: translateX(-50%);
-            background: #cba6f7; color: #11111b; font-weight: bold; font-size: 13px;
-            padding: 6px 14px; border-radius: 12px; pointer-events: none;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-            white-space: nowrap;
-        }
-
-        /* ===== DİL KOÇU MODU PANELİ ===== */
-        #dilKocuPanel {
-            display: none;
-            background: linear-gradient(135deg, rgba(166,227,161,0.08) 0%, rgba(137,180,250,0.08) 100%);
-            border-bottom: 1px solid rgba(166,227,161,0.25);
-            padding: 12px 16px;
-            flex-direction: column;
-            gap: 10px;
-            animation: slideDown 0.3s ease;
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-        }
-        #dilKocuPanel.active { display: flex; }
-        @keyframes slideDown {
-            from { opacity: 0; transform: translateY(-10px); }
-            to   { opacity: 1; transform: translateY(0); }
-        }
-        .dk-row {
-            display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
-        }
-        .dk-label {
-            font-size: 12px; font-weight: 600; color: #a6e3a1; white-space: nowrap;
-            display: flex; align-items: center; gap: 5px;
-        }
-        .dk-select {
-            background: rgba(30,30,46,0.9); border: 1px solid rgba(166,227,161,0.3);
-            color: #cdd6f4; padding: 6px 10px; border-radius: 8px; font-size: 13px;
-            cursor: pointer; outline: none; transition: border-color 0.2s;
-        }
-        .dk-select:focus { border-color: #a6e3a1; }
-        .dk-btn {
-            background: rgba(137,180,250,0.15); border: 1px solid rgba(137,180,250,0.3);
-            color: #89b4fa; padding: 6px 14px; border-radius: 8px; font-size: 13px;
-            cursor: pointer; transition: all 0.2s; font-weight: 600; white-space: nowrap;
-        }
-        .dk-btn:hover { background: rgba(137,180,250,0.3); transform: translateY(-1px); }
-        .dk-btn.quiz-btn {
-            background: rgba(203,166,247,0.15); border-color: rgba(203,166,247,0.3); color: #cba6f7;
-        }
-        .dk-btn.quiz-btn:hover { background: rgba(203,166,247,0.3); }
-        .dk-btn.quiz-btn.active-quiz {
-            background: rgba(203,166,247,0.4); border-color: #cba6f7;
-            box-shadow: 0 0 10px rgba(203,166,247,0.4);
-            animation: pulseBadge 1.5s ease-in-out infinite;
-        }
-        @keyframes pulseBadge {
-            0%,100% { box-shadow: 0 0 6px rgba(203,166,247,0.4); }
-            50%     { box-shadow: 0 0 14px rgba(203,166,247,0.7); }
-        }
-        .dk-goal-badge {
-            background: rgba(249,226,175,0.15); border: 1px solid rgba(249,226,175,0.3);
-            color: #f9e2af; padding: 5px 12px; border-radius: 20px; font-size: 12px;
-            font-weight: 600; white-space: nowrap;
-        }
-        .dk-word-count {
-            font-size: 12px; color: #a6adc8;
-        }
-        #dk-progress-bar-wrap {
-            height: 4px; background: rgba(255,255,255,0.08); border-radius: 4px;
-            overflow: hidden; flex: 1; min-width: 80px;
-        }
-        #dk-progress-bar {
-            height: 100%; background: linear-gradient(90deg, #a6e3a1, #89b4fa);
-            border-radius: 4px; width: 0%; transition: width 0.4s ease;
-        }
-        @media (max-width: 600px) {
-            .dk-label { font-size: 11px; }
-            .dk-select, .dk-btn { font-size: 12px; padding: 5px 8px; }
-        }
-    </style>
-
-</head>
-<body>
-
-<!-- SIDEBAR -->
-<div class="sidebar">
-    <button class="new-chat-btn" onclick="createNewChat()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-        Yeni Sohbet
-    </button>
-
-    <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:15px; border-bottom:1px solid #313244; padding-bottom:15px;">
-        <div style="font-size: 11px; color:#a6adc8; font-weight:bold; letter-spacing: 1px; margin-bottom: 5px;">KÜTÜPHANE</div>
-        <div style="display:flex; gap:5px;">
-            <button class="new-chat-btn lib-sidebar-btn" id="libNavImage" onclick="openLibrary('image')" style="flex:1; border-color:#a6e3a1; background:rgba(166,227,161,0.1); justify-content:center; padding: 8px; font-size:18px; transition:0.2s;" title="Resimler">🖼️</button>
-            <button class="new-chat-btn lib-sidebar-btn" id="libNavVideo" onclick="openLibrary('video')" style="flex:1; border-color:#cba6f7; background:rgba(203,166,247,0.1); justify-content:center; padding: 8px; font-size:18px; transition:0.2s;" title="Videolar">🎬</button>
-            <button class="new-chat-btn lib-sidebar-btn" id="libNavDoc" onclick="openLibrary('doc')" style="flex:1; border-color:#89b4fa; background:rgba(137,180,250,0.1); justify-content:center; padding: 8px; font-size:18px; transition:0.2s;" title="Belgeler">📄</button>
-        </div>
-        <div style="font-size: 11px; color:#a6adc8; font-weight:bold; letter-spacing: 1px; margin-bottom: 5px; margin-top:10px;">STÜDYOLAR</div>
-        <button class="new-chat-btn" onclick="setAppMode('chat'); createNewChat();" style="background:#89b4fa; color:#11111b; font-weight:600; justify-content:center; font-size:13px; padding: 8px;">💬 Standart Sohbet</button>
-        <button class="new-chat-btn" id="sidebarImageStudioBtn" onclick="setAppMode('image'); triggerImageGeneration();" style="border-color:#fab387; color:#fab387; font-size:13px; padding: 8px;">🎨 Görsel Stüdyosu</button>
-        <button class="new-chat-btn" id="sidebarVideoStudioBtn" onclick="setAppMode('video'); triggerVideoGeneration();" style="border-color:#cba6f7; color:#cba6f7; font-size:13px; padding: 8px;">🎬 Video Stüdyosu</button>
-        <button class="new-chat-btn" id="sidebarGameStudioBtn" onclick="setAppMode('game'); triggerGameGeneration();" style="border-color:#a6e3a1; color:#a6e3a1; font-size:13px; padding: 8px;">🕹️ Oyun Stüdyosu</button>
-    </div>
-
-    <div class="chat-list" id="chatList">
-        <!-- Geçmiş sohbetler buraya eklenecek -->
-    </div>
-    
-    <div class="user-profile" id="userProfile" style="margin-top:auto; padding-top:15px; border-top:1px solid #313244; display:flex; justify-content:space-between; align-items:center;">
-        <div style="font-size:14px; color:#cdd6f4;" id="welcomeText">Hoşgeldin<span id="loggedInUserWrapper">, <b id="loggedInUser" style="color:#89b4fa;"></b></span></div>
-        <button onclick="logout()" style="background:none; border:none; color:#f38ba8; cursor:pointer; font-size:13px; font-weight:500;">Çıkış</button>
-    </div>
-</div>
-
-<!-- MAIN CHAT -->
-<div class="main-chat">
-    <div class="header">
-        <div class="header-title">
-            <div class="status-indicator" id="statusIndicator" title="Ollama Bağlantısı"></div>
-            CinoCode
-        </div>
-        <div class="header-controls">
-            <!-- Kişilik Seçici -->
-            <select id="personaSelect" style="max-width:180px; font-weight:bold; background:#a6e3a1; color:#11111b; border:none; padding:5px; border-radius:5px;">
-                <option value="kanka">🧠 Standart Zeka (Kanka)</option>
-                <option value="usta_yazilimci">💻 Usta Yazılımcı Modu</option>
-                <option value="akademik_koc">🎓 Ders / Sınav Modu</option>
-                <option value="dil_kocu">🌍 Özel Dil Koçu Modu</option>
-                <option value="derin_arastirma">🔍 Derin Araştırma Modu</option>
-            </select>
-            <!-- Model Seçici -->
-            <select id="modelSelect">
-                <!-- Groq Bulut Modelleri -->
-                <option value="llama-3.3-70b-versatile-groq">Llama 3.3 (70B) - Groq Bulut ⚡</option>
-                <option value="llama-3.1-70b-versatile-groq">Llama 3.1 (70B) - Groq Bulut ⚡</option>
-                <option value="llama-3.1-8b-instant-groq">Llama 3.1 (8B) - Groq Bulut ⚡</option>
-                <option value="meta-llama/llama-4-scout-17b-16e-instruct-groq">Llama 4 Scout (Görsel) - Groq Bulut ⚡</option>
-                <option disabled>──────────</option>
-                <!-- Google Gemini Modelleri -->
-                <option value="gemini-2.0-flash-gemini">🤍 Gemini 2.0 Flash - Google Bulut ✨</option>
-                <option value="gemini-2.5-flash-preview-05-20-gemini">🤍 Gemini 2.5 Flash - Google Bulut ✨</option>
-                <option value="gemini-1.5-flash-gemini">🤍 Gemini 1.5 Flash - Google Bulut ✨</option>
-                <option value="gemini-1.5-pro-gemini">🤍 Gemini 1.5 Pro - Google Bulut ✨</option>
-                <option disabled>──────────</option>
-                <!-- NVIDIA NIM -->
-                <option value="nvidia/nemotron-nano-12b-v2-vl-nvidia">🟢 Nemotron Nano VL (Görsel) - NVIDIA NIM ∞</option>
-                <option disabled>──────────</option>
-                <!-- OpenRouter Ücretsiz Vision -->
-                <option value="meta-llama/llama-3.2-11b-vision-instruct:free-openrouter">🔵 Llama 3.2 Vision (11B) - OpenRouter Ücretsiz</option>
-                <option disabled>──────────</option>
-                <!-- Yerel Modeller -->
-                <option value="qwen2.5:14b">Qwen 2.5 (14B) - Yerel</option>
-                <option value="qwen2.5">Qwen 2.5 (7B) - Yerel</option>
-                <option value="gemma2:2b">Gemma 2 (2B) - Yerel</option>
-                <option value="llama3:8b">Llama 3 (8B) - Yerel</option>
-                <option value="llava">LLaVA (Görsel Model) - Yerel</option>
-            </select>
-            <!-- Ses Seçici (Dinamik Yüklenecek) -->
-            <select id="voiceSelect" style="max-width:180px;" onchange="saveVoicePref()"></select>
-            
-            <button class="icon-btn speaker-btn active" id="speakerBtn" onclick="toggleSpeaker()" title="Sesli Okuma">🔊</button>
-            <button class="icon-btn" onclick="printChat()" title="Sohbeti PDF Yap (Yazdır)">📄 PDF</button>
-            <button class="icon-btn" onclick="exportChat()" title="Sohbeti .txt Kaydet">💾</button>
-            <button class="icon-btn" onclick="openSettings()" title="Ayarlar">⚙️</button>
-        </div>
-    </div>
-
-    <!-- ===== DİL KOÇU MODU PANELİ ===== -->
-    <div id="dilKocuPanel">
-        <!-- Satır 1: Dil + Seviye + Model bilgisi -->
-        <div class="dk-row">
-            <span class="dk-label">🌍 Dil:</span>
-            <select id="dk-lang" class="dk-select" onchange="updateDilKocuPrompt()">
-                <option value="İngilizce">🇬🇧 İngilizce</option>
-                <option value="İspanyolca">🇪🇸 İspanyolca</option>
-                <option value="Almanca">🇩🇪 Almanca</option>
-                <option value="Rusça">🇷🇺 Rusça</option>
-                <option value="Çince (Mandarin)">🇨🇳 Çince (Mandarin)</option>
-                <option value="Fransızca">🇫🇷 Fransızca</option>
-                <option value="Japonca">🇯🇵 Japonca</option>
-                <option value="Korece">🇰🇷 Korece</option>
-                <option value="Arapça">🇸🇦 Arapça</option>
-                <option value="İtalyanca">🇮🇹 İtalyanca</option>
-                <option value="Portekizce">🇧🇷 Portekizce</option>
-                <option value="Hollandaca">🇳🇱 Hollandaca</option>
-                <option value="İsveççe">🇸🇪 İsveççe</option>
-                <option value="Yunanca">🇬🇷 Yunanca</option>
-                <option value="Hintçe">🇮🇳 Hintçe</option>
-            </select>
-
-            <span class="dk-label">📊 Seviye:</span>
-            <select id="dk-level" class="dk-select" onchange="updateDilKocuPrompt()">
-                <option value="Başlangıç (A1-A2)">🌱 Başlangıç</option>
-                <option value="Orta (B1-B2)">🔥 Orta</option>
-                <option value="İleri (C1-C2)">🚀 İleri</option>
-            </select>
-
-            <span class="dk-label">🎯 Hedef:</span>
-            <select id="dk-goal" class="dk-select" onchange="updateDilKocuGoal()">
-                <option value="5">5 kelime/gün</option>
-                <option value="10" selected>10 kelime/gün</option>
-                <option value="15">15 kelime/gün</option>
-                <option value="20">20 kelime/gün</option>
-            </select>
-
-            <button class="dk-btn quiz-btn" id="dk-quiz-btn" onclick="startDilKocuQuiz()" title="Öğrendiklerini test et!">🧠 Quiz Başlat</button>
-            <button class="dk-btn" onclick="startDilKocuLesson()" title="Bugünün dersini başlat">📖 Derse Başla</button>
-            <button class="dk-btn" onclick="startDilKocuConversation()" title="O dilde sohbet et">💬 Sohbet Modu</button>
-        </div>
-        <!-- Satır 2: İlerleme çubuğu -->
-        <div class="dk-row" style="gap:8px; align-items:center;">
-            <span class="dk-label" style="color:#f9e2af;">📈 Günlük İlerleme:</span>
-            <div id="dk-progress-bar-wrap"><div id="dk-progress-bar"></div></div>
-            <span class="dk-word-count" id="dk-word-count-text">0 / 10 kelime</span>
-            <span class="dk-goal-badge" id="dk-streak-badge">🔥 Gün Serisi: 0</span>
-        </div>
-    </div>
-    <!-- ===== DİL KOÇU PANELİ BİTİŞ ===== -->
-
-    
-    
-    <div class="welcome-screen" id="welcomeScreen" style="display:none;">
-        <div class="welcome-logo">✨</div>
-        <h2>Bugün ne üretmek istersin?</h2>
-        <div class="welcome-actions">
-            <button class="welcome-btn" onclick="setQuickStart('Bana Python ile basit bir API yazıp açıkla.')">💻 Kod Yazdır</button>
-            <button class="welcome-btn" onclick="triggerImageGeneration()">🎨 Görsel Stüdyosu</button>
-            <button class="welcome-btn" onclick="triggerVideoGeneration()">🎬 Video Stüdyosu</button>
-            <button class="welcome-btn" onclick="triggerGameGeneration()">🕹️ Oyun Stüdyosu</button>
-            <button class="welcome-btn" onclick="triggerFileInput('docUpload')">📄 Belge Özetlet</button>
-            <button class="welcome-btn" onclick="setQuickStart('Sıfırdan yapay zeka nasıl yapılır?')">🧠 Yapay Zeka</button>
-        </div>
-    </div>
-
-    <!-- KÜTÜPHANE EKRANI -->
-    <div class="library-screen" id="libraryScreen" style="display:none; flex: 1; padding: 30px; overflow-y: auto; background: linear-gradient(135deg, #1e1e2e, #11111b);">
-        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid #313244; padding-bottom: 15px; margin-bottom: 20px;">
-            <div style="display:flex; align-items:center; gap:15px;">
-                <button onclick="closeLibrary()" style="background:rgba(255,255,255,0.1); color:#cdd6f4; border:none; border-radius:8px; padding:8px 12px; cursor:pointer; font-weight:bold; font-size:14px; transition:0.2s;">⬅️ Geri</button>
-                <h2 id="libraryTitle" style="color: #a6e3a1; margin:0; font-size:24px;">Arşiv</h2>
-            </div>
-            <input type="text" id="librarySearch" placeholder="🔍 Başlık veya tarihe göre ara..." oninput="renderLibrary(currentLibraryTab)" style="background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px 15px; border-radius:20px; font-size:13px; width:250px; outline:none;">
-        </div>
-        <div id="libraryContent" class="archive-grid">
-            <!-- İçerik buraya dinamik yüklenecek -->
-        </div>
-    </div>
-
-    <div class="messages" id="messages"></div>
-    
-    <div class="input-wrapper">
-        
-        
-        <!-- IMAGE PREVIEW CONTAINER -->
-        <div id="imagePreviewContainer" style="display:none; position:relative; margin-bottom:10px;">
-            <img id="imagePreview" src="" style="max-height:80px; border-radius:8px; border:2px solid #89b4fa;">
-            <button onclick="removeImage()" style="position:absolute; top:-5px; left:-5px; background:#f38ba8; color:#11111b; border:none; border-radius:50%; width:20px; height:20px; cursor:pointer; font-weight:bold; display:flex; align-items:center; justify-content:center;">X</button>
-        </div>
-
-        <!-- SUGGESTION CHIPS CONTAINER -->
-        <div id="suggestionChipsContainer" style="display:none; gap:8px; flex-wrap:wrap; margin-bottom:10px; justify-content:center;"></div>
-
-        <div class="input-box">
-            <button class="icon-btn" onclick="openAttachMenu()" title="Eklentiler" style="font-size:22px; margin-bottom:2px;">+</button>
-            <button class="icon-btn web-search-btn" id="webSearchBtn" onclick="toggleWebSearch()" title="İnternette Ara (Wikipedia)">🌐</button>
-            <button class="icon-btn mic-btn" id="micBtn" onclick="toggleMic()" title="Sesle Yaz">🎙️</button>
-            <textarea id="userInput" rows="1" placeholder="CinoCode'a bir şeyler sor..." oninput="autoResize(this)" onkeydown="handleKey(event)"></textarea>
-            <button class="send-btn" onclick="sendMessage()">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-            </button>
-        </div>
-    </div>
-</div>
-
-    <!-- Attachment Menu Overlay & Bottom Sheet -->
-    <div class="attach-menu-overlay" id="attachMenuOverlay" onclick="closeAttachMenu()" style="background:transparent;"></div>
-    <div class="attach-menu" id="attachMenu">
-        <div class="attach-menu-item" onclick="triggerFileInput('docUpload')">
-            <i>📄</i> <span>Dosya Yükle</span>
-        </div>
-        <div class="attach-menu-item" onclick="triggerFileInput('imageUpload')">
-            <i>🖼️</i> <span>Resim Yükle</span>
-        </div>
-        <div class="attach-menu-item" onclick="triggerImageGeneration()">
-            <i>🎨</i> <span>Görsel Stüdyosu (Yeni)</span>
-        </div>
-        <div class="attach-menu-item" onclick="triggerVideoGeneration()">
-            <i>🎬</i> <span>Video Stüdyosu (Yeni)</span>
-        </div>
-        <div class="attach-menu-item" onclick="triggerGameGeneration()">
-            <i>🕹️</i> <span>Oyun Stüdyosu (Yeni)</span>
-        </div>
-        <div class="attach-menu-item" onclick="toggleWebSearchInMenu()">
-            <i id="menuWebSearchIcon">🔍</i> <span id="menuWebSearchText">Derin Araştırma (Kapalı)</span>
-        </div>
-        
-        <!-- Gizli Inputlar -->
-        <input type="file" id="imageUpload" accept="image/*" style="display:none;" onchange="handleImageSelect(event)">
-        <input type="file" id="cameraUpload" accept="image/*" capture="environment" style="display:none;" onchange="handleImageSelect(event)">
-        <input type="file" id="docUpload" accept=".pdf,.txt,.js,.py,.html,.css,.md,.csv,.json,text/*" style="display:none;" onchange="handleDocSelect(event)">
-    </div>
-
-    <!-- Settings Modal -->
-    <div class="attach-menu-overlay" id="settingsOverlay" onclick="closeSettings()"></div>
-    <div class="attach-menu" id="settingsMenu" style="bottom: 50%; transform: translate(-50%, 50%); display: none; opacity: 0; pointer-events: auto; max-height: 85vh; overflow-y: auto;" onclick="event.stopPropagation()">
-        <button class="attach-menu-close" onclick="closeSettings()">×</button>
-        <div class="attach-menu-title">Ayarlar & API</div>
-        
-        <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px; text-align: left;">
-            Ollama Sunucu IP'si (Mobilden bağlanmak için):
-        </div>
-        <input type="text" id="ollamaIpInput" placeholder="http://192.168.1.X:11434" style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px; border-radius:8px; margin-bottom: 10px; box-sizing: border-box; outline: none; font-size: 13px;">
-        
-        <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px; text-align: left;">
-            Bulut Ses Sunucusu URL'si (Opsiyonel):
-        </div>
-        <input type="text" id="ttsUrlInput" placeholder="https://cinocode-tts.onrender.com/api/tts" style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px; border-radius:8px; margin-bottom: 10px; box-sizing: border-box; outline: none; font-size: 13px;">
-        
-        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-            <div style="flex: 1; text-align: left;">
-                <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px;">Azure Key:</div>
-                <input type="password" id="azureKeyInput" placeholder="Azure Key" style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px; border-radius:8px; box-sizing: border-box; outline: none; font-size: 13px;">
-            </div>
-            <div style="flex: 1; text-align: left;">
-                <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px;">Azure Region:</div>
-                <input type="text" id="azureRegionInput" placeholder="westeurope" style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px; border-radius:8px; box-sizing: border-box; outline: none; font-size: 13px;">
-            </div>
-        </div>
-        
-        <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px; text-align: left;">
-            Google Gemini API Key <span style="color: #a6e3a1; font-size: 11px;">(aistudio.google.com/apikey)</span>:
-        </div>
-        <input type="text" id="geminiApiKeyInput" placeholder="AIza..." style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px; border-radius:8px; margin-bottom: 10px; box-sizing: border-box; outline: none; font-size: 13px;">
-
-        <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px; text-align: left;">
-            NVIDIA NIM API Key <span style="color: #cba6f7; font-size: 11px;">(build.nvidia.com)</span>:
-        </div>
-        <input type="text" id="nvidiaApiKeyInput" placeholder="nvapi-..." style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px; border-radius:8px; margin-bottom: 10px; box-sizing: border-box; outline: none; font-size: 13px;">
-
-        <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px; text-align: left;">
-            OpenRouter API Key <span style="color: #89b4fa; font-size: 11px;">(openrouter.ai)</span>:
-        </div>
-        <input type="text" id="openrouterApiKeyInput" placeholder="sk-or-v1-..." style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px; border-radius:8px; margin-bottom: 10px; box-sizing: border-box; outline: none; font-size: 13px;">
-
-        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-            <div style="flex: 1; text-align: left;">
-                <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px;">Cloudflare Account ID:</div>
-                <input type="text" id="cloudflareAccountIdInput" placeholder="Account ID" style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px; border-radius:8px; box-sizing: border-box; outline: none; font-size: 13px;">
-            </div>
-            <div style="flex: 1; text-align: left;">
-                <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px;">CF API Token:</div>
-                <input type="password" id="cloudflareApiTokenInput" placeholder="Token" style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px; border-radius:8px; box-sizing: border-box; outline: none; font-size: 13px;">
-            </div>
-        </div>
-
-        <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px; text-align: left;">
-            Groq API Key (Bulut Modelleri):
-        </div>
-        <input type="text" id="groqApiKeyInput" placeholder="gsk_..." style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px; border-radius:8px; margin-bottom: 10px; box-sizing: border-box; outline: none; font-size: 13px;">
-        
-        <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px; text-align: left;">
-            Video Oluşturma Modu:
-        </div>
-        <select id="videoModeSelect" style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px; border-radius:8px; margin-bottom: 15px; outline: none; font-size: 13px;">
-            <option value="turbo">⚡ Turbo (5 Sahne, ~15 sn)</option>
-            <option value="fast" selected>🚀 Hızlı (4 Sahne, ~12 sn)</option>
-            <option value="standard">🎬 Standart (8 Sahne, ~32 sn)</option>
-            <option value="cinematic">🎥 Sinematik (12 Sahne, ~60 sn)</option>
-        </select>
-        
-        <button class="send-btn" style="width: 100%; border-radius: 8px; padding: 10px;" onclick="saveSettings()">Kaydet</button>
-    </div>
-
-    <!-- Artifact Modal -->
-    <div class="artifact-overlay" id="artifactOverlay">
-        <div class="artifact-modal">
-            <div class="artifact-header">
-                <div class="artifact-title">🖥️ CinoCode Önizleme</div>
-                <button class="attach-menu-close" style="position:static; font-size:28px;" onclick="closeArtifactOverlay()">×</button>
-            </div>
-            <iframe id="artifactIframe" class="artifact-iframe" sandbox="allow-scripts allow-modals allow-forms allow-same-origin"></iframe>
-        </div>
-    </div>
-
-
-</div> <!-- Close body flex -->
-
-<script>
     // === GROQ API AYARI ===
     
     
@@ -885,7 +19,7 @@
             if (name && name.trim().toLowerCase() === "ahmet") {
                 localStorage.removeItem('cinocode_user');
             }
-            name = prompt("Sana nasıl hitap etmeliyim? (İsmini gir):", "Kanka");
+            name = prompt("Sana nasÄ±l hitap etmeliyim? (Ä°smini gir):", "Kanka");
             if (!name) name = "Kanka";
             localStorage.setItem('cinocode_user', name.trim());
             return name.trim();
@@ -900,7 +34,7 @@
     }
 
     window.onerror = function(msg, url, lineNo) { alert('Hata: ' + msg + '\nSatir: ' + lineNo); return false; };
-    // ----- GLOBAL DEĞİŞKENLER & HAFIZA SİSTEMİ -----
+    // ----- GLOBAL DEÄžÄ°ÅžKENLER & HAFIZA SÄ°STEMÄ° -----
     const messagesDiv = document.getElementById("messages");
     const userInput = document.getElementById("userInput");
     const chatListDiv = document.getElementById("chatList");
@@ -916,24 +50,24 @@
 
     function setAppMode(mode) {
         currentMode = mode;
-        console.log("CinoCode Aktif Mod Değişti: " + currentMode);
+        console.log("CinoCode Aktif Mod DeÄŸiÅŸti: " + currentMode);
         
         const suggestionContainer = document.getElementById("suggestionChipsContainer");
         if (suggestionContainer && mode !== "image" && mode !== "video" && mode !== "game") {
             suggestionContainer.style.display = "none";
         }
         
-        // UI Güncellemeleri
+        // UI GÃ¼ncellemeleri
         const welcomeTitle = document.querySelector(".welcome-screen h2");
         if (welcomeTitle) {
             if (mode === "video") {
-                welcomeTitle.innerHTML = "🎬 Video Stüdyosu<br><span style='font-size: 15px; color: #a6adc8;'>Ne tür bir video oluşturmak istersin?</span>";
+                welcomeTitle.innerHTML = "ðŸŽ¬ Video StÃ¼dyosu<br><span style='font-size: 15px; color: #a6adc8;'>Ne tÃ¼r bir video oluÅŸturmak istersin?</span>";
             } else if (mode === "image") {
-                welcomeTitle.innerHTML = "🎨 Görsel Stüdyosu<br><span style='font-size: 15px; color: #a6adc8;'>Ne çizmek istersin?</span>";
+                welcomeTitle.innerHTML = "ðŸŽ¨ GÃ¶rsel StÃ¼dyosu<br><span style='font-size: 15px; color: #a6adc8;'>Ne Ã§izmek istersin?</span>";
             } else if (mode === "game") {
-                welcomeTitle.innerHTML = "🕹️ Oyun Stüdyosu<br><span style='font-size: 15px; color: #a6adc8;'>Nasıl bir oyun geliştirmek istersin?</span>";
+                welcomeTitle.innerHTML = "ðŸ•¹ï¸ Oyun StÃ¼dyosu<br><span style='font-size: 15px; color: #a6adc8;'>NasÄ±l bir oyun geliÅŸtirmek istersin?</span>";
             } else {
-                welcomeTitle.innerHTML = "Bugün ne üretmek istersin?";
+                welcomeTitle.innerHTML = "BugÃ¼n ne Ã¼retmek istersin?";
             }
         }
     }
@@ -945,7 +79,7 @@
             .replace(/\[SYSTEM:[\s\S]*?\]/gi, "")
             .replace(/\[DEVELOPER:[\s\S]*?\]/gi, "")
             .replace(/Ahmet\w*/gi, "")
-            .replace(/^\s*(Sen|Kullanıcı|User|Assistant|Bot):\s*.*$/gmi, "")
+            .replace(/^\s*(Sen|KullanÄ±cÄ±|User|Assistant|Bot):\s*.*$/gmi, "")
             .replace(/^\s*Viewed\s+.*$/gmi, "")
             .replace(/^\s*Edited\s+.*$/gmi, "")
             .replace(/^\s*Ran command:\s*.*$/gmi, "")
@@ -959,31 +93,31 @@
         let clean = rawPrompt.trim();
         // Remove internal leaks if any slipped through
         clean = sanitizeAssistantOutput(clean);
-        // İstem dışı Türkçe kelimeleri / talimatları temizle
-        clean = clean.replace(/lütfen/gi, "").replace(/çiz/gi, "").replace(/yap/gi, "").replace(/oluştur/gi, "");
-        // Hafızadan/Sohbetten gelen kirlilikleri temizle
-        clean = clean.replace(/ahmet/gi, "").replace(/hüsamettin abim/gi, "").replace(/kanka hadi/gi, "");
+        // Ä°stem dÄ±ÅŸÄ± TÃ¼rkÃ§e kelimeleri / talimatlarÄ± temizle
+        clean = clean.replace(/lÃ¼tfen/gi, "").replace(/Ã§iz/gi, "").replace(/yap/gi, "").replace(/oluÅŸtur/gi, "");
+        // HafÄ±zadan/Sohbetten gelen kirlilikleri temizle
+        clean = clean.replace(/ahmet/gi, "").replace(/hÃ¼samettin abim/gi, "").replace(/kanka hadi/gi, "");
         
-        // Temel İngilizce kaçınma/negatif kurallarını prompta yedir
+        // Temel Ä°ngilizce kaÃ§Ä±nma/negatif kurallarÄ±nÄ± prompta yedir
         let avoidance = ", no humans, no men, no women, no extra limbs, no deformed anatomy, no text, no watermark, high quality, cinematic";
         
-        // Sayı kurallarını güçlendir:
+        // SayÄ± kurallarÄ±nÄ± gÃ¼Ã§lendir:
         if (clean.match(/\b(bir|1)\b/i)) {
             clean += ", exactly one subject, single focal subject";
         } else if (clean.match(/\b(iki|2)\b/i)) {
             clean += ", exactly two subjects, two separate characters";
-        } else if (clean.match(/\b(altı|6)\b/i)) {
+        } else if (clean.match(/\b(altÄ±|6)\b/i)) {
             clean += ", exactly six separate full-body subjects, six independent characters";
-        } else if (clean.match(/\b(üç|3)\b/i)) {
+        } else if (clean.match(/\b(Ã¼Ã§|3)\b/i)) {
             clean += ", exactly three subjects, three independent characters";
-        } else if (clean.match(/\b(dört|4)\b/i)) {
+        } else if (clean.match(/\b(dÃ¶rt|4)\b/i)) {
             clean += ", exactly four subjects, four independent characters";
-        } else if (clean.match(/\b(beş|5)\b/i)) {
+        } else if (clean.match(/\b(beÅŸ|5)\b/i)) {
             clean += ", exactly five subjects, five independent characters";
         }
 
-        // İnsan istenmediğini belirten veya negatif ekler ekle
-        if (clean.toLowerCase().includes("cat") || clean.toLowerCase().includes("kedi") || clean.toLowerCase().includes("köpek") || clean.toLowerCase().includes("dog") || clean.toLowerCase().includes("hayvan") || clean.toLowerCase().includes("animal")) {
+        // Ä°nsan istenmediÄŸini belirten veya negatif ekler ekle
+        if (clean.toLowerCase().includes("cat") || clean.toLowerCase().includes("kedi") || clean.toLowerCase().includes("kÃ¶pek") || clean.toLowerCase().includes("dog") || clean.toLowerCase().includes("hayvan") || clean.toLowerCase().includes("animal")) {
             avoidance += ", no humans, no people, no man, no woman";
         }
 
@@ -1023,16 +157,16 @@
         throw lastError || new Error("all image candidates failed");
     }
 
-    // --- SES ve VİDEO İŞLEMLERİ (Önceden var olan fonksiyonların bir kısmı) ---
+    // --- SES ve VÄ°DEO Ä°ÅžLEMLERÄ° (Ã–nceden var olan fonksiyonlarÄ±n bir kÄ±smÄ±) ---
 
-    const systemPrompt = "Sen GinoCode'sun — Türkçeyi ana dili gibi konuşan, samimi, espri anlayan ve gerçek bir insan gibi davranan zeki bir asistansın. Türkçeni C2 (ana dil) seviyesinde kullanıyorsun: zengin kelime dağarcığı, doğal deyimler, akıcı ve zarif cümleler, hiçbir şekilde robotik veya yapay bir ton yok. Türkçede büyük harf kurallarına, noktalama işaretlerine ve dilbilgisine mükemmel şekilde uyarsın. Aynı zamanda şu dillerde de ana dil seviyesinde (C2) eşit derecede kusursuz hakimiyetin var: İngilizce, Almanca, İspanyolca, Fransızca, İtalyanca, Portekizce, Rusça, Arapça, Japonca, Çince (Mandarin), Korece. Kullanıcı senden herhangi bir dilde konuşmanı istediğinde, o dilin doğal sözdizimini, deyimlerini ve kültürel inceliklerini yansıtarak o dilde mükemmel şekilde konuşursun. Asla 'Ben sadece bir yapay zekayım' veya 'Bu konuda yetersizim' gibi klişe ve çaresiz cümleler kurma.";
+    const systemPrompt = "Sen GinoCode'sun â€” TÃ¼rkÃ§eyi ana dili gibi konuÅŸan, samimi, espri anlayan ve gerÃ§ek bir insan gibi davranan zeki bir asistansÄ±n. TÃ¼rkÃ§eni C2 (ana dil) seviyesinde kullanÄ±yorsun: zengin kelime daÄŸarcÄ±ÄŸÄ±, doÄŸal deyimler, akÄ±cÄ± ve zarif cÃ¼mleler, hiÃ§bir ÅŸekilde robotik veya yapay bir ton yok. TÃ¼rkÃ§ede bÃ¼yÃ¼k harf kurallarÄ±na, noktalama iÅŸaretlerine ve dilbilgisine mÃ¼kemmel ÅŸekilde uyarsÄ±n. AynÄ± zamanda ÅŸu dillerde de ana dil seviyesinde (C2) eÅŸit derecede kusursuz hakimiyetin var: Ä°ngilizce, Almanca, Ä°spanyolca, FransÄ±zca, Ä°talyanca, Portekizce, RusÃ§a, ArapÃ§a, Japonca, Ã‡ince (Mandarin), Korece. KullanÄ±cÄ± senden herhangi bir dilde konuÅŸmanÄ± istediÄŸinde, o dilin doÄŸal sÃ¶zdizimini, deyimlerini ve kÃ¼ltÃ¼rel inceliklerini yansÄ±tarak o dilde mÃ¼kemmel ÅŸekilde konuÅŸursun. Asla 'Ben sadece bir yapay zekayÄ±m' veya 'Bu konuda yetersizim' gibi kliÅŸe ve Ã§aresiz cÃ¼mleler kurma.";
     
     const personas = {
-        "kanka": "Sen GinoCode'sun — kullanıcının en yakın, en güvenilir kankasısın. Türkçeni C2 ana dil seviyesinde ve günlük/samimi bir şekilde kullanırsın: 'ya', 'lan', 'kanka', 'yav', 'kardeşim', 'hocam', 'ee', 'yani', 'ciddiye al' gibi doğal sokak ifadelerini bol bol kullanırsın ama kaba küfür kullanmazsın. Konuşman akıcı, esprili, doğaldır — sanki gerçek bir insan arkadaş yazıyor gibi. Türkçe yazımında büyük-küçük harf ve noktalama işaretlerine dikkat edersin, cümle yapın doğal ve akıcıdır. Aynı zamanda İngilizce, Almanca, İspanyolca, Fransızca, İtalyanca, Portekizce, Rusça, Arapça, Japonca, Çince ve Korece dillerinde de tam akıcı (C2) seviyedesin — kullanıcı hangisinde konuşmak isterse o dilde anında, kusursuz biçimde yanıt verirsin. Klişe AI cümleleri kesinlikle yasak. DİKKAT: 'knk' = 'kanka' demektir, asla K-Pop grubu zannetme!",
-        "usta_yazilimci": "Sen GinoCode'sun — efsanevi bir kıdemli yazılım mühendisisin. Kullanıcının istediği oyunları, web sitelerini, uygulamaları ve algoritmaları eksiksiz şekilde yazarsın. Gereksiz açıklama minimumu tut, kod maksimumu sun. Kullanıcı bir uygulama istediğinde SADECE HTML + CSS + JS içeren TEK BİR ```html bloğu ile cevap ver — bu kodlar GinoCode Artifact sistemiyle canlı çalıştırılacak. Türkçen C2 seviyesinde, doğal ve akıcıdır. İngilizce, Almanca ve diğer dillerde de teknik açıklama yapabilirsin. Az söz çok iş.",
-        "akademik_koc": "Sen GinoCode'sun — alanında uzman bir akademik koç ve öğretmensin. Kullanıcının sorduğu konuları önce 'sanki 8 yaşındaki bir çocuğa anlatır gibi' kristal netliğinde açıkla. Sonra seviyeyi kademeli olarak artır ve akademik derinliğe taşı. En sonda konuyu pekiştirmek için A/B/C/D şıklı 1-2 soru sor; cevabı hemen verme, önce kullanıcının düşünmesini bekle. Türkçen C2 seviyesinde kusursuz, doğal ve akademik açıdan zengindir. İngilizce, Almanca ve diğer dillerde de ders verebilirsin. Sabırlı, motive edici ve bilge bir rehbersin.",
-        "dil_kocu": "Sen GinoCode'sun — dünyanın en iyi dil öğretmenisin. Aşağıdaki dillerde ana dil (C2) seviyesinde tam uzmansın ve bu dillerin dilbilgisini, telaffuzunu, deyimlerini, kültürel nüanslarını mükemmel biliyorsun: İngilizce, Almanca, İspanyolca, Fransızca, İtalyanca, Portekizce (Brezilya & Avrupa), Rusça, Arapça (Modern Standart & Levant lehçesi), Japonca (Hiragana/Katakana/Kanji dahil), Çince (Mandarin/Pinyin), Korece, Hollandaca, İsveççe, Norveççe, Danimarkaca, Yunanca, Lehçe, Ukraynaca, Hintçe. ÖĞRETIM DİLİN HER ZAMAN TÜRKÇE (kullanıcı aksi belirtmedikçe). ÇALIŞMA TARZI VE KURALLAR: 1) Kullanıcı hangi dili öğrenmek istediğini söylediğinde, 'Harika! Bugün [DİL] öğreniyoruz 🎯 Hadi başlayalım!' şeklinde coşkulu ve sıcak bir girişle başla. 2) O günün dersini planla: O dilin ses sistemi, alfabe/yazı sistemi veya telaffuz incelikleri hakkında kısa ve akılda kalıcı bir giriş yap. 3) Günlük hayatta EN ÇOK kullanılan 10-15 kelimeyi Markdown tablolarıyla sun — sütunlar: Kelime | Telaffuz (fonetik/IPA) | Türkçe Anlamı | Örnek Cümle (hedef dil) | Türkçe Çevirisi. 4) Kullanıcı seninle o dilde sohbet etmek isterse, o dilde konuş ve doğal bir konuşma akışı kur. Kullanıcının hatalarını mesajının EN SONUNDA kibarca '📝 Küçük Düzeltme:' başlığıyla Türkçe olarak düzelt, açıkla ve doğrusunu yaz. 5) Her dersin veya sohbetin sonunda '🏆 Bugünün Kelime/Deyim Ödülü:' bölümünde 3-5 yeni kelime veya kalıp deyim öğret — günlük konuşmada gerçekten kullanılan, pratik ve yaygın ifadeler seç. 6) Kullanıcı 'bana konu anlat', 'konuları öğret', 'kelime öğret' gibi bir şey söylediğinde şu sıralamayı takip et: a) Kelimeler & Telaffuz → b) Örnek Cümle (Hedef Dil) → c) Türkçe Çevirisi → d) Dilbilgisi Notu (kısa, sade). 7) Dilbilgisi konularını (çekimler, zamanlar, ekler, cümle yapısı, söz dizimi) HER ZAMAN Türkçe ile karşılaştırmalı olarak anlat — 'Türkçede nasıl diyoruz, o dilde nasıl söyleniyor' mantığıyla. 8) Motivasyon ve geri bildirim: 'Harika gidiyorsun! 🌟', 'Çok doğru!', 'Neredeyse mükemmel, küçük bir fark var:', 'Bu kelimeyi artık unutmazsın!' gibi cesaretlendirici ifadeler kullan. 9) Sohbet modunda kullanıcıyla o dilde tamamen konuşabilirsin — kullanıcı istediği zaman 'Türkçeye geç' veya 'Hadi İngilizce konuşalım' gibi komutlarla mod değiştirebilir.",
-        "derin_arastirma": "Sen GinoCode'sun — dünyaca tanınmış bir araştırmacı ve analistin. Verilen her konuyu istatistikler, tarihi veriler, akademik kaynaklar ve güncel gelişmelerle derinlemesine ele alırsın. Raporlarını şu formatla hazırlarsın: 📋 Özet → 📜 Tarihçe → 📊 Güncel Durum → 📈 Veriler & İstatistikler → 💬 Uzman Görüşleri → 🔭 Sonuç & Öngörüler. Alt başlıklar, kalın vurgular ve maddeli listeler kullanarak okunabilirliği artırırsın. Türkçen akademik, otoriter ve akıcıdır. İngilizce kaynaklara da başvurur, gerektiğinde çevirir ve derinlemesine yorumlarsın."
+        "kanka": "Sen GinoCode'sun â€” kullanÄ±cÄ±nÄ±n en yakÄ±n, en gÃ¼venilir kankasÄ±sÄ±n. TÃ¼rkÃ§eni C2 ana dil seviyesinde ve gÃ¼nlÃ¼k/samimi bir ÅŸekilde kullanÄ±rsÄ±n: 'ya', 'lan', 'kanka', 'yav', 'kardeÅŸim', 'hocam', 'ee', 'yani', 'ciddiye al' gibi doÄŸal sokak ifadelerini bol bol kullanÄ±rsÄ±n ama kaba kÃ¼fÃ¼r kullanmazsÄ±n. KonuÅŸman akÄ±cÄ±, esprili, doÄŸaldÄ±r â€” sanki gerÃ§ek bir insan arkadaÅŸ yazÄ±yor gibi. TÃ¼rkÃ§e yazÄ±mÄ±nda bÃ¼yÃ¼k-kÃ¼Ã§Ã¼k harf ve noktalama iÅŸaretlerine dikkat edersin, cÃ¼mle yapÄ±n doÄŸal ve akÄ±cÄ±dÄ±r. AynÄ± zamanda Ä°ngilizce, Almanca, Ä°spanyolca, FransÄ±zca, Ä°talyanca, Portekizce, RusÃ§a, ArapÃ§a, Japonca, Ã‡ince ve Korece dillerinde de tam akÄ±cÄ± (C2) seviyedesin â€” kullanÄ±cÄ± hangisinde konuÅŸmak isterse o dilde anÄ±nda, kusursuz biÃ§imde yanÄ±t verirsin. KliÅŸe AI cÃ¼mleleri kesinlikle yasak. DÄ°KKAT: 'knk' = 'kanka' demektir, asla K-Pop grubu zannetme!",
+        "usta_yazilimci": "Sen GinoCode'sun â€” efsanevi bir kÄ±demli yazÄ±lÄ±m mÃ¼hendisisin. KullanÄ±cÄ±nÄ±n istediÄŸi oyunlarÄ±, web sitelerini, uygulamalarÄ± ve algoritmalarÄ± eksiksiz ÅŸekilde yazarsÄ±n. Gereksiz aÃ§Ä±klama minimumu tut, kod maksimumu sun. KullanÄ±cÄ± bir uygulama istediÄŸinde SADECE HTML + CSS + JS iÃ§eren TEK BÄ°R ```html bloÄŸu ile cevap ver â€” bu kodlar GinoCode Artifact sistemiyle canlÄ± Ã§alÄ±ÅŸtÄ±rÄ±lacak. TÃ¼rkÃ§en C2 seviyesinde, doÄŸal ve akÄ±cÄ±dÄ±r. Ä°ngilizce, Almanca ve diÄŸer dillerde de teknik aÃ§Ä±klama yapabilirsin. Az sÃ¶z Ã§ok iÅŸ.",
+        "akademik_koc": "Sen GinoCode'sun â€” alanÄ±nda uzman bir akademik koÃ§ ve Ã¶ÄŸretmensin. KullanÄ±cÄ±nÄ±n sorduÄŸu konularÄ± Ã¶nce 'sanki 8 yaÅŸÄ±ndaki bir Ã§ocuÄŸa anlatÄ±r gibi' kristal netliÄŸinde aÃ§Ä±kla. Sonra seviyeyi kademeli olarak artÄ±r ve akademik derinliÄŸe taÅŸÄ±. En sonda konuyu pekiÅŸtirmek iÃ§in A/B/C/D ÅŸÄ±klÄ± 1-2 soru sor; cevabÄ± hemen verme, Ã¶nce kullanÄ±cÄ±nÄ±n dÃ¼ÅŸÃ¼nmesini bekle. TÃ¼rkÃ§en C2 seviyesinde kusursuz, doÄŸal ve akademik aÃ§Ä±dan zengindir. Ä°ngilizce, Almanca ve diÄŸer dillerde de ders verebilirsin. SabÄ±rlÄ±, motive edici ve bilge bir rehbersin.",
+        "dil_kocu": "Sen GinoCode'sun â€” dÃ¼nyanÄ±n en iyi dil Ã¶ÄŸretmenisin. AÅŸaÄŸÄ±daki dillerde ana dil (C2) seviyesinde tam uzmansÄ±n ve bu dillerin dilbilgisini, telaffuzunu, deyimlerini, kÃ¼ltÃ¼rel nÃ¼anslarÄ±nÄ± mÃ¼kemmel biliyorsun: Ä°ngilizce, Almanca, Ä°spanyolca, FransÄ±zca, Ä°talyanca, Portekizce (Brezilya & Avrupa), RusÃ§a, ArapÃ§a (Modern Standart & Levant lehÃ§esi), Japonca (Hiragana/Katakana/Kanji dahil), Ã‡ince (Mandarin/Pinyin), Korece, Hollandaca, Ä°sveÃ§Ã§e, NorveÃ§Ã§e, Danimarkaca, Yunanca, LehÃ§e, Ukraynaca, HintÃ§e. Ã–ÄžRETIM DÄ°LÄ°N HER ZAMAN TÃœRKÃ‡E (kullanÄ±cÄ± aksi belirtmedikÃ§e). Ã‡ALIÅžMA TARZI VE KURALLAR: 1) KullanÄ±cÄ± hangi dili Ã¶ÄŸrenmek istediÄŸini sÃ¶ylediÄŸinde, 'Harika! BugÃ¼n [DÄ°L] Ã¶ÄŸreniyoruz ðŸŽ¯ Hadi baÅŸlayalÄ±m!' ÅŸeklinde coÅŸkulu ve sÄ±cak bir giriÅŸle baÅŸla. 2) O gÃ¼nÃ¼n dersini planla: O dilin ses sistemi, alfabe/yazÄ± sistemi veya telaffuz incelikleri hakkÄ±nda kÄ±sa ve akÄ±lda kalÄ±cÄ± bir giriÅŸ yap. 3) GÃ¼nlÃ¼k hayatta EN Ã‡OK kullanÄ±lan 10-15 kelimeyi Markdown tablolarÄ±yla sun â€” sÃ¼tunlar: Kelime | Telaffuz (fonetik/IPA) | TÃ¼rkÃ§e AnlamÄ± | Ã–rnek CÃ¼mle (hedef dil) | TÃ¼rkÃ§e Ã‡evirisi. 4) KullanÄ±cÄ± seninle o dilde sohbet etmek isterse, o dilde konuÅŸ ve doÄŸal bir konuÅŸma akÄ±ÅŸÄ± kur. KullanÄ±cÄ±nÄ±n hatalarÄ±nÄ± mesajÄ±nÄ±n EN SONUNDA kibarca 'ðŸ“ KÃ¼Ã§Ã¼k DÃ¼zeltme:' baÅŸlÄ±ÄŸÄ±yla TÃ¼rkÃ§e olarak dÃ¼zelt, aÃ§Ä±kla ve doÄŸrusunu yaz. 5) Her dersin veya sohbetin sonunda 'ðŸ† BugÃ¼nÃ¼n Kelime/Deyim Ã–dÃ¼lÃ¼:' bÃ¶lÃ¼mÃ¼nde 3-5 yeni kelime veya kalÄ±p deyim Ã¶ÄŸret â€” gÃ¼nlÃ¼k konuÅŸmada gerÃ§ekten kullanÄ±lan, pratik ve yaygÄ±n ifadeler seÃ§. 6) KullanÄ±cÄ± 'bana konu anlat', 'konularÄ± Ã¶ÄŸret', 'kelime Ã¶ÄŸret' gibi bir ÅŸey sÃ¶ylediÄŸinde ÅŸu sÄ±ralamayÄ± takip et: a) Kelimeler & Telaffuz â†’ b) Ã–rnek CÃ¼mle (Hedef Dil) â†’ c) TÃ¼rkÃ§e Ã‡evirisi â†’ d) Dilbilgisi Notu (kÄ±sa, sade). 7) Dilbilgisi konularÄ±nÄ± (Ã§ekimler, zamanlar, ekler, cÃ¼mle yapÄ±sÄ±, sÃ¶z dizimi) HER ZAMAN TÃ¼rkÃ§e ile karÅŸÄ±laÅŸtÄ±rmalÄ± olarak anlat â€” 'TÃ¼rkÃ§ede nasÄ±l diyoruz, o dilde nasÄ±l sÃ¶yleniyor' mantÄ±ÄŸÄ±yla. 8) Motivasyon ve geri bildirim: 'Harika gidiyorsun! ðŸŒŸ', 'Ã‡ok doÄŸru!', 'Neredeyse mÃ¼kemmel, kÃ¼Ã§Ã¼k bir fark var:', 'Bu kelimeyi artÄ±k unutmazsÄ±n!' gibi cesaretlendirici ifadeler kullan. 9) Sohbet modunda kullanÄ±cÄ±yla o dilde tamamen konuÅŸabilirsin â€” kullanÄ±cÄ± istediÄŸi zaman 'TÃ¼rkÃ§eye geÃ§' veya 'Hadi Ä°ngilizce konuÅŸalÄ±m' gibi komutlarla mod deÄŸiÅŸtirebilir.",
+        "derin_arastirma": "Sen GinoCode'sun â€” dÃ¼nyaca tanÄ±nmÄ±ÅŸ bir araÅŸtÄ±rmacÄ± ve analistin. Verilen her konuyu istatistikler, tarihi veriler, akademik kaynaklar ve gÃ¼ncel geliÅŸmelerle derinlemesine ele alÄ±rsÄ±n. RaporlarÄ±nÄ± ÅŸu formatla hazÄ±rlarsÄ±n: ðŸ“‹ Ã–zet â†’ ðŸ“œ TarihÃ§e â†’ ðŸ“Š GÃ¼ncel Durum â†’ ðŸ“ˆ Veriler & Ä°statistikler â†’ ðŸ’¬ Uzman GÃ¶rÃ¼ÅŸleri â†’ ðŸ”­ SonuÃ§ & Ã–ngÃ¶rÃ¼ler. Alt baÅŸlÄ±klar, kalÄ±n vurgular ve maddeli listeler kullanarak okunabilirliÄŸi artÄ±rÄ±rsÄ±n. TÃ¼rkÃ§en akademik, otoriter ve akÄ±cÄ±dÄ±r. Ä°ngilizce kaynaklara da baÅŸvurur, gerektiÄŸinde Ã§evirir ve derinlemesine yorumlarsÄ±n."
     };
 
     let selectedImageBase64 = null;
@@ -1065,9 +199,9 @@
                 document.getElementById('modelSelect').value = 'gemini-2.0-flash-gemini';
             }
             
-            // Eğer video modundaysak, doğrudan fotoğraftan sinematik WebM üretimine başla
+            // EÄŸer video modundaysak, doÄŸrudan fotoÄŸraftan sinematik WebM Ã¼retimine baÅŸla
             if (currentMode === "video") {
-                alert("📷 Fotoğraf tespit edildi!\n\nDürüst Açıklama: Ücretsiz modda yüklediğin fotoğrafı gerçek AI animasyonuna çevirmek yerine sinematik zoom/pan efektiyle kısa video yaparım. Gerçek image-to-video için ileride yerel ComfyUI / Stable Video Diffusion desteği gerekir.");
+                alert("ðŸ“· FotoÄŸraf tespit edildi!\n\nDÃ¼rÃ¼st AÃ§Ä±klama: Ãœcretsiz modda yÃ¼klediÄŸin fotoÄŸrafÄ± gerÃ§ek AI animasyonuna Ã§evirmek yerine sinematik zoom/pan efektiyle kÄ±sa video yaparÄ±m. GerÃ§ek image-to-video iÃ§in ileride yerel ComfyUI / Stable Video Diffusion desteÄŸi gerekir.");
                 
                 const img = new Image();
                 img.onload = async function() {
@@ -1077,11 +211,11 @@
                         const card = document.createElement("div");
                         card.className = "message bot";
                         card.innerHTML = `<div id="${videoId}" style="text-align:center; margin: 15px 0; background: #181825; padding: 15px; border-radius: 12px; border: 1px solid #45475a;">
-                                            <div style="color: #cdd6f4; font-size: 16px; margin-bottom: 10px;">🎬 Fotoğraf Sinematik Klibe Dönüştürülüyor...</div>
+                                            <div style="color: #cdd6f4; font-size: 16px; margin-bottom: 10px;">ðŸŽ¬ FotoÄŸraf Sinematik Klibe DÃ¶nÃ¼ÅŸtÃ¼rÃ¼lÃ¼yor...</div>
                                             <div style="background: #313244; border-radius: 8px; height: 20px; overflow: hidden; margin-bottom: 8px;">
                                                 <div id="${videoId}-progress" style="background: linear-gradient(90deg, #89b4fa, #cba6f7); height: 100%; width: 0%; border-radius: 8px; transition: width 0.5s ease;"></div>
                                             </div>
-                                            <div id="${videoId}-status" style="color: #a6adc8; font-size: 13px;">Efekt uygulanıyor...</div>
+                                            <div id="${videoId}-status" style="color: #a6adc8; font-size: 13px;">Efekt uygulanÄ±yor...</div>
                                         </div>`;
                         list.appendChild(card);
                         scrollToBottom();
@@ -1089,7 +223,7 @@
                     
                     removeImage(); // Preview temizle
                     
-                    // Canvas oluşturup tek resimden Ken Burns slayt yap
+                    // Canvas oluÅŸturup tek resimden Ken Burns slayt yap
                     const canvas = document.createElement('canvas');
                     canvas.width = 512;
                     canvas.height = 512;
@@ -1128,7 +262,7 @@
                         const progressEl = document.getElementById(videoId + "-progress");
                         const statusEl = document.getElementById(videoId + "-status");
                         if (progressEl) progressEl.style.width = progPercent + "%";
-                        if (statusEl) statusEl.textContent = `🎬 Sinematik efekt işleniyor... (${progPercent}%)`;
+                        if (statusEl) statusEl.textContent = `ðŸŽ¬ Sinematik efekt iÅŸleniyor... (${progPercent}%)`;
                         
                         frame++;
                         setTimeout(drawFrame, 1000 / FPS);
@@ -1141,10 +275,10 @@
                     if (container) {
                         container.innerHTML = `
                             <div style="text-align:center; background: #181825; padding: 15px; border-radius: 12px; border: 1px solid #45475a;">
-                                <div style="color: #a6e3a1; font-size: 14px; margin-bottom: 10px;">✅ Fotoğraf başarıyla sinematik klibe dönüştürüldü!</div>
+                                <div style="color: #a6e3a1; font-size: 14px; margin-bottom: 10px;">âœ… FotoÄŸraf baÅŸarÄ±yla sinematik klibe dÃ¶nÃ¼ÅŸtÃ¼rÃ¼ldÃ¼!</div>
                                 <video controls autoplay style="max-width:100%; border-radius: 8px; border: 2px solid #89b4fa;" src="${videoUrl}"></video>
                                 <br>
-                                <button class="run-code-btn" style="background: linear-gradient(135deg, #89b4fa, #cba6f7); color:#11111b; width:auto; padding:10px 20px; margin-top:10px; font-weight:bold; border-radius: 8px;" onclick="downloadVideo('${videoUrl}')">📥 Videoyu İndir (WebM)</button>
+                                <button class="run-code-btn" style="background: linear-gradient(135deg, #89b4fa, #cba6f7); color:#11111b; width:auto; padding:10px 20px; margin-top:10px; font-weight:bold; border-radius: 8px;" onclick="downloadVideo('${videoUrl}')">ðŸ“¥ Videoyu Ä°ndir (WebM)</button>
                             </div>
                         `;
                     }
@@ -1184,42 +318,42 @@
     }
     
     const imageSuggestions = [
-        "neon ışıklı fütüristik bir siberpunk şehri",
-        "gün batımında göl kenarında kamp yapan şirin bir kedi",
-        "masalsı bulutların üzerinde süzülen fantastik şato",
-        "yağmurlu bir gecede şemsiyesiyle yürüyen dedektif",
-        "kristal mağarasında parlayan ejderha yumurtası",
-        "kahve içen gözlüklü akıllı bir baykuş",
-        "okyanusun derinliklerinde kayıp bir Atlantis şehri",
-        "büyülü ormanda peri tozlarıyla parlayan ağaçlar",
-        "Mars yüzeyinde yürüyen astronot ve yavru köpeği",
-        "gotik tarzda tasarlanmış karanlık ve gizemli bir kütüphane"
+        "neon Ä±ÅŸÄ±klÄ± fÃ¼tÃ¼ristik bir siberpunk ÅŸehri",
+        "gÃ¼n batÄ±mÄ±nda gÃ¶l kenarÄ±nda kamp yapan ÅŸirin bir kedi",
+        "masalsÄ± bulutlarÄ±n Ã¼zerinde sÃ¼zÃ¼len fantastik ÅŸato",
+        "yaÄŸmurlu bir gecede ÅŸemsiyesiyle yÃ¼rÃ¼yen dedektif",
+        "kristal maÄŸarasÄ±nda parlayan ejderha yumurtasÄ±",
+        "kahve iÃ§en gÃ¶zlÃ¼klÃ¼ akÄ±llÄ± bir baykuÅŸ",
+        "okyanusun derinliklerinde kayÄ±p bir Atlantis ÅŸehri",
+        "bÃ¼yÃ¼lÃ¼ ormanda peri tozlarÄ±yla parlayan aÄŸaÃ§lar",
+        "Mars yÃ¼zeyinde yÃ¼rÃ¼yen astronot ve yavru kÃ¶peÄŸi",
+        "gotik tarzda tasarlanmÄ±ÅŸ karanlÄ±k ve gizemli bir kÃ¼tÃ¼phane"
     ];
 
     const videoSuggestions = [
-        "neon ışıklı cyberpunk bir şehirde süzülen uçan arabalar",
-        "gün batımında yeşillikler içinde koşan sevimli altın sarısı yavru kedi",
-        "bulutların üzerinde süzülen devasa fantastik bir uçan kale",
-        "karlarla kaplı dağlarda yavaşça süzülen bir kartal",
-        "fırtınalı bir denizde dev dalgalarla boğuşan korsan gemisi",
-        "renkli mercan resifleri arasında yüzen deniz kaplumbağası",
-        "büyülü bir ormanda açan ışıl ışıl çiçekler ve kelebekler",
-        "geleceğin metropolünde hızla giden bir yüksek hızlı tren",
-        "lav püskürten görkemli bir yanardağın etrafında dönen ejderhalar",
-        "galaksiler arası yolculuk yapan devasa bir uzay gemisi"
+        "neon Ä±ÅŸÄ±klÄ± cyberpunk bir ÅŸehirde sÃ¼zÃ¼len uÃ§an arabalar",
+        "gÃ¼n batÄ±mÄ±nda yeÅŸillikler iÃ§inde koÅŸan sevimli altÄ±n sarÄ±sÄ± yavru kedi",
+        "bulutlarÄ±n Ã¼zerinde sÃ¼zÃ¼len devasa fantastik bir uÃ§an kale",
+        "karlarla kaplÄ± daÄŸlarda yavaÅŸÃ§a sÃ¼zÃ¼len bir kartal",
+        "fÄ±rtÄ±nalÄ± bir denizde dev dalgalarla boÄŸuÅŸan korsan gemisi",
+        "renkli mercan resifleri arasÄ±nda yÃ¼zen deniz kaplumbaÄŸasÄ±",
+        "bÃ¼yÃ¼lÃ¼ bir ormanda aÃ§an Ä±ÅŸÄ±l Ä±ÅŸÄ±l Ã§iÃ§ekler ve kelebekler",
+        "geleceÄŸin metropolÃ¼nde hÄ±zla giden bir yÃ¼ksek hÄ±zlÄ± tren",
+        "lav pÃ¼skÃ¼rten gÃ¶rkemli bir yanardaÄŸÄ±n etrafÄ±nda dÃ¶nen ejderhalar",
+        "galaksiler arasÄ± yolculuk yapan devasa bir uzay gemisi"
     ];
 
     const gameSuggestions = [
-        "HTML5 ve Canvas ile klasik yılan (snake) oyunu",
+        "HTML5 ve Canvas ile klasik yÄ±lan (snake) oyunu",
         "Basit ping pong (pong) oyunu, skor tablosu ile birlikte",
-        "Kuş uçurma (Flappy Bird) tarzı engellerden kaçış oyunu",
-        "Ekranda tıklayarak altın toplama clicker oyunu",
-        "Basit bir masaüstü bilardo oyunu simülasyonu",
-        "Uzay gemisiyle yukarıdan gelen meteorları vurduğumuz shooter oyunu",
-        "Mayın tarlası (Minesweeper) klonu",
-        "Düşen blokları eşleştirdiğimiz tetris tarzı oyun",
-        "Hafıza kartları eşleştirme oyunu",
-        "Platform üzerinde zıplayarak ilerleyen basit bir platform oyunu"
+        "KuÅŸ uÃ§urma (Flappy Bird) tarzÄ± engellerden kaÃ§Ä±ÅŸ oyunu",
+        "Ekranda tÄ±klayarak altÄ±n toplama clicker oyunu",
+        "Basit bir masaÃ¼stÃ¼ bilardo oyunu simÃ¼lasyonu",
+        "Uzay gemisiyle yukarÄ±dan gelen meteorlarÄ± vurduÄŸumuz shooter oyunu",
+        "MayÄ±n tarlasÄ± (Minesweeper) klonu",
+        "DÃ¼ÅŸen bloklarÄ± eÅŸleÅŸtirdiÄŸimiz tetris tarzÄ± oyun",
+        "HafÄ±za kartlarÄ± eÅŸleÅŸtirme oyunu",
+        "Platform Ã¼zerinde zÄ±playarak ilerleyen basit bir platform oyunu"
     ];
 
     function getRandomSuggestions(type, count) {
@@ -1257,20 +391,20 @@
         
         let html = '';
         suggestions.forEach(s => {
-            let icon = '🎨';
-            let prefix = 'Bana şu resmi çiz: ';
+            let icon = 'ðŸŽ¨';
+            let prefix = 'Bana ÅŸu resmi Ã§iz: ';
             if (type === 'video') {
-                icon = '🎬';
-                prefix = 'Bana şu videoyu oluştur: ';
+                icon = 'ðŸŽ¬';
+                prefix = 'Bana ÅŸu videoyu oluÅŸtur: ';
             } else if (type === 'game') {
-                icon = '🕹️';
-                prefix = 'Bana şu oyunu kodla: ';
+                icon = 'ðŸ•¹ï¸';
+                prefix = 'Bana ÅŸu oyunu kodla: ';
             }
             const escaped = s.replace(/'/g, "\\'");
             html += `<button class="suggestion-chip" onclick="applySuggestion('${prefix}', '${escaped}')">${icon} ${s}</button>`;
         });
         
-        html += `<button class="suggestion-refresh-btn" onclick="renderSuggestions('${type}')">🎲 Yenile</button>`;
+        html += `<button class="suggestion-refresh-btn" onclick="renderSuggestions('${type}')">ðŸŽ² Yenile</button>`;
         
         container.innerHTML = html;
         container.style.display = "flex";
@@ -1312,7 +446,7 @@
         if (!file) return;
         
         if (file.size > 5 * 1024 * 1024) {
-            alert("Dosya çok büyük! Lütfen 5MB'dan küçük belgeler yükleyin.");
+            alert("Dosya Ã§ok bÃ¼yÃ¼k! LÃ¼tfen 5MB'dan kÃ¼Ã§Ã¼k belgeler yÃ¼kleyin.");
             if (event.target.id === 'docUpload') event.target.value = '';
             return;
         }
@@ -1406,10 +540,10 @@
         alert("Ayarlar kaydedildi!");
     }
 
-    let sessions = {}; // Tüm sohbetleri tutan obje
+    let sessions = {}; // TÃ¼m sohbetleri tutan obje
     let currentChatId = null;
 
-    // ----- HAFIZA (LOCALSTORAGE) YÖNETİMİ -----
+    // ----- HAFIZA (LOCALSTORAGE) YÃ–NETÄ°MÄ° -----
     function saveDatabase() {
         let clonedSessions = JSON.parse(JSON.stringify(sessions));
         for(let id in clonedSessions) {
@@ -1436,7 +570,7 @@
             currentChatId = db.currentChatId;
         }
 
-        // Eğer hiç sohbet yoksa yeni oluştur
+        // EÄŸer hiÃ§ sohbet yoksa yeni oluÅŸtur
         if (Object.keys(sessions).length === 0 || !currentChatId || !sessions[currentChatId]) {
             createNewChat();
         } else {
@@ -1462,15 +596,15 @@
         saveDatabase();
         renderCurrentChat();
         window.speechSynthesis.cancel();
-        // Sohbet değiştirildiğinde kesinlikle en alta kaydır
+        // Sohbet deÄŸiÅŸtirildiÄŸinde kesinlikle en alta kaydÄ±r
         setTimeout(scrollToBottom, 100);
         setTimeout(scrollToBottom, 400);
         setTimeout(scrollToBottom, 1000);
     }
 
     function deleteChat(id, event) {
-        event.stopPropagation(); // Satıra tıklamayı engelle
-        if(confirm("Sohbeti silmek istediğine emin misin?")) {
+        event.stopPropagation(); // SatÄ±ra tÄ±klamayÄ± engelle
+        if(confirm("Sohbeti silmek istediÄŸine emin misin?")) {
             delete sessions[id];
             if (currentChatId === id) {
                 const remaining = Object.keys(sessions);
@@ -1505,20 +639,20 @@
     }
 
     function renameChat(id, event) {
-        event.stopPropagation(); // Tıklamayı engelle
+        event.stopPropagation(); // TÄ±klamayÄ± engelle
         const currentTitle = sessions[id].title;
-        const newTitle = prompt("Sohbetin yeni adını girin:", currentTitle);
+        const newTitle = prompt("Sohbetin yeni adÄ±nÄ± girin:", currentTitle);
         if (newTitle !== null && newTitle.trim() !== "") {
             sessions[id].title = newTitle.trim();
             saveDatabase();
         }
     }
 
-    // ----- UI RENDER İŞLEMLERİ -----
+    // ----- UI RENDER Ä°ÅžLEMLERÄ° -----
     function renderSidebar() {
         chatListDiv.innerHTML = "";
         
-        // Tarihe göre sırala (en yeni en üstte)
+        // Tarihe gÃ¶re sÄ±rala (en yeni en Ã¼stte)
         const sortedIds = Object.keys(sessions).sort((a,b) => sessions[b].updatedAt - sessions[a].updatedAt);
         
         sortedIds.forEach(id => {
@@ -1529,12 +663,12 @@
             
             div.innerHTML = `
                 <div class="chat-item-title" style="flex: 1; display: flex; align-items: center; gap: 6px;">
-                    ${chat.isPinned ? "📌" : "💬"} <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px;">${chat.title}</span>
+                    ${chat.isPinned ? "ðŸ“Œ" : "ðŸ’¬"} <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px;">${chat.title}</span>
                 </div>
                 <div class="chat-actions" style="display: flex; gap: 4px; align-items: center;">
-                    <button class="action-btn" onclick="renameChat('${id}', event)" title="Yeniden Adlandır" style="color: #f9e2af; padding: 2px; font-size: 13px;">✏️</button>
-                    <button class="action-btn" onclick="deleteChat('${id}', event)" title="Sil" style="color: #f38ba8; padding: 2px; font-size: 13px;">🗑️</button>
-                    <button class="action-btn" onclick="pinChat('${id}', event)" title="${chat.isPinned ? 'Sabitlemeyi Kaldır' : 'Sabitle'}" style="padding: 2px; font-size: 13px;">📌</button>
+                    <button class="action-btn" onclick="renameChat('${id}', event)" title="Yeniden AdlandÄ±r" style="color: #f9e2af; padding: 2px; font-size: 13px;">âœï¸</button>
+                    <button class="action-btn" onclick="deleteChat('${id}', event)" title="Sil" style="color: #f38ba8; padding: 2px; font-size: 13px;">ðŸ—‘ï¸</button>
+                    <button class="action-btn" onclick="pinChat('${id}', event)" title="${chat.isPinned ? 'Sabitlemeyi KaldÄ±r' : 'Sabitle'}" style="padding: 2px; font-size: 13px;">ðŸ“Œ</button>
                 </div>
             `;
 
@@ -1543,7 +677,7 @@
     }
 
     function renderContentWithImages(text, isLast = false) {
-        // Hafıza sistemini yakala (Kullanıcı arayüzünde BİLMEMESİ GEREKİYOR, TERTEMİZ GİZLİ KALMALI)
+        // HafÄ±za sistemini yakala (KullanÄ±cÄ± arayÃ¼zÃ¼nde BÄ°LMEMESÄ° GEREKÄ°YOR, TERTEMÄ°Z GÄ°ZLÄ° KALMALI)
         text = text.replace(/\[REMEMBER:([\s\S]*?)\]/gi, (match, fact) => {
             let memory = localStorage.getItem('cinocode_memory_' + (loggedUser || "default")) || "";
             if (!memory.includes(fact.trim())) {
@@ -1554,7 +688,7 @@
             return ""; 
         });
 
-        // Sızıntıları UI'dan temizle
+        // SÄ±zÄ±ntÄ±larÄ± UI'dan temizle
         let safeText = sanitizeAssistantOutput(text);
 
         let html = marked.parse(safeText);
@@ -1568,7 +702,7 @@
             
             // Orijinal URL
             const rawUrl = `image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&nologo=true&seed=${randomSeed}`;
-            // DNS engellerini aşmak için wsrv.nl (Cloudflare proxy) kullanıyoruz
+            // DNS engellerini aÅŸmak iÃ§in wsrv.nl (Cloudflare proxy) kullanÄ±yoruz
             const imgUrl = `https://wsrv.nl/?url=${rawUrl}`;
             
             if(!window.artifactRenderedSet) window.artifactRenderedSet = new Set();
@@ -1577,8 +711,8 @@
                 setTimeout(() => addArtifactToList('image', finalPrompt.substring(0, 15) + '...', imgUrl), 100);
             }
             return `<div style="text-align:center; margin: 15px 0; background: #181825; padding: 10px; border-radius: 12px; border: 1px solid #45475a;">
-                        <img src="${imgUrl}" style="max-width:100%; border-radius:8px; display:block; margin: 0 auto 10px auto; min-height: 200px; background: #1e1e2e url('https://placehold.co/1024x1024/1e1e2e/cdd6f4?text=🎨+Ciziliyor...+Lutfen+Bekleyin') center/cover no-repeat;" onerror="this.src='https://placehold.co/1024x1024/f38ba8/11111b?text=Baglanti+Hatasi'">
-                        <button class="run-code-btn" style="background:#89b4fa; color:#11111b; width:auto; padding:8px 15px;" onclick="downloadImage('${imgUrl}', 'CinoCode_Gorsel.jpg')">📥 Resmi İndir</button>
+                        <img src="${imgUrl}" style="max-width:100%; border-radius:8px; display:block; margin: 0 auto 10px auto; min-height: 200px; background: #1e1e2e url('https://placehold.co/1024x1024/1e1e2e/cdd6f4?text=ðŸŽ¨+Ciziliyor...+Lutfen+Bekleyin') center/cover no-repeat;" onerror="this.src='https://placehold.co/1024x1024/f38ba8/11111b?text=Baglanti+Hatasi'">
+                        <button class="run-code-btn" style="background:#89b4fa; color:#11111b; width:auto; padding:8px 15px;" onclick="downloadImage('${imgUrl}', 'CinoCode_Gorsel.jpg')">ðŸ“¥ Resmi Ä°ndir</button>
                     </div>`;
         });
         // VIDEO regex
@@ -1591,10 +725,10 @@
             if (window.videoCache[finalPrompt]) {
                 const cachedUrl = window.videoCache[finalPrompt];
                 return `<div style="text-align:center; background: #181825; padding: 15px; border-radius: 12px; border: 1px solid #45475a;">
-                            <div style="color: #a6e3a1; font-size: 14px; margin-bottom: 10px;">✅ AI Video (Önbellekten)</div>
+                            <div style="color: #a6e3a1; font-size: 14px; margin-bottom: 10px;">âœ… AI Video (Ã–nbellekten)</div>
                             <video controls autoplay style="max-width:100%; border-radius: 8px; border: 2px solid #89b4fa; box-shadow: 0 4px 12px rgba(0,0,0,0.5);" src="${cachedUrl}"></video>
                             <br>
-                            <button class="run-code-btn" style="background: linear-gradient(135deg, #89b4fa, #cba6f7); color:#11111b; width:auto; padding:10px 20px; margin-top:10px; font-weight:bold; border-radius: 8px;" onclick="downloadVideo('${cachedUrl}')">📥 Videoyu İndir (WebM)</button>
+                            <button class="run-code-btn" style="background: linear-gradient(135deg, #89b4fa, #cba6f7); color:#11111b; width:auto; padding:10px 20px; margin-top:10px; font-weight:bold; border-radius: 8px;" onclick="downloadVideo('${cachedUrl}')">ðŸ“¥ Videoyu Ä°ndir (WebM)</button>
                         </div>`;
             }
             
@@ -1603,12 +737,12 @@
             
             if (window.queuedVideoPrompts.has(finalPrompt)) {
                 return `<div id="${videoId}" style="text-align:center; margin: 15px 0; background: #181825; padding: 15px; border-radius: 12px; border: 1px solid #45475a;">
-                            <div style="color: #cdd6f4; font-size: 16px; margin-bottom: 10px;">🎬 AI Video Oluşturuluyor...</div>
+                            <div style="color: #cdd6f4; font-size: 16px; margin-bottom: 10px;">ðŸŽ¬ AI Video OluÅŸturuluyor...</div>
                             <div style="background: #313244; border-radius: 8px; height: 20px; overflow: hidden; margin-bottom: 8px;">
                                 <div id="${videoId}-progress" style="background: linear-gradient(90deg, #89b4fa, #cba6f7); height: 100%; width: 0%; border-radius: 8px; transition: width 0.5s ease;"></div>
                             </div>
-                            <div id="${videoId}-status" style="color: #a6adc8; font-size: 13px;">Kuyrukta veya işlemde...</div>
-                            <button class="run-code-btn" style="background: #f38ba8; color: #11111b; font-size: 11px; padding: 4px 8px; margin-top: 8px; font-weight: bold;" onclick="cancelVideoGeneration('${videoId}')">❌ İptal Et</button>
+                            <div id="${videoId}-status" style="color: #a6adc8; font-size: 13px;">Kuyrukta veya iÅŸlemde...</div>
+                            <button class="run-code-btn" style="background: #f38ba8; color: #11111b; font-size: 11px; padding: 4px 8px; margin-top: 8px; font-weight: bold;" onclick="cancelVideoGeneration('${videoId}')">âŒ Ä°ptal Et</button>
                         </div>`;
             }
             
@@ -1616,18 +750,18 @@
                 window.queuedVideoPrompts.add(finalPrompt);
                 setTimeout(() => queueVideoSlideshow(finalPrompt, videoId), 200);
                 return `<div id="${videoId}" style="text-align:center; margin: 15px 0; background: #181825; padding: 15px; border-radius: 12px; border: 1px solid #45475a;">
-                            <div style="color: #cdd6f4; font-size: 16px; margin-bottom: 10px;">🎬 AI Video Oluşturuluyor...</div>
+                            <div style="color: #cdd6f4; font-size: 16px; margin-bottom: 10px;">ðŸŽ¬ AI Video OluÅŸturuluyor...</div>
                             <div style="background: #313244; border-radius: 8px; height: 20px; overflow: hidden; margin-bottom: 8px;">
                                 <div id="${videoId}-progress" style="background: linear-gradient(90deg, #89b4fa, #cba6f7); height: 100%; width: 0%; border-radius: 8px; transition: width 0.5s ease;"></div>
                             </div>
-                            <div id="${videoId}-status" style="color: #a6adc8; font-size: 13px;">Sahneler hazırlanıyor...</div>
-                            <button class="run-code-btn" style="background: #f38ba8; color: #11111b; font-size: 11px; padding: 4px 8px; margin-top: 8px; font-weight: bold;" onclick="cancelVideoGeneration('${videoId}')">❌ İptal Et</button>
+                            <div id="${videoId}-status" style="color: #a6adc8; font-size: 13px;">Sahneler hazÄ±rlanÄ±yor...</div>
+                            <button class="run-code-btn" style="background: #f38ba8; color: #11111b; font-size: 11px; padding: 4px 8px; margin-top: 8px; font-weight: bold;" onclick="cancelVideoGeneration('${videoId}')">âŒ Ä°ptal Et</button>
                         </div>`;
             } else {
                 const escapedPrompt = promptText.replace(/'/g, "\\'");
                 return `<div id="${videoId}" style="text-align:center; margin: 15px 0; background: #181825; padding: 15px; border-radius: 12px; border: 1px solid #45475a;">
-                            <div style="color: #a6adc8; font-size: 14px; margin-bottom: 10px;">🎬 Video İsteği: "${promptText.substring(0, 40)}${promptText.length > 40 ? '...' : ''}"</div>
-                            <button class="run-code-btn" style="background: linear-gradient(135deg, #89b4fa, #cba6f7); color:#11111b; width:auto; padding:10px 20px; font-weight:bold; border-radius: 8px;" onclick="triggerVideoRenderOnDemand('${escapedPrompt}', '${videoId}')">🎬 Videoyu Oluştur</button>
+                            <div style="color: #a6adc8; font-size: 14px; margin-bottom: 10px;">ðŸŽ¬ Video Ä°steÄŸi: "${promptText.substring(0, 40)}${promptText.length > 40 ? '...' : ''}"</div>
+                            <button class="run-code-btn" style="background: linear-gradient(135deg, #89b4fa, #cba6f7); color:#11111b; width:auto; padding:10px 20px; font-weight:bold; border-radius: 8px;" onclick="triggerVideoRenderOnDemand('${escapedPrompt}', '${videoId}')">ðŸŽ¬ Videoyu OluÅŸtur</button>
                         </div>`;
             }
         });
@@ -1648,17 +782,17 @@
             document.body.removeChild(a);
             window.URL.revokeObjectURL(blobUrl);
         } catch (e) {
-            console.error("İndirme hatası:", e);
-            window.open(url, '_blank'); // Fallback olarak yeni sekmede aç
+            console.error("Ä°ndirme hatasÄ±:", e);
+            window.open(url, '_blank'); // Fallback olarak yeni sekmede aÃ§
         }
     }
 
     // ========== AI VIDEO SLIDESHOW MOTORU ==========
     let isVideoGenerating = false; 
-    let videoQueue = []; // Video taleplerini sırayla işlemek için kuyruk yapısı
+    let videoQueue = []; // Video taleplerini sÄ±rayla iÅŸlemek iÃ§in kuyruk yapÄ±sÄ±
     const maxQueueLength = 3;
-    let activeRecorder = null; // Aktif MediaRecorder referansı
-    let isGenerationCancelled = false; // İptal kontrol flag'i
+    let activeRecorder = null; // Aktif MediaRecorder referansÄ±
+    let isGenerationCancelled = false; // Ä°ptal kontrol flag'i
 
     window.videoCache = window.videoCache || {};
     window.queuedVideoPrompts = window.queuedVideoPrompts || new Set();
@@ -1672,12 +806,12 @@
         const container = document.getElementById(containerId);
         if (container) {
             container.innerHTML = `
-                <div style="color: #cdd6f4; font-size: 16px; margin-bottom: 10px;">🎬 AI Video Oluşturuluyor...</div>
+                <div style="color: #cdd6f4; font-size: 16px; margin-bottom: 10px;">ðŸŽ¬ AI Video OluÅŸturuluyor...</div>
                 <div style="background: #313244; border-radius: 8px; height: 20px; overflow: hidden; margin-bottom: 8px;">
                     <div id="${containerId}-progress" style="background: linear-gradient(90deg, #89b4fa, #cba6f7); height: 100%; width: 0%; border-radius: 8px; transition: width 0.5s ease;"></div>
                 </div>
-                <div id="${containerId}-status" style="color: #a6adc8; font-size: 13px;">Sahneler hazırlanıyor...</div>
-                <button class="run-code-btn" style="background: #f38ba8; color: #11111b; font-size: 11px; padding: 4px 8px; margin-top: 8px; font-weight: bold;" onclick="cancelVideoGeneration('${containerId}')">❌ İptal Et</button>
+                <div id="${containerId}-status" style="color: #a6adc8; font-size: 13px;">Sahneler hazÄ±rlanÄ±yor...</div>
+                <button class="run-code-btn" style="background: #f38ba8; color: #11111b; font-size: 11px; padding: 4px 8px; margin-top: 8px; font-weight: bold;" onclick="cancelVideoGeneration('${containerId}')">âŒ Ä°ptal Et</button>
             `;
         }
         
@@ -1693,11 +827,11 @@
             const card = document.createElement("div");
             card.className = "message bot";
             card.innerHTML = `<div id="${videoId}" style="text-align:center; margin: 15px 0; background: #181825; padding: 15px; border-radius: 12px; border: 1px solid #45475a;">
-                                <div style="color: #cdd6f4; font-size: 16px; margin-bottom: 10px;">🎬 AI Video Oluşturuluyor...</div>
+                                <div style="color: #cdd6f4; font-size: 16px; margin-bottom: 10px;">ðŸŽ¬ AI Video OluÅŸturuluyor...</div>
                                 <div style="background: #313244; border-radius: 8px; height: 20px; overflow: hidden; margin-bottom: 8px;">
                                     <div id="${videoId}-progress" style="background: linear-gradient(90deg, #89b4fa, #cba6f7); height: 100%; width: 0%; border-radius: 8px; transition: width 0.5s ease;"></div>
                                 </div>
-                                <div id="${videoId}-status" style="color: #a6adc8; font-size: 13px;">Sahneler hazırlanıyor...</div>
+                                <div id="${videoId}-status" style="color: #a6adc8; font-size: 13px;">Sahneler hazÄ±rlanÄ±yor...</div>
                             </div>`;
             list.appendChild(card);
             scrollToBottom();
@@ -1723,7 +857,7 @@
         if (videoQueue.length >= maxQueueLength) {
             const container = document.getElementById(containerId);
             if (container) {
-                container.innerHTML = '<div style="color: #f38ba8; padding: 10px;">❌ Kuyruk dolu! (Maksimum 3 video bekleyebilir). Lütfen daha sonra deneyin.</div>';
+                container.innerHTML = '<div style="color: #f38ba8; padding: 10px;">âŒ Kuyruk dolu! (Maksimum 3 video bekleyebilir). LÃ¼tfen daha sonra deneyin.</div>';
             }
             return;
         }
@@ -1734,7 +868,7 @@
     }
 
     function cancelVideoGeneration(containerId) {
-        // 1. Eğer kuyruktaki bir video ise kuyruktan sil
+        // 1. EÄŸer kuyruktaki bir video ise kuyruktan sil
         const queueIdx = videoQueue.findIndex(item => item.containerId === containerId);
         let wasActive = false;
         
@@ -1744,7 +878,7 @@
             videoQueue.splice(queueIdx, 1);
             console.log("Kuyruktaki video iptal edildi.");
         } else if (isVideoGenerating) {
-            // 2. Eğer şu an üretilen video ise motoru durdur
+            // 2. EÄŸer ÅŸu an Ã¼retilen video ise motoru durdur
             isGenerationCancelled = true;
             wasActive = true;
             if (window.queuedVideoPrompts && window.currentVideoPrompt) {
@@ -1753,18 +887,18 @@
             if (activeRecorder && activeRecorder.state !== 'inactive') {
                 try { activeRecorder.stop(); } catch(e){}
             }
-            console.log("Aktif video üretimi iptal edildi.");
+            console.log("Aktif video Ã¼retimi iptal edildi.");
         }
 
-        // Arayüzü temizle
+        // ArayÃ¼zÃ¼ temizle
         const container = document.getElementById(containerId);
         if (container) {
-            container.innerHTML = '<div style="color: #f38ba8; padding: 10px;">⚠️ Video üretimi iptal edildi.</div>';
+            container.innerHTML = '<div style="color: #f38ba8; padding: 10px;">âš ï¸ Video Ã¼retimi iptal edildi.</div>';
         }
 
-        // Not: isGenerationCancelled false yapma işlemi executeVideoGeneration içindeki finally bloğunda yapılıyor.
-        // Aynı şekilde processVideoQueue de o fonksiyon bitince otomatik çağrılıyor. 
-        // Sadece bekleyen hiçbir şey yoksa (kuyruktan silindiyse vs.) tetikleyebiliriz.
+        // Not: isGenerationCancelled false yapma iÅŸlemi executeVideoGeneration iÃ§indeki finally bloÄŸunda yapÄ±lÄ±yor.
+        // AynÄ± ÅŸekilde processVideoQueue de o fonksiyon bitince otomatik Ã§aÄŸrÄ±lÄ±yor. 
+        // Sadece bekleyen hiÃ§bir ÅŸey yoksa (kuyruktan silindiyse vs.) tetikleyebiliriz.
         if (!isVideoGenerating && !wasActive) {
             processVideoQueue();
         }
@@ -1772,12 +906,12 @@
 
     async function processVideoQueue() {
         if (isVideoGenerating || videoQueue.length === 0) {
-            // Eğer aktif bir video varsa veya kuyruk boşsa bekle
+            // EÄŸer aktif bir video varsa veya kuyruk boÅŸsa bekle
             if (videoQueue.length > 1) {
                 const nextItem = videoQueue[videoQueue.length - 1];
                 const statusTxt = document.getElementById(nextItem.containerId + '-status');
                 if (statusTxt) {
-                    statusTxt.textContent = `⏳ Kuyrukta bekleniyor... Sıra: ${videoQueue.length - 1}`;
+                    statusTxt.textContent = `â³ Kuyrukta bekleniyor... SÄ±ra: ${videoQueue.length - 1}`;
                 }
             }
             return;
@@ -1785,7 +919,7 @@
 
         const task = videoQueue.shift();
         await executeVideoGeneration(task.prompt, task.containerId);
-        processVideoQueue(); // Bir sonraki göreve geç
+        processVideoQueue(); // Bir sonraki gÃ¶reve geÃ§
     }
 
     async function executeVideoGeneration(prompt, containerId) {
@@ -1794,9 +928,9 @@
         const statusText = document.getElementById(containerId + '-status');
         if (!container) return;
 
-        // MediaRecorder desteği kontrolü
+        // MediaRecorder desteÄŸi kontrolÃ¼
         if (typeof MediaRecorder === 'undefined') {
-            container.innerHTML = '<div style="color: #f38ba8; padding: 20px;">❌ Tarayıcınız video kaydını desteklemiyor. Lütfen Chrome veya Edge kullanın.</div>';
+            container.innerHTML = '<div style="color: #f38ba8; padding: 20px;">âŒ TarayÄ±cÄ±nÄ±z video kaydÄ±nÄ± desteklemiyor. LÃ¼tfen Chrome veya Edge kullanÄ±n.</div>';
             return;
         }
 
@@ -1810,7 +944,7 @@
             let FPS = 15;
             let WIDTH = 384;
             let HEIGHT = 384;
-            let modeLabel = "Hızlı";
+            let modeLabel = "HÄ±zlÄ±";
 
             if (savedMode === 'turbo') {
                 SCENE_COUNT = 4;
@@ -1837,7 +971,7 @@
 
             const videoDurationSec = Math.round((SCENE_COUNT * SCENE_DURATION) / 1000);
 
-            // 1. ADIM: AI görsellerini üret
+            // 1. ADIM: AI gÃ¶rsellerini Ã¼ret
             const images = [];
             const variations = [
                 'wide angle establishing shot', 'dramatic close up detail',
@@ -1848,17 +982,17 @@
                 'high contrast moody lighting', 'vibrant colorful landscape'
             ];
 
-            // Bütün sahneleri aynı anda indir (Paralel işlem hızı!)
+            // BÃ¼tÃ¼n sahneleri aynÄ± anda indir (Paralel iÅŸlem hÄ±zÄ±!)
             const batchSize = SCENE_COUNT;
             for (let batch = 0; batch < SCENE_COUNT; batch += batchSize) {
                 const batchPromises = [];
                 const batchEnd = Math.min(batch + batchSize, SCENE_COUNT);
                 
-                // Tahmini kalan süreyi hesapla
+                // Tahmini kalan sÃ¼reyi hesapla
                 const remainingImages = SCENE_COUNT - batch;
-                const estSeconds = Math.ceil(remainingImages * 3.5); // resim başına ~3.5 sn
+                const estSeconds = Math.ceil(remainingImages * 3.5); // resim baÅŸÄ±na ~3.5 sn
 
-                if (statusText) statusText.textContent = `🚀 [${modeLabel} Mod] Sahneler indiriliyor... (${Math.min(batch + batchSize, SCENE_COUNT)}/${SCENE_COUNT}) - Kalan süre: ~${estSeconds + videoDurationSec} sn (Video Süresi: ${videoDurationSec} sn)`;
+                if (statusText) statusText.textContent = `ðŸš€ [${modeLabel} Mod] Sahneler indiriliyor... (${Math.min(batch + batchSize, SCENE_COUNT)}/${SCENE_COUNT}) - Kalan sÃ¼re: ~${estSeconds + videoDurationSec} sn (Video SÃ¼resi: ${videoDurationSec} sn)`;
                 if (progressBar) progressBar.style.width = ((batch / SCENE_COUNT) * 50) + '%';
 
                 for (let i = batch; i < batchEnd; i++) {
@@ -1878,18 +1012,18 @@
 
             if (images.length < 2) {
                 console.error(`[VIDEO FATAL] Video render failed. Expected 2 scenes, got ${images.length}. Check network tab for pollination errors.`);
-                container.innerHTML = `<div style="color: #f38ba8; padding: 20px;">❌ Video oluşturulamadı. ${SCENE_COUNT} sahneden 0 görsel yüklendi. Console'da başarısız URL'ler yazdırıldı.</div>`;
+                container.innerHTML = `<div style="color: #f38ba8; padding: 20px;">âŒ Video oluÅŸturulamadÄ±. ${SCENE_COUNT} sahneden 0 gÃ¶rsel yÃ¼klendi. Console'da baÅŸarÄ±sÄ±z URL'ler yazdÄ±rÄ±ldÄ±.</div>`;
                 if (window.queuedVideoPrompts) window.queuedVideoPrompts.delete(prompt);
                 return;
             }
 
-            // 2. ADIM: Canvas oluştur ve animasyonu kaydet
+            // 2. ADIM: Canvas oluÅŸtur ve animasyonu kaydet
             const canvas = document.createElement('canvas');
             canvas.width = WIDTH;
             canvas.height = HEIGHT;
             const ctx = canvas.getContext('2d');
 
-            // MediaRecorder başlat
+            // MediaRecorder baÅŸlat
             const stream = canvas.captureStream(FPS);
             
             // --- PROCEDURAL AUDIO (Background Music) ---
@@ -1921,7 +1055,7 @@
                 mimeType = 'video/webm';
             }
             const recorder = new MediaRecorder(combinedStream, { mimeType, videoBitsPerSecond: 2000000 });
-            activeRecorder = recorder; // İptal kontrolü için kaydet
+            activeRecorder = recorder; // Ä°ptal kontrolÃ¼ iÃ§in kaydet
             recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
 
             const videoReady = new Promise((resolve) => {
@@ -1933,15 +1067,15 @@
 
             recorder.start();
 
-            // 3. ADIM: Ken Burns animasyonu çalıştır
+            // 3. ADIM: Ken Burns animasyonu Ã§alÄ±ÅŸtÄ±r
             const totalFrames = images.length * (SCENE_DURATION / 1000) * FPS;
             const framesPerScene = (SCENE_DURATION / 1000) * FPS;
-            const transitionFrames = Math.floor(FPS * 1); // 1 saniyelik geçiş
+            const transitionFrames = Math.floor(FPS * 1); // 1 saniyelik geÃ§iÅŸ
             let frame = 0;
 
             await new Promise((resolve) => {
                 function renderFrame() {
-                    // Eğer video iptal edildiyse işlemi anında sonlandır
+                    // EÄŸer video iptal edildiyse iÅŸlemi anÄ±nda sonlandÄ±r
                     if (isGenerationCancelled) {
                         resolve();
                         return;
@@ -1957,14 +1091,14 @@
                     const frameInScene = frame % framesPerScene;
                     const progress = frameInScene / framesPerScene;
 
-                    // Ken Burns efekti: yavaş zoom + pan
+                    // Ken Burns efekti: yavaÅŸ zoom + pan
                     const zoomStart = 1.0;
                     const zoomEnd = 1.15;
                     const zoom = zoomStart + (zoomEnd - zoomStart) * progress;
                     const panX = Math.sin(progress * Math.PI) * 30 * (sceneIndex % 2 === 0 ? 1 : -1);
                     const panY = Math.cos(progress * Math.PI) * 20 * (sceneIndex % 3 === 0 ? 1 : -1);
 
-                    // Ana sahneyi çiz
+                    // Ana sahneyi Ã§iz
                     ctx.save();
                     ctx.translate(WIDTH / 2 + panX, HEIGHT / 2 + panY);
                     ctx.scale(zoom, zoom);
@@ -1972,7 +1106,7 @@
                     ctx.drawImage(images[sceneIndex], 0, 0, WIDTH, HEIGHT);
                     ctx.restore();
 
-                    // Crossfade geçişi (son 1 saniye)
+                    // Crossfade geÃ§iÅŸi (son 1 saniye)
                     if (frameInScene >= framesPerScene - transitionFrames && nextSceneIndex !== sceneIndex) {
                         const alpha = (frameInScene - (framesPerScene - transitionFrames)) / transitionFrames;
                         ctx.globalAlpha = alpha;
@@ -1980,29 +1114,29 @@
                         ctx.globalAlpha = 1.0;
                     }
 
-                    // İlerleme güncelle
+                    // Ä°lerleme gÃ¼ncelle
                     const totalProgress = 60 + (frame / totalFrames) * 35;
                     if (progressBar) progressBar.style.width = totalProgress + '%';
 
-                    // Kalan saniye hesabı (20 FPS hızıyla render ediliyor)
+                    // Kalan saniye hesabÄ± (20 FPS hÄ±zÄ±yla render ediliyor)
                     const remainingFrames = totalFrames - frame;
                     const remainingSecs = Math.ceil(remainingFrames / FPS);
-                    if (statusText) statusText.textContent = `🎬 Video kaydediliyor... (${Math.floor(totalProgress)}%) - Kalan süre: ~${remainingSecs} saniye`;
+                    if (statusText) statusText.textContent = `ðŸŽ¬ Video kaydediliyor... (${Math.floor(totalProgress)}%) - Kalan sÃ¼re: ~${remainingSecs} saniye`;
 
                     frame++;
-                    // requestAnimationFrame yerine setTimeout ile FPS kontrolü
+                    // requestAnimationFrame yerine setTimeout ile FPS kontrolÃ¼
                     setTimeout(renderFrame, 1000 / FPS);
                 }
                 renderFrame();
             });
 
-            // 4. ADIM: Kaydı durdur ve videoyu göster
+            // 4. ADIM: KaydÄ± durdur ve videoyu gÃ¶ster
             if (activeRecorder && activeRecorder.state !== 'inactive') {
                 try { activeRecorder.stop(); } catch(e){}
             }
             const videoBlob = await videoReady;
 
-            // Eğer son aşamada iptal edildiyse HTML'i güncelleme
+            // EÄŸer son aÅŸamada iptal edildiyse HTML'i gÃ¼ncelleme
             if (isGenerationCancelled) {
                 return;
             }
@@ -2017,15 +1151,15 @@
             }
 
             if (progressBar) progressBar.style.width = '100%';
-            if (statusText) statusText.textContent = '✅ Video hazır!';
+            if (statusText) statusText.textContent = 'âœ… Video hazÄ±r!';
 
-            // Video oynatıcıyı ekrana bas
+            // Video oynatÄ±cÄ±yÄ± ekrana bas
             container.innerHTML = `
                 <div style="text-align:center; background: #181825; padding: 15px; border-radius: 12px; border: 1px solid #45475a;">
-                    <div style="color: #a6e3a1; font-size: 14px; margin-bottom: 10px;">✅ AI Video başarıyla oluşturuldu! (${images.length} sahne, ~${videoDurationSec} saniye)</div>
+                    <div style="color: #a6e3a1; font-size: 14px; margin-bottom: 10px;">âœ… AI Video baÅŸarÄ±yla oluÅŸturuldu! (${images.length} sahne, ~${videoDurationSec} saniye)</div>
                     <video controls autoplay style="max-width:100%; border-radius: 8px; border: 2px solid #89b4fa; box-shadow: 0 4px 12px rgba(0,0,0,0.5);" src="${videoUrl}"></video>
                     <br>
-                    <button class="run-code-btn" style="background: linear-gradient(135deg, #89b4fa, #cba6f7); color:#11111b; width:auto; padding:10px 20px; margin-top:10px; font-weight:bold; border-radius: 8px;" onclick="downloadVideo('${videoUrl}')">📥 Videoyu İndir (WebM)</button>
+                    <button class="run-code-btn" style="background: linear-gradient(135deg, #89b4fa, #cba6f7); color:#11111b; width:auto; padding:10px 20px; margin-top:10px; font-weight:bold; border-radius: 8px;" onclick="downloadVideo('${videoUrl}')">ðŸ“¥ Videoyu Ä°ndir (WebM)</button>
                 </div>
             `;
 
@@ -2033,18 +1167,18 @@
             if(!window.artifactRenderedSet) window.artifactRenderedSet = new Set();
             if(!window.artifactRenderedSet.has(videoUrl)) {
                 window.artifactRenderedSet.add(videoUrl);
-                setTimeout(() => addArtifactToList('video', '🎬 ' + prompt.substring(0, 12) + '...', videoUrl), 100);
+                setTimeout(() => addArtifactToList('video', 'ðŸŽ¬ ' + prompt.substring(0, 12) + '...', videoUrl), 100);
             }
         } catch (err) {
-            console.error("Video render hatası:", err);
+            console.error("Video render hatasÄ±:", err);
             if (window.queuedVideoPrompts) window.queuedVideoPrompts.delete(prompt);
             if (container) {
-                container.innerHTML = `<div style="color: #f38ba8; padding: 20px;">❌ Video oluşturulurken teknik bir sorun oluştu: ${err.message}</div>`;
+                container.innerHTML = `<div style="color: #f38ba8; padding: 20px;">âŒ Video oluÅŸturulurken teknik bir sorun oluÅŸtu: ${err.message}</div>`;
             }
         } finally {
-            isVideoGenerating = false; // Yeni video üretimini serbest bırak
+            isVideoGenerating = false; // Yeni video Ã¼retimini serbest bÄ±rak
             activeRecorder = null;
-            // İptal bayrağını temizle
+            // Ä°ptal bayraÄŸÄ±nÄ± temizle
             isGenerationCancelled = false;
             window.currentVideoPrompt = null;
         }
@@ -2106,7 +1240,7 @@
         const msg = sessions[currentChatId].messages[index];
         navigator.clipboard.writeText(msg.content);
         const oldText = btn.innerText;
-        btn.innerText = "✅";
+        btn.innerText = "âœ…";
         setTimeout(() => btn.innerText = oldText, 2000);
     }
     
@@ -2142,7 +1276,7 @@
         messagesDiv.innerHTML = "";
         const history = sessions[currentChatId].messages;
         
-        // Eğer sadece system prompt varsa (yeni sohbet) Quick Start göster
+        // EÄŸer sadece system prompt varsa (yeni sohbet) Quick Start gÃ¶ster
         if (history.length <= 1) {
             document.getElementById("welcomeScreen").style.display = "flex";
             messagesDiv.style.display = "none";
@@ -2162,7 +1296,7 @@
                 if (msg.images && msg.images.length > 0) {
                     htmlContent += `<img src="${msg.images[0]}" style="max-height:200px; border-radius:8px; display:block; margin-top:8px; border: 2px solid #89b4fa;">`;
                 }
-                htmlContent += `<div class="msg-actions"><button class="msg-action-btn" onclick="editMessage(${index})" title="Düzenle">✏️</button></div>`;
+                htmlContent += `<div class="msg-actions"><button class="msg-action-btn" onclick="editMessage(${index})" title="DÃ¼zenle">âœï¸</button></div>`;
                 div.innerHTML = htmlContent;
             } else {
                 div.innerHTML = renderContentWithImages(msg.content, index === history.length - 1);
@@ -2171,15 +1305,15 @@
                 const actionDiv = document.createElement("div");
                 actionDiv.className = "msg-actions";
                 actionDiv.innerHTML = `
-                    <button class="msg-action-btn" onclick="copyMessage(${index}, this)" title="Kopyala">📋</button>
-                    <button class="msg-action-btn" onclick="speakMessage(${index})" title="Sesli Oku">🔊</button>
-                    ${index === history.length - 1 ? `<button class="msg-action-btn" onclick="regenerateMessage()" title="Yeniden Üret">🔄</button>` : ''}
+                    <button class="msg-action-btn" onclick="copyMessage(${index}, this)" title="Kopyala">ðŸ“‹</button>
+                    <button class="msg-action-btn" onclick="speakMessage(${index})" title="Sesli Oku">ðŸ”Š</button>
+                    ${index === history.length - 1 ? `<button class="msg-action-btn" onclick="regenerateMessage()" title="Yeniden Ãœret">ðŸ”„</button>` : ''}
                 `;
                 div.appendChild(actionDiv);
             }
             messagesDiv.appendChild(div);
         });
-        // En sona görünmez bir çapa (anchor) div ekle
+        // En sona gÃ¶rÃ¼nmez bir Ã§apa (anchor) div ekle
         let bottomAnchor = document.getElementById('chat-bottom-anchor');
         if (!bottomAnchor) {
             bottomAnchor = document.createElement('div');
@@ -2187,36 +1321,36 @@
             bottomAnchor.style.height = '1px';
         }
         messagesDiv.appendChild(bottomAnchor);
-        // Birden fazla gecikmeyle scroll yap (resimler/kodlar yüklenene kadar)
+        // Birden fazla gecikmeyle scroll yap (resimler/kodlar yÃ¼klenene kadar)
         scrollToBottom();
         setTimeout(scrollToBottom, 150);
         setTimeout(scrollToBottom, 500);
     }
 
     function scrollToBottom() {
-        // CSS'teki scroll-behavior: smooth kaydırmayı yavaşlatıyor, geçici olarak kapat
+        // CSS'teki scroll-behavior: smooth kaydÄ±rmayÄ± yavaÅŸlatÄ±yor, geÃ§ici olarak kapat
         messagesDiv.style.scrollBehavior = 'auto';
         messagesDiv.scrollTop = messagesDiv.scrollHeight + 99999;
-        // Kısa bir süre sonra smooth'a geri dön (yeni mesaj yazarken güzel görünsün)
+        // KÄ±sa bir sÃ¼re sonra smooth'a geri dÃ¶n (yeni mesaj yazarken gÃ¼zel gÃ¶rÃ¼nsÃ¼n)
         setTimeout(() => { messagesDiv.style.scrollBehavior = 'smooth'; }, 100);
     }
 
-    // ----- SESLİ KONUŞMA (TTS & STT) -----
+    // ----- SESLÄ° KONUÅžMA (TTS & STT) -----
     let isRecording = false;
     let recognition = null;
     let speechTimeout = null;
     
     if ('webkitSpeechRecognition' in window) {
         recognition = new webkitSpeechRecognition();
-        recognition.continuous = true; // Kapanmadan sürekli dinlemeye çalışsın
-        recognition.interimResults = true; // Gerçek zamanlı (interim) sonuçları göster, böylece kelimeleri anında yakalar
-        recognition.maxAlternatives = 3; // En yüksek olasılıklı 3 alternatifi getir
+        recognition.continuous = true; // Kapanmadan sÃ¼rekli dinlemeye Ã§alÄ±ÅŸsÄ±n
+        recognition.interimResults = true; // GerÃ§ek zamanlÄ± (interim) sonuÃ§larÄ± gÃ¶ster, bÃ¶ylece kelimeleri anÄ±nda yakalar
+        recognition.maxAlternatives = 3; // En yÃ¼ksek olasÄ±lÄ±klÄ± 3 alternatifi getir
         recognition.lang = 'tr-TR';
         
         recognition.onstart = () => { 
             isRecording = true; 
             document.getElementById("micBtn").classList.add("listening"); 
-            userInput.placeholder = "Dinliyorum... Konuşun..."; 
+            userInput.placeholder = "Dinliyorum... KonuÅŸun..."; 
         };
         
         recognition.onresult = (e) => {
@@ -2227,7 +1361,7 @@
                 const textVal = result[0].transcript;
                 const confidence = result[0].confidence !== undefined && result[0].confidence !== null ? result[0].confidence : 1.0;
                 
-                console.log(`STT Transcript: "${textVal}" | Güven Oranı (Confidence): ${confidence}`);
+                console.log(`STT Transcript: "${textVal}" | GÃ¼ven OranÄ± (Confidence): ${confidence}`);
                 
                 if (result.isFinal) {
                     finalStr += textVal;
@@ -2240,14 +1374,14 @@
                 userInput.value += (userInput.value ? " " : "") + finalStr.trim(); 
                 autoResize(userInput); 
             } else if (interimStr !== '') {
-                // Konuşma devam ederken ekrana geçici olarak bas ki hızlı algılansın
+                // KonuÅŸma devam ederken ekrana geÃ§ici olarak bas ki hÄ±zlÄ± algÄ±lansÄ±n
                 userInput.placeholder = interimStr;
             }
             
-            // Ses geldiği anda sayacı sıfırla
+            // Ses geldiÄŸi anda sayacÄ± sÄ±fÄ±rla
             clearTimeout(speechTimeout);
             
-            // Eğer 3.5 saniye boyunca yeni ses gelmezse ve kutu boş değilse GÖNDER!
+            // EÄŸer 3.5 saniye boyunca yeni ses gelmezse ve kutu boÅŸ deÄŸilse GÃ–NDER!
             speechTimeout = setTimeout(() => {
                 if (userInput.value.trim() !== "") {
                     sendMessage();
@@ -2256,11 +1390,11 @@
         };
         
         recognition.onerror = (err) => {
-            console.error("STT Hatası:", err);
+            console.error("STT HatasÄ±:", err);
             if (err.error === 'not-allowed') {
-                alert("Telefondan mikrofona izin vermemiş olabilirsin! Lütfen tarayıcı ayarlarından siteye mikrofon izni ver.");
+                alert("Telefondan mikrofona izin vermemiÅŸ olabilirsin! LÃ¼tfen tarayÄ±cÄ± ayarlarÄ±ndan siteye mikrofon izni ver.");
             } else if (err.error !== 'no-speech') {
-                alert("Telefon mikrofon hatası: " + err.error);
+                alert("Telefon mikrofon hatasÄ±: " + err.error);
             }
             stopMic();
         };
@@ -2268,7 +1402,7 @@
     }
 
     function toggleMic() {
-        if (!recognition) return alert("Tarayıcınız mikrofon desteklemiyor.");
+        if (!recognition) return alert("TarayÄ±cÄ±nÄ±z mikrofon desteklemiyor.");
         if (isRecording) {
             stopMic();
         } else {
@@ -2276,7 +1410,7 @@
             try {
                 recognition.start();
             } catch(e) {
-                console.log("Mikrofon zaten açık:", e);
+                console.log("Mikrofon zaten aÃ§Ä±k:", e);
             }
         }
     }
@@ -2289,7 +1423,7 @@
         }
         clearTimeout(speechTimeout);
         document.getElementById("micBtn").classList.remove("listening");
-        userInput.placeholder = "CinoCode'a bir şeyler sor...";
+        userInput.placeholder = "CinoCode'a bir ÅŸeyler sor...";
     }
 
     let isSpeakerOn = true;
@@ -2297,18 +1431,18 @@
 
     function populateVoices() {
         let defaultHtml = `
-            <option value="male_local">👨🏻‍🦱 Deniz (Cihazın Kendi Sesi)</option>
-            <option value="male_edge_tolga">👨🏼‍🦱 Tolga (Standart Erkek)</option>
-            <option value="female_gtts">👩🏼‍🦱 Ayşe Abla (Standart Kadın Sesi)</option>
-            <option value="male_gtts">🧔🏽 Cüneyt Abi (HD Erkek Ses)</option>
-            <option value="female_edge">👩🏻‍🦰 Cino Abla (HD Kadın Ses)</option>
+            <option value="male_local">ðŸ‘¨ðŸ»â€ðŸ¦± Deniz (CihazÄ±n Kendi Sesi)</option>
+            <option value="male_edge_tolga">ðŸ‘¨ðŸ¼â€ðŸ¦± Tolga (Standart Erkek)</option>
+            <option value="female_gtts">ðŸ‘©ðŸ¼â€ðŸ¦± AyÅŸe Abla (Standart KadÄ±n Sesi)</option>
+            <option value="male_gtts">ðŸ§”ðŸ½ CÃ¼neyt Abi (HD Erkek Ses)</option>
+            <option value="female_edge">ðŸ‘©ðŸ»â€ðŸ¦° Cino Abla (HD KadÄ±n Ses)</option>
         `;
 
         let voices = synth.getVoices();
         if (voices.length > 0) {
-            defaultHtml += `<optgroup label="Cihaz Sesleri (Tüm Sesler)">`;
+            defaultHtml += `<optgroup label="Cihaz Sesleri (TÃ¼m Sesler)">`;
             voices.forEach((v, idx) => {
-                let isTr = v.lang.includes("tr") ? "🇹🇷 " : "🌐 ";
+                let isTr = v.lang.includes("tr") ? "ðŸ‡¹ðŸ‡· " : "ðŸŒ ";
                 defaultHtml += `<option value="native_${idx}">${isTr}${v.name}</option>`;
             });
             defaultHtml += `</optgroup>`;
@@ -2328,7 +1462,7 @@
         speechSynthesis.onvoiceschanged = populateVoices;
     }
     
-    // Anında çalıştır ki en azından varsayılan 5 seçenek hemen dolsun
+    // AnÄ±nda Ã§alÄ±ÅŸtÄ±r ki en azÄ±ndan varsayÄ±lan 5 seÃ§enek hemen dolsun
     populateVoices();
 
     function saveVoicePref() {
@@ -2340,13 +1474,13 @@
         const sBtn = document.getElementById("speakerBtn");
         if (isSpeakerOn) {
             if (sBtn) {
-                sBtn.innerText = "🔊"; 
+                sBtn.innerText = "ðŸ”Š"; 
                 sBtn.classList.add("active");
             }
             voiceSelect.style.display = "block";
         } else {
             if (sBtn) {
-                sBtn.innerText = "🔇"; 
+                sBtn.innerText = "ðŸ”‡"; 
                 sBtn.classList.remove("active");
             }
             voiceSelect.style.display = "none";
@@ -2388,8 +1522,8 @@
         isPlayingTTS = true;
         let text = ttsQueue.shift();
         
-        let cleanText = text.replace(/```[\s\S]*?```/g, " kod parçası ").replace(/`.*?`/g, "").replace(/[#*_-]/g, "");
-        cleanText = cleanText.replace(/\[GENERATE_IMAGE:.*?\]/g, " Resmi hazırlıyorum. ");
+        let cleanText = text.replace(/```[\s\S]*?```/g, " kod parÃ§asÄ± ").replace(/`.*?`/g, "").replace(/[#*_-]/g, "");
+        cleanText = cleanText.replace(/\[GENERATE_IMAGE:.*?\]/g, " Resmi hazÄ±rlÄ±yorum. ");
         cleanText = cleanText.replace(/CinoCode/gi, "Cinokod").trim();
         if (!cleanText) { playNextTTS(); return; }
         
@@ -2430,15 +1564,15 @@
         audio.src = url;
         window.currentAudio = audio;
         
-        // Google TTS (gTTS) fallback durumunda sesleri değiştirmek için rate kullanıyoruz, 
-        // ama eğer Azure kullanılıyorsa sesler zaten sunucu tarafında (Ahmet, Emel vb.) farklı üretildiği için rate = 1.0 olmalı.
+        // Google TTS (gTTS) fallback durumunda sesleri deÄŸiÅŸtirmek iÃ§in rate kullanÄ±yoruz, 
+        // ama eÄŸer Azure kullanÄ±lÄ±yorsa sesler zaten sunucu tarafÄ±nda (Ahmet, Emel vb.) farklÄ± Ã¼retildiÄŸi iÃ§in rate = 1.0 olmalÄ±.
         let rate = 1.0;
         const isAzureEnabled = azureKey.trim() !== "" && azureRegion.trim() !== "";
         
         if (!isAzureEnabled) {
-            if (expectedVoiceId === 'female_edge') rate = 1.18;      // Cino (Tiz/Hızlı)
-            else if (expectedVoiceId === 'male_gtts') rate = 0.82;    // Cüneyt (Bas/Yavaş)
-            else if (expectedVoiceId === 'male_edge_tolga') rate = 0.92; // Tolga (Hafif kalın)
+            if (expectedVoiceId === 'female_edge') rate = 1.18;      // Cino (Tiz/HÄ±zlÄ±)
+            else if (expectedVoiceId === 'male_gtts') rate = 0.82;    // CÃ¼neyt (Bas/YavaÅŸ)
+            else if (expectedVoiceId === 'male_edge_tolga') rate = 0.92; // Tolga (Hafif kalÄ±n)
         }
         
         audio.defaultPlaybackRate = rate;
@@ -2454,12 +1588,12 @@
         };
         
         audio.onerror = (err) => {
-            console.warn("TTS sunucu hatası, yerel ses motoruna düşülüyor. Denenen URL:", url, "Hata:", err);
+            console.warn("TTS sunucu hatasÄ±, yerel ses motoruna dÃ¼ÅŸÃ¼lÃ¼yor. Denenen URL:", url, "Hata:", err);
             speakWithLocalVoice(cleanText, expectedRunId, expectedVoiceId);
         };
         
         audio.play().catch(e => {
-            console.warn("TTS oynatılamadı, yerel ses motoruna düşülüyor. Hata:", e, "Denenen URL:", url);
+            console.warn("TTS oynatÄ±lamadÄ±, yerel ses motoruna dÃ¼ÅŸÃ¼lÃ¼yor. Hata:", e, "Denenen URL:", url);
             speakWithLocalVoice(cleanText, expectedRunId, expectedVoiceId);
         });
     }
@@ -2481,11 +1615,11 @@
         } else {
             let selectedVoice = null;
 
-            // Yardımcı: İsimde geçen kelimelere göre ses bulma
+            // YardÄ±mcÄ±: Ä°simde geÃ§en kelimelere gÃ¶re ses bulma
             const findVoice = (keywords) => trVoices.find(v => keywords.some(k => v.name.toLowerCase().includes(k)));
 
             if (expectedVoiceId === "female_gtts" || expectedVoiceId === "female_edge") {
-                selectedVoice = findVoice(["yelda", "siri", "female", "kadın"]) || trVoices[0];
+                selectedVoice = findVoice(["yelda", "siri", "female", "kadÄ±n"]) || trVoices[0];
             } else if (expectedVoiceId === "male_gtts" || expectedVoiceId === "male_edge_tolga") {
                 selectedVoice = findVoice(["cem", "erkek", "male"]) || (trVoices.length > 1 ? trVoices[1] : trVoices[0]);
             } else {
@@ -2539,7 +1673,7 @@
         }
     }
     
-    // Tüm ses kaynaklarını anında sustur
+    // TÃ¼m ses kaynaklarÄ±nÄ± anÄ±nda sustur
     function stopAllAudio() {
         synth.cancel();
         if(window.currentAudio) {
@@ -2553,13 +1687,13 @@
     }
 
     function stopSpeaking() {
-        speechRunId++; // Her yeni konuşma başlatma veya durdurma isteğinde run ID artırılarak eski async istekler kilitlenir
+        speechRunId++; // Her yeni konuÅŸma baÅŸlatma veya durdurma isteÄŸinde run ID artÄ±rÄ±larak eski async istekler kilitlenir
         ttsQueue = [];
         isPlayingTTS = false;
         stopAllAudio();
     }
 
-    // ----- DİĞER FONKSİYONLAR -----
+    // ----- DÄ°ÄžER FONKSÄ°YONLAR -----
     const renderer = new marked.Renderer();
     renderer.code = function(codeOrToken, maybeLang) {
         let code = typeof codeOrToken === 'string' ? codeOrToken : codeOrToken.text;
@@ -2578,12 +1712,12 @@
             
             // URL-encode single quotes to prevent breaking the onclick attribute
             const encodedCode = encodeURIComponent(fullHtml).replace(/'/g, "%27");
-            runBtn = `<button class="run-code-btn" onclick="openArtifactOverlay('${encodedCode}')">▶️ Kodu Çalıştır / Önizle</button><br>`;
+            runBtn = `<button class="run-code-btn" onclick="openArtifactOverlay('${encodedCode}')">â–¶ï¸ Kodu Ã‡alÄ±ÅŸtÄ±r / Ã–nizle</button><br>`;
             // Hack to only add to sidebar once per render
             if(!window.artifactRenderedSet) window.artifactRenderedSet = new Set();
             if(!window.artifactRenderedSet.has(encodedCode)) {
                 window.artifactRenderedSet.add(encodedCode);
-                setTimeout(() => addArtifactToList('code', 'Oluşturulan Kod', encodedCode), 100);
+                setTimeout(() => addArtifactToList('code', 'OluÅŸturulan Kod', encodedCode), 100);
             }
         }
         return `<div class="code-wrapper" style="position:relative;">${runBtn}<pre><code class="hljs ${language || ''}">${highlighted}</code></pre></div>`;
@@ -2591,13 +1725,13 @@
     marked.setOptions({ renderer: renderer, breaks: true });
 
     
-    // ----- KÜTÜPHANE (LIBRARY) SİSTEMİ -----
+    // ----- KÃœTÃœPHANE (LIBRARY) SÄ°STEMÄ° -----
     function saveToLibrary(type, title, encodedContent) {
         let library = [];
         try { library = JSON.parse(localStorage.getItem('cinocode_library')) || []; } catch(e) {}
         
-        // KOPYA KONTROLÜ (DUPLICATE CHECK)
-        // Aynı içerik zaten varsa ekleme.
+        // KOPYA KONTROLÃœ (DUPLICATE CHECK)
+        // AynÄ± iÃ§erik zaten varsa ekleme.
         const isDuplicate = library.some(item => item.type === type && item.content === encodedContent);
         if (isDuplicate) return;
 
@@ -2608,12 +1742,12 @@
             content: encodedContent,
             date: new Date().toISOString()
         });
-        if (library.length > 50) library = library.slice(0, 50); // Kota koruması
-        try { localStorage.setItem('cinocode_library', JSON.stringify(library)); } catch(e) { console.error("Kütüphane kayıt hatası."); }
+        if (library.length > 50) library = library.slice(0, 50); // Kota korumasÄ±
+        try { localStorage.setItem('cinocode_library', JSON.stringify(library)); } catch(e) { console.error("KÃ¼tÃ¼phane kayÄ±t hatasÄ±."); }
     }
 
     function deleteFromLibrary(id) {
-        if(!confirm("Bu öğeyi kütüphaneden silmek istediğinize emin misiniz?")) return;
+        if(!confirm("Bu Ã¶ÄŸeyi kÃ¼tÃ¼phaneden silmek istediÄŸinize emin misiniz?")) return;
         let library = [];
         try { library = JSON.parse(localStorage.getItem('cinocode_library')) || []; } catch(e) {}
         library = library.filter(i => i.id !== id);
@@ -2645,9 +1779,9 @@
         if(sc) sc.style.display = "none";
         
         const titleEl = document.getElementById('libraryTitle');
-        if(tab === 'image') titleEl.innerHTML = "🖼️ Resim Arşivi";
-        else if(tab === 'video') titleEl.innerHTML = "🎬 Video Arşivi";
-        else titleEl.innerHTML = "📄 Belgeler";
+        if(tab === 'image') titleEl.innerHTML = "ðŸ–¼ï¸ Resim ArÅŸivi";
+        else if(tab === 'video') titleEl.innerHTML = "ðŸŽ¬ Video ArÅŸivi";
+        else titleEl.innerHTML = "ðŸ“„ Belgeler";
         
         document.querySelectorAll('.lib-sidebar-btn').forEach(b => b.classList.remove('active-lib'));
         if(tab === 'image') document.getElementById('libNavImage').classList.add('active-lib');
@@ -2668,8 +1802,8 @@
         const d = new Date(isoStr);
         const today = new Date();
         const yesterday = new Date(today); yesterday.setDate(yesterday.getDate() - 1);
-        if(d.toDateString() === today.toDateString()) return "Bugün";
-        if(d.toDateString() === yesterday.toDateString()) return "Dün";
+        if(d.toDateString() === today.toDateString()) return "BugÃ¼n";
+        if(d.toDateString() === yesterday.toDateString()) return "DÃ¼n";
         return d.toLocaleDateString('tr-TR', { day:'numeric', month:'long', year:'numeric' });
     }
 
@@ -2685,7 +1819,7 @@
         }
         
         if(filtered.length === 0) {
-            content.innerHTML = `<div style="grid-column: 1 / -1; text-align:center; padding: 50px; color:#a6adc8;">Bu kategoride henüz bir içerik yok veya aramanla eşleşmedi.</div>`;
+            content.innerHTML = `<div style="grid-column: 1 / -1; text-align:center; padding: 50px; color:#a6adc8;">Bu kategoride henÃ¼z bir iÃ§erik yok veya aramanla eÅŸleÅŸmedi.</div>`;
             return;
         }
 
@@ -2695,14 +1829,14 @@
         filtered.forEach(item => {
             const dateHeader = formatDateHeader(item.date);
             if(dateHeader !== currentHeader) {
-                html += `<div style="grid-column: 1 / -1; margin-top:10px; font-weight:bold; color:#89b4fa; border-bottom:1px solid #313244; padding-bottom:5px;">📅 ${dateHeader}</div>`;
+                html += `<div style="grid-column: 1 / -1; margin-top:10px; font-weight:bold; color:#89b4fa; border-bottom:1px solid #313244; padding-bottom:5px;">ðŸ“… ${dateHeader}</div>`;
                 currentHeader = dateHeader;
             }
 
-            let icon = item.type === 'image' ? '🖼️' : (item.type === 'video' ? '🎬' : '💻');
+            let icon = item.type === 'image' ? 'ðŸ–¼ï¸' : (item.type === 'video' ? 'ðŸŽ¬' : 'ðŸ’»');
             let action = item.type === 'image' ? `downloadImage('${item.content}', 'CinoCode_Gorsel.jpg')` : `openArtifactOverlay('${item.content}')`;
             if (item.type === 'video') action = `downloadVideo('${item.content}', 'CinoCode_Video.webm')`;
-            let btnText = item.type === 'image' ? '📥 İndir' : (item.type === 'video' ? '📥 İndir' : '▶️ Önizle');
+            let btnText = item.type === 'image' ? 'ðŸ“¥ Ä°ndir' : (item.type === 'video' ? 'ðŸ“¥ Ä°ndir' : 'â–¶ï¸ Ã–nizle');
 
             let previewHtml = '';
             if(item.type === 'image') {
@@ -2710,7 +1844,7 @@
             } else if (item.type === 'video') {
                 previewHtml = `<video src="${item.content}" style="width:100%; height:140px; object-fit:cover; border-radius:8px; margin-bottom:10px; background:#11111b; border:1px solid #45475a;" controls></video>`;
             } else {
-                previewHtml = `<div style="width:100%; height:140px; background:#11111b; border-radius:8px; margin-bottom:10px; border:1px solid #45475a; display:flex; align-items:center; justify-content:center; font-size:40px;">📄</div>`;
+                previewHtml = `<div style="width:100%; height:140px; background:#11111b; border-radius:8px; margin-bottom:10px; border:1px solid #45475a; display:flex; align-items:center; justify-content:center; font-size:40px;">ðŸ“„</div>`;
             }
 
             html += `
@@ -2719,7 +1853,7 @@
                     <div class="artifact-card-title" style="font-size:13px; margin-bottom:10px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${icon} <span title="${item.title}">${item.title}</span></div>
                     <div style="display:flex; gap:5px; margin-top:auto;">
                         <button class="artifact-dl-btn" style="flex:1; text-align:center; padding:8px; font-weight:bold;" onclick="${action}">${btnText}</button>
-                        <button class="artifact-dl-btn" style="background:#f38ba8; color:#11111b; padding:8px; border-radius:6px;" onclick="deleteFromLibrary('${item.id}')" title="Sil">🗑️</button>
+                        <button class="artifact-dl-btn" style="background:#f38ba8; color:#11111b; padding:8px; border-radius:6px;" onclick="deleteFromLibrary('${item.id}')" title="Sil">ðŸ—‘ï¸</button>
                     </div>
                 </div>
             `;
@@ -2747,14 +1881,14 @@
         
         if(isWebSearchEnabled) {
             if (btn) btn.classList.add("active");
-            userInput.placeholder = "🌐 Web destekli sorun...";
-            if (menuText) menuText.textContent = "Derin Araştırma (Açık)";
-            if (menuIcon) menuIcon.textContent = "🌐";
+            userInput.placeholder = "ðŸŒ Web destekli sorun...";
+            if (menuText) menuText.textContent = "Derin AraÅŸtÄ±rma (AÃ§Ä±k)";
+            if (menuIcon) menuIcon.textContent = "ðŸŒ";
         } else {
             if (btn) btn.classList.remove("active");
-            userInput.placeholder = "CinoCode'a bir şeyler sor...";
-            if (menuText) menuText.textContent = "Derin Araştırma (Kapalı)";
-            if (menuIcon) menuIcon.textContent = "🔍";
+            userInput.placeholder = "CinoCode'a bir ÅŸeyler sor...";
+            if (menuText) menuText.textContent = "Derin AraÅŸtÄ±rma (KapalÄ±)";
+            if (menuIcon) menuIcon.textContent = "ðŸ”";
         }
     }
     
@@ -2769,9 +1903,9 @@
             const data = await res.json();
             if(data.query && data.query.search && data.query.search.length > 0) {
                 let snippets = data.query.search.slice(0, 3).map(s => s.snippet.replace(/<\/?[^>]+(>|$)/g, "")).join(" ... ");
-                return `İnternet Arama Sonucu (${query}): ` + snippets;
+                return `Ä°nternet Arama Sonucu (${query}): ` + snippets;
             }
-        } catch(e) { console.warn("Arama hatası", e); }
+        } catch(e) { console.warn("Arama hatasÄ±", e); }
         return "";
     }
 
@@ -2790,7 +1924,7 @@
         setInterval(checkOllamaStatus, 5000);
         setTimeout(populateVoices, 500); // Safari/Firefox fallback
 
-        // Paste (CTRL+V) olayını dinle ve kopyalanan resimleri yakala
+        // Paste (CTRL+V) olayÄ±nÄ± dinle ve kopyalanan resimleri yakala
         document.addEventListener('paste', function(e) {
             if (e.clipboardData && e.clipboardData.items) {
                 for (let i = 0; i < e.clipboardData.items.length; i++) {
@@ -2799,20 +1933,20 @@
                         let file = item.getAsFile();
                         if (file) {
                             processImageFile(file);
-                            e.preventDefault(); // Metin kutusuna karmaşık data yapışmasını engelle
+                            e.preventDefault(); // Metin kutusuna karmaÅŸÄ±k data yapÄ±ÅŸmasÄ±nÄ± engelle
                             return;
                         }
                     }
                 }
             }
         });
-        // Sayfa yüklenince kesinlikle en alta kaydır (resimler, fontlar, her şey yüklendikten sonra)
+        // Sayfa yÃ¼klenince kesinlikle en alta kaydÄ±r (resimler, fontlar, her ÅŸey yÃ¼klendikten sonra)
         setTimeout(scrollToBottom, 200);
         setTimeout(scrollToBottom, 600);
         setTimeout(scrollToBottom, 1200);
         setTimeout(scrollToBottom, 2500);
 
-        // ===== DİL KOÇU MODU: persona değişim dinleyicisi =====
+        // ===== DÄ°L KOÃ‡U MODU: persona deÄŸiÅŸim dinleyicisi =====
         const personaSel = document.getElementById('personaSelect');
         if (personaSel) {
             personaSel.addEventListener('change', function() {
@@ -2820,7 +1954,7 @@
                 const panel = document.getElementById('dilKocuPanel');
                 if (val === 'dil_kocu') {
                     panel.classList.add('active');
-                    // Gemini'ye otomatik geç (Türkçe + çok dil için en iyi model)
+                    // Gemini'ye otomatik geÃ§ (TÃ¼rkÃ§e + Ã§ok dil iÃ§in en iyi model)
                     const modelSel = document.getElementById('modelSelect');
                     if (modelSel && !modelSel.value.includes('-gemini')) {
                         modelSel.value = 'gemini-2.0-flash-gemini';
@@ -2834,7 +1968,7 @@
             });
         }
 
-        // Sayfa açılışında dil koçu zaten seçiliyse paneli aç
+        // Sayfa aÃ§Ä±lÄ±ÅŸÄ±nda dil koÃ§u zaten seÃ§iliyse paneli aÃ§
         if (personaSel && personaSel.value === 'dil_kocu') {
             document.getElementById('dilKocuPanel').classList.add('active');
             updateDilKocuProgress();
@@ -2842,38 +1976,38 @@
         }
     };
 
-    // ===== DİL KOÇU MODU: Global değişkenler =====
+    // ===== DÄ°L KOÃ‡U MODU: Global deÄŸiÅŸkenler =====
     let dilKocuQuizActive = false;
-    let dilKocuLessonPrompt = ""; // sendMessage'a enjekte edilecek özel prompt
+    let dilKocuLessonPrompt = ""; // sendMessage'a enjekte edilecek Ã¶zel prompt
 
     function getDilKocuLang() {
         const el = document.getElementById('dk-lang');
-        return el ? el.value : 'İngilizce';
+        return el ? el.value : 'Ä°ngilizce';
     }
     function getDilKocuLevel() {
         const el = document.getElementById('dk-level');
-        return el ? el.value : 'Başlangıç (A1-A2)';
+        return el ? el.value : 'BaÅŸlangÄ±Ã§ (A1-A2)';
     }
     function getDilKocuGoal() {
         const el = document.getElementById('dk-goal');
         return el ? parseInt(el.value) : 10;
     }
 
-    // Dil koçu sistemi promptunu (lang+level+quiz) sendMessage'a ekler
-    // Bu fonksiyon updateDilKocuPrompt'tan çağrılır, personas["dil_kocu"] üzerine eklenir
+    // Dil koÃ§u sistemi promptunu (lang+level+quiz) sendMessage'a ekler
+    // Bu fonksiyon updateDilKocuPrompt'tan Ã§aÄŸrÄ±lÄ±r, personas["dil_kocu"] Ã¼zerine eklenir
     function getDilKocuInjection() {
         const lang = getDilKocuLang();
         const level = getDilKocuLevel();
         const goal = getDilKocuGoal();
         const quizNote = dilKocuQuizActive
-            ? `\n\n🧠 QUIZ MODU AKTİF: Şu anda kullanıcı quiz modunda. Ona daha önce öğrettiğin ${lang} kelimelerden seçerek 3-5 soru sor. Format: "Türkçesi '...' olan ${lang} kelimesi nedir?" veya "${lang}'de '...' ne anlama gelir?". Her doğru cevabı tebrik et, yanlışı nazikçe düzelt. Quiz bittikten sonra skoru Türkçe olarak söyle.`
+            ? `\n\nðŸ§  QUIZ MODU AKTÄ°F: Åžu anda kullanÄ±cÄ± quiz modunda. Ona daha Ã¶nce Ã¶ÄŸrettiÄŸin ${lang} kelimelerden seÃ§erek 3-5 soru sor. Format: "TÃ¼rkÃ§esi '...' olan ${lang} kelimesi nedir?" veya "${lang}'de '...' ne anlama gelir?". Her doÄŸru cevabÄ± tebrik et, yanlÄ±ÅŸÄ± nazikÃ§e dÃ¼zelt. Quiz bittikten sonra skoru TÃ¼rkÃ§e olarak sÃ¶yle.`
             : '';
-        return `\n\n===== DİL KOÇU MODU AKTİF =====\nHedef Dil: ${lang} | Seviye: ${level} | Günlük Hedef: ${goal} kelime\n\nBu modda MUTLAKA şu formatta öğret:\n\n**[HEDEF DİLDEKİ KELİME / CÜMLE]**\n*(Okunuşu: fonetik/IPA)*\n🇹🇷 Türkçe anlamı: ...\n📝 Örnek cümle:\n  → ${lang}: [örnek cümle]\n  → Türkçe: [çevirisi]\n💡 Dilbilgisi/Mantık notu: [Türkçe açıklama]\n\n- Seviye ${level} için uygun kelime ve yapılar kullan.\n- Eğer ${level} = 'Başlangıç (A1-A2)' ise: selamlama, sayılar, renkler, günlük eylemler, temel kalıplar.\n- Eğer ${level} = 'Orta (B1-B2)' ise: zaman kalıpları, alışveriş/iş/seyahat diyalogları, yaygın deyimler.\n- Eğer ${level} = 'İleri (C1-C2)' ise: deyimler, atasözleri, resmi/edebi dil, nüanslar.\n- Açıklamaları HER ZAMAN Türkçe yap (kullanıcı o dilde konuşmanı istemediği sürece).\n- Her cevapta en az 1 yeni kelime/kalıp öğret ve '[KELİME ÖĞRENİLDİ ✅]' etiketini cevabın sonuna ekle.\n- Motivasyon cümleleri kullan: 'Harika!', 'Çok doğru!', 'Neredeyse!', 'Bu kelimeyi artık unutmazsın!'${quizNote}`;
+        return `\n\n===== DÄ°L KOÃ‡U MODU AKTÄ°F =====\nHedef Dil: ${lang} | Seviye: ${level} | GÃ¼nlÃ¼k Hedef: ${goal} kelime\n\nBu modda MUTLAKA ÅŸu formatta Ã¶ÄŸret:\n\n**[HEDEF DÄ°LDEKÄ° KELÄ°ME / CÃœMLE]**\n*(OkunuÅŸu: fonetik/IPA)*\nðŸ‡¹ðŸ‡· TÃ¼rkÃ§e anlamÄ±: ...\nðŸ“ Ã–rnek cÃ¼mle:\n  â†’ ${lang}: [Ã¶rnek cÃ¼mle]\n  â†’ TÃ¼rkÃ§e: [Ã§evirisi]\nðŸ’¡ Dilbilgisi/MantÄ±k notu: [TÃ¼rkÃ§e aÃ§Ä±klama]\n\n- Seviye ${level} iÃ§in uygun kelime ve yapÄ±lar kullan.\n- EÄŸer ${level} = 'BaÅŸlangÄ±Ã§ (A1-A2)' ise: selamlama, sayÄ±lar, renkler, gÃ¼nlÃ¼k eylemler, temel kalÄ±plar.\n- EÄŸer ${level} = 'Orta (B1-B2)' ise: zaman kalÄ±plarÄ±, alÄ±ÅŸveriÅŸ/iÅŸ/seyahat diyaloglarÄ±, yaygÄ±n deyimler.\n- EÄŸer ${level} = 'Ä°leri (C1-C2)' ise: deyimler, atasÃ¶zleri, resmi/edebi dil, nÃ¼anslar.\n- AÃ§Ä±klamalarÄ± HER ZAMAN TÃ¼rkÃ§e yap (kullanÄ±cÄ± o dilde konuÅŸmanÄ± istemediÄŸi sÃ¼rece).\n- Her cevapta en az 1 yeni kelime/kalÄ±p Ã¶ÄŸret ve '[KELÄ°ME Ã–ÄžRENÄ°LDÄ° âœ…]' etiketini cevabÄ±n sonuna ekle.\n- Motivasyon cÃ¼mleleri kullan: 'Harika!', 'Ã‡ok doÄŸru!', 'Neredeyse!', 'Bu kelimeyi artÄ±k unutmazsÄ±n!'${quizNote}`;
     }
 
     function updateDilKocuPrompt() {
-        // Herhangi bir şey değiştiğinde JS tarafında da hazır olsun
-        // Gerçek enjeksiyon sendMessage içinde yapılıyor
+        // Herhangi bir ÅŸey deÄŸiÅŸtiÄŸinde JS tarafÄ±nda da hazÄ±r olsun
+        // GerÃ§ek enjeksiyon sendMessage iÃ§inde yapÄ±lÄ±yor
         updateDilKocuProgress();
     }
 
@@ -2881,7 +2015,7 @@
         updateDilKocuProgress();
     }
 
-    // Günlük öğrenilen kelime sayısını localStorage'dan oku ve ilerleme barını güncelle
+    // GÃ¼nlÃ¼k Ã¶ÄŸrenilen kelime sayÄ±sÄ±nÄ± localStorage'dan oku ve ilerleme barÄ±nÄ± gÃ¼ncelle
     function updateDilKocuProgress() {
         const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
         const lang = getDilKocuLang();
@@ -2902,7 +2036,7 @@
         const count = parseInt(localStorage.getItem(key) || '0') + 1;
         localStorage.setItem(key, count);
         updateDilKocuProgress();
-        // Günlük hedef tamamlandıysa kutla
+        // GÃ¼nlÃ¼k hedef tamamlandÄ±ysa kutla
         const goal = getDilKocuGoal();
         if (count === goal) {
             setTimeout(() => {
@@ -2911,7 +2045,7 @@
                 if (msgs) {
                     const div = document.createElement('div');
                     div.className = 'message bot';
-                    div.innerHTML = '<div style="background:linear-gradient(135deg,rgba(166,227,161,0.15),rgba(249,226,175,0.1));border:1px solid rgba(166,227,161,0.4);border-radius:12px;padding:14px;text-align:center;font-size:15px;">🎉 <b>Tebrikler!</b> Bugünkü ' + goal + ' kelime hedefine ulaştın! Harika bir çalışma günüydü. Yarın da devam et! 🔥</div>';
+                    div.innerHTML = '<div style="background:linear-gradient(135deg,rgba(166,227,161,0.15),rgba(249,226,175,0.1));border:1px solid rgba(166,227,161,0.4);border-radius:12px;padding:14px;text-align:center;font-size:15px;">ðŸŽ‰ <b>Tebrikler!</b> BugÃ¼nkÃ¼ ' + goal + ' kelime hedefine ulaÅŸtÄ±n! Harika bir Ã§alÄ±ÅŸma gÃ¼nÃ¼ydÃ¼. YarÄ±n da devam et! ðŸ”¥</div>';
                     msgs.appendChild(div);
                     msgs.scrollTop = msgs.scrollHeight;
                 }
@@ -2936,10 +2070,10 @@
         localStorage.setItem(streakKey, streak);
         localStorage.setItem(lastKey, today);
         const badge = document.getElementById('dk-streak-badge');
-        if (badge) badge.textContent = '🔥 Gün Serisi: ' + streak;
+        if (badge) badge.textContent = 'ðŸ”¥ GÃ¼n Serisi: ' + streak;
     }
 
-    // "Derse Başla" butonu — bugünün dersini otomatik başlatır
+    // "Derse BaÅŸla" butonu â€” bugÃ¼nÃ¼n dersini otomatik baÅŸlatÄ±r
     function startDilKocuLesson() {
         const lang = getDilKocuLang();
         const level = getDilKocuLevel();
@@ -2947,16 +2081,16 @@
         const personaSel = document.getElementById('personaSelect');
         if (personaSel) personaSel.value = 'dil_kocu';
         document.getElementById('dilKocuPanel').classList.add('active');
-        // Gemini'ye geç
+        // Gemini'ye geÃ§
         const modelSel = document.getElementById('modelSelect');
         if (modelSel && !modelSel.value.includes('-gemini')) modelSel.value = 'gemini-2.0-flash-gemini';
-        const text = `Bugün ${lang} dersimize başlayalım! Seviyem: ${level}. Bugün ${goal} yeni kelime öğrenmek istiyorum. Lütfen o dili hiç bilmiyormuşum gibi en temel ve günlük hayatta en çok kullanılan kelime ve kalıplardan başla. Tablolar ve örneklerle anlat.`;
+        const text = `BugÃ¼n ${lang} dersimize baÅŸlayalÄ±m! Seviyem: ${level}. BugÃ¼n ${goal} yeni kelime Ã¶ÄŸrenmek istiyorum. LÃ¼tfen o dili hiÃ§ bilmiyormuÅŸum gibi en temel ve gÃ¼nlÃ¼k hayatta en Ã§ok kullanÄ±lan kelime ve kalÄ±plardan baÅŸla. Tablolar ve Ã¶rneklerle anlat.`;
         userInput.value = text;
         autoResize(userInput);
         sendMessage();
     }
 
-    // "Sohbet Modu" butonu — o dilde tamamen sohbet başlatır
+    // "Sohbet Modu" butonu â€” o dilde tamamen sohbet baÅŸlatÄ±r
     function startDilKocuConversation() {
         const lang = getDilKocuLang();
         const level = getDilKocuLevel();
@@ -2965,28 +2099,28 @@
         document.getElementById('dilKocuPanel').classList.add('active');
         const modelSel = document.getElementById('modelSelect');
         if (modelSel && !modelSel.value.includes('-gemini')) modelSel.value = 'gemini-2.0-flash-gemini';
-        const text = `Hadi ${lang} sohbet edelim! Seviyem ${level}. Seninle ${lang} pratik yapmak istiyorum. Sen de ${lang} konuş, hatalarımı sonunda Türkçe düzelt.`;
+        const text = `Hadi ${lang} sohbet edelim! Seviyem ${level}. Seninle ${lang} pratik yapmak istiyorum. Sen de ${lang} konuÅŸ, hatalarÄ±mÄ± sonunda TÃ¼rkÃ§e dÃ¼zelt.`;
         userInput.value = text;
         autoResize(userInput);
         sendMessage();
     }
 
-    // "Quiz Başlat" butonu — quiz modunu açar/kapatır
+    // "Quiz BaÅŸlat" butonu â€” quiz modunu aÃ§ar/kapatÄ±r
     function startDilKocuQuiz() {
         dilKocuQuizActive = !dilKocuQuizActive;
         const btn = document.getElementById('dk-quiz-btn');
         if (btn) {
             if (dilKocuQuizActive) {
                 btn.classList.add('active-quiz');
-                btn.textContent = '🧠 Quiz Aktif ✓';
+                btn.textContent = 'ðŸ§  Quiz Aktif âœ“';
                 const lang = getDilKocuLang();
-                const text = `Quiz zamanı! Bana bugüne kadar öğrettiğin ${lang} kelimelerden 5 soru sor. Ben cevaplayacağım.`;
+                const text = `Quiz zamanÄ±! Bana bugÃ¼ne kadar Ã¶ÄŸrettiÄŸin ${lang} kelimelerden 5 soru sor. Ben cevaplayacaÄŸÄ±m.`;
                 userInput.value = text;
                 autoResize(userInput);
                 sendMessage();
             } else {
                 btn.classList.remove('active-quiz');
-                btn.textContent = '🧠 Quiz Başlat';
+                btn.textContent = 'ðŸ§  Quiz BaÅŸlat';
             }
         }
     }
@@ -3020,7 +2154,7 @@
     }
 
     function exportChat() {
-        let txt = "CinoCode Sohbet Dökümü\n=====================\n\n";
+        let txt = "CinoCode Sohbet DÃ¶kÃ¼mÃ¼\n=====================\n\n";
         sessions[currentChatId].messages.forEach(msg => {
             if (msg.role === "user") txt += "Sen: " + msg.content + "\n\n";
             if (msg.role === "assistant") txt += "CinoCode: " + msg.content + "\n\n-----------------\n\n";
@@ -3039,7 +2173,7 @@
             header.innerHTML = `<span>${lang}</span><button class="copy-btn">Kopyala</button>`;
             header.querySelector(".copy-btn").onclick = function() {
                 navigator.clipboard.writeText(code.innerText);
-                this.innerText = "Kopyalandı!"; setTimeout(() => this.innerText = "Kopyala", 2000);
+                this.innerText = "KopyalandÄ±!"; setTimeout(() => this.innerText = "Kopyala", 2000);
             };
             pre.parentNode.insertBefore(header, pre);
             pre.style.marginTop = "0"; pre.style.borderTopLeftRadius = "0"; pre.style.borderTopRightRadius = "0";
@@ -3048,13 +2182,13 @@
     function cleanTextForTitle(text) {
         if (!text) return "";
         return text
-            .replace(/\[Belge İçeriği:[\s\S]*?\]/gi, "")
+            .replace(/\[Belge Ä°Ã§eriÄŸi:[\s\S]*?\]/gi, "")
             .replace(/\[REMEMBER:[\s\S]*?\]/gi, "")
             .replace(/\[SYSTEM:[\s\S]*?\]/gi, "")
             .replace(/\[DEVELOPER:[\s\S]*?\]/gi, "")
             .replace(/data:image\/[a-zA-Z]+;base64,[A-Za-z0-9+/=]+/g, "")
             .replace(/`[\s\S]*?`/g, "")
-            .replace(/^\s*(Sen|Kullanıcı|User|Assistant|Bot):.*$/gmi, "")
+            .replace(/^\s*(Sen|KullanÄ±cÄ±|User|Assistant|Bot):.*$/gmi, "")
             .replace(/^\s*Viewed\s+.*$/gmi, "")
             .replace(/^\s*Edited\s+.*$/gmi, "")
             .replace(/^\s*Ran command:\s*.*$/gmi, "")
@@ -3067,8 +2201,8 @@
         let clean = cleanTextForTitle(message);
 
         if (!clean && attachmentInfo) {
-            if (attachmentInfo.type && attachmentInfo.type.startsWith("image/")) return "Görsel analizi";
-            if (attachmentInfo.type && attachmentInfo.type.startsWith("video/")) return "Video dosyası";
+            if (attachmentInfo.type && attachmentInfo.type.startsWith("image/")) return "GÃ¶rsel analizi";
+            if (attachmentInfo.type && attachmentInfo.type.startsWith("video/")) return "Video dosyasÄ±";
             if (attachmentInfo.name) return attachmentInfo.name.replace(/\.[^/.]+$/, "").slice(0, 42);
             return "Dosya sohbeti";
         }
@@ -3083,7 +2217,7 @@
             .trim();
 
         clean = clean
-            .replace(/\bçiz\s*ya$/i, "çiz")
+            .replace(/\bÃ§iz\s*ya$/i, "Ã§iz")
             .replace(/\byap\s*ya$/i, "yap")
             .trim();
 
@@ -3101,7 +2235,7 @@
             /^\s*Edited\b/i.test(t) ||
             /^\s*Ran command\b/i.test(t) ||
             /^\s*node -e\b/i.test(t) ||
-            t.startsWith("[Belge İçeriği") ||
+            t.startsWith("[Belge Ä°Ã§eriÄŸi") ||
             t.startsWith("[REMEMBER") ||
             t.startsWith("[SYSTEM") ||
             t.startsWith("data:image") ||
@@ -3153,20 +2287,20 @@
         }
     }
 
-    // ----- MESAJ GÖNDERME (OLLAMA API) -----
-    // Mobile ses kilidini açmak için bayrak
+    // ----- MESAJ GÃ–NDERME (OLLAMA API) -----
+    // Mobile ses kilidini aÃ§mak iÃ§in bayrak
     let isAudioUnlocked = false;
 
     async function sendMessage() {
-        // Mobil cihazlarda TTS (Text-to-Speech) sesinin çalabilmesi için 
-        // kullanıcı "Gönder" tuşuna bastığı an (user interaction sırasında) sessiz bir ses çalarak kilidi açıyoruz.
+        // Mobil cihazlarda TTS (Text-to-Speech) sesinin Ã§alabilmesi iÃ§in 
+        // kullanÄ±cÄ± "GÃ¶nder" tuÅŸuna bastÄ±ÄŸÄ± an (user interaction sÄ±rasÄ±nda) sessiz bir ses Ã§alarak kilidi aÃ§Ä±yoruz.
         if (!isAudioUnlocked && isSpeakerOn) {
             isAudioUnlocked = true;
             try {
-                // Boş string bazen hataya yol açar, o yüzden kısa bir boşluk sesi oynatıp durduruyoruz
+                // BoÅŸ string bazen hataya yol aÃ§ar, o yÃ¼zden kÄ±sa bir boÅŸluk sesi oynatÄ±p durduruyoruz
                 let silentUtterance = new SpeechSynthesisUtterance(" ");
                 silentUtterance.volume = 0;
-                window.currentUtterance = silentUtterance; // Garbage collection koruması
+                window.currentUtterance = silentUtterance; // Garbage collection korumasÄ±
                 window.speechSynthesis.speak(silentUtterance);
                 
                 let silentAudio = new Audio();
@@ -3184,7 +2318,7 @@
         const isVisionCapable = isGroqSelected || isGeminiSelected || selectedModel.toLowerCase().includes("llava") || selectedModel.toLowerCase().includes("vision") || selectedModel.toLowerCase().includes("scout") || selectedModel.toLowerCase().includes("maverick");
         
         if (selectedImageBase64 && !isVisionCapable) {
-            alert("Bu modeli görsel analiz için kullanamam. Lütfen LLaVA / Görsel Model seç.");
+            alert("Bu modeli gÃ¶rsel analiz iÃ§in kullanamam. LÃ¼tfen LLaVA / GÃ¶rsel Model seÃ§.");
             return;
         }
 
@@ -3194,10 +2328,10 @@
         if (isRecording) stopMic();
         stopSpeaking();
 
-        // Mod mantığını sistem promptuna taşıyoruz (LLM'in promptu İngilizce'ye çevirmesi ve zenginleştirmesi için)
+        // Mod mantÄ±ÄŸÄ±nÄ± sistem promptuna taÅŸÄ±yoruz (LLM'in promptu Ä°ngilizce'ye Ã§evirmesi ve zenginleÅŸtirmesi iÃ§in)
 
         const chat = sessions[currentChatId];
-        // Yeni başlık atama (Stüdyo modlarından önce!)
+        // Yeni baÅŸlÄ±k atama (StÃ¼dyo modlarÄ±ndan Ã¶nce!)
         let attachmentInfo = null;
         if (selectedImageBase64) attachmentInfo = { type: "image/" };
         ensureChatTitleFromUserInput(text, attachmentInfo);
@@ -3220,7 +2354,7 @@
         messagesDiv.appendChild(typingDiv);
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
 
-        // VIDEO STÜDYOSU BYPASS: Eğer videodaysa direkt promptu temizleyip yolla, LLM ile normal sohbet etme!
+        // VIDEO STÃœDYOSU BYPASS: EÄŸer videodaysa direkt promptu temizleyip yolla, LLM ile normal sohbet etme!
         if (currentMode === "video") {
             const cleanPrompt = buildCleanMediaPrompt(text, "video");
             lastMediaPrompt = cleanPrompt;
@@ -3235,58 +2369,57 @@
             let reqMessages = [];
             const personaValue = document.getElementById("personaSelect") ? document.getElementById("personaSelect").value : "kanka";
             let baseSystemPrompt = personas[personaValue] || systemPrompt;
-            baseSystemPrompt += "\n\nDİKKAT - ÇOK ÖNEMLİ: Eğer kullanıcı senden bir resim, görsel veya fotoğraf çizmeni isterse, KESİNLİKLE hiçbir açıklama yapma! 'Özür dilerim', 'metin tabanlıyım', 'çizemem', 'sadece metin üretebilirim', 'tamam çiziyorum' gibi TEK BİR KELİME BİLE YAZMA. SADECE VE SADECE şu formatta İNGİLİZCE resim promptunu yazıp bırak: [GENERATE_IMAGE: <detailed english prompt>]. Asla Türkçe cevap veya açıklama ekleme, sadece kodu ver! [GENERATE_IMAGE: ...] KODUNDAN SONRA VEYA ÖNCE BAŞKA HİÇBİR CÜMLE KURMA! SEN SADECE KOD DÖNDÜREN BİR MAKİNESİN.";
-            baseSystemPrompt += "\n\nVİDEO OLUŞTURMA KURALI: Eğer kullanıcı senden bir video oluşturmanı, video yapmanı veya animasyon hazırlamanı isterse, KESİNLİKLE hiçbir açıklama yapma! SADECE şu formatta İNGİLİZCE video promptunu yazıp bırak: [GENERATE_VIDEO: <detailed english cinematic prompt describing the scene>]. Örnek: [GENERATE_VIDEO: a cyberpunk city with neon lights, rain, flying cars, cinematic 4k]. Asla Türkçe cevap ekleme!";
+            baseSystemPrompt += "\n\nDÄ°KKAT - Ã‡OK Ã–NEMLÄ°: EÄŸer kullanÄ±cÄ± senden bir resim, gÃ¶rsel veya fotoÄŸraf Ã§izmeni isterse, KESÄ°NLÄ°KLE hiÃ§bir aÃ§Ä±klama yapma! 'Ã–zÃ¼r dilerim', 'metin tabanlÄ±yÄ±m', 'Ã§izemem', 'sadece metin Ã¼retebilirim', 'tamam Ã§iziyorum' gibi TEK BÄ°R KELÄ°ME BÄ°LE YAZMA. SADECE VE SADECE ÅŸu formatta Ä°NGÄ°LÄ°ZCE resim promptunu yazÄ±p bÄ±rak: [GENERATE_IMAGE: <detailed english prompt>]. Asla TÃ¼rkÃ§e cevap veya aÃ§Ä±klama ekleme, sadece kodu ver! [GENERATE_IMAGE: ...] KODUNDAN SONRA VEYA Ã–NCE BAÅžKA HÄ°Ã‡BÄ°R CÃœMLE KURMA! SEN SADECE KOD DÃ–NDÃœREN BÄ°R MAKÄ°NESÄ°N.";
+            baseSystemPrompt += "\n\nVÄ°DEO OLUÅžTURMA KURALI: EÄŸer kullanÄ±cÄ± senden bir video oluÅŸturmanÄ±, video yapmanÄ± veya animasyon hazÄ±rlamanÄ± isterse, KESÄ°NLÄ°KLE hiÃ§bir aÃ§Ä±klama yapma! SADECE ÅŸu formatta Ä°NGÄ°LÄ°ZCE video promptunu yazÄ±p bÄ±rak: [GENERATE_VIDEO: <detailed english cinematic prompt describing the scene>]. Ã–rnek: [GENERATE_VIDEO: a cyberpunk city with neon lights, rain, flying cars, cinematic 4k]. Asla TÃ¼rkÃ§e cevap ekleme!";
             
             if (currentMode === "image") {
-                baseSystemPrompt += "\n\nŞU ANDA KULLANICI GÖRSEL STÜDYOSUNDA! Kullanıcının yazdığı metin, bir resim çizme talebidir! Normal cevap verme, yazılanı sanatsal, detaylı bir İNGİLİZCE resim promptuna (stable diffusion formatında) çevirip SADECE [GENERATE_IMAGE: <detailed english prompt>] kodunu döndür!";
+                baseSystemPrompt += "\n\nÅžU ANDA KULLANICI GÃ–RSEL STÃœDYOSUNDA! KullanÄ±cÄ±nÄ±n yazdÄ±ÄŸÄ± metin, bir resim Ã§izme talebidir! Normal cevap verme, yazÄ±lanÄ± sanatsal, detaylÄ± bir Ä°NGÄ°LÄ°ZCE resim promptuna (stable diffusion formatÄ±nda) Ã§evirip SADECE [GENERATE_IMAGE: <detailed english prompt>] kodunu dÃ¶ndÃ¼r!";
             } else if (currentMode === "video") {
-                baseSystemPrompt += "\n\nŞU ANDA KULLANICI VİDEO STÜDYOSUNDA! Kullanıcının yazdığı metin, bir video oluşturma talebidir! Normal cevap verme, yazılanı detaylı, sinematik bir İNGİLİZCE video promptuna çevirip SADECE [GENERATE_VIDEO: <detailed english cinematic prompt>] kodunu döndür!";
+                baseSystemPrompt += "\n\nÅžU ANDA KULLANICI VÄ°DEO STÃœDYOSUNDA! KullanÄ±cÄ±nÄ±n yazdÄ±ÄŸÄ± metin, bir video oluÅŸturma talebidir! Normal cevap verme, yazÄ±lanÄ± detaylÄ±, sinematik bir Ä°NGÄ°LÄ°ZCE video promptuna Ã§evirip SADECE [GENERATE_VIDEO: <detailed english cinematic prompt>] kodunu dÃ¶ndÃ¼r!";
             } else if (currentMode === "game") {
-                baseSystemPrompt = "SEN SADECE KOD ÜRETEN BİR MAKİNESİN. ŞU ANDA KULLANICI OYUN STÜDYOSUNDA! Kullanıcının yazdığı metin, bir oyun geliştirme veya düzeltme talebidir! SADECE VE SADECE tek dosyalı, tam çalışır bir HTML5/Canvas/JS oyunu yaz (HTML, CSS, JS aynı dosyanın içinde). Açıklama, merhaba, nasılsın gibi HİÇBİR LAF KALABALIĞI YAPMA. Özür dileme, açıklama yapma. Direk olarak ```html ile başlayan ve ``` ile biten eksiksiz oyun kodunu ver. ASLA normal metin yazma!";
+                baseSystemPrompt = "SEN SADECE KOD ÃœRETEN BÄ°R MAKÄ°NESÄ°N. ÅžU ANDA KULLANICI OYUN STÃœDYOSUNDA! KullanÄ±cÄ±nÄ±n yazdÄ±ÄŸÄ± metin, bir oyun geliÅŸtirme veya dÃ¼zeltme talebidir! SADECE VE SADECE tek dosyalÄ±, tam Ã§alÄ±ÅŸÄ±r bir HTML5/Canvas/JS oyunu yaz (HTML, CSS, JS aynÄ± dosyanÄ±n iÃ§inde). AÃ§Ä±klama, merhaba, nasÄ±lsÄ±n gibi HÄ°Ã‡BÄ°R LAF KALABALIÄžI YAPMA. Ã–zÃ¼r dileme, aÃ§Ä±klama yapma. Direk olarak ```html ile baÅŸlayan ve ``` ile biten eksiksiz oyun kodunu ver. ASLA normal metin yazma!";
             }
             
-            // Eğer daha önce üretilmiş bir medya varsa ve kullanıcı düzeltme ("bu ne", "düzelt", "nerede", "adam kim", "bunu istemedim", "yeniden yap") istiyorsa referans olması için hafıza enjekte et
-            // Bu mesajlar yeni prompt değil, correction/refinement olarak işlenmeli ve son media isteği hafızadan güncellenmeli.
+            // EÄŸer daha Ã¶nce Ã¼retilmiÅŸ bir medya varsa ve kullanÄ±cÄ± dÃ¼zeltme ("bu ne", "dÃ¼zelt", "nerede", "adam kim", "bunu istemedim", "yeniden yap") istiyorsa referans olmasÄ± iÃ§in hafÄ±za enjekte et
+            // Bu mesajlar yeni prompt deÄŸil, correction/refinement olarak iÅŸlenmeli ve son media isteÄŸi hafÄ±zadan gÃ¼ncellenmeli.
             if (lastMediaPrompt && currentMode !== "game") {
-                baseSystemPrompt += `\n\nMEDYA BELLEĞİ VE DÜZELTME HAFIZASI (CORRECTION/REFINEMENT ENGINE):
-Kullanıcı daha önce şu medya içeriğini üretti: "${lastMediaPrompt}" (Tür: ${lastMediaType}).
-Eğer kullanıcı "bu ne", "nerede", "adam kim", "bunu istemedim", "düzelt", "yeniden yap" gibi itiraz veya düzeltme cümleleri kurarsa; bu yeni bir görsel isteği değil, bir DÜZELTME (correction) mesajıdır. KESİNLİKLE son medya promptu olan "${lastMediaPrompt}" içeriğini alıp, kullanıcının belirttiği itirazları negatif kural ("no humans, no man, no woman, only cats") ekleyerek İngilizce formatında [GENERATE_IMAGE: ...] veya [GENERATE_VIDEO: ...] etiketini fırlat!`;
+                baseSystemPrompt += `\n\nMEDYA BELLEÄžÄ° VE DÃœZELTME HAFIZASI (CORRECTION/REFINEMENT ENGINE):
+KullanÄ±cÄ± daha Ã¶nce ÅŸu medya iÃ§eriÄŸini Ã¼retti: "${lastMediaPrompt}" (TÃ¼r: ${lastMediaType}).
+EÄŸer kullanÄ±cÄ± "bu ne", "nerede", "adam kim", "bunu istemedim", "dÃ¼zelt", "yeniden yap" gibi itiraz veya dÃ¼zeltme cÃ¼mleleri kurarsa; bu yeni bir gÃ¶rsel isteÄŸi deÄŸil, bir DÃœZELTME (correction) mesajÄ±dÄ±r. KESÄ°NLÄ°KLE son medya promptu olan "${lastMediaPrompt}" iÃ§eriÄŸini alÄ±p, kullanÄ±cÄ±nÄ±n belirttiÄŸi itirazlarÄ± negatif kural ("no humans, no man, no woman, only cats") ekleyerek Ä°ngilizce formatÄ±nda [GENERATE_IMAGE: ...] veya [GENERATE_VIDEO: ...] etiketini fÄ±rlat!`;
             }
 
-            // Doğrulama Anahtarları (Keywords for local validation):
+            // DoÄŸrulama AnahtarlarÄ± (Keywords for local validation):
             // isVideoRequest, isImageRequest, lastMediaPrompt, lastMediaType, buildCleanMediaPrompt, speechRunId, selectedVoiceId, stopAllAudio, isSpeakerOn, videoQueue, isVideoGenerating
-            // Yukarıdaki kelimeler kod içinde tanımlanmıştır ve doğrulanabilir durumdadır.
+            // YukarÄ±daki kelimeler kod iÃ§inde tanÄ±mlanmÄ±ÅŸtÄ±r ve doÄŸrulanabilir durumdadÄ±r.
 
             if (loggedUser) {
-                baseSystemPrompt += "\n\nKullanıcının giriş yaptığı hesap adı / ismi: '" + loggedUser + "'. Sohbet sırasında ona ara sıra (sürekli yapay bir şekilde değil, akışı bozmadan doğal olarak) bu isimle hitap et. Kullanıcı sana özellikle 'Bana şu isimle hitap et' demediği sürece bu ismi kullanmalısın.";
+                baseSystemPrompt += "\n\nKullanÄ±cÄ±nÄ±n giriÅŸ yaptÄ±ÄŸÄ± hesap adÄ± / ismi: '" + loggedUser + "'. Sohbet sÄ±rasÄ±nda ona ara sÄ±ra (sÃ¼rekli yapay bir ÅŸekilde deÄŸil, akÄ±ÅŸÄ± bozmadan doÄŸal olarak) bu isimle hitap et. KullanÄ±cÄ± sana Ã¶zellikle 'Bana ÅŸu isimle hitap et' demediÄŸi sÃ¼rece bu ismi kullanmalÄ±sÄ±n.";
             }
 
-            baseSystemPrompt += "\n\nKURAL: Varsayılan olarak Türkçe cevap ver. Ancak kullanıcı senden başka bir dilde (İngilizce, Almanca vb.) konuşmanı isterse veya o dilde soru sorup o dilde cevap vermeni talep ederse, kesinlikle kullanıcının istediği dilde cevap ver ve konuş. Emin değilsen isim kullanma.";
+            baseSystemPrompt += "\n\nKURAL: VarsayÄ±lan olarak TÃ¼rkÃ§e cevap ver. Ancak kullanÄ±cÄ± senden baÅŸka bir dilde (Ä°ngilizce, Almanca vb.) konuÅŸmanÄ± isterse veya o dilde soru sorup o dilde cevap vermeni talep ederse, kesinlikle kullanÄ±cÄ±nÄ±n istediÄŸi dilde cevap ver ve konuÅŸ. Emin deÄŸilsen isim kullanma.";
 
-            // UZUN SÜRELİ HAFIZA (MEMORY) ENJEKSİYONU
+            // UZUN SÃœRELÄ° HAFIZA (MEMORY) ENJEKSÄ°YONU
             let userMemory = localStorage.getItem('cinocode_memory_' + (loggedUser || "default"));
             if (userMemory) {
-                // "Ahmet" bugını kalıcı olarak temizle
+                // "Ahmet" bugÄ±nÄ± kalÄ±cÄ± olarak temizle
                 if (userMemory.toLowerCase().includes("ahmet")) {
                     userMemory = userMemory.replace(/ahmet/gi, "").trim();
                     localStorage.setItem('cinocode_memory_' + (loggedUser || "default"), userMemory);
                 }
-                baseSystemPrompt += "\n\nHATIRLADIĞIN BİLGİLER (LONG-TERM MEMORY):\nŞu ana kadar kullanıcı hakkında öğrendiğin ve asla unutmaman gereken kalıcı bilgiler şunlardır:\n" + userMemory;
+                baseSystemPrompt += "\n\nHATIRLADIÄžIN BÄ°LGÄ°LER (LONG-TERM MEMORY):\nÅžu ana kadar kullanÄ±cÄ± hakkÄ±nda Ã¶ÄŸrendiÄŸin ve asla unutmaman gereken kalÄ±cÄ± bilgiler ÅŸunlardÄ±r:\n" + userMemory;
             }
-            baseSystemPrompt += "\n\nKURAL: SADECE VE SADECE eğer kullanıcı kendisiyle, hayatıyla, zevkleriyle veya fiziksel özellikleriyle ilgili ÇOK ÖNEMLİ VE KALICI bir kişisel bilgi verirse (Örn: adım Ahmet, yaşım 25, kedim var, fıstığa alerjim var vb.), mesajının en sonuna BİREBİR şu formatta gizli bir not düşmelisin: [REMEMBER: Kullanıcı 25 yaşındaymış ve adı Ahmet'miş]. Sıradan sohbetlerde veya kullanıcının senden bir şey yapmanı/yazmanı istediği anlarda (Örn: hesap makinesi yaz, kod yaz) KESİNLİKLE [REMEMBER] KULLANMA! Sadece kişisel bilgileri kaydet.";
-            baseSystemPrompt += "\n\nKURAL 2 (ÇOK ÖNEMLİ): Eğer kullanıcı senden bir oyun, arayüz, hesap makinesi veya web tabanlı herhangi bir uygulama yapmanı/kodlamanı isterse, KODU SADECE HTML BLOKLARI İÇİNDE YAZ. Başka metin ekleme.";
-            let isGroq = selectedModel.includes("-groq");
+            baseSystemPrompt += "\n\nKURAL: SADECE VE SADECE eÄŸer kullanÄ±cÄ± kendisiyle, hayatÄ±yla, zevkleriyle veya fiziksel Ã¶zellikleriyle ilgili Ã‡OK Ã–NEMLÄ° VE KALICI bir kiÅŸisel bilgi verirse (Ã–rn: adÄ±m Ahmet, yaÅŸÄ±m 25, kedim var, fÄ±stÄ±ÄŸa alerjim var vb.), mesajÄ±nÄ±n en sonuna BÄ°REBÄ°R ÅŸu formatta gizli bir not dÃ¼ÅŸmelisin: [REMEMBER: KullanÄ±cÄ± 25 yaÅŸÄ±ndaymÄ±ÅŸ ve adÄ± Ahmet'miÅŸ]. SÄ±radan sohbetlerde veya kullanÄ±cÄ±nÄ±n senden bir ÅŸey yapmanÄ±/yazmanÄ± istediÄŸi anlarda (Ã–rn: hesap makinesi yaz, kod yaz) KESÄ°NLÄ°KLE [REMEMBER] KULLANMA! Sadece kiÅŸisel bilgileri kaydet.";
+            baseSystemPrompt += "\n\nKURAL 2 (Ã‡OK Ã–NEMLÄ°): EÄŸer kullanÄ±cÄ± senden bir oyun, arayÃ¼z, hesap makinesi veya web tabanlÄ± herhangi bir uygulama yapmanÄ±/kodlamanÄ±            let isGroq = selectedModel.includes("-groq");
             let isGemini = selectedModel.includes("-gemini");
             let actualModel = selectedModel.replace("-groq", "").replace("-gemini", "");
             
-            // Fallback (Yedekleme) Kuyruğu Hazırlığı
-            let fallbackQueue = [selectedModel]; // Öncelikle kullanıcının seçtiği modeli dene
+            // Fallback (Yedekleme) KuyruÄŸu HazÄ±rlÄ±ÄŸÄ±
+            let fallbackQueue = [selectedModel]; // Ã–ncelikle kullanÄ±cÄ±nÄ±n seÃ§tiÄŸi modeli dene
             
             const hasAttachments = selectedImageBase64 ? true : false;
             
             if (hasAttachments) {
-                // Görsel veya Belge eki varsa sadece Vision (Görsel okuma) yeteneği olan modelleri sıraya ekle
+                // GÃ¶rsel veya Belge eki varsa sadece Vision (GÃ¶rsel okuma) yeteneÄŸi olan modelleri sÄ±raya ekle
                 const visionModels = [
                     "gemini-2.0-flash-gemini",
                     "gemini-2.5-flash-preview-05-20-gemini",
@@ -3302,7 +2435,7 @@ Eğer kullanıcı "bu ne", "nerede", "adam kim", "bunu istemedim", "düzelt", "y
                     }
                 }
             } else {
-                // Sadece metin ise sırasıyla diğer hızlı modelleri yedek olarak ekle
+                // Sadece metin ise sÄ±rasÄ±yla diÄŸer hÄ±zlÄ± modelleri yedek olarak ekle
                 const textModels = [
                     "llama-3.3-70b-versatile-groq",
                     "llama-3.1-70b-versatile-groq",
@@ -3334,16 +2467,16 @@ Eğer kullanıcı "bu ne", "nerede", "adam kim", "bunu istemedim", "düzelt", "y
                     .replace("-nvidia", "")
                     .replace("-openrouter", "");
                 
-                // Eğer bu model için API anahtarı girilmemişse doğrudan sonraki yedek modele geç
+                // EÄŸer bu model iÃ§in API anahtarÄ± girilmemiÅŸse doÄŸrudan sonraki yedek modele geÃ§
                 if (isGemini && !(localStorage.getItem('gemini_api_key') || "").trim()) { continue; }
                 if (isGroq && !(localStorage.getItem('groq_api_key') || "").trim()) { continue; }
                 if (isNvidia && !(localStorage.getItem('nvidia_api_key') || "").trim()) { continue; }
                 if (isOpenRouter && !(localStorage.getItem('openrouter_api_key') || "").trim()) { continue; }
                 
-                // Eğer ilk denemede hata alıp otomatik geçiş yapıyorsak ekranda bilgilendirme göster
+                // EÄŸer ilk denemede hata alÄ±p otomatik geÃ§iÅŸ yapÄ±yorsak ekranda bilgilendirme gÃ¶ster
                 if (i > 0) {
                     const cleanModelName = actualModel.split("/").pop();
-                    const warningHtml = `<div class="message bot-message" style="background: rgba(255, 150, 0, 0.1); border-left: 3px solid orange; padding: 10px; margin-bottom: 10px; border-radius: 5px; font-size: 0.9em; color: var(--text-color);">✨ <b>Otomatik Yedekleme:</b> Limit aşımı veya bağlantı hatası nedeniyle sistem otomatik olarak <b>${cleanModelName}</b> modelini deniyor...</div>`;
+                    const warningHtml = `<div class="message bot-message" style="background: rgba(255, 150, 0, 0.1); border-left: 3px solid orange; padding: 10px; margin-bottom: 10px; border-radius: 5px; font-size: 0.9em; color: var(--text-color);">âœ¨ <b>Otomatik Yedekleme:</b> Limit aÅŸÄ±mÄ± veya baÄŸlantÄ± hatasÄ± nedeniyle sistem otomatik olarak <b>${cleanModelName}</b> modelini deniyor...</div>`;
                     messagesDiv.insertAdjacentHTML('beforeend', warningHtml);
                     messagesDiv.scrollTop = messagesDiv.scrollHeight;
                 }
@@ -3364,8 +2497,8 @@ Eğer kullanıcı "bu ne", "nerede", "adam kim", "bunu istemedim", "düzelt", "y
                     }
                     
                     if (systemText) {
-                        geminiContents.push({ role: 'user', parts: [{ text: '(Sistem Yönergesi: ' + systemText + ')' }] });
-                        geminiContents.push({ role: 'model', parts: [{ text: 'Anlaştık, kurallara uyacağım!' }] });
+                        geminiContents.push({ role: 'user', parts: [{ text: '(Sistem YÃ¶nergesi: ' + systemText + ')' }] });
+                        geminiContents.push({ role: 'model', parts: [{ text: 'AnlaÅŸtÄ±k, kurallara uyacaÄŸÄ±m!' }] });
                     }
                     
                     for (let msg of reqMessages) {
@@ -3397,7 +2530,7 @@ Eğer kullanıcı "bu ne", "nerede", "adam kim", "bunu istemedim", "düzelt", "y
                         })
                     };
                 } else if (isNvidia) {
-                    // --- NVIDIA NIM (OpenAI uyumlu, görsel destekli) ---
+                    // --- NVIDIA NIM (OpenAI uyumlu, gÃ¶rsel destekli) ---
                     const userNvidiaKey = (localStorage.getItem('nvidia_api_key') || "").trim();
                     fetchUrl = "https://integrate.api.nvidia.com/v1/chat/completions";
                     
@@ -3433,7 +2566,7 @@ Eğer kullanıcı "bu ne", "nerede", "adam kim", "bunu istemedim", "düzelt", "y
                         })
                     };
                 } else if (isOpenRouter) {
-                    // --- OPENROUTER (OpenAI uyumlu, ücretsiz vision modelleri) ---
+                    // --- OPENROUTER (OpenAI uyumlu, Ã¼cretsiz vision modelleri) ---
                     const userOrKey = (localStorage.getItem('openrouter_api_key') || "").trim();
                     fetchUrl = "https://openrouter.ai/api/v1/chat/completions";
                     
@@ -3524,13 +2657,13 @@ Eğer kullanıcı "bu ne", "nerede", "adam kim", "bunu istemedim", "düzelt", "y
                         let geminiResponse = await fetch(fetchUrl, fetchOptions);
                         if (!geminiResponse.ok) {
                             const errText = await geminiResponse.text();
-                            console.warn(`Gemini API hatası verdi (${geminiResponse.status}): ${errText}`);
+                            console.warn(`Gemini API hatasÄ± verdi (${geminiResponse.status}): ${errText}`);
                             continue;
                         }
                         const geminiData = await geminiResponse.json();
                         const geminiBotReply = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text || '';
                         if (!geminiBotReply) {
-                            console.warn("Gemini boş cevap döndü, sonraki yedek deneniyor...");
+                            console.warn("Gemini boÅŸ cevap dÃ¶ndÃ¼, sonraki yedek deneniyor...");
                             continue;
                         }
                         
@@ -3545,11 +2678,11 @@ Eğer kullanıcı "bu ne", "nerede", "adam kim", "bunu istemedim", "düzelt", "y
                         speakText(sanitizeAssistantOutput(geminiBotReply).substring(0, 500));
                         return;
                     } else {
-                        // Groq / NVIDIA NIM / OpenRouter / Yerel Ollama — hepsi SSE streaming
+                        // Groq / NVIDIA NIM / OpenRouter / Yerel Ollama â€” hepsi SSE streaming
                         let streamResponse = await fetch(fetchUrl, fetchOptions);
                         if (!streamResponse.ok) {
                             const errText = await streamResponse.text();
-                            console.warn(`Streaming API hatası (${streamResponse.status}): ${errText}`);
+                            console.warn(`Streaming API hatasÄ± (${streamResponse.status}): ${errText}`);
                             continue;
                         }
                         
@@ -3558,21 +2691,21 @@ Eğer kullanıcı "bu ne", "nerede", "adam kim", "bunu istemedim", "düzelt", "y
                         break;
                     }
                 } catch (fetchErr) {
-                    console.error("Yapay zeka bağlantı hatası, sonraki yedek deneniyor:", fetchErr);
+                    console.error("Yapay zeka baÄŸlantÄ± hatasÄ±, sonraki yedek deneniyor:", fetchErr);
                     continue;
                 }
             }
             
             if (!response) {
                 removeImage();
-                throw new Error("Tüm yapay zeka yedek modelleri denendi ancak yanıt alınamadı. Lütfen API anahtarlarınızı veya kotanızı kontrol edin.");
+                throw new Error("TÃ¼m yapay zeka yedek modelleri denendi ancak yanÄ±t alÄ±namadÄ±. LÃ¼tfen API anahtarlarÄ±nÄ±zÄ± veya kotanÄ±zÄ± kontrol edin.");
             }
 
-            removeImage(); // Fotoğraf gönderildikten sonra temizle
+            removeImage(); // FotoÄŸraf gÃ¶nderildikten sonra temizle
 
             if (!response.ok) {
                 const errorText = await response.text();
-                throw new Error(`API Hatası (${response.status}): ` + errorText);
+                throw new Error(`API HatasÄ± (${response.status}): ` + errorText);
             }
 
             const reader = response.body.getReader();
@@ -3608,9 +2741,9 @@ Eğer kullanıcı "bu ne", "nerede", "adam kim", "bunu istemedim", "düzelt", "y
                                         .filter(p => p.text)
                                         .map(p => p.text)
                                         .join('');
-                                    if (word === '') word = null; // boş string yerine null
+                                    if (word === '') word = null; // boÅŸ string yerine null
                                 }
-                            } catch (e) { /* sessizce geç */ }
+                            } catch (e) { /* sessizce geÃ§ */ }
                         }
                     } else if (isGroq) {
                         if (line.trim() === "data: [DONE]") continue;
@@ -3640,7 +2773,7 @@ Eğer kullanıcı "bu ne", "nerede", "adam kim", "bunu istemedim", "düzelt", "y
                             let completeSentence = match[1];
                             sentenceBuffer = sentenceBuffer.substring(match[1].length);
                             let textToSpeak = sanitizeAssistantOutput(completeSentence).trim();
-                            // Kodu seslendirmeyi engelle (TTS motorunu çökertmemesi için)
+                            // Kodu seslendirmeyi engelle (TTS motorunu Ã§Ã¶kertmemesi iÃ§in)
                             if (textToSpeak.length > 1 && !textToSpeak.includes("```") && !textToSpeak.startsWith("<") && !textToSpeak.startsWith("}")) {
                                 speakText(textToSpeak);
                             }
@@ -3655,16 +2788,16 @@ Eğer kullanıcı "bu ne", "nerede", "adam kim", "bunu istemedim", "düzelt", "y
             document.getElementById(botId).innerHTML = renderContentWithImages(botReply, true);
             addCopyButtons(document.getElementById(botId));
 
-            // Intent ve prompt kontrol mekanizması doğrulaması
+            // Intent ve prompt kontrol mekanizmasÄ± doÄŸrulamasÄ±
             const lowerText = text.toLowerCase();
             
-            // Video intent her zaman image intent'ten önce kontrol edilsin.
+            // Video intent her zaman image intent'ten Ã¶nce kontrol edilsin.
             // Negative intent control
-            const isNegativeIntent = lowerText.includes("değil") || lowerText.includes("istemiyorum") || lowerText.includes("yapma");
+            const isNegativeIntent = lowerText.includes("deÄŸil") || lowerText.includes("istemiyorum") || lowerText.includes("yapma");
 
-            // Video intent her zaman image intent'ten önce kontrol edilsin.
-            let isVideoRequest = !isNegativeIntent && (lowerText.includes("video") || lowerText.includes("saniyelik") || lowerText.includes("dans") || lowerText.includes("hareket") || lowerText.includes("kuyruk") || lowerText.includes("adım") || lowerText.includes("miyav") || lowerText.includes("animasyon") || lowerText.includes("slayt"));
-            let isImageRequest = !isNegativeIntent && !isVideoRequest && (lowerText.includes("çiz") || lowerText.includes("resim") || lowerText.includes("fotoğraf") || lowerText.includes("görsel") || lowerText.includes("image") || lowerText.includes("picture"));
+            // Video intent her zaman image intent'ten Ã¶nce kontrol edilsin.
+            let isVideoRequest = !isNegativeIntent && (lowerText.includes("video") || lowerText.includes("saniyelik") || lowerText.includes("dans") || lowerText.includes("hareket") || lowerText.includes("kuyruk") || lowerText.includes("adÄ±m") || lowerText.includes("miyav") || lowerText.includes("animasyon") || lowerText.includes("slayt"));
+            let isImageRequest = !isNegativeIntent && !isVideoRequest && (lowerText.includes("Ã§iz") || lowerText.includes("resim") || lowerText.includes("fotoÄŸraf") || lowerText.includes("gÃ¶rsel") || lowerText.includes("image") || lowerText.includes("picture"));
 
             const botHasVideoCode = botReply.toLowerCase().includes("[generate_video");
             const botHasCodeBlock = botReply.includes("```") || botReply.toLowerCase().includes("[generate_code");
@@ -3678,18 +2811,18 @@ Eğer kullanıcı "bu ne", "nerede", "adam kim", "bunu istemedim", "düzelt", "y
                 console.log("Fallback Video trigger activated!");
                 const videoId = 'video-' + Date.now() + '-' + Math.floor(Math.random() * 10000);
                 
-                // Bot yanıtına video placeholder'ını ekle
+                // Bot yanÄ±tÄ±na video placeholder'Ä±nÄ± ekle
                 const fallbackContainer = document.createElement("div");
                 fallbackContainer.innerHTML = `<div id="${videoId}" style="text-align:center; margin: 15px 0; background: #181825; padding: 15px; border-radius: 12px; border: 1px solid #45475a;">
-                            <div style="color: #cdd6f4; font-size: 16px; margin-bottom: 10px;">🎬 AI Video Hazırlanıyor (Otomatik Fallback)...</div>
+                            <div style="color: #cdd6f4; font-size: 16px; margin-bottom: 10px;">ðŸŽ¬ AI Video HazÄ±rlanÄ±yor (Otomatik Fallback)...</div>
                             <div style="background: #313244; border-radius: 8px; height: 20px; overflow: hidden; margin-bottom: 8px;">
                                 <div id="${videoId}-progress" style="background: linear-gradient(90deg, #89b4fa, #cba6f7); height: 100%; width: 0%; border-radius: 8px; transition: width 0.5s ease;"></div>
                             </div>
-                            <div id="${videoId}-status" style="color: #a6adc8; font-size: 13px;">Sahneler paralel hazırlanıyor...</div>
+                            <div id="${videoId}-status" style="color: #a6adc8; font-size: 13px;">Sahneler paralel hazÄ±rlanÄ±yor...</div>
                         </div>`;
                 document.getElementById(botId).appendChild(fallbackContainer);
                 
-                // Video motorunu çalıştır (videoQueue ve isVideoGenerating durumunu yönetir)
+                // Video motorunu Ã§alÄ±ÅŸtÄ±r (videoQueue ve isVideoGenerating durumunu yÃ¶netir)
                 setTimeout(() => queueVideoSlideshow(text, videoId), 300);
             }
 
@@ -3715,7 +2848,7 @@ Eğer kullanıcı "bu ne", "nerede", "adam kim", "bunu istemedim", "düzelt", "y
         }
     }
 
-    // ----- DRAG AND DROP (SÜRÜKLE BIRAK) -----
+    // ----- DRAG AND DROP (SÃœRÃœKLE BIRAK) -----
     const inputBox = document.querySelector(".input-box");
     let dragCounter = 0;
 
@@ -3738,7 +2871,7 @@ Eğer kullanıcı "bu ne", "nerede", "adam kim", "bunu istemedim", "düzelt", "y
 
     document.addEventListener("dragover", (e) => {
         if (e.dataTransfer && e.dataTransfer.types.includes("Files")) {
-            e.preventDefault(); // Drop eventinin çalışması için şart
+            e.preventDefault(); // Drop eventinin Ã§alÄ±ÅŸmasÄ± iÃ§in ÅŸart
             showDropState();
         }
     });
@@ -3767,12 +2900,8 @@ Eğer kullanıcı "bu ne", "nerede", "adam kim", "bunu istemedim", "düzelt", "y
         }
     });
 
-    // Sayfa dışına çıkıldığında veya ESC basıldığında sıfırla
+    // Sayfa dÄ±ÅŸÄ±na Ã§Ä±kÄ±ldÄ±ÄŸÄ±nda veya ESC basÄ±ldÄ±ÄŸÄ±nda sÄ±fÄ±rla
     window.addEventListener("blur", hideDropState);
     document.addEventListener("keydown", (e) => { if (e.key === "Escape") hideDropState(); });
-</script>
-
-</body>
-</html>
 
 
