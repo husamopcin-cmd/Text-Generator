@@ -68,47 +68,70 @@
         .sk-modal {
             background: linear-gradient(145deg, #1e1e2e 0%, #181825 100%);
             border: 1px solid rgba(203,166,247,0.3);
-            border-radius: 20px; padding: 28px 24px 24px;
-            width: min(640px, 95vw); max-height: 88vh; overflow-y: auto;
+            border-radius: 20px; padding: 24px;
+            width: min(720px, 95vw); max-height: 88vh; overflow-y: auto;
             box-shadow: 0 25px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(203,166,247,0.1);
             transform: translateY(20px) scale(0.97);
             transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            display: flex; flex-direction: column;
         }
         .sk-overlay.active .sk-modal { transform: translateY(0) scale(1); }
         .sk-modal-header {
-            text-align: center; margin-bottom: 22px;
+            text-align: center; margin-bottom: 16px;
         }
-        .sk-modal-header .sk-icon { font-size: 40px; display: block; margin-bottom: 8px;
+        .sk-modal-header .sk-icon { font-size: 36px; display: block; margin-bottom: 6px;
             animation: sk-float 3s ease-in-out infinite; }
         @keyframes sk-float {
             0%,100% { transform: translateY(0); }
             50% { transform: translateY(-6px); }
         }
         .sk-modal-header h2 {
-            font-size: 20px; font-weight: 700; color: #cba6f7;
+            font-size: 22px; font-weight: 800; color: #cba6f7;
             margin: 0 0 4px; letter-spacing: -0.3px;
         }
         .sk-modal-header p {
-            font-size: 13px; color: #6c7086; margin: 0;
+            font-size: 13px; color: #a6adc8; margin: 0;
         }
         .sk-file-badge {
             display: inline-flex; align-items: center; gap: 6px;
             background: rgba(137,180,250,0.1); border: 1px solid rgba(137,180,250,0.25);
-            border-radius: 20px; padding: 4px 12px; font-size: 12px; color: #89b4fa;
-            margin-bottom: 20px; max-width: 100%; overflow: hidden; text-overflow: ellipsis;
-            white-space: nowrap;
+            border-radius: 20px; padding: 4px 12px; font-size: 11.5px; color: #89b4fa;
+            max-width: 100%; overflow: hidden; text-overflow: ellipsis;
+            white-space: nowrap; margin-bottom: 14px;
         }
+        /* Tab Navigation */
+        .sk-tabs {
+            display: flex; gap: 8px; overflow-x: auto; margin-bottom: 18px;
+            padding-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.08);
+            scrollbar-width: none; -ms-overflow-style: none;
+        }
+        .sk-tabs::-webkit-scrollbar { display: none; }
+        .sk-tab-btn {
+            background: rgba(49,50,68,0.4); border: 1px solid rgba(255,255,255,0.05);
+            color: #a6adc8; padding: 8px 14px; border-radius: 8px; font-size: 12.5px;
+            font-weight: 600; cursor: pointer; white-space: nowrap; transition: all 0.2s ease;
+        }
+        .sk-tab-btn:hover { background: rgba(203,166,247,0.12); color: #cba6f7; border-color: rgba(203,166,247,0.25); }
+        .sk-tab-btn.active { background: rgba(203,166,247,0.2); color: #cba6f7; border-color: #cba6f7; }
+        .sk-tab-content { display: none; }
+        .sk-tab-content.active { display: block; }
+
         .sk-grid {
             display: grid; grid-template-columns: 1fr 1fr;
-            gap: 12px; margin-bottom: 14px;
+            gap: 12px;
         }
-        @media (max-width: 500px) { .sk-grid { grid-template-columns: 1fr; } }
+        @media (max-width: 600px) {
+            .sk-grid { grid-template-columns: 1fr; }
+            .sk-modal { padding: 18px 14px; }
+            .sk-tabs { gap: 6px; }
+            .sk-tab-btn { padding: 6px 10px; font-size: 11.5px; }
+        }
         .sk-card {
             background: rgba(49,50,68,0.4);
             border: 1.5px solid rgba(255,255,255,0.06);
-            border-radius: 14px; padding: 16px 14px 14px;
+            border-radius: 14px; padding: 14px;
             cursor: pointer; transition: all 0.2s ease;
-            display: flex; flex-direction: column; gap: 8px;
+            display: flex; flex-direction: column; gap: 6px;
             position: relative; overflow: hidden;
         }
         .sk-card::before {
@@ -120,9 +143,9 @@
             box-shadow: 0 8px 24px rgba(203,166,247,0.12); }
         .sk-card:hover::before { opacity: 1; }
         .sk-card.sk-selected { border-color: #cba6f7; background: rgba(203,166,247,0.1); }
-        .sk-card-icon { font-size: 26px; }
-        .sk-card-title { font-size: 14px; font-weight: 600; color: #cdd6f4; }
-        .sk-card-desc { font-size: 11.5px; color: #6c7086; line-height: 1.5; }
+        .sk-card-icon { font-size: 24px; }
+        .sk-card-title { font-size: 14px; font-weight: 700; color: #cdd6f4; }
+        .sk-card-desc { font-size: 11.5px; color: #a6adc8; line-height: 1.5; }
         .sk-card-tag {
             display: inline-block; font-size: 10px; font-weight: 600;
             padding: 2px 8px; border-radius: 20px; background: rgba(203,166,247,0.15);
@@ -135,7 +158,7 @@
         }
         .sk-pill {
             background: rgba(49,50,68,0.7); border: 1px solid rgba(255,255,255,0.1);
-            color: #a6adc8; font-size: 11px; padding: 3px 10px;
+            color: #a6adc8; font-size: 11px; padding: 4px 10px;
             border-radius: 20px; cursor: pointer; transition: all 0.15s;
         }
         .sk-pill:hover { background: rgba(203,166,247,0.2); color: #cba6f7; border-color: rgba(203,166,247,0.4); }
@@ -153,11 +176,11 @@
         .sk-count-btn.sk-count-active { background: rgba(166,227,161,0.2); color: #a6e3a1; border-color: #a6e3a1; }
         /* Footer */
         .sk-footer {
-            display: flex; gap: 10px; justify-content: flex-end; margin-top: 6px;
+            display: flex; gap: 10px; justify-content: flex-end; margin-top: 10px;
         }
         .sk-cancel-btn {
             background: transparent; border: 1px solid rgba(255,255,255,0.1);
-            color: #6c7086; padding: 10px 18px; border-radius: 10px;
+            color: #a6adc8; padding: 10px 18px; border-radius: 10px;
             font-size: 13px; cursor: pointer; transition: all 0.15s;
         }
         .sk-cancel-btn:hover { border-color: #f38ba8; color: #f38ba8; }
@@ -1610,6 +1633,14 @@
                 previewImg.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 24 24' fill='none' stroke='%2389b4fa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'></path><polyline points='14 2 14 8 20 8'></polyline><line x1='16' y1='13' x2='8' y2='13'></line><line x1='16' y1='17' x2='8' y2='17'></line><polyline points='10 9 9 9 8 9'></polyline></svg>";
                 previewContainer.style.display = 'inline-block';
                 selectedImageBase64 = null;
+                
+                if (window.isExamMode) {
+                    const modeTitle = typeof buildExamCoachTitle === "function" ? buildExamCoachTitle() : "🎓 Sınav Koçu Modu";
+                    document.getElementById("userInput").value = modeTitle;
+                    setTimeout(() => {
+                        sendMessage();
+                    }, 100);
+                }
                 
             } catch (err) {
                 console.error("PDF okuma hatası:", err);
@@ -4361,100 +4392,200 @@
   <div class="sk-modal" id="sinavKocuModal">
     <div class="sk-modal-header">
       <span class="sk-icon">🎓</span>
-      <h2>Sınav Koçu — Mod Seç</h2>
-      <p>Hangi modda çalışmamı istersin?</p>
+      <h2>CinoCode Akademi</h2>
+      <p>Öğrenciyi sınava hazırlayan akıllı koç paneli</p>
     </div>
-    <div style="text-align:center; margin-bottom:16px;">
+    <div style="text-align:center;">
       <span class="sk-file-badge" id="skFileBadge">📄 —</span>
     </div>
 
-    <div class="sk-grid">
-
-      <!-- 1. HIZLI ÖZET -->
-      <div class="sk-card" id="skCard-ozet" onclick="skSelectCard('ozet')">
-        <div class="sk-card-icon">⚡</div>
-        <div class="sk-card-title">Hızlı Özet</div>
-        <div class="sk-card-desc">Sınava ne kadar vaktin var? Süreye göre özel özet oluşturur.</div>
-        <div class="sk-card-tag">Özet Modu</div>
-        <div class="sk-pills" id="skPills-ozet">
-          <span class="sk-pill" data-desc="Sınav kapısında son okuma" onclick="skPickPill(event,'ozet','30s')">⚡ 30 sn</span>
-          <span class="sk-pill" data-desc="Temel kavramlar hızlı tarama" onclick="skPickPill(event,'ozet','1dk')">📌 1 dk</span>
-          <span class="sk-pill" data-desc="Ana başlıklar ve örnekler" onclick="skPickPill(event,'ozet','2dk')">📖 2 dk</span>
-          <span class="sk-pill" data-desc="Ağırlıklı konular ve detaylar" onclick="skPickPill(event,'ozet','5dk')">🎯 5 dk</span>
-          <span class="sk-pill" data-desc="Kapsamlı çalışma rehberi" onclick="skPickPill(event,'ozet','10dk')">📚 10 dk</span>
-        </div>
-        <span class="sk-pill-desc" id="skPillDesc-ozet"></span>
-      </div>
-
-      <!-- 2. FLASHCARD -->
-      <div class="sk-card" id="skCard-flashcard" onclick="skSelectCard('flashcard')">
-        <div class="sk-card-icon">🃏</div>
-        <div class="sk-card-title">Flashcard'lar</div>
-        <div class="sk-card-desc">Anahtar kavramları kart formatında oluşturur. Her kart: İngilizce terim + açıklama + Türkçe karşılık.</div>
-        <div class="sk-card-tag">Ezberleme Modu</div>
-        <div class="sk-pills" id="skPills-flashcard">
-          <span class="sk-pill" onclick="skPickPill(event,'flashcard','8')">8 kart</span>
-          <span class="sk-pill" onclick="skPickPill(event,'flashcard','12')">12 kart</span>
-          <span class="sk-pill" onclick="skPickPill(event,'flashcard','20')">20 kart</span>
-        </div>
-      </div>
-
-      <!-- 3. PROFESÖR ANALİZİ -->
-      <div class="sk-card" id="skCard-profesor" onclick="skSelectCard('profesor')">
-        <div class="sk-card-icon">🧑‍🏫</div>
-        <div class="sk-card-title">Profesör Analizi</div>
-        <div class="sk-card-desc">Sınavda hangi soruların çıkabileceğini tahmin eder. Kesinlikle ezberlenecek kavramları işaretler.</div>
-        <div class="sk-card-tag">Tahmin Modu</div>
-      </div>
-
-      <!-- 4. QUIZ -->
-      <div class="sk-card" id="skCard-quiz" onclick="skSelectCard('quiz')">
-        <div class="sk-card-icon">📝</div>
-        <div class="sk-card-title">Quiz — Çoktan Seçmeli</div>
-        <div class="sk-card-desc">A/B/C/D şıklı sorular + cevap anahtarı. Her seferinde farklı sorular!</div>
-        <div class="sk-card-tag">Test Modu</div>
-        <div class="sk-count-grid" id="skCount-quiz">
-          <button class="sk-count-btn" onclick="skPickCount(event,'quiz',5)">5</button>
-          <button class="sk-count-btn" onclick="skPickCount(event,'quiz',10)">10</button>
-          <button class="sk-count-btn" onclick="skPickCount(event,'quiz',15)">15</button>
-          <button class="sk-count-btn" onclick="skPickCount(event,'quiz',20)">20</button>
-          <button class="sk-count-btn" onclick="skPickCount(event,'quiz',50)">50</button>
-        </div>
-      </div>
-
-      <!-- 5. SOKRATİK MOD (tam genişlik) -->
-      <div class="sk-card" id="skCard-sokratik" onclick="skSelectCard('sokratik')" style="grid-column: 1 / -1; flex-direction: row; align-items: flex-start; gap: 14px;">
-        <div class="sk-card-icon" style="margin-top:2px;">🔁</div>
-        <div style="flex:1;">
-          <div class="sk-card-title">Sokratik Mod — İnteraktif Öğrenme</div>
-          <div class="sk-card-desc">Sınav koçun sana konuyla ilgili sorular sorar, cevaplarını değerlendirir, yanlışlarını düzeltir. Gerçek bir öğretmen gibi!</div>
-          <div class="sk-card-tag">İnteraktif Mod</div>
-        </div>
-      </div>
-
+    <!-- Kategori Sekmeleri -->
+    <div class="sk-tabs">
+      <button class="sk-tab-btn active" onclick="skSwitchTab(event, 'tab-ogren')">📚 Öğren</button>
+      <button class="sk-tab-btn" onclick="skSwitchTab(event, 'tab-ezberle')">🃏 Ezberle</button>
+      <button class="sk-tab-btn" onclick="skSwitchTab(event, 'tab-test')">📝 Test Et</button>
+      <button class="sk-tab-btn" onclick="skSwitchTab(event, 'tab-pratik')">🎤 Pratik Yap</button>
+      <button class="sk-tab-btn" onclick="skSwitchTab(event, 'tab-tahmin')">🎯 Tahmin</button>
     </div>
 
-    <div class="sk-footer">
+    <!-- 1. ÖĞREN SEKME İÇERİĞİ -->
+    <div class="sk-tab-content active" id="tab-ogren">
+      <div class="sk-grid">
+        <!-- Hızlı Özetler -->
+        <div class="sk-card" onclick="event.stopPropagation();">
+          <div class="sk-card-icon">⚡</div>
+          <div class="sk-card-title">Hızlı Özetler</div>
+          <div class="sk-card-desc">Süreye göre özelleştirilmiş pratik özet oluşturur. Süre seçin:</div>
+          <div class="sk-pills">
+            <span class="sk-pill" onclick="skDirectConfirm('ozet', '30s')">⚡ 30 sn</span>
+            <span class="sk-pill" onclick="skDirectConfirm('ozet', '1dk')">📌 1 dk</span>
+            <span class="sk-pill" onclick="skDirectConfirm('ozet', '2dk')">📖 2 dk</span>
+            <span class="sk-pill" onclick="skDirectConfirm('ozet', '5dk')">🎯 5 dk</span>
+            <span class="sk-pill" onclick="skDirectConfirm('ozet', '10dk')">📚 10 dk</span>
+          </div>
+        </div>
+        <!-- Profesör Anlatımı -->
+        <div class="sk-card" onclick="skDirectConfirm('profesor_anlatim')">
+          <div class="sk-card-icon">👨‍🏫</div>
+          <div class="sk-card-title">Profesör Anlatımı</div>
+          <div class="sk-card-desc">Akademik, derin ama son derece anlaşılır dille konunun püf noktalarını açıklar.</div>
+          <div class="sk-card-tag">Akademik Mod</div>
+        </div>
+        <!-- Sıfırdan Anlat -->
+        <div class="sk-card" onclick="skDirectConfirm('sifirdan')">
+          <div class="sk-card-icon">👶</div>
+          <div class="sk-card-title">Sıfırdan Anlat</div>
+          <div class="sk-card-desc">Konuyu ilk defa görüyormuşsun gibi basit dille anlatır, sonuna mini alıştırma ekler.</div>
+          <div class="sk-card-tag">Temel Seviye</div>
+        </div>
+        <!-- ELI5 -->
+        <div class="sk-card" onclick="skDirectConfirm('eli5')">
+          <div class="sk-card-icon">🧠</div>
+          <div class="sk-card-title">Çocuk Anlatımı (ELI5)</div>
+          <div class="sk-card-desc">Karmaşık teknik terimleri 5 yaşındaki bir çocuğa anlatır gibi analojilerle açıklar.</div>
+          <div class="sk-card-tag">Basit Dil</div>
+        </div>
+        <!-- Hikâyeleştir -->
+        <div class="sk-card" onclick="skDirectConfirm('hikaye')">
+          <div class="sk-card-icon">📖</div>
+          <div class="sk-card-title">Hikâyeleştir</div>
+          <div class="sk-card-desc">Ezber bilgiler yerine konuyu akılda kalıcı, eğlenceli bir hikaye kurgusuyla anlatır.</div>
+          <div class="sk-card-tag">Hafıza Modu</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. EZBERLE SEKME İÇERİĞİ -->
+    <div class="sk-tab-content" id="tab-ezberle">
+      <div class="sk-grid">
+        <!-- Flashcards -->
+        <div class="sk-card" onclick="event.stopPropagation();">
+          <div class="sk-card-icon">🃏</div>
+          <div class="sk-card-title">Kavram Flashcard'ları</div>
+          <div class="sk-card-desc">Ön yüz: Terim, Arka yüz: Türkçe açıklama + İngilizce karşılık. Kart sayısı seçin:</div>
+          <div class="sk-pills">
+            <span class="sk-pill" onclick="skDirectConfirm('flashcard', '10')">10 Kart</span>
+            <span class="sk-pill" onclick="skDirectConfirm('flashcard', '20')">20 Kart</span>
+            <span class="sk-pill" onclick="skDirectConfirm('flashcard', '30')">30 Kart</span>
+            <span class="sk-pill" onclick="skDirectConfirm('flashcard', '50')">50 Kart</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. TEST ET SEKME İÇERİĞİ -->
+    <div class="sk-tab-content" id="tab-test">
+      <div class="sk-grid">
+        <!-- Çoktan Seçmeli Quiz -->
+        <div class="sk-card" onclick="event.stopPropagation();">
+          <div class="sk-card-icon">📝</div>
+          <div class="sk-card-title">Çoktan Seçmeli Quiz</div>
+          <div class="sk-card-desc">A/B/C/D şıklı sorular + cevap anahtarı. Soru sayısı seçin:</div>
+          <div class="sk-count-grid">
+            <button class="sk-count-btn" onclick="skDirectConfirm('quiz', 5)">5</button>
+            <button class="sk-count-btn" onclick="skDirectConfirm('quiz', 10)">10</button>
+            <button class="sk-count-btn" onclick="skDirectConfirm('quiz', 15)">15</button>
+            <button class="sk-count-btn" onclick="skDirectConfirm('quiz', 20)">20</button>
+            <button class="sk-count-btn" onclick="skDirectConfirm('quiz', 50)">50</button>
+          </div>
+        </div>
+        <!-- Sonsuz Quiz -->
+        <div class="sk-card" onclick="skDirectConfirm('sonsuz_quiz')">
+          <div class="sk-card-icon">🔁</div>
+          <div class="sk-card-title">Sonsuz Quiz</div>
+          <div class="sk-card-desc">Kullanıcı "durdur" diyene kadar sürekli yeni soru soran ve yanlışlarını tekrar soran mod.</div>
+          <div class="sk-card-tag">Dinamik Soru</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. İNTERAKTİF PRATİK SEKME İÇERİĞİ -->
+    <div class="sk-tab-content" id="tab-pratik">
+      <div class="sk-grid">
+        <!-- Sözlü/Sesli Sınav -->
+        <div class="sk-card" onclick="skDirectConfirm('sozlu_sinav')">
+          <div class="sk-card-icon">🎤</div>
+          <div class="sk-card-title">Sözlü / Sesli Sınav</div>
+          <div class="sk-card-desc">CinoCode sana tek tek soru sorar. Cevap verirsin, değerlendirip yeni soruya geçer.</div>
+          <div class="sk-card-tag">Sesli Uyumluluk</div>
+        </div>
+        <!-- Sokratik Mod -->
+        <div class="sk-card" onclick="skDirectConfirm('sokratik')">
+          <div class="sk-card-icon">🔁</div>
+          <div class="sk-card-title">Sokratik Mod</div>
+          <div class="sk-card-desc">Cevabı direkt vermez, seni düşündürerek konuyu derinlemesine keşfetmeni sağlar.</div>
+          <div class="sk-card-tag">Felsefi Derinlik</div>
+        </div>
+        <!-- Eksik Analizi -->
+        <div class="sk-card" onclick="skDirectConfirm('eksik_analizi')">
+          <div class="sk-card-icon">🛠️</div>
+          <div class="sk-card-title">Eksik Analizi (Tanı Testi)</div>
+          <div class="sk-card-desc">10 kısa soruluk test ile eksiklerini yüzdesel raporlar, sadece zayıf konulara çalıştırır.</div>
+          <div class="sk-card-tag">Tanı Modu</div>
+        </div>
+        <!-- Challenge Modu -->
+        <div class="sk-card" onclick="event.stopPropagation();">
+          <div class="sk-card-icon">🧩</div>
+          <div class="sk-card-title">Challenge Modu</div>
+          <div class="sk-card-desc">Kademeli olarak zorlaşan soru-cevap düellosu. Zorluk seviyesi seçin:</div>
+          <div class="sk-pills">
+            <span class="sk-pill" onclick="skDirectConfirm('challenge', 'easy')">🌱 Kolay</span>
+            <span class="sk-pill" onclick="skDirectConfirm('challenge', 'medium')">🔥 Orta</span>
+            <span class="sk-pill" onclick="skDirectConfirm('challenge', 'hard')">🚀 Zor</span>
+            <span class="sk-pill" onclick="skDirectConfirm('challenge', 'professor')">🎓 Hoca</span>
+            <span class="sk-pill" onclick="skDirectConfirm('challenge', 'interview')">💻 Mülakat</span>
+          </div>
+        </div>
+        <!-- Münazara Modu -->
+        <div class="sk-card" onclick="skDirectConfirm('munazara')">
+          <div class="sk-card-icon">🗣️</div>
+          <div class="sk-card-title">Münazara Modu</div>
+          <div class="sk-card-desc">Model sana karşı tezleri savunur, seni kendi argümanlarını kurmaya ve savunmaya zorlar.</div>
+          <div class="sk-card-tag">Tartışma Modu</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. TAHMİN SEKME İÇERİĞİ -->
+    <div class="sk-tab-content" id="tab-tahmin">
+      <div class="sk-grid">
+        <!-- Hoca Ne Sorar? -->
+        <div class="sk-card" onclick="skDirectConfirm('hoca_tahmin')">
+          <div class="sk-card-icon">🎯</div>
+          <div class="sk-card-title">Hoca Ne Sorar? (Tahmin)</div>
+          <div class="sk-card-desc">Bu belgeden sınavda çıkabilecek klasik ve test sorularını, kritik ezber kelimelerini tahmin eder.</div>
+          <div class="sk-card-tag">Hoca Modu</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sk-footer" style="margin-top:20px;">
       <button class="sk-cancel-btn" onclick="closeSinavKocuModal()">İptal</button>
-      <button class="sk-go-btn" id="skGoBtn" disabled onclick="skConfirm()">Başlat 🚀</button>
     </div>
   </div>
 </div>
 
 <script>
 // ===== SINAV KOÇU MOD SEÇİM SİSTEMİ =====
-window.skState = { mode: null, ozet: null, flashcardCount: 8, quizCount: 10, resolve: null };
+window.skState = { mode: null, ozet: null, flashcardCount: 10, quizCount: 10, challengeDiff: 'medium', resolve: null };
 if (!window.skQuizHistory) window.skQuizHistory = [];
 
 function openSinavKocuModal(fileName) {
-    window.skState = { mode: null, ozet: null, flashcardCount: 8, quizCount: 10, resolve: null };
+    window.skState = { mode: null, ozet: null, flashcardCount: 10, quizCount: 10, challengeDiff: 'medium', resolve: null };
     document.getElementById('skFileBadge').textContent = '📄 ' + fileName;
+    
+    // UI Sıfırlama
     document.querySelectorAll('.sk-card').forEach(c => c.classList.remove('sk-selected'));
     document.querySelectorAll('.sk-pill').forEach(p => p.classList.remove('sk-pill-active'));
     document.querySelectorAll('.sk-count-btn').forEach(b => b.classList.remove('sk-count-active'));
-    let descEl = document.getElementById('skPillDesc-ozet');
-    if (descEl) descEl.textContent = '';
-    document.getElementById('skGoBtn').disabled = true;
+    
+    // Tab sıfırlama (İlk tabı aktif yap)
+    skSwitchTab(null, 'tab-ogren');
+    document.querySelectorAll('.sk-tab-btn').forEach((btn, idx) => {
+        if (idx === 0) btn.classList.add('active');
+        else btn.classList.remove('active');
+    });
+
     document.getElementById('sinavKocuOverlay').classList.add('active');
     return new Promise(resolve => { window.skState.resolve = resolve; });
 }
@@ -4468,57 +4599,91 @@ function skOverlayClick(e) {
     if (e.target === document.getElementById('sinavKocuOverlay')) closeSinavKocuModal();
 }
 
-function skSelectCard(mode) {
-    window.skState.mode = mode;
-    document.querySelectorAll('.sk-card').forEach(c => c.classList.remove('sk-selected'));
-    let card = document.getElementById('skCard-' + mode);
-    if (card) card.classList.add('sk-selected');
-    let needsPill = (mode === 'ozet');
-    document.getElementById('skGoBtn').disabled = needsPill ? !window.skState.ozet : false;
+function skSwitchTab(e, tabId) {
+    if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+    // Tüm tab butonlarının aktifliğini kaldır
+    document.querySelectorAll('.sk-tab-btn').forEach(btn => btn.classList.remove('active'));
+    // Tüm tab içeriklerini gizle
+    document.querySelectorAll('.sk-tab-content').forEach(content => content.classList.remove('active'));
+    
+    // Tıklananı aktif et
+    if (e && e.target) e.target.classList.add('active');
+    const targetContent = document.getElementById(tabId);
+    if (targetContent) targetContent.classList.add('active');
 }
 
-function skPickPill(e, mode, val) {
-    e.stopPropagation();
-    skSelectCard(mode);
-    let container = document.getElementById('skPills-' + mode);
-    if (container) container.querySelectorAll('.sk-pill').forEach(p => p.classList.remove('sk-pill-active'));
-    e.target.classList.add('sk-pill-active');
+function skDirectConfirm(mode, subVal) {
+    window.skState.mode = mode;
     if (mode === 'ozet') {
-        window.skState.ozet = val;
-        let desc = e.target.dataset.desc || '';
-        let descEl = document.getElementById('skPillDesc-ozet');
-        if (descEl) descEl.textContent = desc ? '→ ' + desc : '';
-        document.getElementById('skGoBtn').disabled = false;
+        window.skState.ozet = subVal;
     } else if (mode === 'flashcard') {
-        window.skState.flashcardCount = parseInt(val);
-        document.getElementById('skGoBtn').disabled = false;
+        window.skState.flashcardCount = parseInt(subVal);
+    } else if (mode === 'quiz') {
+        window.skState.quizCount = parseInt(subVal);
+    } else if (mode === 'challenge') {
+        window.skState.challengeDiff = subVal;
+    }
+    
+    document.getElementById('sinavKocuOverlay').classList.remove('active');
+    if (window.skState.resolve) {
+        window.skState.resolve(mode);
+        window.skState.resolve = null;
     }
 }
 
-function skPickCount(e, mode, val) {
-    e.stopPropagation();
-    skSelectCard(mode);
-    let container = document.getElementById('skCount-' + mode);
-    if (container) container.querySelectorAll('.sk-count-btn').forEach(b => b.classList.remove('sk-count-active'));
-    e.target.classList.add('sk-count-active');
-    if (mode === 'quiz') window.skState.quizCount = val;
-    document.getElementById('skGoBtn').disabled = false;
-}
-
-function skConfirm() {
-    if (!window.skState.mode) return;
-    document.getElementById('sinavKocuOverlay').classList.remove('active');
-    if (window.skState.resolve) { window.skState.resolve(window.skState.mode); window.skState.resolve = null; }
+function buildExamCoachTitle() {
+    let mode = window.skState.mode;
+    if (!mode) return '🎓 Sınav Koçu Modu';
+    
+    let sub = '';
+    if (mode === 'ozet') {
+        let t = window.skState.ozet || '5dk';
+        sub = ` (${t === '30s' ? '30 sn' : t.replace('dk', ' dk')})`;
+        return `🎓 Sınav Koçu: Özet${sub}`;
+    }
+    if (mode === 'profesor_anlatim') return `🎓 Sınav Koçu: Profesör Anlatımı`;
+    if (mode === 'sifirdan') return `🎓 Sınav Koçu: Sıfırdan Anlatım`;
+    if (mode === 'eli5') return `🎓 Sınav Koçu: Çocuk Anlatımı (ELI5)`;
+    if (mode === 'hikaye') return `🎓 Sınav Koçu: Hikâyeleştirme Modu`;
+    if (mode === 'flashcard') {
+        return `🃏 Sınav Koçu: ${window.skState.flashcardCount || 10} Flashcard`;
+    }
+    if (mode === 'quiz') {
+        return `📝 Sınav Koçu: ${window.skState.quizCount || 10} Soruluk Quiz`;
+    }
+    if (mode === 'sonsuz_quiz') return `🔁 Sınav Koçu: Sonsuz Quiz Modu`;
+    if (mode === 'sozlu_sinav') return `🎤 Sınav Koçu: Sözlü / Sesli Sınav`;
+    if (mode === 'sokratik') return `🔁 Sınav Koçu: Sokratik Mod`;
+    if (mode === 'eksik_analizi') return `🛠️ Sınav Koçu: Eksik Analizi (Tanı Testi)`;
+    if (mode === 'challenge') {
+        let diffs = { easy: 'Kolay', medium: 'Orta', hard: 'Zor', professor: 'Hoca', interview: 'Mülakat' };
+        let diffLabel = diffs[window.skState.challengeDiff] || 'Orta';
+        return `🧩 Sınav Koçu: Challenge Seviyesi — ${diffLabel}`;
+    }
+    if (mode === 'munazara') return `🗣️ Sınav Koçu: Münazara Modu`;
+    if (mode === 'hoca_tahmin') return `🎯 Sınav Koçu: Hoca Ne Sorar? Tahmini`;
+    
+    return '🎓 Sınav Koçu';
 }
 
 function buildExamCoachSuffix() {
     let mode = window.skState.mode;
     if (!mode) return '';
 
+    // Geçmiş Soru/Konu tekrarlarını önlemek için not oluştur
+    let histNote = '';
+    if (window.skQuizHistory && window.skQuizHistory.length > 0) {
+        let items = window.skQuizHistory.map(h => `- Konu/Açıklama: "${h.topic}", Soru Tipi: "${h.questionType}", Zorluk: "${h.difficulty}"`).join('\n');
+        histNote = `\n\n⚠️ ÖNEMLİ (Tekrar Önleme): Bu belge için daha önce şu soru/konu setleri çalışılmıştır:\n${items}\nLütfen bu konuların, soru tarzlarının ve zorluk derecelerinin dışına çık. Tamamen özgün, farklı alt başlıklara değinen sorular ve kavramlar üret!`;
+    }
+
     if (mode === 'ozet') {
         let t = window.skState.ozet || '5dk';
         let configs = {
-            '30s': { label: '30 Saniyelik', desc: 'sınav kapısında son okumayla tüm konuya hâkim olmak için', len: '3-4 cümle', style: 'son derece özlü, ezbere kolay, madde işareti yok' },
+            '30s': { label: '30 Saniyelik', desc: 'sınav kapısında son okumayla tüm konuya hızlıca hâkim olmak için', len: '3-4 cümle', style: 'son derece özlü, ezbere kolay, madde işareti yok' },
             '1dk': { label: '1 Dakikalık', desc: 'temel kavramları hızlıca taramak için', len: '2-3 madde veya kısa paragraf', style: 'net, madde işaretli' },
             '2dk': { label: '2 Dakikalık', desc: 'ana başlıkları ve önemli örnekleri kavramak için', len: '4-6 madde', style: 'başlıklı, somut örnekler ekle' },
             '5dk': { label: '5 Dakikalık', desc: 'ağırlıklı konuları ve detayları anlamak için', len: '8-12 madde', style: 'başlıklı, alt madde de kullan, önemli terimleri bold yaz' },
@@ -4528,31 +4693,90 @@ function buildExamCoachSuffix() {
         return `\n\n[🎓 SINAV KOÇU — ${c.label} ÖZET]\nBu belgeyi ${c.desc} özetle. Uzunluk: ${c.len}. Stil: ${c.style}.\nSon satırda şunu ekle: "📌 Bu özet ${c.label.toLowerCase()} okuma için optimize edilmiştir."`;
     }
 
-    if (mode === 'flashcard') {
-        let count = window.skState.flashcardCount || 8;
-        return `\n\n[🃏 SINAV KOÇU — FLASHCARD MODU]\nBu belgedeki en önemli ${count} kavramı flashcard formatında oluştur.\n\nHer kart için kesinlikle şu formatı kullan:\n\n---\n**[KART X / ${count}]**\n- 🏷️ **Terim:** (İngilizce teknik terim)\n- 📖 **İngilizce Açıklama:** (1-2 cümle, sade İngilizce)\n- 🇹🇷 **Türkçe Karşılık:** (Türkçe adı)\n- 💡 **Türkçe Açıklama:** (kısa, anlaşılır Türkçe)\n---\n\nEn önemli kavramlardan başla. Son kart bittikten sonra şunu ekle:\n"✅ ${count} flashcard hazır! 'Bana bu kartları sınav formatında sor' yazarsan seni test edebilirim."`;
+    if (mode === 'profesor_anlatim') {
+        return `\n\n[👨‍🏫 SINAV KOÇU — PROFESÖR ANLATIMI]\nBu belge içeriğini kıdemli bir profesör edasıyla anlat. Konunun en kritik noktalarını, akademik detaylarını bozmadan ama öğrencinin kolayca anlayabileceği formda açıkla. Önemli akademik kavramları **kalın yazı (bold)** olarak vurgula ve sonuna 'Sormak istediğin bir detay var mı?' şeklinde bitir.`;
     }
 
-    if (mode === 'profesor') {
-        return `\n\n[🧑‍🏫 SINAV KOÇU — PROFESÖR ANALİZİ]\nBu belgeyi deneyimli bir sınav hazırlama uzmanı gibi analiz et:\n\n## 🎯 Sınavda Büyük İhtimalle Çıkacak Sorular\n3-5 adet muhtemel soru tahmini yap. Her soru için neden çıkma ihtimalinin yüksek olduğunu kısaca açıkla.\n\n## 🔑 Mutlaka Ezberlenmesi Gereken Kavramlar\nBunları **bold** yaz ve yanlarına neden kritik olduklarını ekle.\n\n## ⚠️ Sık Yapılan Hatalar\nÖğrencilerin bu konuda en çok neyi karıştırdığını belirt.\n\n## 📌 Son Dakika Tavsiyesi\nSınava girmeden önce bakılacak tek şeyi 1 cümleyle söyle.`;
+    if (mode === 'sifirdan') {
+        return `\n\n[👶 SINAV KOÇU — SIFIRDAN ANLATIM]\nBu belgedeki konuyu, sanki hayatında ilk kez duyuyormuşum gibi en baştan ve en yalın haliyle anlat. Günlük hayattan benzetmeler (analojiler) ve örnekler kullan. Anlatımın sonuna 3 maddelik kısa bir 'Öğrenme Alıştırması (Mini Egzersiz)' ekle ve benden bunu yapmamı iste.`;
+    }
+
+    if (mode === 'eli5') {
+        return `\n\n[🧠 SINAV KOÇU — ÇOCUK ANLATIMI (ELI5)]\nBu belgeyi 5 yaşındaki bir çocuğa anlatır gibi son derece basit, eğlenceli ve anlaşılır bir dille açıkla. Karmaşık teknik terimler yerine oyuncaklar, hayvanlar veya gündelik basit olaylar üzerinden analojiler kur.`;
+    }
+
+    if (mode === 'hikaye') {
+        return `\n\n[📖 SINAV KOÇU — HİKÂYELEŞTİRME MODU]\nBu belgedeki teorik ve sıkıcı olabilecek tüm bilgileri, akılda kalıcı, macera dolu veya eğlenceli bir hikaye kurgusuna dönüştürerek anlat. Hikayedeki karakterler veya olaylar belgedeki teknik kavramları (örneğin Entity, Normalization, Database vs.) temsil etsin veya simgelesin.`;
+    }
+
+    if (mode === 'flashcard') {
+        let count = window.skState.flashcardCount || 10;
+        return `\n\n[🃏 SINAV KOÇU — FLASHCARD MODU]\nBu belgedeki en önemli ${count} kavramı flashcard formatında oluştur.\n\nHer kart için kesinlikle şu formatı kullan:\n\n---\n**[KART X / ${count}]**\n- 🏷️ **Terim:** (İngilizce teknik terim)\n- 📖 **İngilizce Açıklama:** (1-2 cümle, sade İngilizce)\n- 🇹🇷 **Türkçe Karşılık:** (Türkçe adı)\n- 💡 **Türkçe Açıklama:** (kısa, anlaşılır Türkçe)\n---\n\nEn önemli kavramlardan başla. Son kart bittikten sonra şunu ekle:\n"✅ ${count} flashcard hazır! 'Bana bu kartları sınav formatında sor' yazarsan seni test edebilirim."`;
     }
 
     if (mode === 'quiz') {
         let count = window.skState.quizCount || 10;
-        let histLen = window.skQuizHistory.length;
-        let histNote = '';
-        if (histLen > 0) {
-            histNote = `\n\n⚠️ ÖNEMLİ: Daha önce bu belge için ${histLen} kez quiz yapıldı. Bu sefer TAMAMEN FARKLI alt konulardan, farklı açılardan soru üret. Geçmiş sorularla aynı kavramı tekrar sorma.`;
-        }
-        let sessionTag = 'Q' + count + '@' + Date.now().toString(36);
-        window.skQuizHistory.push(sessionTag);
+        
+        let histItem = {
+            topic: `Çoktan seçmeli genel quiz (${count} soru)`,
+            questionType: "multiple-choice",
+            difficulty: "mixed",
+            timestamp: Date.now()
+        };
+        window.skQuizHistory.push(histItem);
         if (window.skQuizHistory.length > 10) window.skQuizHistory.shift();
 
         return `\n\n[📝 SINAV KOÇU — QUIZ MODU — ${count} SORU]${histNote}\n\nBu belgeye dayanarak ${count} adet özgün çoktan seçmeli soru hazırla. Sorular farklı zorluk seviyelerinde olsun (kolay, orta, zor).\n\nHer soru için format:\n**Soru X:** [Soru metni]\nA) ...\nB) ...\nC) ...\nD) ...\n\nTüm sorular bittikten sonra:\n## ✅ CEVAP ANAHTARI\nSoru 1: [Harf] — [Kısa açıklama neden doğru]\n...\n\nEn sona şunu ekle: "🔁 Farklı sorular için 'Yeni Quiz' yaz. Sözlü sınav için 'Sokratik mod başlat' yaz."`;
     }
 
+    if (mode === 'sonsuz_quiz') {
+        return `\n\n[🔁 SINAV KOÇU — SONSUZ QUIZ MODU]\nBu belgeyle ilgili interaktif bir test başlatıyoruz. Kurallar:\n1. Bana her seferinde sadece TEK bir çoktan seçmeli soru sor.\n2. Ben cevabı (A, B, C veya D) yazana kadar yeni soru sorma.\n3. Ben cevap verince: Doğruluğunu kontrol et. Yanlışsa mini bir anlatım ile neden yanlış olduğunu ve doğrusunu açıkla.\n4. Yanlış yaptığım konuları hafızanda tut ve birkaç soru sonra benzer konudan tekrar soru sor.\n5. Ben 'Durdur' veya 'Bitir' diyene kadar bu döngüyü sürdür.\n\nHadi ilk soruyla hemen başla!`;
+    }
+
+    if (mode === 'sozlu_sinav') {
+        return `\n\n[🎤 SINAV KOÇU — SÖZLÜ / SESLİ SINAV]\nBu belge üzerinden benimle bir sözlü sınav gerçekleştir. Kurallar:\n1. Rolün: Deneyimli ve titiz bir ders hocası. Sesli yanıtlara uygun kısa, net sorular soracaksın.\n2. Bana her seferinde sadece TEK bir açık uçlu soru yönelt.\n3. Ben yanıtımı verene kadar bekle.\n4. Verdiğim yanıtı değerlendir: Eksik veya yanlış bir yer varsa kibarca düzelt, hoca gözüyle ekleme yap (örn: 'Güzel ama Primary Key detayını unuttun').\n5. Hemen ardından sıradaki soruya geç.\n\nHadi hocam, ilk sorunuzla başlayın!`;
+    }
+
     if (mode === 'sokratik') {
-        return `\n\n[🔁 SINAV KOÇU — SOKRATİK MOD]\nBu belge içeriğini kullanarak beni interaktif olarak sınava hazırla. Şu kurallarla çalış:\n\n1. Konuyu direkt anlatma. Bunun yerine bana sorular sor.\n2. Her seferinde TEK soru sor ve cevabımı bekle.\n3. Cevabım doğruysa → tebrik et, neden doğru olduğunu açıkla, sonraki soruya geç.\n4. Cevabım yanlışsa → neden yanlış olduğunu açıkla, doğru cevabı ver, konuyu kısaca özetle.\n5. 5 sorudan sonra bana kısa bir puan ver (örn: 4/5 doğru).\n6. En sona şunu ekle: "Devam etmemi istersen 'devam' yaz, belirli bir konuya odaklanmamı istersen konuyu yaz."\n\nHemen ilk soruyla başla!`;
+        return `\n\n[🔁 SINAV KOÇU — SOKRATİK ÖĞRENME MODU]\nBu belge içeriğiyle ilgili beni eğiteceksin. Ancak bana doğrudan cevapları verme! Kurallar:\n1. Bana konunun mantığını kavratacak sorular sor.\n2. Her seferinde sadece TEK soru sor ve cevabımı bekle.\n3. Verdiğim cevaba göre beni yönlendir. Doğru yoldaysam bir sonraki aşamaya geçmek için takip sorusu sor. Yanlış yoldaysam ipucu vererek beni doğru düşünmeye sevk et.\n4. Örnek: 'Entity nedir?' sorusuna ben cevap verince 'Peki Student neden bir entity olur da student name neden attribute olur?' gibi tümdengelim sorularıyla beni konunun içine sok.\n\nHadi ilk sorunla başla!`;
+    }
+
+    if (mode === 'eksik_analizi') {
+        let histItem = {
+            topic: "Eksik Analizi Tanı Testi",
+            questionType: "diagnostic-test",
+            difficulty: "mixed",
+            timestamp: Date.now()
+        };
+        window.skQuizHistory.push(histItem);
+        if (window.skQuizHistory.length > 10) window.skQuizHistory.shift();
+
+        return `\n\n[🛠️ SINAV KOÇU — EKSİK ANALİZİ (TANI TESTİ)]\nBu belge üzerinden benim eksiklerimi tespit etmek için 10 adet kısa soruluk bir tanı testi hazırla.\n\nKurallar:\n1. 10 soruyu peş peşe listele (kısa cevaplı veya boşluk doldurma tarzında olsunlar).\n2. Soruların altına benden cevaplarımı yazmamı iste.\n3. Ben cevaplarımı girince, her soru alt konusunu (Örn: Normalization, Normal Formlar, Primary Key, Weak Entity vs.) analiz et ve bana yüzdelik bir tablo çıkart:\n   - Konu A: %95 Başarı\n   - Konu B: %30 Başarı (Eksik Yakalandı!)\n4. Bu tablonun ardından, bana sadece en zayıf kaldığım (%50 altı) konuları çalıştırmak üzere özel bir ders planı öner.\n\nHadi soruları listele!`;
+    }
+
+    if (mode === 'challenge') {
+        let diff = window.skState.challengeDiff || 'medium';
+        let diffLabels = { easy: 'Kolay', medium: 'Orta', hard: 'Zor', professor: 'Hoca Seviyesi', interview: 'Google Mülakat Seviyesi' };
+        let diffLabel = diffLabels[diff];
+        
+        let histItem = {
+            topic: `Challenge Modu (${diffLabel})`,
+            questionType: "challenge-duel",
+            difficulty: diff,
+            timestamp: Date.now()
+        };
+        window.skQuizHistory.push(histItem);
+        if (window.skQuizHistory.length > 10) window.skQuizHistory.shift();
+
+        return `\n\n[🧩 SINAV KOÇU — CHALLENGE MODU (${diffLabel.toUpperCase()})]${histNote}\n\nBu belgeden benim için ${diffLabel} zorluk derecesinde son derece zorlayıcı, zeka gerektiren 5 adet soru hazırla. Sorular klasik veya çoktan seçmeli olabilir. Formatı serbest bırakıyorum ancak seçtiğim zorluk derecesinin hakkını sonuna kadar ver! En sona cevap anahtarını ve detaylı çözümlerini ekle.`;
+    }
+
+    if (mode === 'munazara') {
+        return `\n\n[🗣️ SINAV KOÇU — MÜNAZARA MODU]\nBu belgedeki tartışmalı veya farklı yorumlanabilecek bir konuyu ele alalım. Kurallar:\n1. Sen belgedeki bir görüşün/tezin tam karşıt tarafını (şeytanın avukatını) savunacaksın.\n2. Bana tezini sun ve beni kendi tezimi savunmaya, kanıt göstermeye zorla.\n3. Her mesajda sadece kendi karşı argümanını sunup sözü bana bırak.\n4. Bu fikir düellosu sayesinde benim konuyu çok yönlü kavramamı sağla.\n\nHadi münazara konusunu ve senin ilk karşı tezini sunarak tartışmayı başlat!`;
+    }
+
+    if (mode === 'hoca_tahmin') {
+        return `\n\n[🎯 SINAV KOÇU — HOCA NE SORAR? TAHMİNİ]\nBu belgeyi hazırlayan akademisyenin gözünden bir analiz yap:\n\n## 📝 1. Klasik Soru Gelebilecek Yerler\nBelgeden 3 adet klasik (açık uçlu) soru tahmin et ve hocanın hangi anahtar kelimeleri (keywords) cevap kâğıdında arayacağını yaz.\n\n## 📊 2. Test Sorusuna Uygun Püf Noktaları\nÇoktan seçmeli sınavlarda çeldirici olarak kullanılabilecek, ezberlenmesi gereken 3-4 kritik ayrımı veya kuralı listele.\n\n## 🔑 3. Mutlaka Ezberlenecek Kavramlar Listesi\nSınavda çıkma olasılığı %90+ olan terimleri **bold** olarak listele ve tek cümleyle açıkla.`;
     }
 
     return '';
