@@ -60,6 +60,24 @@
         .artifact-dl-btn:hover { background: #89b4fa; color: #11111b; }
         .artifact-card-actions { display:flex; flex-wrap:wrap; gap:8px; justify-content:flex-start; margin-top:10px; }
         .artifact-card-actions button { flex:1 1 auto; min-width: 90px; }
+        
+        @media (max-width: 768px) {
+            .artifact-card-actions {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 6px;
+            }
+            .artifact-card-actions button {
+                min-width: auto;
+                padding: 8px 6px;
+                font-size: 10px;
+            }
+        }
+        @media (max-width: 480px) {
+            .artifact-card-actions {
+                grid-template-columns: 1fr;
+            }
+        }
 
         /* ===== SINAV KOÇU MOD SEÇİM MODALI ===== */
         .sk-overlay {
@@ -1252,19 +1270,20 @@
             Video Oluşturma Modu:
         </div>
         <select id="videoModeSelect" style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px; border-radius:8px; margin-bottom: 15px; outline: none; font-size: 13px;">
-            <option value="turbo">⚡ Turbo (5 Sahne, ~15 sn)</option>
-            <option value="fast" selected>🚀 Hızlı (4 Sahne, ~12 sn)</option>
-            <option value="standard">🎬 Standart (8 Sahne, ~32 sn)</option>
-            <option value="cinematic">🎥 Sinematik (12 Sahne, ~60 sn)</option>
+            <option value="fast_clip" selected>⚡ Hızlı Klip (5-8 sn)</option>
+            <option value="standard_video">🎬 Standart Video (10-15 sn)</option>
+            <option value="cinematic">🎥 Sinematik (20 sn)</option>
+            <option value="scene_long">🧩 Sahne Sahne Uzun Video (45-60 sn)</option>
+            <option value="experimental_long">🧪 Deneysel Uzun (90-120 sn)</option>
         </select>
 
         <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px; text-align: left;">
             Video Kalitesi:
         </div>
         <select id="videoQualitySelect" style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px; border-radius:8px; margin-bottom: 15px; outline: none; font-size: 13px;">
-            <option value="standard">📶 Standart 512x512</option>
-            <option value="high">🏞️ Yüksek 640x640</option>
-            <option value="ultra">🧨 Ultra 768x768</option>
+            <option value="standard">📶 Standart</option>
+            <option value="high">🏞️ Yüksek</option>
+            <option value="cinematic">🎥 Sinematik</option>
         </select>
 
         <button class="send-btn" style="width: 100%; border-radius: 8px; padding: 10px;" onclick="saveSettings()">Kaydet</button>
@@ -1426,19 +1445,21 @@
         let avoidance = ", no humans, no men, no women, no extra limbs, no deformed anatomy, no text, no watermark, high quality, cinematic";
         
         if (type === 'video') {
-            const savedVideoMode = localStorage.getItem('video_mode') || 'fast';
+            const savedVideoMode = localStorage.getItem('video_mode') || 'fast_clip';
             const savedVideoQuality = localStorage.getItem('video_quality') || 'standard';
-            if (savedVideoMode === 'turbo') {
+            if (savedVideoMode === 'fast_clip') {
                 clean += ', punchy fast cuts, energetic storytelling, punchy motion blur';
-            } else if (savedVideoMode === 'standard') {
+            } else if (savedVideoMode === 'standard_video') {
                 clean += ', polished cinematic structure, smooth camera moves, professional framing';
             } else if (savedVideoMode === 'cinematic') {
                 clean += ', slow cinematic reveals, dramatic lighting, epic atmosphere';
+            } else if (savedVideoMode === 'scene_long' || savedVideoMode === 'experimental_long') {
+                clean += ', consistent character design, scene-to-scene continuity, detailed environment, narrative flow';
             }
             if (savedVideoQuality === 'high') {
                 clean += ', crisp detail, fine texture details, 4k inspired clarity';
-            } else if (savedVideoQuality === 'ultra') {
-                clean += ', ultra high resolution detail, filmic grading, premium studio polish';
+            } else if (savedVideoQuality === 'cinematic') {
+                clean += ', ultra high resolution detail, filmic grading, premium studio polish, cinematic depth of field';
             }
         }
         
@@ -2469,54 +2490,80 @@
         window.currentVideoPrompt = prompt;
 
         try {
-            const savedMode = localStorage.getItem('video_mode') || 'fast';
+            const savedMode = localStorage.getItem('video_mode') || 'fast_clip';
             let SCENE_COUNT = 3;
             let SCENE_DURATION = 3500; 
             let FPS = 15;
             let WIDTH = 384;
             let HEIGHT = 384;
-            let modeLabel = "Hızlı";
+            let modeLabel = "Hızlı Klip";
+            let isLongVideo = false;
             const savedVideoQuality = localStorage.getItem('video_quality') || 'standard';
 
-            if (savedMode === 'turbo') {
-                SCENE_COUNT = 4;
-                SCENE_DURATION = 2500;
-                FPS = 12;
+            if (savedMode === 'fast_clip') {
+                SCENE_COUNT = 3;
+                SCENE_DURATION = 2000;
+                FPS = 15;
                 WIDTH = 384;
                 HEIGHT = 384;
-                modeLabel = "Turbo";
-            } else if (savedMode === 'standard') {
-                SCENE_COUNT = 5;
-                SCENE_DURATION = 4000; 
-                FPS = 20;
+                modeLabel = "Hızlı Klip";
+            } else if (savedMode === 'standard_video') {
+                SCENE_COUNT = 4;
+                SCENE_DURATION = 3000;
+                FPS = 18;
                 WIDTH = 512;
                 HEIGHT = 512;
-                modeLabel = "Standart";
+                modeLabel = "Standart Video";
             } else if (savedMode === 'cinematic') {
-                SCENE_COUNT = 8;
-                SCENE_DURATION = 4500; 
-                FPS = 24; 
+                SCENE_COUNT = 5;
+                SCENE_DURATION = 4000;
+                FPS = 24;
                 WIDTH = 512;
                 HEIGHT = 512;
                 modeLabel = "Sinematik";
+            } else if (savedMode === 'scene_long') {
+                SCENE_COUNT = 6;
+                SCENE_DURATION = 8000;
+                FPS = 20;
+                WIDTH = 512;
+                HEIGHT = 512;
+                modeLabel = "Sahne Sahne Uzun";
+                isLongVideo = true;
+            } else if (savedMode === 'experimental_long') {
+                SCENE_COUNT = 8;
+                SCENE_DURATION = 10000;
+                FPS = 20;
+                WIDTH = 512;
+                HEIGHT = 512;
+                modeLabel = "Deneysel Uzun";
+                isLongVideo = true;
             }
 
             if (savedVideoQuality === 'high') {
                 WIDTH = Math.max(WIDTH, 640);
                 HEIGHT = Math.max(HEIGHT, 640);
-            } else if (savedVideoQuality === 'ultra') {
+            } else if (savedVideoQuality === 'cinematic') {
                 WIDTH = Math.max(WIDTH, 768);
                 HEIGHT = Math.max(HEIGHT, 768);
-                if (savedMode === 'turbo') {
+                FPS = Math.max(FPS, 24);
+                if (savedMode === 'fast_clip') {
+                    SCENE_COUNT = 4;
+                    SCENE_DURATION = 2500;
+                } else if (savedMode === 'standard_video') {
                     SCENE_COUNT = 5;
-                    SCENE_DURATION = 3000;
-                } else if (savedMode === 'fast') {
-                    SCENE_COUNT = 5;
-                    SCENE_DURATION = 3600;
+                    SCENE_DURATION = 3500;
                 }
             }
 
             const videoDurationSec = Math.round((SCENE_COUNT * SCENE_DURATION) / 1000);
+
+            // Uzun video modu için kullanıcı bilgilendirme
+            if (isLongVideo) {
+                if (statusText) statusText.textContent = `🎬 [${modeLabel} Mod] Uzun video sahne sahne oluşturulacak (${SCENE_COUNT} sahne, ~${videoDurationSec} sn)`;
+            }
+
+            // Prompt geliştirme (video için)
+            const enhancedPrompt = enhanceVideoPrompt(prompt, savedVideoQuality, isLongVideo);
 
             // 1. ADIM: AI görsellerini üret
             const images = [];
@@ -2543,7 +2590,7 @@
                 if (progressBar) progressBar.style.width = ((batch / SCENE_COUNT) * 50) + '%';
 
                 for (let i = batch; i < batchEnd; i++) {
-                    const scenePrompt = `${prompt}, ${variations[i]}, cinematic 4k, masterpiece`;
+                    const scenePrompt = `${enhancedPrompt}, ${variations[i]}, cinematic 4k, masterpiece`;
                     // Use robust loader with fallbacks
                     batchPromises.push(loadSceneImage(scenePrompt, i).catch(e => { 
                         console.error(`[VIDEO][SCENE ${i+1}] ALL FALLBACKS FAILED:`, e.message); 
@@ -2559,7 +2606,16 @@
 
             if (images.length < 2) {
                 console.error(`[VIDEO FATAL] Video render failed. Expected 2 scenes, got ${images.length}. Check network tab for pollination errors.`);
-                container.innerHTML = `<div style="color: #f38ba8; padding: 20px;">❌ Video oluşturulamadı. ${SCENE_COUNT} sahneden 0 görsel yüklendi. Console'da başarısız URL'ler yazdırıldı.</div>`;
+                let errorMsg = '❌ Video oluşturulamadı. ';
+                if (images.length === 0) {
+                    errorMsg += 'Yeterli görsel üretilemedi. İnternet bağlantınızı kontrol edin veya daha kısa bir mod seçin.';
+                } else {
+                    errorMsg += `${SCENE_COUNT} sahne bekleniyordu, ${images.length} sahne üretildi. Tekrar deneyin.`;
+                }
+                if (isLongVideo) {
+                    errorMsg += ' Bu mod uzun video için sahne sahne çalışır.';
+                }
+                container.innerHTML = `<div style="color: #f38ba8; padding: 20px;">${errorMsg}</div>`;
                 if (window.queuedVideoPrompts) window.queuedVideoPrompts.delete(prompt);
                 return;
             }
@@ -2705,10 +2761,12 @@
                 <div style="text-align:center; background: #181825; padding: 15px; border-radius: 12px; border: 1px solid #45475a;">
                     <div style="color: #a6e3a1; font-size: 14px; margin-bottom: 10px;">✅ AI Video başarıyla oluşturuldu! (${images.length} sahne, ~${videoDurationSec} saniye)</div>
                     <video controls autoplay style="max-width:100%; border-radius: 8px; border: 2px solid #89b4fa; box-shadow: 0 4px 12px rgba(0,0,0,0.5);" src="${videoUrl}"></video>
-                    <div class="artifact-card-actions">
-                        <button class="artifact-dl-btn" onclick="downloadVideo('${videoUrl}', 'CinoCode_Video.webm')">📥 İndir</button>
-                        <button class="artifact-dl-btn" style="background:#89b4fa; color:#11111b;" onclick="replayVideo('${prompt}', '${videoUrl}')">🔁 Yeniden Oynat</button>
-                        <button class="artifact-dl-btn" style="background:#89b4fa; color:#11111b;" onclick="copyPromptToClipboard('${prompt}')">📋 Promptu Kopyala</button>
+                    <div class="artifact-card-actions" style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 12px;">
+                        <button class="artifact-dl-btn" onclick="downloadVideo('${videoUrl}', 'CinoCode_Video.webm')">⬇️ İndir</button>
+                        <button class="artifact-dl-btn" style="background:#cba6f7; color:#11111b;" onclick="regenerateVideo('${prompt}', '${containerId}')">🔁 Yeniden Oluştur</button>
+                        <button class="artifact-dl-btn" style="background:#89b4fa; color:#11111b;" onclick="editVideoPrompt('${prompt}')">✏️ Düzenle</button>
+                        <button class="artifact-dl-btn" style="background:#f38ba8; color:#11111b;" onclick="deleteVideoCard('${containerId}')">🗑️ Sil</button>
+                        <button class="artifact-dl-btn" style="background:#a6e3a1; color:#11111b;" onclick="copyPromptToClipboard('${prompt}')">📋 Promptu Kopyala</button>
                     </div>
                 </div>
             `;
@@ -2717,13 +2775,21 @@
             if(!window.artifactRenderedSet) window.artifactRenderedSet = new Set();
             if(!window.artifactRenderedSet.has(videoUrl)) {
                 window.artifactRenderedSet.add(videoUrl);
-                setTimeout(() => addArtifactToList('video', '🎬 ' + prompt.substring(0, 12) + '...', videoUrl), 100);
+                setTimeout(() => addArtifactToList('video', '🎬 ' + prompt.substring(0, 12) + '...', videoUrl, prompt), 100);
             }
         } catch (err) {
             console.error("Video render hatası:", err);
             if (window.queuedVideoPrompts) window.queuedVideoPrompts.delete(prompt);
             if (container) {
-                container.innerHTML = `<div style="color: #f38ba8; padding: 20px;">❌ Video oluşturulurken teknik bir sorun oluştu: ${err.message}</div>`;
+                let errorMsg = '❌ Video oluşturulurken bir sorun oluştu. ';
+                if (err.message.includes('timeout') || err.message.includes('network')) {
+                    errorMsg += 'İnternet bağlantısı zaman aşımına uğradı veya API yanıt vermedi.';
+                } else if (err.message.includes('MediaRecorder')) {
+                    errorMsg += 'Tarayıcınız video kaydını desteklemiyor. Chrome veya Edge kullanın.';
+                } else {
+                    errorMsg += 'Tekrar deneyin veya daha kısa bir mod seçin.';
+                }
+                container.innerHTML = `<div style="color: #f38ba8; padding: 20px;">${errorMsg}</div>`;
             }
         } finally {
             isVideoGenerating = false; // Yeni video üretimini serbest bırak
@@ -2772,6 +2838,75 @@
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
+    }
+
+    function regenerateVideo(prompt, containerId) {
+        const container = document.getElementById(containerId);
+        if (container) {
+            container.innerHTML = `
+                <div style="text-align:center; background: #181825; padding: 15px; border-radius: 12px; border: 1px solid #45475a;">
+                    <div style="color: #cba6f7; font-size: 14px; margin-bottom: 10px;">🔄 Video yeniden oluşturuluyor...</div>
+                    <div id="${containerId}-progress" style="width: 100%; height: 6px; background: #313244; border-radius: 3px; margin-bottom: 10px; overflow: hidden;">
+                        <div style="width: 0%; height: 100%; background: linear-gradient(90deg, #cba6f7, #89b4fa); transition: width 0.3s;"></div>
+                    </div>
+                    <div id="${containerId}-status" style="color: #a6adc8; font-size: 12px;">Hazırlanıyor...</div>
+                </div>
+            `;
+        }
+        queueVideoSlideshow(prompt, containerId);
+    }
+
+    function editVideoPrompt(prompt) {
+        document.getElementById("userInput").value = prompt;
+        autoResize(document.getElementById("userInput"));
+        document.getElementById("userInput").focus();
+    }
+
+    function deleteVideoCard(containerId) {
+        if (confirm("Bu videoyu silmek istiyor musun?")) {
+            const container = document.getElementById(containerId);
+            if (container) {
+                container.remove();
+            }
+            // LocalStorage'dan da silmeye çalış
+            try {
+                let library = JSON.parse(localStorage.getItem('cinocode_library')) || [];
+                library = library.filter(item => !item.id || !item.id.includes(containerId));
+                localStorage.setItem('cinocode_library', JSON.stringify(library));
+            } catch(e) {
+                console.error("Library silme hatası:", e);
+            }
+        }
+    }
+
+    function copyPromptToClipboard(prompt) {
+        navigator.clipboard.writeText(prompt).then(() => {
+            alert("✅ Prompt kopyalandı!");
+        }).catch(err => {
+            console.error("Kopyalama hatası:", err);
+            alert("❌ Kopyalama başarısız");
+        });
+    }
+
+    function enhanceVideoPrompt(basePrompt, quality, isLongVideo) {
+        let enhanced = basePrompt;
+        
+        // Kalite bazlı geliştirmeler
+        if (quality === 'high') {
+            enhanced += ', detailed camera movement, professional lighting, high resolution, sharp focus';
+        } else if (quality === 'cinematic') {
+            enhanced += ', cinematic camera angles, dramatic lighting, film grain, depth of field, professional color grading, smooth transitions';
+        }
+        
+        // Uzun video için sahne tutarlılığı
+        if (isLongVideo) {
+            enhanced += ', consistent character design, scene-to-scene continuity, detailed environment, narrative flow, smooth scene transitions';
+        }
+        
+        // Genel video geliştirmeleri
+        enhanced += ', dynamic composition, visual storytelling, engaging atmosphere';
+        
+        return enhanced;
     }
 
     
@@ -3493,8 +3628,24 @@
         renderLibrary(currentLibraryTab);
     }
 
-    function addArtifactToList(type, title, encodedContent) {
-        saveToLibrary(type, title, encodedContent);
+    function addArtifactToList(type, title, encodedContent, prompt = null) {
+        const libraryItem = {
+            id: Date.now().toString() + Math.floor(Math.random()*10000),
+            type: type,
+            title: title,
+            content: encodedContent,
+            date: new Date().toISOString()
+        };
+        if (prompt) {
+            libraryItem.prompt = prompt;
+        }
+        
+        let library = [];
+        try { library = JSON.parse(localStorage.getItem('cinocode_library')) || []; } catch(e) {}
+        library.unshift(libraryItem);
+        if (library.length > 50) library = library.slice(0, 50);
+        try { localStorage.setItem('cinocode_library', JSON.stringify(library)); } catch(e) { console.error("Kütüphane kayıt hatası."); }
+        
         const libScreen = document.getElementById('libraryScreen');
         if(libScreen && libScreen.style.display === 'flex') renderLibrary(currentLibraryTab);
     }
@@ -3585,12 +3736,22 @@
                 previewHtml = `<div style="width:100%; height:140px; background:#11111b; border-radius:8px; margin-bottom:10px; border:1px solid #45475a; display:flex; align-items:center; justify-content:center; font-size:40px;">📄</div>`;
             }
 
+            let extraButtons = '';
+            if(item.type === 'video' && item.prompt) {
+                extraButtons = `
+                    <button class="artifact-dl-btn" style="background:#cba6f7; color:#11111b; padding:8px; border-radius:6px; font-size:11px;" onclick="regenerateVideo('${item.prompt}', 'archive-${item.id}')" title="Yeniden Oluştur">🔁</button>
+                    <button class="artifact-dl-btn" style="background:#89b4fa; color:#11111b; padding:8px; border-radius:6px; font-size:11px;" onclick="editVideoPrompt('${item.prompt}')" title="Düzenle">✏️</button>
+                    <button class="artifact-dl-btn" style="background:#a6e3a1; color:#11111b; padding:8px; border-radius:6px; font-size:11px;" onclick="copyPromptToClipboard('${item.prompt}')" title="Promptu Kopyala">📋</button>
+                `;
+            }
+
             html += `
                 <div class="artifact-card archive-card" style="position:relative; display:flex; flex-direction:column;">
                     ${previewHtml}
                     <div class="artifact-card-title" style="font-size:13px; margin-bottom:10px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${icon} <span title="${item.title}">${item.title}</span></div>
-                    <div style="display:flex; gap:5px; margin-top:auto;">
+                    <div style="display:flex; gap:5px; margin-top:auto; flex-wrap:wrap;">
                         <button class="artifact-dl-btn" style="flex:1; text-align:center; padding:8px; font-weight:bold;" onclick="${action}">${btnText}</button>
+                        ${extraButtons}
                         <button class="artifact-dl-btn" style="background:#f38ba8; color:#11111b; padding:8px; border-radius:6px;" onclick="deleteFromLibrary('${item.id}')" title="Sil">🗑️</button>
                     </div>
                 </div>
