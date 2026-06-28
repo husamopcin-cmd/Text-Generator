@@ -1100,14 +1100,14 @@
         </div>
         <input type="text" id="openrouterApiKeyInput" placeholder="sk-or-v1-..." style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px; border-radius:8px; margin-bottom: 10px; box-sizing: border-box; outline: none; font-size: 13px;">
 
-        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+        <div style="display: flex; gap: 10px; margin-bottom: 10px; opacity:0.55;">
             <div style="flex: 1; text-align: left;">
-                <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px;">Cloudflare Account ID:</div>
-                <input type="text" id="cloudflareAccountIdInput" placeholder="Account ID" style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px; border-radius:8px; box-sizing: border-box; outline: none; font-size: 13px;">
+                <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px;">Cloudflare Account ID <span style="color:#6c7086;font-size:11px;">(sonraki faz)</span>:</div>
+                <input type="text" id="cloudflareAccountIdInput" placeholder="Account ID" disabled readonly style="width:100%; background:#11111b; border:1px solid #313244; color:#6c7086; padding:8px; border-radius:8px; box-sizing: border-box; outline: none; font-size: 13px; cursor:not-allowed;">
             </div>
             <div style="flex: 1; text-align: left;">
-                <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px;">CF API Token:</div>
-                <input type="password" id="cloudflareApiTokenInput" placeholder="Token" style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px; border-radius:8px; box-sizing: border-box; outline: none; font-size: 13px;">
+                <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px;">CF API Token <span style="color:#6c7086;font-size:11px;">(sonraki faz)</span>:</div>
+                <input type="password" id="cloudflareApiTokenInput" placeholder="Token" disabled readonly style="width:100%; background:#11111b; border:1px solid #313244; color:#6c7086; padding:8px; border-radius:8px; box-sizing: border-box; outline: none; font-size: 13px; cursor:not-allowed;">
             </div>
         </div>
         
@@ -1826,11 +1826,7 @@
         const openrouterKey = document.getElementById('openrouterApiKeyInput').value.trim();
         localStorage.setItem('openrouter_api_key', openrouterKey);
 
-        const cloudflareAccountId = document.getElementById('cloudflareAccountIdInput').value.trim();
-        localStorage.setItem('cloudflare_account_id', cloudflareAccountId);
-
-        const cloudflareApiToken = document.getElementById('cloudflareApiTokenInput').value.trim();
-        localStorage.setItem('cloudflare_api_token', cloudflareApiToken);
+        // Cloudflare sonraki faz — kaydetme devre dışı
 
         const ollamaIp = document.getElementById('ollamaIpInput').value.trim();
         localStorage.setItem('ollama_ip', ollamaIp);
@@ -4080,22 +4076,16 @@
             }
             console.log("[CinoCode] reqMessages dolduruldu:", reqMessages.length, "mesaj");
             
-            const PROXY_CLOUD_MODELS = ['cerebras', 'deepseek', 'mistral', 'openrouter'];
-
             function parseModelLabel(label) {
                 const normalized = String(label || '').trim();
                 const lower = normalized.toLowerCase();
                 if (PROXY_CLOUD_MODELS.includes(lower)) {
                     return { provider: lower, modelId: lower, displayLabel: normalized };
                 }
-                const providerMatch = normalized.match(/(?:[-:])(cerebras|deepseek|mistral|openrouter|gemini|groq|nvidia)(?:\b|$)/i);
+                const providerMatch = normalized.match(/(?:[-:])(openai|cerebras|deepseek|mistral|openrouter|gemini|groq|fireworks|together|nvidia)(?:\b|$)/i);
                 const provider = providerMatch ? providerMatch[1].toLowerCase() : null;
                 const modelId = provider ? normalized.replace(new RegExp(`(?:[-:])${provider}(?:\b|$)`, 'i'), '').trim() : normalized;
                 return { provider, modelId, displayLabel: normalized };
-            }
-
-            function isProxyCloudModel(modelValue) {
-                return PROXY_CLOUD_MODELS.includes(String(modelValue || '').trim().toLowerCase());
             }
 
             function isProxyCloudProvider(provider) {
@@ -4119,8 +4109,8 @@
             }
 
             function getRequestTimeoutMs() {
-                if (taskType === 'vision') return 45000;
-                if (taskType === 'pdf') return 25000;
+                if (taskType === 'vision') return 35000;
+                if (taskType === 'pdf') return 30000;
                 return 15000;
             }
 
@@ -4181,20 +4171,12 @@
                 "meta-llama/llama-3.2-11b-vision-instruct:free-openrouter"
             ];
             const normalTextModels = [
-                "llama-3.1-8b-instant-groq",
-                "llama-3.3-70b-versatile-groq",
-                "gemini-2.5-flash-gemini",
-                "meta-llama/llama-3.2-11b-vision-instruct:free-openrouter",
-                "qwen2.5:14b",
-                "qwen2.5"
+                "openai", "cerebras", "deepseek", "mistral", "openrouter", "gemini", "groq",
+                "qwen2.5:14b", "qwen2.5"
             ];
             const pdfTextModels = [
-                "gemini-2.5-flash-gemini",
-                "llama-3.3-70b-versatile-groq",
-                "llama-3.1-8b-instant-groq",
-                "meta-llama/llama-3.2-11b-vision-instruct:free-openrouter",
-                "qwen2.5:14b",
-                "qwen2.5"
+                "gemini", "openai", "deepseek", "cerebras", "mistral", "openrouter",
+                "qwen2.5:14b", "qwen2.5"
             ];
 
             if (hasAttachments) {
@@ -4216,9 +4198,9 @@
                     }
                     if (selectedModel) chatPriority.push(selectedModel);
                     const canonical = [
-                        "llama-3.1-8b-instant-groq",
-                        "gemini-2.5-flash-gemini",
-                        "llama-3.3-70b-versatile-groq"
+                        "openai",
+                        "gemini",
+                        "groq"
                     ];
                     fallbackQueue = [...new Set([...chatPriority, ...canonical])];
                 }
@@ -4234,7 +4216,7 @@
                 return true;
             });
             if (availableModels.length === 0) {
-                throw new Error("Hiçbir uygun model denenemedi. Lütfen yapay zeka API anahtarlarınızı kontrol edin.");
+                throw new Error("Hiçbir uygun model denenemedi. Cloud sağlayıcılar Netlify Environment Variables ile yapılandırılmalıdır.");
             }
             fallbackQueue = availableModels;
 
@@ -4254,17 +4236,16 @@
             const triedModels = new Set();
             let lastErrorMessage = null;
             let lastErrorDetails = null;
-            let proxyCloudResponse = false;
 
             for (let i = 0; i < fallbackQueue.length; i++) {
                 const currentTryModel = fallbackQueue[i];
                 if (triedModels.has(currentTryModel)) continue;
                 triedModels.add(currentTryModel);
                 const currentTryInfo = parseModelLabel(currentTryModel);
-                isGroq = currentTryInfo.provider === "groq";
-                isGemini = currentTryInfo.provider === "gemini";
-                isNvidia = currentTryInfo.provider === "nvidia";
                 const isProxyCloud = isProxyCloudModel(currentTryModel);
+                isGroq = currentTryInfo.provider === "groq" && !isProxyCloud;
+                isGemini = false;
+                isNvidia = currentTryInfo.provider === "nvidia";
                 isOpenRouter = currentTryInfo.provider === "openrouter" && !isProxyCloud;
                 actualModel = currentTryInfo.modelId;
                 const displayLabel = currentTryInfo.displayLabel;
@@ -4285,51 +4266,18 @@
                 }
 
                 let fetchUrl, fetchOptions;
-                
-                if (isGemini) {
-                    // --- GOOGLE GEMINI ---
-                    const userGeminiKey = getRandomApiKey(localStorage.getItem('gemini_api_key'));
-                    let geminiContents = [];
-                    let systemText = '';
-                    
-                    for (let msg of reqMessages) {
-                        if (msg.role === 'system') {
-                            systemText = msg.content;
-                            break;
-                        }
-                    }
-                    
-                    if (systemText) {
-                        geminiContents.push({ role: 'user', parts: [{ text: '(Sistem Yönergesi: ' + systemText + ')' }] });
-                        geminiContents.push({ role: 'model', parts: [{ text: 'Anlaştık, kurallara uyacağım!' }] });
-                    }
-                    
-                    for (let msg of reqMessages) {
-                        if (msg.role === 'system') continue;
-                        let parts = [];
-                        if (msg.content) parts.push({ text: msg.content });
-                        if (msg.images && msg.images.length > 0) {
-                            for (let img of msg.images) {
-                                let base64Data = img.split(',')[1] || img;
-                                let mimeType = img.match(/^data:([^;]+);/)?.[1] || 'image/jpeg';
-                                parts.push({ inline_data: { mime_type: mimeType, data: base64Data } });
-                            }
-                        }
-                        let gemRole = msg.role === 'assistant' ? 'model' : 'user';
-                        if (geminiContents.length > 0 && geminiContents[geminiContents.length - 1].role === gemRole) {
-                            geminiContents[geminiContents.length - 1].parts.push(...parts);
-                        } else {
-                            geminiContents.push({ role: gemRole, parts });
-                        }
-                    }
-                    
-                    fetchUrl = `https://generativelanguage.googleapis.com/v1beta/models/${actualModel}:generateContent?key=${userGeminiKey}`;
+
+                if (isProxyCloud) {
+                    fetchUrl = '/.netlify/functions/ai-chat';
                     fetchOptions = {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            contents: geminiContents,
-                            generationConfig: { temperature: 0.9, maxOutputTokens: 8192 }
+                            messages: reqMessages,
+                            taskType,
+                            selectedModel: currentTryInfo.provider,
+                            temperature: 0.7,
+                            maxTokens: taskType === 'pdf' ? 4096 : 1024
                         })
                     };
                 } else if (isNvidia) {
@@ -4368,21 +4316,6 @@
                             stream: true
                         })
                     };
-                } else if (isProxyCloud) {
-                    // --- FAZ 1 NETLIFY BULUT PROXY (Cerebras / DeepSeek / Mistral / OpenRouter Cloud) ---
-                    fetchUrl = '/.netlify/functions/ai-chat';
-                    fetchOptions = {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            messages: reqMessages,
-                            taskType,
-                            selectedModel: currentTryInfo.provider,
-                            temperature: 0.7,
-                            maxTokens: 1024
-                        })
-                    };
-                    proxyCloudResponse = true;
                 } else if (isOpenRouter) {
                     // --- OPENROUTER (OpenAI uyumlu, ücretsiz vision modelleri) ---
                     const userOrKey = (localStorage.getItem('openrouter_api_key') || "").trim();
@@ -4470,65 +4403,51 @@
                 }
                 
                 try {
-                    if (isGemini) {
-                        removeImage();
+                    if (isProxyCloud) {
                         const controller = new AbortController();
                         const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
                         fetchOptions.signal = controller.signal;
-
-                        let geminiResponse;
+                        let proxyResponse;
                         try {
-                            geminiResponse = await fetch(fetchUrl, fetchOptions);
+                            proxyResponse = await fetch(fetchUrl, fetchOptions);
                         } finally {
                             clearTimeout(timeoutId);
                         }
 
-                        if (!geminiResponse.ok) {
-                            const errText = await geminiResponse.text().catch(() => "");
-                            lastErrorMessage = geminiResponse.status === 401 || geminiResponse.status === 403
-                                ? "API key geçersiz olabilir."
-                                : geminiResponse.status === 429
-                                    ? "Kota/limit dolmuş olabilir."
-                                    : `Gemini API hatası: ${geminiResponse.status}`;
-                            lastErrorDetails = { provider: 'gemini', model: actualModel, timeout: false, status: geminiResponse.status, errorBody: errText, endpoint: fetchUrl, taskType };
-                            console.error(lastErrorDetails);
-                            setModelScore(currentTryModel, -3); // AI Router: HTTP hatası
-                            continue;
-                        }
-                        const geminiData = await geminiResponse.json();
-                        const geminiBotReply = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-                        if (!geminiBotReply) {
-                            lastErrorMessage = "Model yanıt üretmedi.";
-                            lastErrorDetails = { provider: 'gemini', model: actualModel, timeout: false, status: geminiResponse.status, errorBody: JSON.stringify(geminiData), endpoint: fetchUrl, taskType };
-                            console.warn("Gemini boş cevap döndü, sonraki yedek deneniyor...");
+                        const jsonData = await proxyResponse.json().catch(() => null);
+                        if (!proxyResponse.ok || !jsonData || !jsonData.ok) {
+                            lastErrorMessage = jsonData?.error
+                                || (proxyResponse.status === 401 || proxyResponse.status === 403 ? 'API anahtarı geçersiz veya yetkisiz.'
+                                : proxyResponse.status === 429 ? 'Kota/rate limit doldu, yedek sağlayıcı deneniyor.'
+                                : proxyResponse.status === 413 ? 'İstek çok büyük.'
+                                : 'Bulut proxy hatası oluştu.');
+                            lastErrorDetails = { provider: currentTryInfo.provider, model: actualModel, timeout: false, status: proxyResponse.status, errorBody: jsonData?.error || '', endpoint: fetchUrl, taskType };
                             setModelScore(currentTryModel, -3);
                             continue;
                         }
 
-                        setModelScore(currentTryModel, +2); // AI Router: başarı
+                        setModelScore(currentTryModel, +2);
                         document.getElementById("modelSelect").value = currentTryModel;
-                        document.getElementById(botId).innerHTML = renderContentWithImages(geminiBotReply, true);
+                        window.lastWorkingProvider = currentTryInfo.provider;
+                        window.lastWorkingModel = actualModel;
+                        window.lastWorkingModelAt = Date.now();
+
+                        const botReply = String(jsonData.content || '').trim();
+                        document.getElementById(botId).innerHTML = renderContentWithImages(botReply, true);
                         addCopyButtons(document.getElementById(botId));
-                        chat.messages.push({ role: 'assistant', content: geminiBotReply });
+                        chat.messages.push({ role: 'assistant', content: botReply });
                         chat.updatedAt = Date.now();
                         saveDatabase();
                         scrollToBottom();
                         setTimeout(scrollToBottom, 300);
-                        speakText(sanitizeAssistantOutput(geminiBotReply).substring(0, 500));
+                        speakText(sanitizeAssistantOutput(botReply).substring(0, 500));
 
-                        // mark last working model/provider
-                        window.lastWorkingProvider = provider || 'gemini';
-                        window.lastWorkingModel = actualModel;
-                        window.lastWorkingModelAt = Date.now();
-
-                        // clear generation state
                         window.isGenerating = false;
                         try { document.querySelector('.send-btn').disabled = false; } catch(e) {}
                         try { document.getElementById('userInput').disabled = false; } catch(e) {}
-                        const stEl = document.getElementById(genStatusId); if (stEl) stEl.remove();
+                        const stElProxy = document.getElementById(genStatusId); if (stElProxy) stElProxy.remove();
                         return;
-                    } else {
-                        // Groq / NVIDIA NIM / OpenRouter / Yerel Ollama — hepsi SSE streaming
+                    } else if (isNvidia || isOpenRouter || isGroq) {
                         const controller = new AbortController();
                         const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
                         fetchOptions.signal = controller.signal;
@@ -4561,6 +4480,37 @@
                         window.lastWorkingModelAt = Date.now();
                         response = streamResponse;
                         break;
+                    } else {
+                        const controller = new AbortController();
+                        const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+                        fetchOptions.signal = controller.signal;
+
+                        let streamResponse;
+                        try {
+                            streamResponse = await fetch(fetchUrl, fetchOptions);
+                        } finally {
+                            clearTimeout(timeoutId);
+                        }
+
+                        if (!streamResponse.ok) {
+                            const errText = await streamResponse.text().catch(() => "");
+                            lastErrorMessage = streamResponse.status === 401 || streamResponse.status === 403
+                                ? "API key geçersiz olabilir."
+                                : streamResponse.status === 429
+                                    ? "Kota/limit dolmuş olabilir."
+                                    : `Model hatası: ${streamResponse.status}`;
+                            lastErrorDetails = { provider: 'ollama', model: actualModel, timeout: false, status: streamResponse.status, errorBody: errText, endpoint: fetchUrl, taskType };
+                            setModelScore(currentTryModel, -3);
+                            continue;
+                        }
+
+                        setModelScore(currentTryModel, +2);
+                        document.getElementById("modelSelect").value = currentTryModel;
+                        window.lastWorkingProvider = 'ollama';
+                        window.lastWorkingModel = actualModel;
+                        window.lastWorkingModelAt = Date.now();
+                        response = streamResponse;
+                        break;
                     }
                 } catch (fetchErr) {
                     const timedOut = fetchErr.name === 'AbortError';
@@ -4583,7 +4533,7 @@
                 if (!fallbackCandidate) {
                     throw new Error("Hiçbir uygun model denenemedi. Lütfen yapay zeka API anahtarlarınızı kontrol edin.");
                 }
-                throw new Error(lastErrorMessage || `Tüm yapay zeka yedek modelleri denendi ancak yanıt alınamadı. Lütfen API anahtarlarınızı, kotanızı veya ağ bağlantınızı kontrol edin.`);
+                throw new Error(lastErrorMessage || `Tüm yapay zeka yedek modelleri denendi ancak yanıt alınamadı. Cloud sağlayıcılar Netlify Environment Variables ile yapılandırılmalıdır.`);
             }
 
             removeImage(); // Fotoğraf gönderildikten sonra temizle
@@ -4594,29 +4544,6 @@
                 window.isGenerating = false; try { document.querySelector('.send-btn').disabled = false; } catch(e) {} try { document.getElementById('userInput').disabled = false; } catch(e) {}
                 const stEl2 = document.getElementById(genStatusId); if (stEl2) stEl2.remove();
                 throw new Error(`API Hatası (${response.status}): ` + errorText);
-            }
-
-            if (proxyCloudResponse) {
-                const jsonData = await response.json().catch(() => null);
-                if (!jsonData || !jsonData.ok) {
-                    const errMsg = jsonData?.error || 'Bulut proxy hatası oluştu.';
-                    throw new Error(errMsg);
-                }
-                const botReply = String(jsonData.content || '').trim();
-                document.getElementById(botId).innerHTML = renderContentWithImages(botReply, true);
-                addCopyButtons(document.getElementById(botId));
-                chat.messages.push({ role: 'assistant', content: botReply });
-                chat.updatedAt = Date.now();
-                saveDatabase();
-                scrollToBottom();
-                setTimeout(scrollToBottom, 300);
-                speakText(sanitizeAssistantOutput(botReply).substring(0, 500));
-
-                window.isGenerating = false;
-                try { document.querySelector('.send-btn').disabled = false; } catch(e) {}
-                try { document.getElementById('userInput').disabled = false; } catch(e) {}
-                const stEl3 = document.getElementById('cinocode_generating_status'); if (stEl3) stEl3.remove();
-                return;
             }
 
             const reader = response.body.getReader();
@@ -4643,20 +4570,7 @@
                     if (line.trim() === "") continue;
                     
                     let word = null;
-                    if (isGemini) {
-                        if (line.startsWith("data: ")) {
-                            try {
-                                const data = JSON.parse(line.substring(6));
-                                if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) {
-                                    word = data.candidates[0].content.parts
-                                        .filter(p => p.text)
-                                        .map(p => p.text)
-                                        .join('');
-                                    if (word === '') word = null; // boş string yerine null
-                                }
-                            } catch (e) { /* sessizce geç */ }
-                        }
-                    } else if (isGroq || isNvidia || isOpenRouter) {
+                    if (isGroq || isNvidia || isOpenRouter) {
                         if (line.trim() === "data: [DONE]") continue;
                         if (line.startsWith("data: ")) {
                             try {
