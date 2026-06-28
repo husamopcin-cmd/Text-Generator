@@ -556,8 +556,15 @@
                 <option disabled>──────────</option>
                 <!-- Google Gemini Modelleri -->
                 <option value="gemini-2.0-flash-gemini">🤍 Gemini 2.0 Flash - Google Bulut ✨</option>
+                <option value="gemini-2.5-flash-preview-05-20-gemini">🤍 Gemini 2.5 Flash - Google Bulut ✨</option>
                 <option value="gemini-1.5-flash-gemini">🤍 Gemini 1.5 Flash - Google Bulut ✨</option>
                 <option value="gemini-1.5-pro-gemini">🤍 Gemini 1.5 Pro - Google Bulut ✨</option>
+                <option disabled>──────────</option>
+                <!-- NVIDIA NIM -->
+                <option value="nvidia/nemotron-nano-12b-v2-vl-nvidia">🟢 Nemotron Nano VL (Görsel) - NVIDIA NIM ∞</option>
+                <option disabled>──────────</option>
+                <!-- OpenRouter Ücretsiz Vision -->
+                <option value="meta-llama/llama-3.2-11b-vision-instruct:free-openrouter">🔵 Llama 3.2 Vision (11B) - OpenRouter Ücretsiz</option>
                 <option disabled>──────────</option>
                 <!-- Yerel Modeller -->
                 <option value="qwen2.5:14b">Qwen 2.5 (14B) - Yerel</option>
@@ -660,52 +667,73 @@
 
     <!-- Settings Modal -->
     <div class="attach-menu-overlay" id="settingsOverlay" onclick="closeSettings()"></div>
-    <div class="attach-menu" id="settingsMenu" style="bottom: 50%; transform: translate(-50%, 50%); display: none; opacity: 0; pointer-events: auto;" onclick="event.stopPropagation()">
+    <div class="attach-menu" id="settingsMenu" style="bottom: 50%; transform: translate(-50%, 50%); display: none; opacity: 0; pointer-events: auto; max-height: 85vh; overflow-y: auto;" onclick="event.stopPropagation()">
         <button class="attach-menu-close" onclick="closeSettings()">×</button>
         <div class="attach-menu-title">Ayarlar & API</div>
         
-        <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 10px; text-align: left;">
+        <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px; text-align: left;">
             Ollama Sunucu IP'si (Mobilden bağlanmak için):
         </div>
-        <input type="text" id="ollamaIpInput" placeholder="http://192.168.1.X:11434" style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:10px; border-radius:8px; margin-bottom: 15px; box-sizing: border-box; outline: none;">
+        <input type="text" id="ollamaIpInput" placeholder="http://192.168.1.X:11434" style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px; border-radius:8px; margin-bottom: 10px; box-sizing: border-box; outline: none; font-size: 13px;">
         
-        <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 10px; text-align: left;">
-            Bulut Ses Sunucusu URL'si (Render/Railway vb. için - Opsiyonel):
+        <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px; text-align: left;">
+            Bulut Ses Sunucusu URL'si (Opsiyonel):
         </div>
-        <input type="text" id="ttsUrlInput" placeholder="https://cinocode-tts.onrender.com/api/tts" style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:10px; border-radius:8px; margin-bottom: 15px; box-sizing: border-box; outline: none;">
+        <input type="text" id="ttsUrlInput" placeholder="https://cinocode-tts.onrender.com/api/tts" style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px; border-radius:8px; margin-bottom: 10px; box-sizing: border-box; outline: none; font-size: 13px;">
         
-        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
             <div style="flex: 1; text-align: left;">
-                <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 10px;">Azure Speech Key (Opsiyonel):</div>
-                <input type="password" id="azureKeyInput" placeholder="Azure Key (F0 Free)" style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:10px; border-radius:8px; box-sizing: border-box; outline: none;">
+                <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px;">Azure Key:</div>
+                <input type="password" id="azureKeyInput" placeholder="Azure Key" style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px; border-radius:8px; box-sizing: border-box; outline: none; font-size: 13px;">
             </div>
             <div style="flex: 1; text-align: left;">
-                <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 10px;">Azure Bölge (Region):</div>
-                <input type="text" id="azureRegionInput" placeholder="e.g. westeurope" style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:10px; border-radius:8px; box-sizing: border-box; outline: none;">
+                <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px;">Azure Region:</div>
+                <input type="text" id="azureRegionInput" placeholder="westeurope" style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px; border-radius:8px; box-sizing: border-box; outline: none; font-size: 13px;">
             </div>
         </div>
         
-        <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 10px; text-align: left;">
-            Groq API Anahtarınız (Bulut modelleri için):
+        <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px; text-align: left;">
+            Google Gemini API Key <span style="color: #a6e3a1; font-size: 11px;">(aistudio.google.com/apikey)</span>:
         </div>
-        <input type="text" id="groqApiKeyInput" placeholder="gsk_..." style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:10px; border-radius:8px; margin-bottom: 15px; box-sizing: border-box; outline: none;">
-        
-        <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 10px; text-align: left;">
-            Google Gemini API Anahtarı <span style="color: #a6e3a1; font-size: 11px;">(Tamamen Ücretsiz! → aistudio.google.com/apikey)</span>:
+        <input type="text" id="geminiApiKeyInput" placeholder="AIza..." style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px; border-radius:8px; margin-bottom: 10px; box-sizing: border-box; outline: none; font-size: 13px;">
+
+        <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px; text-align: left;">
+            NVIDIA NIM API Key <span style="color: #cba6f7; font-size: 11px;">(build.nvidia.com)</span>:
         </div>
-        <input type="text" id="geminiApiKeyInput" placeholder="AIza..." style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:10px; border-radius:8px; margin-bottom: 15px; box-sizing: border-box; outline: none;">
+        <input type="text" id="nvidiaApiKeyInput" placeholder="nvapi-..." style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px; border-radius:8px; margin-bottom: 10px; box-sizing: border-box; outline: none; font-size: 13px;">
+
+        <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px; text-align: left;">
+            OpenRouter API Key <span style="color: #89b4fa; font-size: 11px;">(openrouter.ai)</span>:
+        </div>
+        <input type="text" id="openrouterApiKeyInput" placeholder="sk-or-v1-..." style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px; border-radius:8px; margin-bottom: 10px; box-sizing: border-box; outline: none; font-size: 13px;">
+
+        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+            <div style="flex: 1; text-align: left;">
+                <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px;">Cloudflare Account ID:</div>
+                <input type="text" id="cloudflareAccountIdInput" placeholder="Account ID" style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px; border-radius:8px; box-sizing: border-box; outline: none; font-size: 13px;">
+            </div>
+            <div style="flex: 1; text-align: left;">
+                <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px;">CF API Token:</div>
+                <input type="password" id="cloudflareApiTokenInput" placeholder="Token" style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px; border-radius:8px; box-sizing: border-box; outline: none; font-size: 13px;">
+            </div>
+        </div>
+
+        <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px; text-align: left;">
+            Groq API Key (Bulut Modelleri):
+        </div>
+        <input type="text" id="groqApiKeyInput" placeholder="gsk_..." style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px; border-radius:8px; margin-bottom: 10px; box-sizing: border-box; outline: none; font-size: 13px;">
         
-        <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 10px; text-align: left;">
+        <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px; text-align: left;">
             Video Oluşturma Modu:
         </div>
-        <select id="videoModeSelect" style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:10px; border-radius:8px; margin-bottom: 15px; outline: none;">
+        <select id="videoModeSelect" style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px; border-radius:8px; margin-bottom: 15px; outline: none; font-size: 13px;">
             <option value="turbo">⚡ Turbo (5 Sahne, ~15 sn)</option>
             <option value="fast" selected>🚀 Hızlı (4 Sahne, ~12 sn)</option>
             <option value="standard">🎬 Standart (8 Sahne, ~32 sn)</option>
             <option value="cinematic">🎥 Sinematik (12 Sahne, ~60 sn)</option>
         </select>
-
-        <button class="send-btn" style="width: 100%; border-radius: 8px;" onclick="saveSettings()">Kaydet</button>
+        
+        <button class="send-btn" style="width: 100%; border-radius: 8px; padding: 10px;" onclick="saveSettings()">Kaydet</button>
     </div>
 
     <!-- Artifact Modal -->
@@ -1184,6 +1212,11 @@
         const currentGeminiKey = localStorage.getItem('gemini_api_key') || "";
         document.getElementById('geminiApiKeyInput').value = currentGeminiKey;
 
+        document.getElementById('nvidiaApiKeyInput').value = localStorage.getItem('nvidia_api_key') || "";
+        document.getElementById('openrouterApiKeyInput').value = localStorage.getItem('openrouter_api_key') || "";
+        document.getElementById('cloudflareAccountIdInput').value = localStorage.getItem('cloudflare_account_id') || "";
+        document.getElementById('cloudflareApiTokenInput').value = localStorage.getItem('cloudflare_api_token') || "";
+
         const currentOllamaIp = localStorage.getItem('ollama_ip') || "";
         document.getElementById('ollamaIpInput').value = currentOllamaIp;
 
@@ -1217,6 +1250,18 @@
 
         const geminiKey = document.getElementById('geminiApiKeyInput').value.trim();
         localStorage.setItem('gemini_api_key', geminiKey);
+
+        const nvidiaKey = document.getElementById('nvidiaApiKeyInput').value.trim();
+        localStorage.setItem('nvidia_api_key', nvidiaKey);
+
+        const openrouterKey = document.getElementById('openrouterApiKeyInput').value.trim();
+        localStorage.setItem('openrouter_api_key', openrouterKey);
+
+        const cloudflareAccountId = document.getElementById('cloudflareAccountIdInput').value.trim();
+        localStorage.setItem('cloudflare_account_id', cloudflareAccountId);
+
+        const cloudflareApiToken = document.getElementById('cloudflareApiTokenInput').value.trim();
+        localStorage.setItem('cloudflare_api_token', cloudflareApiToken);
 
         const ollamaIp = document.getElementById('ollamaIpInput').value.trim();
         localStorage.setItem('ollama_ip', ollamaIp);
@@ -2939,8 +2984,11 @@ Eğer kullanıcı "bu ne", "nerede", "adam kim", "bunu istemedim", "düzelt", "y
                 // Görsel veya Belge eki varsa sadece Vision (Görsel okuma) yeteneği olan modelleri sıraya ekle
                 const visionModels = [
                     "gemini-2.0-flash-gemini",
-                    "gemini-1.5-flash-gemini",
+                    "gemini-2.5-flash-preview-05-20-gemini",
+                    "nvidia/nemotron-nano-12b-v2-vl-nvidia",
+                    "meta-llama/llama-3.2-11b-vision-instruct:free-openrouter",
                     "meta-llama/llama-4-scout-17b-16e-instruct-groq",
+                    "gemini-1.5-flash-gemini",
                     "gemini-1.5-pro-gemini"
                 ];
                 for (let vModel of visionModels) {
@@ -2954,6 +3002,9 @@ Eğer kullanıcı "bu ne", "nerede", "adam kim", "bunu istemedim", "düzelt", "y
                     "llama-3.3-70b-versatile-groq",
                     "llama-3.1-70b-versatile-groq",
                     "gemini-2.0-flash-gemini",
+                    "gemini-2.5-flash-preview-05-20-gemini",
+                    "nvidia/nemotron-nano-12b-v2-vl-nvidia",
+                    "meta-llama/llama-3.2-11b-vision-instruct:free-openrouter",
                     "gemini-1.5-flash-gemini",
                     "llama-3.1-8b-instant-groq"
                 ];
@@ -2970,15 +3021,19 @@ Eğer kullanıcı "bu ne", "nerede", "adam kim", "bunu istemedim", "düzelt", "y
                 const currentTryModel = fallbackQueue[i];
                 isGroq = currentTryModel.includes("-groq");
                 isGemini = currentTryModel.includes("-gemini");
-                actualModel = currentTryModel.replace("-groq", "").replace("-gemini", "");
+                const isNvidia = currentTryModel.includes("-nvidia");
+                const isOpenRouter = currentTryModel.includes("-openrouter");
+                actualModel = currentTryModel
+                    .replace("-groq", "")
+                    .replace("-gemini", "")
+                    .replace("-nvidia", "")
+                    .replace("-openrouter", "");
                 
                 // Eğer bu model için API anahtarı girilmemişse doğrudan sonraki yedek modele geç
-                if (isGemini && !(localStorage.getItem('gemini_api_key') || "").trim()) {
-                    continue;
-                }
-                if (isGroq && !(localStorage.getItem('groq_api_key') || "").trim()) {
-                    continue;
-                }
+                if (isGemini && !(localStorage.getItem('gemini_api_key') || "").trim()) { continue; }
+                if (isGroq && !(localStorage.getItem('groq_api_key') || "").trim()) { continue; }
+                if (isNvidia && !(localStorage.getItem('nvidia_api_key') || "").trim()) { continue; }
+                if (isOpenRouter && !(localStorage.getItem('openrouter_api_key') || "").trim()) { continue; }
                 
                 // Eğer ilk denemede hata alıp otomatik geçiş yapıyorsak ekranda bilgilendirme göster
                 if (i > 0) {
@@ -2991,6 +3046,7 @@ Eğer kullanıcı "bu ne", "nerede", "adam kim", "bunu istemedim", "düzelt", "y
                 let fetchUrl, fetchOptions;
                 
                 if (isGemini) {
+                    // --- GOOGLE GEMINI ---
                     const userGeminiKey = (localStorage.getItem('gemini_api_key') || "").trim();
                     let geminiContents = [];
                     let systemText = '';
@@ -3035,7 +3091,77 @@ Eğer kullanıcı "bu ne", "nerede", "adam kim", "bunu istemedim", "düzelt", "y
                             generationConfig: { temperature: 0.9, maxOutputTokens: 8192 }
                         })
                     };
+                } else if (isNvidia) {
+                    // --- NVIDIA NIM (OpenAI uyumlu, görsel destekli) ---
+                    const userNvidiaKey = (localStorage.getItem('nvidia_api_key') || "").trim();
+                    fetchUrl = "https://integrate.api.nvidia.com/v1/chat/completions";
+                    
+                    let nvidiaMessages = [];
+                    for (let msg of reqMessages) {
+                        if (msg.role === 'system') {
+                            nvidiaMessages.push({ role: 'system', content: msg.content });
+                            continue;
+                        }
+                        if (msg.images && msg.images.length > 0) {
+                            let contentParts = [];
+                            if (msg.content) contentParts.push({ type: 'text', text: msg.content });
+                            for (let img of msg.images) {
+                                contentParts.push({ type: 'image_url', image_url: { url: img } });
+                            }
+                            nvidiaMessages.push({ role: msg.role === 'assistant' ? 'assistant' : 'user', content: contentParts });
+                        } else {
+                            nvidiaMessages.push({ role: msg.role === 'assistant' ? 'assistant' : (msg.role === 'system' ? 'system' : 'user'), content: msg.content || '' });
+                        }
+                    }
+                    
+                    fetchOptions = {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${userNvidiaKey}`
+                        },
+                        body: JSON.stringify({
+                            model: actualModel,
+                            messages: nvidiaMessages,
+                            max_tokens: 4096,
+                            stream: true
+                        })
+                    };
+                } else if (isOpenRouter) {
+                    // --- OPENROUTER (OpenAI uyumlu, ücretsiz vision modelleri) ---
+                    const userOrKey = (localStorage.getItem('openrouter_api_key') || "").trim();
+                    fetchUrl = "https://openrouter.ai/api/v1/chat/completions";
+                    
+                    let orMessages = [];
+                    for (let msg of reqMessages) {
+                        if (msg.images && msg.images.length > 0) {
+                            let contentParts = [];
+                            if (msg.content) contentParts.push({ type: 'text', text: msg.content });
+                            for (let img of msg.images) {
+                                contentParts.push({ type: 'image_url', image_url: { url: img } });
+                            }
+                            orMessages.push({ role: msg.role === 'assistant' ? 'assistant' : 'user', content: contentParts });
+                        } else {
+                            orMessages.push({ role: msg.role, content: msg.content || '' });
+                        }
+                    }
+                    
+                    fetchOptions = {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${userOrKey}`,
+                            'HTTP-Referer': window.location.origin || 'https://cinocode.app',
+                            'X-Title': 'CinoCode AI'
+                        },
+                        body: JSON.stringify({
+                            model: actualModel,
+                            messages: orMessages,
+                            stream: true
+                        })
+                    };
                 } else if (isGroq) {
+                    // --- GROQ ---
                     const userGroqKey = (localStorage.getItem('groq_api_key') || "").trim();
                     fetchUrl = "https://api.groq.com/openai/v1/chat/completions";
                     
@@ -3073,6 +3199,7 @@ Eğer kullanıcı "bu ne", "nerede", "adam kim", "bunu istemedim", "düzelt", "y
                         })
                     };
                 } else {
+                    // --- YEREL OLLAMA ---
                     fetchUrl = getOllamaUrl() + "/api/chat";
                     fetchOptions = {
                         method: "POST",
@@ -3113,15 +3240,16 @@ Eğer kullanıcı "bu ne", "nerede", "adam kim", "bunu istemedim", "düzelt", "y
                         speakText(sanitizeAssistantOutput(geminiBotReply).substring(0, 500));
                         return;
                     } else {
-                        let groqResponse = await fetch(fetchUrl, fetchOptions);
-                        if (!groqResponse.ok) {
-                            const errText = await groqResponse.text();
-                            console.warn(`Groq/Yerel API hatası verdi (${groqResponse.status}): ${errText}`);
+                        // Groq / NVIDIA NIM / OpenRouter / Yerel Ollama — hepsi SSE streaming
+                        let streamResponse = await fetch(fetchUrl, fetchOptions);
+                        if (!streamResponse.ok) {
+                            const errText = await streamResponse.text();
+                            console.warn(`Streaming API hatası (${streamResponse.status}): ${errText}`);
                             continue;
                         }
                         
                         document.getElementById("modelSelect").value = currentTryModel;
-                        response = groqResponse;
+                        response = streamResponse;
                         break;
                     }
                 } catch (fetchErr) {
