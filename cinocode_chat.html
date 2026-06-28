@@ -706,6 +706,47 @@
             .dk-label { font-size: 11px; }
             .dk-select, .dk-btn { font-size: 12px; padding: 5px 8px; }
         }
+
+        /* ===== SINAV KOÇU PANELİ ===== */
+        #sinavKocuPanel {
+            display: none;
+            background: linear-gradient(135deg, rgba(203,166,247,0.08) 0%, rgba(137,180,250,0.08) 100%);
+            border-bottom: 1px solid rgba(203,166,247,0.25);
+            padding: 12px 16px;
+            flex-direction: column;
+            gap: 8px;
+            animation: slideDown 0.3s ease;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+        #sinavKocuPanel.active { display: flex; }
+        .skp-row {
+            display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+        }
+        .skp-label {
+            font-size: 12px; font-weight: 600; color: #cba6f7; white-space: nowrap;
+            display: flex; align-items: center; gap: 5px;
+        }
+        .skp-select {
+            background: rgba(30,30,46,0.9); border: 1px solid rgba(203,166,247,0.3);
+            color: #cdd6f4; padding: 6px 10px; border-radius: 8px; font-size: 13px;
+            cursor: pointer; outline: none; transition: border-color 0.2s;
+        }
+        .skp-select:focus { border-color: #cba6f7; }
+        .skp-btn {
+            background: rgba(203,166,247,0.15); border: 1px solid rgba(203,166,247,0.3);
+            color: #cba6f7; padding: 6px 16px; border-radius: 8px; font-size: 13px;
+            cursor: pointer; transition: all 0.2s; font-weight: 700; white-space: nowrap;
+        }
+        .skp-btn:hover { background: rgba(203,166,247,0.35); transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(203,166,247,0.3); }
+        .skp-no-doc {
+            font-size: 12px; color: #f38ba8; font-style: italic;
+        }
+        @media (max-width: 600px) {
+            .skp-label { font-size: 11px; }
+            .skp-select, .skp-btn { font-size: 12px; padding: 5px 8px; }
+        }
     </style>
 
 </head>
@@ -860,6 +901,55 @@
         </div>
     </div>
     <!-- ===== DİL KOÇU PANELİ BİTİŞ ===== -->
+
+    <!-- ===== SINAV KOÇU PANELİ ===== -->
+    <div id="sinavKocuPanel">
+        <div class="skp-row">
+            <span class="skp-label">📄 Kaynak:</span>
+            <select id="skp-source" class="skp-select">
+                <option value="pdf" selected>Bu PDF</option>
+                <option value="chat">Sohbet Geçmişi</option>
+                <option value="both">PDF + Sohbet</option>
+            </select>
+
+            <span class="skp-label">🎓 Mod:</span>
+            <select id="skp-mode" class="skp-select" onchange="skpOnModeChange()">
+                <optgroup label="── 📚 Öğren ──">
+                    <option value="ozet">⚡ Hızlı Özet</option>
+                    <option value="profesor_anlatim">👨‍🏫 Profesör Anlatımı</option>
+                    <option value="sifirdan">👶 Sıfırdan Anlat</option>
+                    <option value="eli5">🧠 Çocuk Anlatımı (ELI5)</option>
+                    <option value="hikaye">📖 Hikâyeleştir</option>
+                </optgroup>
+                <optgroup label="── 🃏 Ezberle ──">
+                    <option value="flashcard">🃏 Flashcard</option>
+                </optgroup>
+                <optgroup label="── 📝 Test Et ──">
+                    <option value="quiz">📝 Çoktan Seçmeli Quiz</option>
+                    <option value="sonsuz_quiz">🔁 Sonsuz Quiz</option>
+                </optgroup>
+                <optgroup label="── 🎤 Pratik Yap ──">
+                    <option value="sozlu_sinav">🎤 Sözlü Sınav</option>
+                    <option value="sokratik">🔁 Sokratik Mod</option>
+                    <option value="eksik_analizi">🛠️ Eksik Analizi</option>
+                    <option value="challenge">🧩 Challenge</option>
+                    <option value="munazara">🗣️ Münazara Modu</option>
+                </optgroup>
+                <optgroup label="── 🎯 Tahmin ──">
+                    <option value="hoca_tahmin">🎯 Hoca Ne Sorar?</option>
+                </optgroup>
+            </select>
+
+            <!-- Dinamik alt seçenek -->
+            <span id="skp-sub-label" class="skp-label" style="display:none;"></span>
+            <select id="skp-sub-select" class="skp-select" style="display:none;"></select>
+
+            <button class="skp-btn" onclick="skpTriggerGo()">▶ Başlat</button>
+
+            <span id="skp-doc-status" class="skp-no-doc" style="display:none;">📂 PDF yüklü değil</span>
+        </div>
+    </div>
+    <!-- ===== SINAV KOÇU PANELİ BİTİŞ ===== -->
 
     
     
@@ -3343,14 +3433,18 @@
         setTimeout(scrollToBottom, 1200);
         setTimeout(scrollToBottom, 2500);
 
-        // ===== DİL KOÇU MODU: persona değişim dinleyicisi =====
+        // ===== DİL KOÇU + SINAV KOÇU: persona değişim dinleyicisi =====
         const personaSel = document.getElementById('personaSelect');
         if (personaSel) {
             personaSel.addEventListener('change', function() {
                 const val = this.value;
-                const panel = document.getElementById('dilKocuPanel');
+                const dilPanel = document.getElementById('dilKocuPanel');
+                const sinavPanel = document.getElementById('sinavKocuPanel');
+                dilPanel.classList.remove('active');
+                sinavPanel.classList.remove('active');
+
                 if (val === 'dil_kocu') {
-                    panel.classList.add('active');
+                    dilPanel.classList.add('active');
                     // Gemini'ye otomatik geç
                     const modelSel = document.getElementById('modelSelect');
                     if (modelSel && !modelSel.value.includes('-gemini')) {
@@ -3359,17 +3453,22 @@
                     updateDilKocuPrompt();
                     updateDilKocuProgress();
                     updateDilKocuStreak();
-                } else {
-                    panel.classList.remove('active');
+                } else if (val === 'akademik_koc') {
+                    sinavPanel.classList.add('active');
+                    skpOnModeChange();
+                    skpUpdateDocStatus();
                 }
             });
         }
 
-        // Sayfa açılışında dil koçu zaten seçiliyse paneli aç
+        // Sayfa açılışında seçili persona panelini aç
         if (personaSel && personaSel.value === 'dil_kocu') {
             document.getElementById('dilKocuPanel').classList.add('active');
             updateDilKocuProgress();
             updateDilKocuStreak();
+        } else if (personaSel && personaSel.value === 'akademik_koc') {
+            document.getElementById('sinavKocuPanel').classList.add('active');
+            skpOnModeChange();
         }
     };
 
@@ -3759,16 +3858,41 @@
         if (selectedImageBase64) {
             msgObj.images = [selectedImageBase64];
         }
+        // ===== SINAV KOÇU: aktif doküman kalıcı hafıza =====
+        // akademik_koc seçiliyken yüklenen PDF kaybolmasın
+        const isAkademikKocNow = (document.getElementById('personaSelect') && document.getElementById('personaSelect').value === 'akademik_koc');
         if (window.selectedDocumentText) {
-            msgObj.documentText = window.selectedDocumentText;
-            msgObj.documentName = window.selectedDocumentName || "Belge";
+            // PDF yeni yüklendi — aktif hafızaya kaydet
+            window.activeDocText = window.selectedDocumentText;
+            window.activeDocName = window.selectedDocumentName || 'Belge';
+        }
+
+        const docTextToUse = window.selectedDocumentText ||
+            (isAkademikKocNow && window.activeDocText ? window.activeDocText : null);
+        const docNameToUse = window.selectedDocumentName || window.activeDocName || 'Belge';
+
+        if (docTextToUse) {
+            // Kaynak seçimi (skp-source): chat → doc metni gönderme
+            const srcVal = document.getElementById('skp-source') ? document.getElementById('skp-source').value : 'pdf';
+            if (srcVal !== 'chat') {
+                msgObj.documentText = docTextToUse;
+                msgObj.documentName = docNameToUse;
+            }
             if (window.isExamMode) {
+                skpSyncStateFromPanel();
                 if (typeof buildExamCoachSuffix === "function") {
                     msgObj.promptSuffix = buildExamCoachSuffix();
                 } else {
                     msgObj.promptSuffix = "\n\n[🎓 SINAV KOÇU MODU]\nBu belgeyi analiz et, özet çıkar, önemli kavramları listele ve 10 soruluk test oluştur.";
                 }
                 window.isExamMode = false;
+            } else if (isAkademikKocNow && !window.selectedDocumentText) {
+                // İkinci+ mesaj: panel dropdownlarından suffix üret
+                skpSyncStateFromPanel();
+                if (typeof buildExamCoachSuffix === "function") {
+                    const suffix = buildExamCoachSuffix();
+                    if (suffix) msgObj.promptSuffix = suffix;
+                }
             }
         }
         
@@ -4628,9 +4752,155 @@ function skDirectConfirm(mode, subVal) {
     }
     
     document.getElementById('sinavKocuOverlay').classList.remove('active');
+
+    // Paneli senkronize et ve kalıcı yap
+    skpSyncPanelFromState();
+    // Persona'yı akademik_koc'a çek → panel görünür kalır
+    const personaSel = document.getElementById('personaSelect');
+    if (personaSel && personaSel.value !== 'akademik_koc') {
+        personaSel.value = 'akademik_koc';
+    }
+    const sinavPanel = document.getElementById('sinavKocuPanel');
+    if (sinavPanel) sinavPanel.classList.add('active');
+    const dilPanel = document.getElementById('dilKocuPanel');
+    if (dilPanel) dilPanel.classList.remove('active');
+
     if (window.skState.resolve) {
         window.skState.resolve(mode);
         window.skState.resolve = null;
+    }
+}
+
+// ===== SINAV KOÇU PANELİ FONKSİYONLARI =====
+
+// Panel dropdownlarını window.skState'e göre güncelle (modal → panel senkronu)
+function skpSyncPanelFromState() {
+    const modeEl = document.getElementById('skp-mode');
+    if (modeEl && window.skState.mode) {
+        modeEl.value = window.skState.mode;
+    }
+    skpOnModeChange();
+    // Sub seçeneği de ayarla
+    const subEl = document.getElementById('skp-sub-select');
+    if (subEl) {
+        let subVal = '';
+        if (window.skState.mode === 'ozet') subVal = window.skState.ozet || '5dk';
+        else if (window.skState.mode === 'flashcard') subVal = String(window.skState.flashcardCount || 10);
+        else if (window.skState.mode === 'quiz') subVal = String(window.skState.quizCount || 10);
+        else if (window.skState.mode === 'challenge') subVal = window.skState.challengeDiff || 'medium';
+        if (subVal) subEl.value = subVal;
+    }
+}
+
+// Panel dropdownlarını okuyup window.skState'i güncelle (gönderim öncesi)
+function skpSyncStateFromPanel() {
+    const modeEl = document.getElementById('skp-mode');
+    const subEl = document.getElementById('skp-sub-select');
+    const mode = modeEl ? modeEl.value : null;
+    const subVal = subEl ? subEl.value : '';
+    if (!mode) return;
+    window.skState.mode = mode;
+    if (mode === 'ozet') window.skState.ozet = subVal || '5dk';
+    else if (mode === 'flashcard') window.skState.flashcardCount = parseInt(subVal) || 10;
+    else if (mode === 'quiz') window.skState.quizCount = parseInt(subVal) || 10;
+    else if (mode === 'challenge') window.skState.challengeDiff = subVal || 'medium';
+}
+
+// Mod değişince dinamik alt seçenek göster
+function skpOnModeChange() {
+    const modeEl = document.getElementById('skp-mode');
+    const labelEl = document.getElementById('skp-sub-label');
+    const subEl = document.getElementById('skp-sub-select');
+    if (!modeEl || !labelEl || !subEl) return;
+    const mode = modeEl.value;
+
+    const subConfigs = {
+        ozet: {
+            label: '⏱️ Süre:',
+            options: [
+                { value: '30s', text: '⚡ 30 sn' },
+                { value: '1dk', text: '📌 1 dk' },
+                { value: '2dk', text: '📖 2 dk' },
+                { value: '5dk', text: '🎯 5 dk', selected: true },
+                { value: '10dk', text: '📚 10 dk' }
+            ]
+        },
+        flashcard: {
+            label: '🃏 Kart:',
+            options: [
+                { value: '10', text: '10 Kart', selected: true },
+                { value: '20', text: '20 Kart' },
+                { value: '30', text: '30 Kart' },
+                { value: '50', text: '50 Kart' }
+            ]
+        },
+        quiz: {
+            label: '📝 Soru:',
+            options: [
+                { value: '5', text: '5 Soru' },
+                { value: '10', text: '10 Soru', selected: true },
+                { value: '15', text: '15 Soru' },
+                { value: '20', text: '20 Soru' },
+                { value: '50', text: '50 Soru' }
+            ]
+        },
+        challenge: {
+            label: '🧩 Zorluk:',
+            options: [
+                { value: 'easy', text: '🌱 Kolay' },
+                { value: 'medium', text: '🔥 Orta', selected: true },
+                { value: 'hard', text: '🚀 Zor' },
+                { value: 'professor', text: '🎓 Hoca' },
+                { value: 'interview', text: '💻 Mülakat' }
+            ]
+        }
+    };
+
+    const cfg = subConfigs[mode];
+    if (cfg) {
+        labelEl.textContent = cfg.label;
+        labelEl.style.display = 'flex';
+        subEl.style.display = '';
+        subEl.innerHTML = cfg.options.map(o =>
+            `<option value="${o.value}"${o.selected ? ' selected' : ''}>${o.text}</option>`
+        ).join('');
+    } else {
+        labelEl.style.display = 'none';
+        subEl.style.display = 'none';
+        subEl.innerHTML = '';
+    }
+}
+
+// PDF yüklü mü kontrolü — durum yazısını güncelle
+function skpUpdateDocStatus() {
+    const el = document.getElementById('skp-doc-status');
+    if (!el) return;
+    const hasDoc = !!(window.activeDocText || window.selectedDocumentText);
+    const docName = window.activeDocName || window.selectedDocumentName || '';
+    if (hasDoc) {
+        el.style.display = 'none';
+    } else {
+        el.textContent = '📂 PDF yüklü değil';
+        el.style.display = 'inline';
+    }
+}
+
+// ▶ Başlat butonuna tıklanınca
+function skpTriggerGo() {
+    const isAkademikKoc = (document.getElementById('personaSelect') && document.getElementById('personaSelect').value === 'akademik_koc');
+    if (!isAkademikKoc) {
+        // Persona'yı değiştir
+        const personaSel = document.getElementById('personaSelect');
+        if (personaSel) { personaSel.value = 'akademik_koc'; }
+    }
+    skpSyncStateFromPanel();
+    const hasDoc = !!(window.activeDocText || window.selectedDocumentText);
+    const title = buildExamCoachTitle();
+    const userInputEl = document.getElementById('userInput');
+    if (userInputEl) userInputEl.value = title;
+    window.isExamMode = true;
+    if (typeof sendMessage === 'function') {
+        setTimeout(() => sendMessage(), 50);
     }
 }
 
