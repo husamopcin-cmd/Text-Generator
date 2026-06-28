@@ -552,10 +552,12 @@
                 <option value="llama-3.3-70b-versatile-groq">Llama 3.3 (70B) - Groq Bulut ⚡</option>
                 <option value="llama-3.1-70b-versatile-groq">Llama 3.1 (70B) - Groq Bulut ⚡</option>
                 <option value="llama-3.1-8b-instant-groq">Llama 3.1 (8B) - Groq Bulut ⚡</option>
+                <option value="meta-llama/llama-4-scout-17b-16e-instruct-groq">Llama 4 Scout (Görsel) - Groq Bulut ⚡</option>
                 <option disabled>──────────</option>
                 <!-- Google Gemini Modelleri -->
                 <option value="gemini-2.0-flash-gemini">🤍 Gemini 2.0 Flash - Google Bulut ✨</option>
                 <option value="gemini-1.5-flash-gemini">🤍 Gemini 1.5 Flash - Google Bulut ✨</option>
+                <option value="gemini-1.5-pro-gemini">🤍 Gemini 1.5 Pro - Google Bulut ✨</option>
                 <option disabled>──────────</option>
                 <!-- Yerel Modeller -->
                 <option value="qwen2.5:14b">Qwen 2.5 (14B) - Yerel</option>
@@ -2924,256 +2926,213 @@ Eğer kullanıcı "bu ne", "nerede", "adam kim", "bunu istemedim", "düzelt", "y
                 baseSystemPrompt += "\n\nHATIRLADIĞIN BİLGİLER (LONG-TERM MEMORY):\nŞu ana kadar kullanıcı hakkında öğrendiğin ve asla unutmaman gereken kalıcı bilgiler şunlardır:\n" + userMemory;
             }
             baseSystemPrompt += "\n\nKURAL: SADECE VE SADECE eğer kullanıcı kendisiyle, hayatıyla, zevkleriyle veya fiziksel özellikleriyle ilgili ÇOK ÖNEMLİ VE KALICI bir kişisel bilgi verirse (Örn: adım Ahmet, yaşım 25, kedim var, fıstığa alerjim var vb.), mesajının en sonuna BİREBİR şu formatta gizli bir not düşmelisin: [REMEMBER: Kullanıcı 25 yaşındaymış ve adı Ahmet'miş]. Sıradan sohbetlerde veya kullanıcının senden bir şey yapmanı/yazmanı istediği anlarda (Örn: hesap makinesi yaz, kod yaz) KESİNLİKLE [REMEMBER] KULLANMA! Sadece kişisel bilgileri kaydet.";
-            baseSystemPrompt += "\n\nKURAL 2 (ÇOK ÖNEMLİ): Eğer kullanıcı senden bir oyun, arayüz, hesap makinesi veya web tabanlı herhangi bir uygulama yapmanı/kodlamanı isterse; BUNU KESİNLİKLE 'HTML, CSS ve JavaScript' kullanarak TEK BİR HTML DOSYASI İÇİNDE (```html) yaz. Asla Python, C# veya başka bir dil kullanma! Çünkü sistemimiz sadece HTML/JS kodlarını ekranda canlı (Artifact olarak) çalıştırılıyor.";
-
-            // WEB SEARCH ENJEKSİYONU
-            if (isWebSearchEnabled) {
-                let searchResult = await doWebSearch(text);
-                if (searchResult) {
-                    baseSystemPrompt += "\n\nİNTERNET ARAMA SONUCU:\nKullanıcının son sorduğu soruya karşılık internetten (Wikipedia) şu güncel sonuçlar bulundu. Bu bilgileri harmanlayarak cevap ver:\n" + searchResult;
-                }
-            }
-
-            reqMessages.push({role: "system", content: baseSystemPrompt});
-
-            let recentMessages = chat.messages.filter(m => m.role !== "system");
-            if (recentMessages.length > 10) {
-                recentMessages = recentMessages.slice(recentMessages.length - 10);
-            }
-
-            for(let msg of recentMessages) {
-                let reqMsg = {role: msg.role, content: msg.content};
-                // Eğer mesaj inanılmaz uzunsa API'yi patlatmamak için kırp (Limit 25000 karaktere çıkarıldı, oyun kodları sığabilsin diye)
-                if (reqMsg.content.length > 25000) {
-                    reqMsg.content = reqMsg.content.substring(0, 25000) + "... [Metin çok uzun olduğu için sistem tarafından kırpıldı]";
-                }
-                if (msg.images) {
-                    // Ollama API expects raw base64 without the data URL prefix
-                    reqMsg.images = msg.images.map(img => img.replace(/^data:image\/[a-zA-Z0-9+]+;base64,/, ""));
-                }
-                reqMessages.push(reqMsg);
-            }
-
-            const isGroq = selectedModel.includes("-groq");
-            const isGemini = selectedModel.includes("-gemini");
-            const actualModel = selectedModel.replace("-groq", "").replace("-gemini", "");
+            baseSystemPrompt += "\n\nKURAL 2 (ÇOK ÖNEMLİ): Eğer kullanıcı senden bir oyun, arayüz, hesap makinesi veya web tabanlı herhangi bir uygulama yapmanı/kodlamanı            let isGroq = selectedModel.includes("-groq");
+            let isGemini = selectedModel.includes("-gemini");
+            let actualModel = selectedModel.replace("-groq", "").replace("-gemini", "");
             
-            let fetchUrl, fetchOptions;
-
-            if (isGemini) {
-                const userGeminiKey = (localStorage.getItem('gemini_api_key') || "").trim();
-                if (!userGeminiKey) {
-                    removeImage();
-                    alert("Lütfen önce Ayarlar (⚙️) menüsünden Google Gemini API Anahtarınızı girin!\n\nAnahtarı ücretiz alabilirsiniz: aistudio.google.com/apikey");
-                    return;
-                }
-                
-                // Gemini için mesajları dönüştür (strict user/model sıralaması gerekiyor)
-                let geminiContents = [];
-                let systemText = '';
-                
-                // Önce sistem prompt'unu bul
-                for (let msg of reqMessages) {
-                    if (msg.role === 'system') {
-                        systemText = msg.content;
-                        break;
+            // Fallback (Yedekleme) Kuyruğu Hazırlığı
+            let fallbackQueue = [selectedModel]; // Öncelikle kullanıcının seçtiği modeli dene
+            
+            const hasAttachments = selectedImageBase64 ? true : false;
+            
+            if (hasAttachments) {
+                // Görsel veya Belge eki varsa sadece Vision (Görsel okuma) yeteneği olan modelleri sıraya ekle
+                const visionModels = [
+                    "gemini-2.0-flash-gemini",
+                    "gemini-1.5-flash-gemini",
+                    "meta-llama/llama-4-scout-17b-16e-instruct-groq",
+                    "gemini-1.5-pro-gemini"
+                ];
+                for (let vModel of visionModels) {
+                    if (!fallbackQueue.includes(vModel)) {
+                        fallbackQueue.push(vModel);
                     }
                 }
+            } else {
+                // Sadece metin ise sırasıyla diğer hızlı modelleri yedek olarak ekle
+                const textModels = [
+                    "llama-3.3-70b-versatile-groq",
+                    "llama-3.1-70b-versatile-groq",
+                    "gemini-2.0-flash-gemini",
+                    "gemini-1.5-flash-gemini",
+                    "llama-3.1-8b-instant-groq"
+                ];
+                for (let tModel of textModels) {
+                    if (!fallbackQueue.includes(tModel)) {
+                        fallbackQueue.push(tModel);
+                    }
+                }
+            }
+
+            let response = null;
+            
+            for (let i = 0; i < fallbackQueue.length; i++) {
+                const currentTryModel = fallbackQueue[i];
+                isGroq = currentTryModel.includes("-groq");
+                isGemini = currentTryModel.includes("-gemini");
+                actualModel = currentTryModel.replace("-groq", "").replace("-gemini", "");
                 
-                // Sistem prompt'unu ilk mesaja ekle
-                if (systemText) {
-                    geminiContents.push({ role: 'user', parts: [{ text: '(Sistem Yönergesi - Lütfen bu kurallara uy: ' + systemText + ')' }] });
-                    geminiContents.push({ role: 'model', parts: [{ text: 'Anlaştık, kurallara uyacağım!' }] });
+                // Eğer bu model için API anahtarı girilmemişse doğrudan sonraki yedek modele geç
+                if (isGemini && !(localStorage.getItem('gemini_api_key') || "").trim()) {
+                    continue;
+                }
+                if (isGroq && !(localStorage.getItem('groq_api_key') || "").trim()) {
+                    continue;
                 }
                 
-                // Sistem dışındaki mesajları ekle (user/model sıralamasını zorla)
-                for (let msg of reqMessages) {
-                    if (msg.role === 'system') continue;
+                // Eğer ilk denemede hata alıp otomatik geçiş yapıyorsak ekranda bilgilendirme göster
+                if (i > 0) {
+                    const cleanModelName = actualModel.split("/").pop();
+                    const warningHtml = `<div class="message bot-message" style="background: rgba(255, 150, 0, 0.1); border-left: 3px solid orange; padding: 10px; margin-bottom: 10px; border-radius: 5px; font-size: 0.9em; color: var(--text-color);">✨ <b>Otomatik Yedekleme:</b> Limit aşımı veya bağlantı hatası nedeniyle sistem otomatik olarak <b>${cleanModelName}</b> modelini deniyor...</div>`;
+                    messagesDiv.insertAdjacentHTML('beforeend', warningHtml);
+                    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                }
+                
+                let fetchUrl, fetchOptions;
+                
+                if (isGemini) {
+                    const userGeminiKey = (localStorage.getItem('gemini_api_key') || "").trim();
+                    let geminiContents = [];
+                    let systemText = '';
                     
-                    let parts = [];
-                    if (msg.content) parts.push({ text: msg.content });
-                    if (msg.images && msg.images.length > 0) {
-                        for (let img of msg.images) {
-                            let base64Data = img.split(',')[1] || img;
-                            let mimeType = img.match(/^data:([^;]+);/)?.[1] || 'image/jpeg';
-                            parts.push({ inline_data: { mime_type: mimeType, data: base64Data } });
+                    for (let msg of reqMessages) {
+                        if (msg.role === 'system') {
+                            systemText = msg.content;
+                            break;
                         }
                     }
                     
-                    let gemRole = msg.role === 'assistant' ? 'model' : 'user';
+                    if (systemText) {
+                        geminiContents.push({ role: 'user', parts: [{ text: '(Sistem Yönergesi: ' + systemText + ')' }] });
+                        geminiContents.push({ role: 'model', parts: [{ text: 'Anlaştık, kurallara uyacağım!' }] });
+                    }
                     
-                    // Ardışık aynı role mesajlarını birleştir (Gemini hatasını önle)
-                    if (geminiContents.length > 0 && geminiContents[geminiContents.length - 1].role === gemRole) {
-                        geminiContents[geminiContents.length - 1].parts.push(...parts);
-                    } else {
-                        geminiContents.push({ role: gemRole, parts });
-                    }
-                }
-                
-                fetchUrl = `https://generativelanguage.googleapis.com/v1beta/models/${actualModel}:generateContent?key=${userGeminiKey}`;
-                fetchOptions = {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: geminiContents,
-                        generationConfig: { temperature: 0.9, maxOutputTokens: 8192 }
-                    })
-                };
-                
-                // Gemini için ayrı non-stream işleme
-                removeImage();
-                let geminiResponse = await fetch(fetchUrl, fetchOptions);
-                if (!geminiResponse.ok) {
-                    const errText = await geminiResponse.text();
-                    throw new Error(`Gemini API Hatası (${geminiResponse.status}): ` + errText);
-                }
-                const geminiData = await geminiResponse.json();
-                const geminiBotReply = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-                if (!geminiBotReply) {
-                    throw new Error('Gemini boş cevap döndürdü. API Key doğru mu? Model adı geçerli mi?');
-                }
-                
-                // Mesajı ekrana yaz
-                document.getElementById(botId).innerHTML = renderContentWithImages(geminiBotReply, true);
-                addCopyButtons(document.getElementById(botId));
-                chat.messages.push({ role: 'assistant', content: geminiBotReply });
-                chat.updatedAt = Date.now();
-                saveDatabase();
-                scrollToBottom();
-                setTimeout(scrollToBottom, 300);
-                speakText(sanitizeAssistantOutput(geminiBotReply).substring(0, 500));
-                return; // Gemini işlendi, normal stream akışına girme
-            } else if (isGroq) {
-                const userGroqKey = (localStorage.getItem('groq_api_key') || "").trim();
-                if (!userGroqKey) {
-                    removeImage();
-                    alert("Lütfen önce Ayarlar (⚙️) menüsünden Groq API Anahtarınızı girin!");
-                    return;
-                }
-                
-                fetchUrl = "https://api.groq.com/openai/v1/chat/completions";
-                
-                let groqModel = actualModel;
-                let hasImages = false;
-
-                // Groq API image format desteği için Ollama formatını OpenAI formatına çevir
-                for (let msg of reqMessages) {
-                    if (msg.images && msg.images.length > 0) {
-                        hasImages = true;
-                        let textContent = msg.content;
-                        let imgSrc = msg.images[0]; // Full data URL
-                        msg.content = [
-                            { type: "text", text: textContent },
-                            { type: "image_url", image_url: { url: imgSrc } }
-                        ];
-                        delete msg.images;
-                    }
-                }
-
-                // Eğer görsel varsa mecburi olarak Vision modeline geç (Groq'ta sadece bu destekliyor)
-                if (hasImages) {
-                    groqModel = "meta-llama/llama-4-scout-17b-16e-instruct";
-                    console.log("Image detected! Auto-switching to Groq Vision model.");
-                }
-
-                fetchOptions = {
-                    method: "POST",
-                    headers: { 
-                        "Content-Type": "application/json",
-                        "Authorization": `Bearer ${userGroqKey}`
-                    },
-                    body: JSON.stringify({
-                        model: groqModel,
-                        messages: reqMessages,
-                        stream: true
-                    })
-                };
-            } else {
-                fetchUrl = getOllamaUrl() + "/api/chat";
-                fetchOptions = {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        model: actualModel,
-                        messages: reqMessages,
-                        stream: true,
-                        keep_alive: "1h"
-                    })
-                };
-            }
-
-            let response = await fetch(fetchUrl, fetchOptions);
-
-            // AUTO-FALLBACK FOR GROQ RATE LIMIT (TPM / TPD)
-            if (!response.ok && response.status === 429 && isGroq) {
-                // Tüm Groq modelleri aynı günlük limiti paylaşıyor!
-                // Önce Gemini'ye geç (varsa), yoksa diğer Groq modellerini dene
-                const geminiKeyForFallback = (localStorage.getItem('gemini_api_key') || "").trim();
-                if (geminiKeyForFallback) {
-                    // === GEMİNİ'YE OTOMATİK GEÇİŞ ===
-                    messagesDiv.insertAdjacentHTML('beforeend', `<div class="message bot-message" style="background: rgba(100, 200, 100, 0.1); border-left: 3px solid #a6e3a1; padding: 10px; margin-bottom: 10px; border-radius: 5px; font-size: 0.9em; color: var(--text-color);">✨ <b>Otomatik Geçiş:</b> Groq günlük limiti doldu! <b>Google Gemini 2.0 Flash</b> modeline otomatik geçildi. Sohbet kesintisiz devam ediyor!</div>`);
-                    messagesDiv.scrollTop = messagesDiv.scrollHeight;
-                    document.getElementById("modelSelect").value = "gemini-2.0-flash-gemini";
-                    
-                    // Gemini içerikleri hazırla
-                    let gemFallbackContents = [];
-                    let sysText = reqMessages.find(m => m.role === 'system')?.content || '';
-                    if (sysText) {
-                        gemFallbackContents.push({ role: 'user', parts: [{ text: '(Sistem Yönergesi: ' + sysText + ')' }] });
-                        gemFallbackContents.push({ role: 'model', parts: [{ text: 'Anlaştık!' }] });
-                    }
                     for (let msg of reqMessages) {
                         if (msg.role === 'system') continue;
+                        let parts = [];
+                        if (msg.content) parts.push({ text: msg.content });
+                        if (msg.images && msg.images.length > 0) {
+                            for (let img of msg.images) {
+                                let base64Data = img.split(',')[1] || img;
+                                let mimeType = img.match(/^data:([^;]+);/)?.[1] || 'image/jpeg';
+                                parts.push({ inline_data: { mime_type: mimeType, data: base64Data } });
+                            }
+                        }
                         let gemRole = msg.role === 'assistant' ? 'model' : 'user';
-                        let parts = [{ text: msg.content || '' }];
-                        if (gemFallbackContents.length > 0 && gemFallbackContents[gemFallbackContents.length - 1].role === gemRole) {
-                            gemFallbackContents[gemFallbackContents.length - 1].parts.push(...parts);
+                        if (geminiContents.length > 0 && geminiContents[geminiContents.length - 1].role === gemRole) {
+                            geminiContents[geminiContents.length - 1].parts.push(...parts);
                         } else {
-                            gemFallbackContents.push({ role: gemRole, parts });
+                            geminiContents.push({ role: gemRole, parts });
                         }
                     }
                     
-                    const gemFallbackUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKeyForFallback}`;
-                    const gemFallbackResp = await fetch(gemFallbackUrl, {
+                    fetchUrl = `https://generativelanguage.googleapis.com/v1beta/models/${actualModel}:generateContent?key=${userGeminiKey}`;
+                    fetchOptions = {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ contents: gemFallbackContents, generationConfig: { temperature: 0.9, maxOutputTokens: 8192 } })
-                    });
+                        body: JSON.stringify({
+                            contents: geminiContents,
+                            generationConfig: { temperature: 0.9, maxOutputTokens: 8192 }
+                        })
+                    };
+                } else if (isGroq) {
+                    const userGroqKey = (localStorage.getItem('groq_api_key') || "").trim();
+                    fetchUrl = "https://api.groq.com/openai/v1/chat/completions";
                     
-                    if (gemFallbackResp.ok) {
-                        removeImage();
-                        const gemFallbackData = await gemFallbackResp.json();
-                        const gemFallbackReply = gemFallbackData?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-                        if (gemFallbackReply) {
-                            document.getElementById(botId).innerHTML = renderContentWithImages(gemFallbackReply, true);
-                            addCopyButtons(document.getElementById(botId));
-                            chat.messages.push({ role: 'assistant', content: gemFallbackReply });
-                            chat.updatedAt = Date.now();
-                            saveDatabase();
-                            scrollToBottom();
-                            setTimeout(scrollToBottom, 300);
-                            speakText(sanitizeAssistantOutput(gemFallbackReply).substring(0, 500));
-                            return;
+                    let groqModel = actualModel;
+                    let hasImages = false;
+                    let tempReqMessages = JSON.parse(JSON.stringify(reqMessages));
+                    
+                    for (let msg of tempReqMessages) {
+                        if (msg.images && msg.images.length > 0) {
+                            hasImages = true;
+                            let textContent = msg.content;
+                            let imgSrc = msg.images[0];
+                            msg.content = [
+                                { type: "text", text: textContent },
+                                { type: "image_url", image_url: { url: imgSrc } }
+                            ];
+                            delete msg.images;
                         }
                     }
+                    
+                    if (hasImages && !groqModel.includes("scout")) {
+                        groqModel = "meta-llama/llama-4-scout-17b-16e-instruct";
+                    }
+                    
+                    fetchOptions = {
+                        method: "POST",
+                        headers: { 
+                            "Content-Type": "application/json",
+                            "Authorization": `Bearer ${userGroqKey}`
+                        },
+                        body: JSON.stringify({
+                            model: groqModel,
+                            messages: tempReqMessages,
+                            stream: true
+                        })
+                    };
+                } else {
+                    fetchUrl = getOllamaUrl() + "/api/chat";
+                    fetchOptions = {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            model: actualModel,
+                            messages: reqMessages,
+                            stream: true,
+                            keep_alive: "1h"
+                        })
+                    };
                 }
                 
-                // Gemini yoksa diğer Groq modellerini dene (umut var mı bilinmez ama deneyelim)
-                let fallbackModels = ["llama-3.1-8b-instant", "llama-3.1-70b-versatile", "llama-3.3-70b-versatile"];
-                for (let fbModel of fallbackModels) {
-                    if (fbModel === actualModel) continue;
-                    let fallbackBody = JSON.parse(fetchOptions.body);
-                    fallbackBody.model = fbModel;
-                    fetchOptions.body = JSON.stringify(fallbackBody);
-                    response = await fetch(fetchUrl, fetchOptions);
-                    if (response.ok) {
-                        document.getElementById("modelSelect").value = fbModel + "-groq";
-                        let warningHtml = `<div class="message bot-message" style="background: rgba(255, 150, 0, 0.1); border-left: 3px solid orange; padding: 10px; margin-bottom: 10px; border-radius: 5px; font-size: 0.9em; color: var(--text-color);">⚠️ <b>Sistem Bildirimi:</b> Limit dolduğu için otomatik olarak <b>${fbModel}</b> modeline geçiş yapıldı.</div>`;
-                        messagesDiv.insertAdjacentHTML('beforeend', warningHtml);
-                        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                try {
+                    if (isGemini) {
+                        removeImage();
+                        let geminiResponse = await fetch(fetchUrl, fetchOptions);
+                        if (!geminiResponse.ok) {
+                            const errText = await geminiResponse.text();
+                            console.warn(`Gemini API hatası verdi (${geminiResponse.status}): ${errText}`);
+                            continue;
+                        }
+                        const geminiData = await geminiResponse.json();
+                        const geminiBotReply = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+                        if (!geminiBotReply) {
+                            console.warn("Gemini boş cevap döndü, sonraki yedek deneniyor...");
+                            continue;
+                        }
+                        
+                        document.getElementById("modelSelect").value = currentTryModel;
+                        document.getElementById(botId).innerHTML = renderContentWithImages(geminiBotReply, true);
+                        addCopyButtons(document.getElementById(botId));
+                        chat.messages.push({ role: 'assistant', content: geminiBotReply });
+                        chat.updatedAt = Date.now();
+                        saveDatabase();
+                        scrollToBottom();
+                        setTimeout(scrollToBottom, 300);
+                        speakText(sanitizeAssistantOutput(geminiBotReply).substring(0, 500));
+                        return;
+                    } else {
+                        let groqResponse = await fetch(fetchUrl, fetchOptions);
+                        if (!groqResponse.ok) {
+                            const errText = await groqResponse.text();
+                            console.warn(`Groq/Yerel API hatası verdi (${groqResponse.status}): ${errText}`);
+                            continue;
+                        }
+                        
+                        document.getElementById("modelSelect").value = currentTryModel;
+                        response = groqResponse;
                         break;
                     }
+                } catch (fetchErr) {
+                    console.error("Yapay zeka bağlantı hatası, sonraki yedek deneniyor:", fetchErr);
+                    continue;
                 }
+            }
+            
+            if (!response) {
+                removeImage();
+                throw new Error("Tüm yapay zeka yedek modelleri denendi ancak yanıt alınamadı. Lütfen API anahtarlarınızı veya kotanızı kontrol edin.");
             }
 
             removeImage(); // Fotoğraf gönderildikten sonra temizle
