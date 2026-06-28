@@ -487,17 +487,32 @@
             border-top: 1px solid rgba(255,255,255,0.05); padding: 20px 10%; z-index: 5;
         }
         .input-box {
-            display: flex; gap: 10px; align-items: flex-end; position: relative;
+            display: flex; gap: 10px; align-items: center; position: relative;
             background: rgba(24, 24, 37, 0.7); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px;
             padding: 10px; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); box-shadow: 0 5px 20px rgba(0,0,0,0.2);
         }
         .input-box:focus-within { border-color: rgba(137, 180, 250, 0.5); box-shadow: 0 0 15px rgba(137, 180, 250, 0.15), 0 5px 20px rgba(0,0,0,0.3); transform: translateY(-1px); }
-        
+        .input-box::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 16px;
+            pointer-events: none;
+        }
+        .input-box button.icon-btn,
+        .input-box .send-btn {
+            flex-shrink: 0;
+            z-index: 2;
+        }
         textarea {
             flex: 1; background: transparent; border: none; color: #cdd6f4;
-            font-family: inherit; font-size: 15px; resize: none; padding: 8px;
-            max-height: 150px; outline: none; overflow-y: auto; line-height: 1.5;
+            font-family: inherit; font-size: 15px; resize: none; padding: 10px 12px;
+            width: 100%; min-width: 0; max-height: 150px; outline: none; overflow-y: auto;
+            line-height: 1.6; height: auto; position: relative; z-index: 1;
         }
+        textarea::placeholder { color: rgba(205,214,244,0.55); }
+        .input-box > button { pointer-events: auto; }
+        .input-box > textarea { pointer-events: auto; }
         
         .mic-btn {
             background: rgba(49, 50, 68, 0.5); border-radius: 50%; width: 40px; height: 40px; border: 1px solid rgba(255,255,255,0.05);
@@ -1440,8 +1455,12 @@
         document.getElementById('imagePreview').src = '';
         document.getElementById('imagePreviewContainer').style.display = 'none';
         selectedImageBase64 = null;
+    }
+
+    function clearSelectedDocument() {
         window.selectedDocumentText = null;
         window.selectedDocumentName = null;
+        if (typeof skpUpdateDocStatus === 'function') skpUpdateDocStatus();
     }
 
     // ----- ATTACHMENT MENU (BOTTOM SHEET) FONKSIYONLARI -----
@@ -1649,52 +1668,32 @@
                     promptMsg += `  • Tamamını dene (yavaş olabilir) → 'hepsi'`;
                 }
 
-                let userInputRange = prompt(promptMsg);
-                if (userInputRange !== null) {
-                    userInputRange = (userInputRange || 'hepsi').trim().toLowerCase();
-                    if (userInputRange === 'sınav' || userInputRange === 'sinav') {
-                        // Sınav Koçu v3 Modalını aç
-                        let selectedMode = await openSinavKocuModal(file.name);
-                        if (!selectedMode) return; // İptal edildi
-                        
-                        window.isExamMode = true;
-                        startPage = 1;
-                        endPage = Math.min(20, totalPages);
-                    } else if (userInputRange === 'hepsi' || userInputRange === '') {
-                        startPage = 1;
-                        endPage = totalPages;
-                        if (totalPages > 20 && totalPages <= 80) {
-                            const numChunks = totalPages <= 40 ? 2 : (totalPages <= 60 ? 3 : 4);
-                            const chunkSize = Math.ceil(totalPages / numChunks);
-                            window.pdfChunks = [];
-                            for (let c = 0; c < numChunks; c++) {
-                                window.pdfChunks.push({ start: c * chunkSize + 1, end: Math.min((c + 1) * chunkSize, totalPages) });
-                            }
-                        }
-                    } else {
-                        let matchRange = userInputRange.match(/^(\d+)-(\d+)$/);
-                        let matchSingle = userInputRange.match(/^(\d+)$/);
-                        if (matchRange) {
-                            let s = parseInt(matchRange[1]);
-                            let e = parseInt(matchRange[2]);
-                            if (s >= 1 && e <= totalPages && s <= e) {
-                                startPage = s; endPage = e;
-                            } else {
-                                alert(`Geçersiz aralık (1-${totalPages}). Tamamını okuyorum.`);
-                            }
-                        } else if (matchSingle) {
-                            let s = parseInt(matchSingle[1]);
-                            if (s >= 1 && s <= totalPages) {
-                                startPage = s; endPage = s;
-                            } else {
-                                alert(`Geçersiz sayfa (1-${totalPages}). Tamamını okuyorum.`);
-                            }
-                        } else {
-                            alert('Formatı anlayamadım. Tamamını okuyorum.');
-                        }
-                    }
+                // Bu eski prompt/alert akışını kaldırdık.
+                // Tüm PDF'i varsayılan olarak seçiyoruz ve kullanıcı
+                // mod seçimini uygulama içindeki CinoCode Akademi panelinden yapacak.
+                if (totalPages > 80) {
+                    // Çok büyük PDF'ler için otomatik olarak ilk 30 sayfayı alıyoruz.
+                    // Uygulama içinde kullanıcı istiyorsa farklı sayfa seçebilir.
+                    startPage = 1;
+                    endPage = Math.min(30, totalPages);
                 } else {
-                    return;
+                    startPage = 1;
+                    endPage = totalPages;
+                }
+                if (totalPages > 20 && totalPages <= 80) {
+                    const numChunks = totalPages <= 40 ? 2 : (totalPages <= 60 ? 3 : 4);
+                    const chunkSize = Math.ceil(totalPages / numChunks);
+                    window.pdfChunks = [];
+                    for (let c = 0; c < numChunks; c++) {
+                        window.pdfChunks.push({ start: c * chunkSize + 1, end: Math.min((c + 1) * chunkSize, totalPages) });
+                    }
+                }
+
+                // Eğer uygulama zaten Sınav Koçu modundaysa, başlangıçta ilk 20 sayfayı kullan.
+                const personaSel = document.getElementById('personaSelect');
+                if (personaSel && personaSel.value === 'akademik_koc') {
+                    window.isExamMode = true;
+                    endPage = Math.min(20, totalPages);
                 }
 
                 // PDF sayfalarını oku
@@ -1716,6 +1715,10 @@
                 
                 window.selectedDocumentText = `\n[${docName} İÇERİĞİ]:\n${fullText}\n`;
                 window.selectedDocumentName = docName;
+                window.activeDocText = window.selectedDocumentText;
+                window.activeDocName = window.selectedDocumentName;
+                window.activeDocCursor = 0;
+                if (typeof skpUpdateDocStatus === 'function') skpUpdateDocStatus();
                 
                 // UI'da dosyanın seçildiğini göster
                 const previewContainer = document.getElementById('imagePreviewContainer');
@@ -1725,11 +1728,9 @@
                 selectedImageBase64 = null;
                 
                 if (window.isExamMode) {
-                    const modeTitle = typeof buildExamCoachTitle === "function" ? buildExamCoachTitle() : "🎓 Sınav Koçu Modu";
-                    document.getElementById("userInput").value = modeTitle;
-                    setTimeout(() => {
-                        sendMessage();
-                    }, 100);
+                    // Sınav Koçu modu aktif, ancak otomatik gönderme yapmıyoruz.
+                    // Kullanıcı önce metnini yazarak onaylamalı.
+                    document.getElementById("userInput").placeholder = "PDF hazır. Ne yapmamı istediğini yaz...";
                 }
                 
             } catch (err) {
@@ -2638,8 +2639,9 @@
     let isRecording = false;
     let recognition = null;
     
-    if ('webkitSpeechRecognition' in window) {
-        recognition = new webkitSpeechRecognition();
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+        recognition = new SpeechRecognition();
         recognition.continuous = true; // Kapanmadan sürekli dinlemeye çalışsın
         recognition.interimResults = true; // Gerçek zamanlı (interim) sonuçları göster, böylece kelimeleri anında yakalar
         recognition.maxAlternatives = 3; // En yüksek olasılıklı 3 alternatifi getir
@@ -2668,29 +2670,23 @@
             if (finalStr !== '') { 
                 userInput.value += (userInput.value ? " " : "") + finalStr.trim(); 
                 autoResize(userInput); 
-                // Geçici (interim) placeholder'ı sıfırla
-                userInput.placeholder = "Dinliyorum... Konuşun...";
+                userInput.placeholder = "CinoCode'a bir şeyler sor...";
+                try { const sendBtn = document.getElementById('sendBtn') || document.querySelector('.send-btn'); if (sendBtn) sendBtn.disabled = false; } catch(e) {}
             } else if (interimStr !== '') {
-                // Konuşma devam ederken ekrana geçici olarak bas ki hızlı algılansın
                 userInput.placeholder = interimStr;
             }
-            
-            // Otomatik gönderme (timeout) İPTAL EDİLDİ! Artık kullanıcı ne kadar susarsa sussun göndermeyecek.
-            // Sadece kaydetmeye devam edecek. Göndermek için Gönder butonuna basması gerekecek.
         };
         
         recognition.onerror = (err) => {
             console.error("STT Hatası:", err);
             if (err.error === 'not-allowed') {
-                alert("Telefondan mikrofona izin vermemiş olabilirsin! Lütfen tarayıcı ayarlarından siteye mikrofon izni ver.");
+                alert("Tarayıcı mikrofon iznini engellemiş olabilir. Lütfen siteye mikrofon izni verin.");
             } else if (err.error !== 'no-speech') {
                 console.log("Mikrofon hatası: " + err.error);
             }
-            // "no-speech" hatasında kapatma, devam etsin.
             if (err.error !== 'no-speech') stopMic();
         };
         recognition.onend = () => {
-            // Sürekli dinleme koptuysa ve hala isRecording ise yeniden başlat (kısa duraklamalarda kapanmasını önler)
             if (isRecording) {
                 try { recognition.start(); } catch(e) { stopMic(); }
             } else {
@@ -2700,7 +2696,7 @@
     }
 
     function toggleMic() {
-        if (!recognition) return alert("Tarayıcınız mikrofon desteklemiyor.");
+        if (!recognition) return alert("Tarayıcınız mikrofon desteklemiyor veya sayfa yeniden yüklenmesi gerekebilir.");
         if (isRecording) {
             stopMic();
         } else {
@@ -3811,6 +3807,49 @@
     // Mobile ses kilidini açmak için bayrak
     let isAudioUnlocked = false;
 
+    function getDocumentChunkPayload(fullText, selectedModel, isExamMode) {
+        if (!fullText) return { chunk: null, docNameSuffix: '', note: '', done: false };
+
+        const weakModelLimit = 12000;
+        const normalLimit = isExamMode ? 25000 : 20000;
+        const strongModel = selectedModel.includes("-gemini") || selectedModel.includes("-groq") || selectedModel.includes("-nvidia") || selectedModel.includes("-openrouter") || selectedModel.toLowerCase().includes("llava") || selectedModel.toLowerCase().includes("vision") || selectedModel.toLowerCase().includes("scout") || selectedModel.toLowerCase().includes("maverick");
+        const limit = strongModel ? normalLimit : Math.min(normalLimit, weakModelLimit);
+
+        if (window.activeDocCursor == null || window.activeDocCursor < 0) window.activeDocCursor = 0;
+        if (window.activeDocCursor >= fullText.length) {
+            return { chunk: null, docNameSuffix: '', note: '', done: true };
+        }
+
+        const start = window.activeDocCursor;
+        let end = Math.min(fullText.length, start + limit);
+        let chunk = fullText.slice(start, end);
+
+        const lastSpace = chunk.lastIndexOf(' ');
+        if (lastSpace > Math.floor(chunk.length * 0.7)) {
+            chunk = chunk.slice(0, lastSpace);
+            end = start + chunk.length;
+        }
+
+        window.activeDocCursor = end;
+        const totalChunks = Math.max(1, Math.ceil(fullText.length / limit));
+        const currentChunkIndex = Math.floor(start / limit) + 1;
+        const remainingChars = fullText.length - end;
+
+        const note = remainingChars > 0
+            ? `Bu belgenin ${currentChunkIndex}. parçasını (yaklaşık ${chunk.length} karakter) kullandım. Daha fazlasına devam etmek için lütfen "devam et" yaz.`
+            : `Bu belgenin son parçasını kullandım.`;
+        const docNameSuffix = remainingChars > 0
+            ? ` [PDF Parça ${currentChunkIndex}/${totalChunks}]`
+            : ` [PDF Son Parça]`;
+
+        return {
+            chunk,
+            docNameSuffix,
+            note,
+            done: false
+        };
+    }
+
     async function sendMessage() {
         // Mobil cihazlarda TTS (Text-to-Speech) sesinin çalabilmesi için 
         // kullanıcı "Gönder" tuşuna bastığı an (user interaction sırasında) sessiz bir ses çalarak kilidi açıyoruz.
@@ -3830,7 +3869,20 @@
         }
 
         const text = userInput.value.trim();
+        // Prevent concurrent generation: if already generating, show a short notice and refuse to queue
+        if (window.isGenerating) {
+            const infoHtml = `<div class="message bot-message" style="background: rgba(64,64,64,0.12); border-left: 3px solid #89b4fa; padding: 8px; margin-bottom:10px; border-radius:6px; font-size:0.9em;">⏳ Yanıt hazırlanıyor, lütfen bekle.</div>`;
+            messagesDiv.insertAdjacentHTML('beforeend', infoHtml);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            return;
+        }
+
         if (!text && !selectedImageBase64 && !window.selectedDocumentText) return;
+        if (!text && (selectedImageBase64 || window.selectedDocumentText)) {
+            userInput.placeholder = "PDF/fotoğraf hazır. Lütfen bir talimat yaz ve gönder.";
+            userInput.focus();
+            return;
+        }
 
         const selectedModel = document.getElementById("modelSelect").value;
         const isGroqSelected = selectedModel.includes("-groq");
@@ -3875,15 +3927,25 @@
             // Kaynak seçimi (skp-source): chat → doc metni gönderme
             const srcVal = document.getElementById('skp-source') ? document.getElementById('skp-source').value : 'pdf';
             if (srcVal !== 'chat') {
-                msgObj.documentText = docTextToUse;
-                msgObj.documentName = docNameToUse;
+                const chunkInfo = getDocumentChunkPayload(docTextToUse, selectedModel, window.isExamMode || isAkademikKocNow);
+                if (chunkInfo.done) {
+                    // PDF chunkları bittiğinde kullanıcı mesajına otomatik ekleme yapmayalım.
+                    // Gerekirse bu uyarıyı bot tarafında göster.
+                } else if (chunkInfo.chunk) {
+                    msgObj.documentText = chunkInfo.chunk;
+                    msgObj.documentName = docNameToUse + chunkInfo.docNameSuffix;
+                    msgObj.promptSuffix = (msgObj.promptSuffix || "") + "\n\n" + chunkInfo.note;
+                } else {
+                    msgObj.documentText = docTextToUse;
+                    msgObj.documentName = docNameToUse;
+                }
             }
             if (window.isExamMode) {
                 skpSyncStateFromPanel();
                 if (typeof buildExamCoachSuffix === "function") {
-                    msgObj.promptSuffix = buildExamCoachSuffix();
+                    msgObj.promptSuffix = (msgObj.promptSuffix || "") + "\n\n" + buildExamCoachSuffix();
                 } else {
-                    msgObj.promptSuffix = "\n\n[🎓 SINAV KOÇU MODU]\nBu belgeyi analiz et, özet çıkar, önemli kavramları listele ve 10 soruluk test oluştur.";
+                    msgObj.promptSuffix = (msgObj.promptSuffix || "") + "\n\n[🎓 SINAV KOÇU MODU]\nBu belgeyi analiz et, özet çıkar, önemli kavramları listele ve 10 soruluk test oluştur.";
                 }
                 window.isExamMode = false;
             } else if (isAkademikKocNow && !window.selectedDocumentText) {
@@ -3891,7 +3953,7 @@
                 skpSyncStateFromPanel();
                 if (typeof buildExamCoachSuffix === "function") {
                     const suffix = buildExamCoachSuffix();
-                    if (suffix) msgObj.promptSuffix = suffix;
+                    if (suffix) msgObj.promptSuffix = (msgObj.promptSuffix || "") + "\n\n" + suffix;
                 }
             }
         }
@@ -3903,10 +3965,12 @@
         
         userInput.value = ""; autoResize(userInput);
         
-        // Gönderimden sonra dokümanı ve önizlemeyi temizle
-        window.selectedDocumentText = null;
-        window.selectedDocumentName = null;
-        document.getElementById('imagePreviewContainer').style.display = 'none';
+        // Sadece görsel varsa preview temizle, PDF durumunu koru
+        if (selectedImageBase64) {
+            selectedImageBase64 = null;
+            const previewContainer = document.getElementById('imagePreviewContainer');
+            if (previewContainer) previewContainer.style.display = 'none';
+        }
 
         const botId = "bot-" + Date.now();
         const typingDiv = document.createElement("div");
@@ -3953,29 +4017,117 @@
             baseSystemPrompt += "\n\nKURAL: SADECE VE SADECE eğer kullanıcı kendisiyle, hayatıyla, zevkleriyle veya fiziksel özellikleriyle ilgili ÇOK ÖNEMLİ VE KALICI bir kişisel bilgi verirse (Örn: adım Ahmet, yaşım 25, kedim var, fıstığa alerjim var vb.), mesajının en sonuna BİREBİR şu formatta gizli bir not düşmelisin: [REMEMBER: Kullanıcı 25 yaşındaymış ve adı Ahmet'miş]. Sıradan sohbetlerde veya kullanıcının senden bir şey yapmanı/yazmanı istediği anlarda (Örn: hesap makinesi yaz, kod yaz) KESİNLİKLE [REMEMBER] KULLANMA! Sadece kişisel bilgileri kaydet.";
             baseSystemPrompt += "\n\nKURAL 2 (ÇOK ÖNEMLİ): Eğer kullanıcı senden bir oyun, arayüz, hesap makinesi veya web tabanlı herhangi bir uygulama yapmanı/kodlamanı isterse, KODU SADECE HTML BLOKLARI İÇİNDE YAZ. Başka metin ekleme.";
             
-            // ===== KRİTİK FIX: reqMessages'a sistem + sohbet geçmişini ekle =====
+            // ===== KRİTİK FIX: reqMessages'a sistem + sınırlı sohbet geçmişini ekle =====
+            // Determine task type early to avoid TDZ errors
+            const isVisionTask = !!selectedImageBase64;
+            const docSource = document.getElementById('skp-source') ? document.getElementById('skp-source').value : 'pdf';
+            const isPdfTask = !!docTextToUse && docSource !== 'chat';
+            const taskType = isVisionTask ? 'vision' : isPdfTask ? 'pdf' : 'chat';
+            // Always include system prompt, but limit conversation history for normal chat to avoid huge requests
             reqMessages.push({ role: "system", content: baseSystemPrompt });
-            const historyMsgs = chat.messages.slice(-20);
-            for (let hm of historyMsgs) { 
-                let hmClone = { ...hm };
-                if (hmClone.documentText) {
-                    hmClone.content = (hmClone.content ? "Kullanıcının Mesajı:\n" + hmClone.content + "\n\n" : "") + hmClone.documentText;
-                    delete hmClone.documentText;
-                    delete hmClone.documentName;
+            const historyLimit = (taskType === 'chat') ? 4 : 20;
+            const rawHistory = chat.messages || [];
+            // collect recent messages but filter out UI/system notifications and document chunks for normal chat
+            const historyMsgs = [];
+            for (let i = rawHistory.length - 1; i >= 0 && historyMsgs.length < historyLimit; i--) {
+                const hm = rawHistory[i];
+                if (!hm || !hm.role) continue;
+                // skip system/notification-like assistant messages that we use for UI hints
+                if (hm.role === 'assistant' && typeof hm.content === 'string') {
+                    const low = hm.content.toLowerCase();
+                    if (low.includes('otomatik yedekleme') || low.includes('yedek model') || low.includes('yanıt hazırlanıyor') || low.includes('kota') || low.includes('hata:')) continue;
                 }
-                if (hmClone.promptSuffix) {
-                    hmClone.content = (hmClone.content || "") + hmClone.promptSuffix;
-                    delete hmClone.promptSuffix;
+                // skip messages that were inserted as UI/system warnings
+                if (hm.meta && hm.meta.ui) continue;
+                // if normal chat, skip documentText / promptSuffix entirely
+                if (taskType === 'chat') {
+                    if (hm.documentText) continue;
                 }
-                reqMessages.push(hmClone); 
+                historyMsgs.unshift(hm);
+            }
+
+            for (let hm of historyMsgs) {
+                let hmClone = { role: hm.role, content: (hm.content || '') };
+                // Do not include document text or prompt suffix in normal chat
+                if (taskType !== 'chat') {
+                    if (hm.documentText) {
+                        // attach document text but ensure it's not huge
+                        hmClone.content = ((hmClone.content ? hmClone.content + "\n\n" : "") + (String(hm.documentText).substring(0, 2000)));
+                    }
+                    if (hm.promptSuffix) {
+                        hmClone.content = (hmClone.content || "") + String(hm.promptSuffix).substring(0, 2000);
+                    }
+                }
+                // truncate each message content to max 2000 chars
+                if (hmClone.content && hmClone.content.length > 2000) hmClone.content = hmClone.content.substring(0, 2000);
+                reqMessages.push(hmClone);
             }
             console.log("[CinoCode] reqMessages dolduruldu:", reqMessages.length, "mesaj");
             
-            let isGroq = selectedModel.includes("-groq");
-            let isGemini = selectedModel.includes("-gemini");
-            let isNvidia = selectedModel.includes("-nvidia");
-            let isOpenRouter = selectedModel.includes("-openrouter");
-            let actualModel = selectedModel.replace("-groq", "").replace("-gemini", "").replace("-nvidia", "").replace("-openrouter", "");
+            function parseModelLabel(label) {
+                const normalized = String(label || '').trim();
+                const providerMatch = normalized.match(/(?:[-:])(cerebras|deepseek|mistral|openrouter|gemini|groq|nvidia)(?:\b|$)/i);
+                const provider = providerMatch ? providerMatch[1].toLowerCase() : null;
+                const modelId = provider ? normalized.replace(new RegExp(`(?:[-:])${provider}(?:\b|$)`, 'i'), '').trim() : normalized;
+                return { provider, modelId, displayLabel: normalized };
+            }
+
+            function isProxyCloudProvider(provider) {
+                return ['cerebras', 'deepseek', 'mistral', 'openrouter'].includes(provider);
+            }
+
+            // taskType and related flags computed earlier above the reqMessages builder
+
+            function getProviderApiKey(provider) {
+                if (!provider) return "";
+                const keyStr = (localStorage.getItem(provider + '_api_key') || "").trim();
+                if (!keyStr) return "";
+                const keys = keyStr.split(',').map(k => k.trim()).filter(Boolean);
+                return keys.length ? keys[Math.floor(Math.random() * keys.length)] : "";
+            }
+
+            function hasProviderApiKey(provider) {
+                if (!provider) return false;
+                if (isProxyCloudProvider(provider)) return true;
+                return !!getProviderApiKey(provider);
+            }
+
+            function getRequestTimeoutMs() {
+                if (taskType === 'vision') return 45000;
+                if (taskType === 'pdf') return 25000;
+                return 15000;
+            }
+
+            // Model cooldowns (store in localStorage to persist across reloads)
+            function getCooldowns() {
+                try { return JSON.parse(localStorage.getItem('cinocode_model_cooldowns') || '{}'); } catch(e) { return {}; }
+            }
+            function setCooldown(modelId, ttlMs) {
+                const cds = getCooldowns();
+                cds[modelId] = Date.now() + ttlMs;
+                localStorage.setItem('cinocode_model_cooldowns', JSON.stringify(cds));
+            }
+            function isModelOnCooldown(modelId) {
+                if (!modelId) return false;
+                const cds = getCooldowns();
+                const until = cds[modelId];
+                if (!until) return false;
+                if (Date.now() > until) {
+                    // expired
+                    delete cds[modelId];
+                    localStorage.setItem('cinocode_model_cooldowns', JSON.stringify(cds));
+                    return false;
+                }
+                return true;
+            }
+
+            function isVisionModel(modelValue) {
+                if (!modelValue) return false;
+                const v = modelValue.toLowerCase();
+                return v.includes('vision') || v.includes('scout') || v.includes('llava') || v.includes('nvidia') || v.includes('vision-instruct');
+            }
+
+            let fallbackQueue = [selectedModel];
             
             // ===== AI ROUTER — Model Sağlık Takip Sistemi =====
             // Her modelin başarı/başarısızlık geçmişini localStorage'da puan olarak tutar.
@@ -3995,81 +4147,117 @@
             }
 
             // Fallback (Yedekleme) Kuyruğu Hazırlığı
-            let fallbackQueue = [selectedModel];
-            
-            const hasAttachments = selectedImageBase64 ? true : false;
-            
-            if (hasAttachments) {
-                const visionModels = [
-                    "gemini-2.0-flash-exp-gemini",
-                    "meta-llama/llama-3.2-11b-vision-instruct:free-openrouter",
-                    "gemini-1.5-flash-gemini",
-                    "gemini-1.5-pro-gemini"
-                ];
-                for (let vModel of visionModels) {
-                    if (!fallbackQueue.includes(vModel)) fallbackQueue.push(vModel);
-                }
-            } else {
-                const isDilKocu = (document.getElementById('personaSelect') && document.getElementById('personaSelect').value === 'dil_kocu');
-                const isSinavKocu = (document.getElementById('personaSelect') && document.getElementById('personaSelect').value === 'akademik_koc');
-                let textModels;
-                if (isDilKocu || isSinavKocu) {
-                    // Dil/Sınav Koçu → Gemini önce (Türkçe + uzun metin daha iyi)
-                    textModels = [
-                        "gemini-3-flash-preview-gemini",
-                        "gemini-2.5-flash-gemini",
-                        "llama-3.3-70b-versatile-groq",
-                        "meta-llama/llama-3.2-11b-vision-instruct:free-openrouter",
-                        "llama-3.1-8b-instant-groq"
-                    ];
-                } else {
-                    textModels = [
-                        "llama-3.3-70b-versatile-groq",
-                        "llama-3.1-8b-instant-groq",
-                        "gemini-3-flash-preview-gemini",
-                        "meta-llama/llama-3.2-11b-vision-instruct:free-openrouter",
-                        "gemini-2.5-flash-gemini"
-                    ];
-                }
-                for (let tModel of textModels) {
-                    if (!fallbackQueue.includes(tModel)) fallbackQueue.push(tModel);
-                }
+            const hasAttachments = !!selectedImageBase64;
+            const isPdfCoaching = isAkademikKocNow || (document.getElementById('personaSelect') && document.getElementById('personaSelect').value === 'dil_kocu');
+            const visionModels = [
+                "meta-llama/llama-4-scout-17b-16e-instruct-groq",
+                "nvidia/nemotron-nano-12b-v2-vl-nvidia",
+                "meta-llama/llama-3.2-11b-vision-instruct:free-openrouter"
+            ];
+            const normalTextModels = [
+                "llama-3.1-8b-instant-groq",
+                "llama-3.3-70b-versatile-groq",
+                "gemini-2.5-flash-gemini",
+                "meta-llama/llama-3.2-11b-vision-instruct:free-openrouter",
+                "qwen2.5:14b",
+                "qwen2.5"
+            ];
+            const pdfTextModels = [
+                "gemini-2.5-flash-gemini",
+                "llama-3.3-70b-versatile-groq",
+                "llama-3.1-8b-instant-groq",
+                "meta-llama/llama-3.2-11b-vision-instruct:free-openrouter",
+                "qwen2.5:14b",
+                "qwen2.5"
+            ];
 
-                // AI Router: Kullanıcının seçtiği model dışındakiler puanlarına göre sıralansın
-                const [firstModel, ...restModels] = fallbackQueue;
-                restModels.sort((a, b) => getModelScore(b) - getModelScore(a));
-                fallbackQueue = [firstModel, ...restModels];
-                console.log('[AI Router] Fallback sırası (puana göre):', fallbackQueue.map(m => `${m.split('-').pop()}:${getModelScore(m)}`));
+            if (hasAttachments) {
+                // Vision task: use vision models but ensure selectedModel first
+                fallbackQueue = [...new Set([selectedModel, ...visionModels.filter(m => m !== selectedModel)])];
+            } else if (isPdfTask || isPdfCoaching) {
+                // PDF task: use pdfTextModels order
+                fallbackQueue = [...new Set([selectedModel, ...pdfTextModels.filter(m => m !== selectedModel)])];
+            } else {
+                // Emergency stabilization: for normal chat only try the selected model (no fallback)
+                if (taskType === 'chat') {
+                    fallbackQueue = [selectedModel];
+                } else {
+                    const chatPriority = [];
+                    if (window.lastWorkingModel && window.lastWorkingProvider && !isModelOnCooldown(window.lastWorkingModel)) {
+                        const lastLabel = window.lastWorkingModel + (window.lastWorkingProvider ? `-${window.lastWorkingProvider}` : '');
+                        const pInfo = parseModelLabel(lastLabel);
+                        if (!pInfo.provider || hasProviderApiKey(pInfo.provider)) chatPriority.push(lastLabel);
+                    }
+                    if (selectedModel) chatPriority.push(selectedModel);
+                    const canonical = [
+                        "llama-3.1-8b-instant-groq",
+                        "gemini-2.5-flash-gemini",
+                        "llama-3.3-70b-versatile-groq"
+                    ];
+                    fallbackQueue = [...new Set([...chatPriority, ...canonical])];
+                }
             }
 
+            // Filter out models that lack provider key, are on cooldown, or are vision models for chat
+            const availableModels = fallbackQueue.filter(modelValue => {
+                const parsed = parseModelLabel(modelValue);
+                if (!parsed) return false;
+                if (isModelOnCooldown(parsed.modelId)) return false;
+                if (taskType === 'chat' && isVisionModel(parsed.modelId)) return false;
+                if (parsed.provider && !hasProviderApiKey(parsed.provider)) return false;
+                return true;
+            });
+            if (availableModels.length === 0) {
+                throw new Error("Hiçbir uygun model denenemedi. Lütfen yapay zeka API anahtarlarınızı kontrol edin.");
+            }
+            fallbackQueue = availableModels;
+
             let response = null;
-            
+            // Set generation lock and UI state
+            window.isGenerating = true;
+            try { document.querySelector('.send-btn').disabled = true; } catch(e) {}
+            try { document.getElementById('userInput').disabled = true; } catch(e) {}
+            // show a small status message
+            const genStatusId = 'cinocode_generating_status';
+            let existingStatus = document.getElementById(genStatusId);
+            if (!existingStatus) {
+                const statusHtml = `<div id="${genStatusId}" class="message bot-message" style="background: rgba(24,24,37,0.6); border-left: 3px solid #89b4fa; padding: 8px; margin-bottom:10px; border-radius:6px; font-size:0.9em; color:var(--text-color);">⏳ Yanıt hazırlanıyor...</div>`;
+                messagesDiv.insertAdjacentHTML('beforeend', statusHtml);
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            }
+            const triedModels = new Set();
+            let lastErrorMessage = null;
+            let lastErrorDetails = null;
+            let proxyCloudResponse = false;
+
             for (let i = 0; i < fallbackQueue.length; i++) {
                 const currentTryModel = fallbackQueue[i];
-                isGroq = currentTryModel.includes("-groq");
-                isGemini = currentTryModel.includes("-gemini");
-                isNvidia = currentTryModel.includes("-nvidia");
-                isOpenRouter = currentTryModel.includes("-openrouter");
-                actualModel = currentTryModel
-                    .replace("-groq", "")
-                    .replace("-gemini", "")
-                    .replace("-nvidia", "")
-                    .replace("-openrouter", "");
-                
-                // Eğer bu model için API anahtarı girilmemişse doğrudan sonraki yedek modele geç
-                if (isGemini && !getRandomApiKey(localStorage.getItem('gemini_api_key'))) { continue; }
-                if (isGroq && !getRandomApiKey(localStorage.getItem('groq_api_key'))) { continue; }
-                if (isNvidia && !getRandomApiKey(localStorage.getItem('nvidia_api_key'))) { continue; }
-                if (isOpenRouter && !getRandomApiKey(localStorage.getItem('openrouter_api_key'))) { continue; }
-                
-                // Eğer ilk denemede hata alıp otomatik geçiş yapıyorsak ekranda bilgilendirme göster
+                if (triedModels.has(currentTryModel)) continue;
+                triedModels.add(currentTryModel);
+                const currentTryInfo = parseModelLabel(currentTryModel);
+                isGroq = currentTryInfo.provider === "groq";
+                isGemini = currentTryInfo.provider === "gemini";
+                isNvidia = currentTryInfo.provider === "nvidia";
+                isOpenRouter = currentTryInfo.provider === "openrouter";
+                const isProxyCloud = isProxyCloudProvider(currentTryInfo.provider);
+                actualModel = currentTryInfo.modelId;
+                const displayLabel = currentTryInfo.displayLabel;
+                const provider = currentTryInfo.provider;
+                const providerKey = provider ? (isProxyCloud ? 'proxy' : getProviderApiKey(provider)) : "";
+                if (provider && !providerKey) {
+                    console.warn(`[AI Router] API anahtarı yok, atlanıyor: ${currentTryModel}`);
+                    continue;
+                }
+
+                const timeoutMs = getRequestTimeoutMs();
+                const cleanModelName = actualModel.split("/").pop();
                 if (i > 0) {
-                    const cleanModelName = actualModel.split("/").pop();
-                    const warningHtml = `<div class="message bot-message" style="background: rgba(255, 150, 0, 0.1); border-left: 3px solid orange; padding: 10px; margin-bottom: 10px; border-radius: 5px; font-size: 0.9em; color: var(--text-color);">✨ <b>Otomatik Yedekleme:</b> Limit aşımı veya bağlantı hatası nedeniyle sistem otomatik olarak <b>${cleanModelName}</b> modelini deniyor...</div>`;
+                    const warningHtml = `<div class="message bot-message" style="background: rgba(255, 150, 0, 0.1); border-left: 3px solid orange; padding: 10px; margin-bottom: 10px; border-radius: 5px; font-size: 0.9em; color: var(--text-color);">✨ <b>Otomatik Yedekleme:</b> Bir sonraki model <b>${cleanModelName}</b> deneniyor...</div>`;
                     messagesDiv.insertAdjacentHTML('beforeend', warningHtml);
                     messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                    const stEl = document.getElementById('cinocode_generating_status'); if (stEl) stEl.innerText = `🔁 Yedek model deneniyor: ${cleanModelName}`;
                 }
-                
+
                 let fetchUrl, fetchOptions;
                 
                 if (isGemini) {
@@ -4154,6 +4342,21 @@
                             stream: true
                         })
                     };
+                } else if (isProxyCloud) {
+                    // --- BULUT PROVIDER PROXY ---
+                    fetchUrl = '/.netlify/functions/ai-chat';
+                    fetchOptions = {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            messages: reqMessages,
+                            taskType,
+                            selectedModel: currentTryModel,
+                            temperature: 0.7,
+                            maxTokens: 1024
+                        })
+                    };
+                    proxyCloudResponse = true;
                 } else if (isOpenRouter) {
                     // --- OPENROUTER (OpenAI uyumlu, ücretsiz vision modelleri) ---
                     const userOrKey = (localStorage.getItem('openrouter_api_key') || "").trim();
@@ -4244,25 +4447,38 @@
                     if (isGemini) {
                         removeImage();
                         const controller = new AbortController();
-                        const timeoutId = setTimeout(() => controller.abort(), 60000);
+                        const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
                         fetchOptions.signal = controller.signal;
 
-                        let geminiResponse = await fetch(fetchUrl, fetchOptions);
-                        clearTimeout(timeoutId);
+                        let geminiResponse;
+                        try {
+                            geminiResponse = await fetch(fetchUrl, fetchOptions);
+                        } finally {
+                            clearTimeout(timeoutId);
+                        }
 
                         if (!geminiResponse.ok) {
-                            const errText = await geminiResponse.text();
-                            console.warn(`Gemini API hatası verdi (${geminiResponse.status}): ${errText}`);
+                            const errText = await geminiResponse.text().catch(() => "");
+                            lastErrorMessage = geminiResponse.status === 401 || geminiResponse.status === 403
+                                ? "API key geçersiz olabilir."
+                                : geminiResponse.status === 429
+                                    ? "Kota/limit dolmuş olabilir."
+                                    : `Gemini API hatası: ${geminiResponse.status}`;
+                            lastErrorDetails = { provider: 'gemini', model: actualModel, timeout: false, status: geminiResponse.status, errorBody: errText, endpoint: fetchUrl, taskType };
+                            console.error(lastErrorDetails);
                             setModelScore(currentTryModel, -3); // AI Router: HTTP hatası
                             continue;
                         }
                         const geminiData = await geminiResponse.json();
                         const geminiBotReply = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text || '';
                         if (!geminiBotReply) {
+                            lastErrorMessage = "Model yanıt üretmedi.";
+                            lastErrorDetails = { provider: 'gemini', model: actualModel, timeout: false, status: geminiResponse.status, errorBody: JSON.stringify(geminiData), endpoint: fetchUrl, taskType };
                             console.warn("Gemini boş cevap döndü, sonraki yedek deneniyor...");
+                            setModelScore(currentTryModel, -3);
                             continue;
                         }
-                        
+
                         setModelScore(currentTryModel, +2); // AI Router: başarı
                         document.getElementById("modelSelect").value = currentTryModel;
                         document.getElementById(botId).innerHTML = renderContentWithImages(geminiBotReply, true);
@@ -4273,45 +4489,108 @@
                         scrollToBottom();
                         setTimeout(scrollToBottom, 300);
                         speakText(sanitizeAssistantOutput(geminiBotReply).substring(0, 500));
+
+                        // mark last working model/provider
+                        window.lastWorkingProvider = provider || 'gemini';
+                        window.lastWorkingModel = actualModel;
+                        window.lastWorkingModelAt = Date.now();
+
+                        // clear generation state
+                        window.isGenerating = false;
+                        try { document.querySelector('.send-btn').disabled = false; } catch(e) {}
+                        try { document.getElementById('userInput').disabled = false; } catch(e) {}
+                        const stEl = document.getElementById(genStatusId); if (stEl) stEl.remove();
                         return;
                     } else {
                         // Groq / NVIDIA NIM / OpenRouter / Yerel Ollama — hepsi SSE streaming
                         const controller = new AbortController();
-                        const timeoutId = setTimeout(() => controller.abort(), 60000);
+                        const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
                         fetchOptions.signal = controller.signal;
 
-                        let streamResponse = await fetch(fetchUrl, fetchOptions);
-                        clearTimeout(timeoutId);
+                        let streamResponse;
+                        try {
+                            streamResponse = await fetch(fetchUrl, fetchOptions);
+                        } finally {
+                            clearTimeout(timeoutId);
+                        }
 
                         if (!streamResponse.ok) {
-                            const errText = await streamResponse.text();
-                            console.warn(`Streaming API hatası (${streamResponse.status}): ${errText}`);
+                            const errText = await streamResponse.text().catch(() => "");
+                            lastErrorMessage = streamResponse.status === 401 || streamResponse.status === 403
+                                ? "API key geçersiz olabilir."
+                                : streamResponse.status === 429
+                                    ? "Kota/limit dolmuş olabilir."
+                                    : `Model hatası: ${streamResponse.status}`;
+                            lastErrorDetails = { provider: provider || 'unknown', model: actualModel, timeout: false, status: streamResponse.status, errorBody: errText, endpoint: fetchUrl, taskType };
+                            console.error(lastErrorDetails);
                             setModelScore(currentTryModel, -3); // AI Router: HTTP hatası
                             continue;
                         }
-                        
+
                         setModelScore(currentTryModel, +2); // AI Router: başarı
                         document.getElementById("modelSelect").value = currentTryModel;
+                        // mark last working early so next message can prefer it
+                        window.lastWorkingProvider = provider || window.lastWorkingProvider;
+                        window.lastWorkingModel = actualModel;
+                        window.lastWorkingModelAt = Date.now();
                         response = streamResponse;
                         break;
                     }
                 } catch (fetchErr) {
+                    const timedOut = fetchErr.name === 'AbortError';
+                    lastErrorMessage = timedOut ? "Model zaman aşımına uğradı." : "Network veya CORS hatası oluştu.";
+                    lastErrorDetails = { provider: provider || 'unknown', model: actualModel, timeout: timedOut, status: timedOut ? 'timeout' : 'network', errorBody: fetchErr.message, endpoint: fetchUrl, taskType };
+                    console.error(lastErrorDetails);
+                    // If timeout, set cooldown for this model for 5 minutes
+                    if (timedOut) setCooldown(actualModel, 5 * 60 * 1000);
                     setModelScore(currentTryModel, -3); // AI Router: başarısızlık
-                    console.error("Yapay zeka bağlantı hatası, sonraki yedek deneniyor:", fetchErr);
                     continue;
                 }
             }
             
             if (!response) {
                 removeImage();
-                throw new Error("Tüm yapay zeka yedek modelleri denendi ancak yanıt alınamadı. Lütfen API anahtarlarınızı veya kotanızı kontrol edin.");
+                const fallbackCandidate = fallbackQueue.find(modelValue => {
+                    const provider = parseModelLabel(modelValue).provider;
+                    return !provider || hasProviderApiKey(provider);
+                });
+                if (!fallbackCandidate) {
+                    throw new Error("Hiçbir uygun model denenemedi. Lütfen yapay zeka API anahtarlarınızı kontrol edin.");
+                }
+                throw new Error(lastErrorMessage || `Tüm yapay zeka yedek modelleri denendi ancak yanıt alınamadı. Lütfen API anahtarlarınızı, kotanızı veya ağ bağlantınızı kontrol edin.`);
             }
 
             removeImage(); // Fotoğraf gönderildikten sonra temizle
 
             if (!response.ok) {
                 const errorText = await response.text();
+                // release lock before throwing
+                window.isGenerating = false; try { document.querySelector('.send-btn').disabled = false; } catch(e) {} try { document.getElementById('userInput').disabled = false; } catch(e) {}
+                const stEl2 = document.getElementById(genStatusId); if (stEl2) stEl2.remove();
                 throw new Error(`API Hatası (${response.status}): ` + errorText);
+            }
+
+            if (proxyCloudResponse) {
+                const jsonData = await response.json().catch(() => null);
+                if (!jsonData || !jsonData.ok) {
+                    const errMsg = jsonData?.error || 'Bulut proxy hatası oluştu.';
+                    throw new Error(errMsg);
+                }
+                const botReply = String(jsonData.content || '').trim();
+                document.getElementById(botId).innerHTML = renderContentWithImages(botReply, true);
+                addCopyButtons(document.getElementById(botId));
+                chat.messages.push({ role: 'assistant', content: botReply });
+                chat.updatedAt = Date.now();
+                saveDatabase();
+                scrollToBottom();
+                setTimeout(scrollToBottom, 300);
+                speakText(sanitizeAssistantOutput(botReply).substring(0, 500));
+
+                window.isGenerating = false;
+                try { document.querySelector('.send-btn').disabled = false; } catch(e) {}
+                try { document.getElementById('userInput').disabled = false; } catch(e) {}
+                const stEl3 = document.getElementById('cinocode_generating_status'); if (stEl3) stEl3.remove();
+                return;
             }
 
             const reader = response.body.getReader();
@@ -4449,14 +4728,40 @@
             setTimeout(scrollToBottom, 300);
             setTimeout(scrollToBottom, 800);
 
+            // clear generation lock and process pending queue
+            window.isGenerating = false;
+            try { document.querySelector('.send-btn').disabled = false; } catch(e) {}
+            try { document.getElementById('userInput').disabled = false; } catch(e) {}
+            const stEl3 = document.getElementById('cinocode_generating_status'); if (stEl3) stEl3.remove();
+            // Clear any pendingMessages queue (queueing disabled in this hotfix)
+            try { window.pendingMessages = []; } catch(e) {}
+
         } catch (error) {
-            document.getElementById(botId).innerHTML = "<b>Hata:</b> " + error.message;
+            console.error('sendMessage error:', error);
+            try { document.getElementById(botId).innerHTML = "<b>Hata:</b> " + error.message; } catch(e) {}
+        } finally {
+            // Ensure UI is always re-enabled to avoid permanent lock
+            try { window.isGenerating = false; } catch(e) {}
+            try { window.pendingMessages = []; } catch(e) {}
+            try { const userInputEl = document.getElementById('userInput'); if (userInputEl) userInputEl.disabled = false; } catch(e) {}
+            try { const sendBtn = document.getElementById('sendBtn') || document.querySelector('.send-btn'); if (sendBtn) sendBtn.disabled = false; } catch(e) {}
+            try { const st = document.getElementById('cinocode_generating_status'); if (st) st.remove(); } catch(e) {}
         }
     }
 
     // ----- DRAG AND DROP (SÜRÜKLE BIRAK) -----
     const inputBox = document.querySelector(".input-box");
     let dragCounter = 0;
+
+    if (inputBox) {
+        inputBox.addEventListener('click', (event) => {
+            const userInputEl = document.getElementById('userInput');
+            if (!userInputEl) return;
+            if (event.target === inputBox || inputBox.contains(event.target)) {
+                userInputEl.focus();
+            }
+        });
+    }
 
     function showDropState() {
         inputBox.classList.add("drag-active");
@@ -4806,6 +5111,73 @@ function skpSyncStateFromPanel() {
     else if (mode === 'challenge') window.skState.challengeDiff = subVal || 'medium';
 }
 
+function skpBuildStartInstruction() {
+    const modeEl = document.getElementById('skp-mode');
+    const subEl = document.getElementById('skp-sub-select');
+    const mode = window.skState.mode || (modeEl ? modeEl.value : null);
+    const subVal = window.skState.mode === 'ozet' ? window.skState.ozet : (subEl ? subEl.value : '');
+    if (!mode) return null;
+
+    let modeLabel = '';
+    let extra = '';
+    switch (mode) {
+        case 'ozet':
+            modeLabel = 'Hızlı Özet';
+            extra = `Süre: ${subVal || window.skState.ozet || '5dk'}.`;
+            break;
+        case 'flashcard':
+            modeLabel = `Flashcard (${window.skState.flashcardCount || parseInt(subEl?.value) || 10} kart)`;
+            break;
+        case 'quiz':
+            modeLabel = `Quiz (${window.skState.quizCount || parseInt(subEl?.value) || 10} soru)`;
+            break;
+        case 'challenge':
+            modeLabel = `Challenge (${window.skState.challengeDiff || subVal || 'medium'})`;
+            break;
+        case 'ozet':
+            modeLabel = 'Hızlı Özet';
+            extra = `Süre: ${window.skState.ozet || '5dk'}.`;
+            break;
+        case 'profesor_anlatim':
+            modeLabel = 'Profesör Anlatımı';
+            break;
+        case 'sifirdan':
+            modeLabel = 'Sıfırdan Anlatım';
+            break;
+        case 'eli5':
+            modeLabel = 'ELI5';
+            break;
+        case 'hikaye':
+            modeLabel = 'Hikâyeleştirme';
+            break;
+        case 'flashcard':
+            modeLabel = `Flashcard (${window.skState.flashcardCount || 10} kart)`;
+            break;
+        case 'quiz':
+            modeLabel = `Quiz (${window.skState.quizCount || 10} soru)`;
+            break;
+        case 'sonsuz_quiz':
+            modeLabel = 'Sonsuz Quiz';
+            break;
+        case 'sozlu_sinav':
+            modeLabel = 'Sözlü Sınav';
+            break;
+        case 'sokratik':
+            modeLabel = 'Sokratik Mod';
+            break;
+        case 'eksik_analizi':
+            modeLabel = 'Eksik Analizi';
+            break;
+        case 'challenge':
+            modeLabel = `Challenge (${window.skState.challengeDiff || 'medium'})`;
+            break;
+        default:
+            modeLabel = 'Bilinmeyen Mod';
+    }
+
+    return `Bu PDF'yi seçili Sınav Koçu moduna göre işle. Mod: ${modeLabel}. ${extra}`.trim();
+}
+
 // Mod değişince dinamik alt seçenek göster
 function skpOnModeChange() {
     const modeEl = document.getElementById('skp-mode');
@@ -4887,56 +5259,39 @@ function skpUpdateDocStatus() {
 
 // ▶ Başlat butonuna tıklanınca
 function skpTriggerGo() {
-    const isAkademikKoc = (document.getElementById('personaSelect') && document.getElementById('personaSelect').value === 'akademik_koc');
-    if (!isAkademikKoc) {
-        // Persona'yı değiştir
-        const personaSel = document.getElementById('personaSelect');
-        if (personaSel) { personaSel.value = 'akademik_koc'; }
+    const personaSel = document.getElementById('personaSelect');
+    if (personaSel && personaSel.value !== 'akademik_koc') {
+        personaSel.value = 'akademik_koc';
     }
     skpSyncStateFromPanel();
-    const hasDoc = !!(window.activeDocText || window.selectedDocumentText);
-    const title = buildExamCoachTitle();
-    const userInputEl = document.getElementById('userInput');
-    if (userInputEl) userInputEl.value = title;
-    window.isExamMode = true;
-    if (typeof sendMessage === 'function') {
-        setTimeout(() => sendMessage(), 50);
-    }
-}
 
-function buildExamCoachTitle() {
-    let mode = window.skState.mode;
-    if (!mode) return '🎓 Sınav Koçu Modu';
-    
-    let sub = '';
-    if (mode === 'ozet') {
-        let t = window.skState.ozet || '5dk';
-        sub = ` (${t === '30s' ? '30 sn' : t.replace('dk', ' dk')})`;
-        return `🎓 Sınav Koçu: Özet${sub}`;
+    const userInputEl = document.getElementById('userInput');
+    if (!userInputEl) return;
+
+    const hasDocument = !!(window.selectedDocumentText || window.activeDocText);
+    if (!hasDocument) {
+        userInputEl.placeholder = "Önce bir PDF yükle veya normal bir mesaj yaz.";
+        userInputEl.focus();
+        return;
     }
-    if (mode === 'profesor_anlatim') return `🎓 Sınav Koçu: Profesör Anlatımı`;
-    if (mode === 'sifirdan') return `🎓 Sınav Koçu: Sıfırdan Anlatım`;
-    if (mode === 'eli5') return `🎓 Sınav Koçu: Çocuk Anlatımı (ELI5)`;
-    if (mode === 'hikaye') return `🎓 Sınav Koçu: Hikâyeleştirme Modu`;
-    if (mode === 'flashcard') {
-        return `🃏 Sınav Koçu: ${window.skState.flashcardCount || 10} Flashcard`;
+
+    const startInstruction = skpBuildStartInstruction();
+    if (!startInstruction) {
+        userInputEl.placeholder = "Sınav Koçu modunu seçip yeniden başlat.";
+        userInputEl.focus();
+        return;
     }
-    if (mode === 'quiz') {
-        return `📝 Sınav Koçu: ${window.skState.quizCount || 10} Soruluk Quiz`;
+
+    const currentText = userInputEl.value.trim();
+    if (currentText) {
+        userInputEl.value = `${currentText}\n\n${startInstruction}`;
+    } else {
+        userInputEl.value = startInstruction;
     }
-    if (mode === 'sonsuz_quiz') return `🔁 Sınav Koçu: Sonsuz Quiz Modu`;
-    if (mode === 'sozlu_sinav') return `🎤 Sınav Koçu: Sözlü / Sesli Sınav`;
-    if (mode === 'sokratik') return `🔁 Sınav Koçu: Sokratik Mod`;
-    if (mode === 'eksik_analizi') return `🛠️ Sınav Koçu: Eksik Analizi (Tanı Testi)`;
-    if (mode === 'challenge') {
-        let diffs = { easy: 'Kolay', medium: 'Orta', hard: 'Zor', professor: 'Hoca', interview: 'Mülakat' };
-        let diffLabel = diffs[window.skState.challengeDiff] || 'Orta';
-        return `🧩 Sınav Koçu: Challenge Seviyesi — ${diffLabel}`;
-    }
-    if (mode === 'munazara') return `🗣️ Sınav Koçu: Münazara Modu`;
-    if (mode === 'hoca_tahmin') return `🎯 Sınav Koçu: Hoca Ne Sorar? Tahmini`;
-    
-    return '🎓 Sınav Koçu';
+
+    window.isExamMode = true;
+    if (typeof skpUpdateDocStatus === 'function') skpUpdateDocStatus();
+    sendMessage();
 }
 
 function buildExamCoachSuffix() {
