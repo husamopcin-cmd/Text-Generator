@@ -627,9 +627,8 @@
                 <option value="meta-llama/llama-4-scout-17b-16e-instruct-groq">Llama 4 Scout (Görsel) - Groq Bulut ⚡</option>
                 <option disabled>──────────</option>
                 <!-- Google Gemini Modelleri -->
-                <option value="gemini-2.0-flash-exp-gemini">🤍 Gemini 2.0 Flash - Google Bulut ✨</option>
-                <option value="gemini-1.5-flash-gemini">🤍 Gemini 1.5 Flash - Google Bulut ✨</option>
-                <option value="gemini-1.5-pro-gemini">🤍 Gemini 1.5 Pro - Google Bulut ✨</option>
+                <option value="gemini-3-flash-preview-gemini">🤍 Gemini 3 Flash Preview - Google Bulut ✨</option>
+                <option value="gemini-2.5-flash-gemini">🤍 Gemini 2.5 Flash - Google Bulut ✨</option>
                 <option disabled>──────────</option>
                 <!-- NVIDIA NIM -->
                 <option value="nvidia/nemotron-nano-12b-v2-vl-nvidia">🟢 Nemotron Nano VL (Görsel) - NVIDIA NIM ∞</option>
@@ -1096,7 +1095,7 @@
             
             const currentModel = document.getElementById('modelSelect').value;
             if (!currentModel.includes('-gemini')) {
-                document.getElementById('modelSelect').value = 'gemini-2.0-flash-gemini';
+                document.getElementById('modelSelect').value = 'gemini-3-flash-preview-gemini';
             }
             
             // Eğer video modundaysak, doğrudan fotoğraftan sinematik WebM üretimine başla
@@ -2886,7 +2885,7 @@
                     // Gemini'ye otomatik geç (Türkçe + çok dil için en iyi model)
                     const modelSel = document.getElementById('modelSelect');
                     if (modelSel && !modelSel.value.includes('-gemini')) {
-                        modelSel.value = 'gemini-2.0-flash-gemini';
+                        modelSel.value = 'gemini-3-flash-preview-gemini';
                     }
                     updateDilKocuPrompt();
                     updateDilKocuProgress();
@@ -3012,7 +3011,7 @@
         document.getElementById('dilKocuPanel').classList.add('active');
         // Gemini'ye geç
         const modelSel = document.getElementById('modelSelect');
-        if (modelSel && !modelSel.value.includes('-gemini')) modelSel.value = 'gemini-2.0-flash-gemini';
+        if (modelSel && !modelSel.value.includes('-gemini')) modelSel.value = 'gemini-3-flash-preview-gemini';
         const text = `Bugün ${lang} dersimize başlayalım! Seviyem: ${level}. Bugün ${goal} yeni kelime öğrenmek istiyorum. Lütfen o dili hiç bilmiyormuşum gibi en temel ve günlük hayatta en çok kullanılan kelime ve kalıplardan başla. Tablolar ve örneklerle anlat.`;
         userInput.value = text;
         autoResize(userInput);
@@ -3027,7 +3026,7 @@
         if (personaSel) personaSel.value = 'dil_kocu';
         document.getElementById('dilKocuPanel').classList.add('active');
         const modelSel = document.getElementById('modelSelect');
-        if (modelSel && !modelSel.value.includes('-gemini')) modelSel.value = 'gemini-2.0-flash-gemini';
+        if (modelSel && !modelSel.value.includes('-gemini')) modelSel.value = 'gemini-3-flash-preview-gemini';
         const text = `Hadi ${lang} sohbet edelim! Seviyem ${level}. Seninle ${lang} pratik yapmak istiyorum. Sen de ${lang} konuş, hatalarımı sonunda Türkçe düzelt.`;
         userInput.value = text;
         autoResize(userInput);
@@ -3247,7 +3246,7 @@
         const isVisionCapable = isGroqSelected || isGeminiSelected || selectedModel.toLowerCase().includes("llava") || selectedModel.toLowerCase().includes("vision") || selectedModel.toLowerCase().includes("scout") || selectedModel.toLowerCase().includes("maverick");
         
         if (selectedImageBase64 && !isVisionCapable) {
-            alert("Bu modeli görsel analiz için kullanamam. Lütfen LLaVA / Görsel Model seç.");
+            alert("Bu modeli görsel analiz için kullanamam. Lütfen Gemini veya Görsel Model seç.");
             return;
         }
 
@@ -3257,10 +3256,7 @@
         if (isRecording) stopMic();
         stopSpeaking();
 
-        // Mod mantığını sistem promptuna taşıyoruz (LLM'in promptu İngilizce'ye çevirmesi ve zenginleştirmesi için)
-
         const chat = sessions[currentChatId];
-        // Yeni başlık atama (Stüdyo modlarından önce!)
         let attachmentInfo = null;
         if (selectedImageBase64) attachmentInfo = { type: "image/" };
         ensureChatTitleFromUserInput(text, attachmentInfo);
@@ -3283,7 +3279,6 @@
         messagesDiv.appendChild(typingDiv);
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
 
-        // VIDEO STÜDYOSU BYPASS: Eğer videodaysa direkt promptu temizleyip yolla, LLM ile normal sohbet etme!
         if (currentMode === "video") {
             const cleanPrompt = buildCleanMediaPrompt(text, "video");
             lastMediaPrompt = cleanPrompt;
@@ -3294,40 +3289,10 @@
 
         try {
             const selectedModel = document.getElementById("modelSelect").value;
-            
             let reqMessages = [];
             const personaValue = document.getElementById("personaSelect") ? document.getElementById("personaSelect").value : "kanka";
             let baseSystemPrompt = personas[personaValue] || systemPrompt;
-            baseSystemPrompt += "\n\nDİKKAT - ÇOK ÖNEMLİ: Eğer kullanıcı senden bir resim, görsel veya fotoğraf çizmeni isterse, KESİNLİKLE hiçbir açıklama yapma! 'Özür dilerim', 'metin tabanlıyım', 'çizemem', 'sadece metin üretebilirim', 'tamam çiziyorum' gibi TEK BİR KELİME BİLE YAZMA. SADECE VE SADECE şu formatta İNGİLİZCE resim promptunu yazıp bırak: [GENERATE_IMAGE: <detailed english prompt>]. Asla Türkçe cevap veya açıklama ekleme, sadece kodu ver! [GENERATE_IMAGE: ...] KODUNDAN SONRA VEYA ÖNCE BAŞKA HİÇBİR CÜMLE KURMA! SEN SADECE KOD DÖNDÜREN BİR MAKİNESİN.";
-            baseSystemPrompt += "\n\nVİDEO OLUŞTURMA KURALI: Eğer kullanıcı senden bir video oluşturmanı, video yapmanı veya animasyon hazırlamanı isterse, KESİNLİKLE hiçbir açıklama yapma! SADECE şu formatta İNGİLİZCE video promptunu yazıp bırak: [GENERATE_VIDEO: <detailed english cinematic prompt describing the scene>]. Örnek: [GENERATE_VIDEO: a cyberpunk city with neon lights, rain, flying cars, cinematic 4k]. Asla Türkçe cevap ekleme!";
-            
-            if (currentMode === "image") {
-                baseSystemPrompt += "\n\nŞU ANDA KULLANICI GÖRSEL STÜDYOSUNDA! Kullanıcının yazdığı metin, bir resim çizme talebidir! Normal cevap verme, yazılanı sanatsal, detaylı bir İNGİLİZCE resim promptuna (stable diffusion formatında) çevirip SADECE [GENERATE_IMAGE: <detailed english prompt>] kodunu döndür!";
-            } else if (currentMode === "video") {
-                baseSystemPrompt += "\n\nŞU ANDA KULLANICI VİDEO STÜDYOSUNDA! Kullanıcının yazdığı metin, bir video oluşturma talebidir! Normal cevap verme, yazılanı detaylı, sinematik bir İNGİLİZCE video promptuna çevirip SADECE [GENERATE_VIDEO: <detailed english cinematic prompt>] kodunu döndür!";
-            } else if (currentMode === "game") {
-                baseSystemPrompt = "SEN SADECE KOD ÜRETEN BİR MAKİNESİN. ŞU ANDA KULLANICI OYUN STÜDYOSUNDA! Kullanıcının yazdığı metin, bir oyun geliştirme veya düzeltme talebidir! SADECE VE SADECE tek dosyalı, tam çalışır bir HTML5/Canvas/JS oyunu yaz (HTML, CSS, JS aynı dosyanın içinde). Açıklama, merhaba, nasılsın gibi HİÇBİR LAF KALABALIĞI YAPMA. Özür dileme, açıklama yapma. Direk olarak ```html ile başlayan ve ``` ile biten eksiksiz oyun kodunu ver. ASLA normal metin yazma!";
-            }
-            
-            // Eğer daha önce üretilmiş bir medya varsa ve kullanıcı düzeltme ("bu ne", "düzelt", "nerede", "adam kim", "bunu istemedim", "yeniden yap") istiyorsa referans olması için hafıza enjekte et
-            // Bu mesajlar yeni prompt değil, correction/refinement olarak işlenmeli ve son media isteği hafızadan güncellenmeli.
-            if (lastMediaPrompt && currentMode !== "game") {
-                baseSystemPrompt += `\n\nMEDYA BELLEĞİ VE DÜZELTME HAFIZASI (CORRECTION/REFINEMENT ENGINE):
-Kullanıcı daha önce şu medya içeriğini üretti: "${lastMediaPrompt}" (Tür: ${lastMediaType}).
-Eğer kullanıcı "bu ne", "nerede", "adam kim", "bunu istemedim", "düzelt", "yeniden yap" gibi itiraz veya düzeltme cümleleri kurarsa; bu yeni bir görsel isteği değil, bir DÜZELTME (correction) mesajıdır. KESİNLİKLE son medya promptu olan "${lastMediaPrompt}" içeriğini alıp, kullanıcının belirttiği itirazları negatif kural ("no humans, no man, no woman, only cats") ekleyerek İngilizce formatında [GENERATE_IMAGE: ...] veya [GENERATE_VIDEO: ...] etiketini fırlat!`;
-            }
 
-            // Doğrulama Anahtarları (Keywords for local validation):
-            // isVideoRequest, isImageRequest, lastMediaPrompt, lastMediaType, buildCleanMediaPrompt, speechRunId, selectedVoiceId, stopAllAudio, isSpeakerOn, videoQueue, isVideoGenerating
-            // Yukarıdaki kelimeler kod içinde tanımlanmıştır ve doğrulanabilir durumdadır.
-
-            if (loggedUser) {
-                baseSystemPrompt += "\n\nKullanıcının giriş yaptığı hesap adı / ismi: '" + loggedUser + "'. Sohbet sırasında ona ara sıra (sürekli yapay bir şekilde değil, akışı bozmadan doğal olarak) bu isimle hitap et. Kullanıcı sana özellikle 'Bana şu isimle hitap et' demediği sürece bu ismi kullanmalısın.";
-            }
-
-            baseSystemPrompt += "\n\nKURAL: Varsayılan olarak Türkçe cevap ver. Ancak kullanıcı senden başka bir dilde (İngilizce, Almanca vb.) konuşmanı isterse veya o dilde soru sorup o dilde cevap vermeni talep ederse, kesinlikle kullanıcının istediği dilde cevap ver ve konuş. Emin değilsen isim kullanma.";
-
-            // UZUN SÜRELİ HAFIZA (MEMORY) ENJEKSİYONU
             let userMemory = localStorage.getItem('cinocode_memory_' + (loggedUser || "default"));
             if (userMemory) {
                 // "Ahmet" bugını kalıcı olarak temizle
@@ -3339,6 +3304,13 @@ Eğer kullanıcı "bu ne", "nerede", "adam kim", "bunu istemedim", "düzelt", "y
             }
             baseSystemPrompt += "\n\nKURAL: SADECE VE SADECE eğer kullanıcı kendisiyle, hayatıyla, zevkleriyle veya fiziksel özellikleriyle ilgili ÇOK ÖNEMLİ VE KALICI bir kişisel bilgi verirse (Örn: adım Ahmet, yaşım 25, kedim var, fıstığa alerjim var vb.), mesajının en sonuna BİREBİR şu formatta gizli bir not düşmelisin: [REMEMBER: Kullanıcı 25 yaşındaymış ve adı Ahmet'miş]. Sıradan sohbetlerde veya kullanıcının senden bir şey yapmanı/yazmanı istediği anlarda (Örn: hesap makinesi yaz, kod yaz) KESİNLİKLE [REMEMBER] KULLANMA! Sadece kişisel bilgileri kaydet.";
             baseSystemPrompt += "\n\nKURAL 2 (ÇOK ÖNEMLİ): Eğer kullanıcı senden bir oyun, arayüz, hesap makinesi veya web tabanlı herhangi bir uygulama yapmanı/kodlamanı isterse, KODU SADECE HTML BLOKLARI İÇİNDE YAZ. Başka metin ekleme.";
+            
+            // ===== KRİTİK FIX: reqMessages'a sistem + sohbet geçmişini ekle =====
+            reqMessages.push({ role: "system", content: baseSystemPrompt });
+            const historyMsgs = chat.messages.slice(-20);
+            for (let hm of historyMsgs) { reqMessages.push(hm); }
+            console.log("[CinoCode] reqMessages dolduruldu:", reqMessages.length, "mesaj");
+            
             let isGroq = selectedModel.includes("-groq");
             let isGemini = selectedModel.includes("-gemini");
             let actualModel = selectedModel.replace("-groq", "").replace("-gemini", "");
@@ -3366,9 +3338,9 @@ Eğer kullanıcı "bu ne", "nerede", "adam kim", "bunu istemedim", "düzelt", "y
                 const textModels = [
                     "llama-3.3-70b-versatile-groq",
                     "llama-3.1-8b-instant-groq",
-                    "gemini-2.0-flash-exp-gemini",
+                    "gemini-3-flash-preview-gemini",
                     "meta-llama/llama-3.2-11b-vision-instruct:free-openrouter",
-                    "gemini-1.5-flash-gemini"
+                    "gemini-2.5-flash-gemini"
                 ];
                 for (let tModel of textModels) {
                     if (!fallbackQueue.includes(tModel)) {

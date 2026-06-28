@@ -231,7 +231,7 @@
             
             const currentModel = document.getElementById('modelSelect').value;
             if (!currentModel.includes('-gemini')) {
-                document.getElementById('modelSelect').value = 'gemini-2.0-flash-gemini';
+                document.getElementById('modelSelect').value = 'gemini-3-flash-preview-gemini';
             }
             
             // EÄŸer video modundaysak, doÄŸrudan fotoÄŸraftan sinematik WebM Ã¼retimine baÅŸla
@@ -2021,7 +2021,7 @@
                     // Gemini'ye otomatik geÃ§ (TÃ¼rkÃ§e + Ã§ok dil iÃ§in en iyi model)
                     const modelSel = document.getElementById('modelSelect');
                     if (modelSel && !modelSel.value.includes('-gemini')) {
-                        modelSel.value = 'gemini-2.0-flash-gemini';
+                        modelSel.value = 'gemini-3-flash-preview-gemini';
                     }
                     updateDilKocuPrompt();
                     updateDilKocuProgress();
@@ -2147,7 +2147,7 @@
         document.getElementById('dilKocuPanel').classList.add('active');
         // Gemini'ye geÃ§
         const modelSel = document.getElementById('modelSelect');
-        if (modelSel && !modelSel.value.includes('-gemini')) modelSel.value = 'gemini-2.0-flash-gemini';
+        if (modelSel && !modelSel.value.includes('-gemini')) modelSel.value = 'gemini-3-flash-preview-gemini';
         const text = `BugÃ¼n ${lang} dersimize baÅŸlayalÄ±m! Seviyem: ${level}. BugÃ¼n ${goal} yeni kelime Ã¶ÄŸrenmek istiyorum. LÃ¼tfen o dili hiÃ§ bilmiyormuÅŸum gibi en temel ve gÃ¼nlÃ¼k hayatta en Ã§ok kullanÄ±lan kelime ve kalÄ±plardan baÅŸla. Tablolar ve Ã¶rneklerle anlat.`;
         userInput.value = text;
         autoResize(userInput);
@@ -2162,7 +2162,7 @@
         if (personaSel) personaSel.value = 'dil_kocu';
         document.getElementById('dilKocuPanel').classList.add('active');
         const modelSel = document.getElementById('modelSelect');
-        if (modelSel && !modelSel.value.includes('-gemini')) modelSel.value = 'gemini-2.0-flash-gemini';
+        if (modelSel && !modelSel.value.includes('-gemini')) modelSel.value = 'gemini-3-flash-preview-gemini';
         const text = `Hadi ${lang} sohbet edelim! Seviyem ${level}. Seninle ${lang} pratik yapmak istiyorum. Sen de ${lang} konuÅŸ, hatalarÄ±mÄ± sonunda TÃ¼rkÃ§e dÃ¼zelt.`;
         userInput.value = text;
         autoResize(userInput);
@@ -2382,7 +2382,7 @@
         const isVisionCapable = isGroqSelected || isGeminiSelected || selectedModel.toLowerCase().includes("llava") || selectedModel.toLowerCase().includes("vision") || selectedModel.toLowerCase().includes("scout") || selectedModel.toLowerCase().includes("maverick");
         
         if (selectedImageBase64 && !isVisionCapable) {
-            alert("Bu modeli gÃ¶rsel analiz iÃ§in kullanamam. LÃ¼tfen LLaVA / GÃ¶rsel Model seÃ§.");
+            alert("Bu modeli gÃ¶rsel analiz iÃ§in kullanamam. LÃ¼tfen Gemini veya GÃ¶rsel Model seÃ§.");
             return;
         }
 
@@ -2392,10 +2392,7 @@
         if (isRecording) stopMic();
         stopSpeaking();
 
-        // Mod mantÄ±ÄŸÄ±nÄ± sistem promptuna taÅŸÄ±yoruz (LLM'in promptu Ä°ngilizce'ye Ã§evirmesi ve zenginleÅŸtirmesi iÃ§in)
-
         const chat = sessions[currentChatId];
-        // Yeni baÅŸlÄ±k atama (StÃ¼dyo modlarÄ±ndan Ã¶nce!)
         let attachmentInfo = null;
         if (selectedImageBase64) attachmentInfo = { type: "image/" };
         ensureChatTitleFromUserInput(text, attachmentInfo);
@@ -2418,7 +2415,6 @@
         messagesDiv.appendChild(typingDiv);
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
 
-        // VIDEO STÃœDYOSU BYPASS: EÄŸer videodaysa direkt promptu temizleyip yolla, LLM ile normal sohbet etme!
         if (currentMode === "video") {
             const cleanPrompt = buildCleanMediaPrompt(text, "video");
             lastMediaPrompt = cleanPrompt;
@@ -2429,40 +2425,10 @@
 
         try {
             const selectedModel = document.getElementById("modelSelect").value;
-            
             let reqMessages = [];
             const personaValue = document.getElementById("personaSelect") ? document.getElementById("personaSelect").value : "kanka";
             let baseSystemPrompt = personas[personaValue] || systemPrompt;
-            baseSystemPrompt += "\n\nDÄ°KKAT - Ã‡OK Ã–NEMLÄ°: EÄŸer kullanÄ±cÄ± senden bir resim, gÃ¶rsel veya fotoÄŸraf Ã§izmeni isterse, KESÄ°NLÄ°KLE hiÃ§bir aÃ§Ä±klama yapma! 'Ã–zÃ¼r dilerim', 'metin tabanlÄ±yÄ±m', 'Ã§izemem', 'sadece metin Ã¼retebilirim', 'tamam Ã§iziyorum' gibi TEK BÄ°R KELÄ°ME BÄ°LE YAZMA. SADECE VE SADECE ÅŸu formatta Ä°NGÄ°LÄ°ZCE resim promptunu yazÄ±p bÄ±rak: [GENERATE_IMAGE: <detailed english prompt>]. Asla TÃ¼rkÃ§e cevap veya aÃ§Ä±klama ekleme, sadece kodu ver! [GENERATE_IMAGE: ...] KODUNDAN SONRA VEYA Ã–NCE BAÅžKA HÄ°Ã‡BÄ°R CÃœMLE KURMA! SEN SADECE KOD DÃ–NDÃœREN BÄ°R MAKÄ°NESÄ°N.";
-            baseSystemPrompt += "\n\nVÄ°DEO OLUÅžTURMA KURALI: EÄŸer kullanÄ±cÄ± senden bir video oluÅŸturmanÄ±, video yapmanÄ± veya animasyon hazÄ±rlamanÄ± isterse, KESÄ°NLÄ°KLE hiÃ§bir aÃ§Ä±klama yapma! SADECE ÅŸu formatta Ä°NGÄ°LÄ°ZCE video promptunu yazÄ±p bÄ±rak: [GENERATE_VIDEO: <detailed english cinematic prompt describing the scene>]. Ã–rnek: [GENERATE_VIDEO: a cyberpunk city with neon lights, rain, flying cars, cinematic 4k]. Asla TÃ¼rkÃ§e cevap ekleme!";
-            
-            if (currentMode === "image") {
-                baseSystemPrompt += "\n\nÅžU ANDA KULLANICI GÃ–RSEL STÃœDYOSUNDA! KullanÄ±cÄ±nÄ±n yazdÄ±ÄŸÄ± metin, bir resim Ã§izme talebidir! Normal cevap verme, yazÄ±lanÄ± sanatsal, detaylÄ± bir Ä°NGÄ°LÄ°ZCE resim promptuna (stable diffusion formatÄ±nda) Ã§evirip SADECE [GENERATE_IMAGE: <detailed english prompt>] kodunu dÃ¶ndÃ¼r!";
-            } else if (currentMode === "video") {
-                baseSystemPrompt += "\n\nÅžU ANDA KULLANICI VÄ°DEO STÃœDYOSUNDA! KullanÄ±cÄ±nÄ±n yazdÄ±ÄŸÄ± metin, bir video oluÅŸturma talebidir! Normal cevap verme, yazÄ±lanÄ± detaylÄ±, sinematik bir Ä°NGÄ°LÄ°ZCE video promptuna Ã§evirip SADECE [GENERATE_VIDEO: <detailed english cinematic prompt>] kodunu dÃ¶ndÃ¼r!";
-            } else if (currentMode === "game") {
-                baseSystemPrompt = "SEN SADECE KOD ÃœRETEN BÄ°R MAKÄ°NESÄ°N. ÅžU ANDA KULLANICI OYUN STÃœDYOSUNDA! KullanÄ±cÄ±nÄ±n yazdÄ±ÄŸÄ± metin, bir oyun geliÅŸtirme veya dÃ¼zeltme talebidir! SADECE VE SADECE tek dosyalÄ±, tam Ã§alÄ±ÅŸÄ±r bir HTML5/Canvas/JS oyunu yaz (HTML, CSS, JS aynÄ± dosyanÄ±n iÃ§inde). AÃ§Ä±klama, merhaba, nasÄ±lsÄ±n gibi HÄ°Ã‡BÄ°R LAF KALABALIÄžI YAPMA. Ã–zÃ¼r dileme, aÃ§Ä±klama yapma. Direk olarak ```html ile baÅŸlayan ve ``` ile biten eksiksiz oyun kodunu ver. ASLA normal metin yazma!";
-            }
-            
-            // EÄŸer daha Ã¶nce Ã¼retilmiÅŸ bir medya varsa ve kullanÄ±cÄ± dÃ¼zeltme ("bu ne", "dÃ¼zelt", "nerede", "adam kim", "bunu istemedim", "yeniden yap") istiyorsa referans olmasÄ± iÃ§in hafÄ±za enjekte et
-            // Bu mesajlar yeni prompt deÄŸil, correction/refinement olarak iÅŸlenmeli ve son media isteÄŸi hafÄ±zadan gÃ¼ncellenmeli.
-            if (lastMediaPrompt && currentMode !== "game") {
-                baseSystemPrompt += `\n\nMEDYA BELLEÄžÄ° VE DÃœZELTME HAFIZASI (CORRECTION/REFINEMENT ENGINE):
-KullanÄ±cÄ± daha Ã¶nce ÅŸu medya iÃ§eriÄŸini Ã¼retti: "${lastMediaPrompt}" (TÃ¼r: ${lastMediaType}).
-EÄŸer kullanÄ±cÄ± "bu ne", "nerede", "adam kim", "bunu istemedim", "dÃ¼zelt", "yeniden yap" gibi itiraz veya dÃ¼zeltme cÃ¼mleleri kurarsa; bu yeni bir gÃ¶rsel isteÄŸi deÄŸil, bir DÃœZELTME (correction) mesajÄ±dÄ±r. KESÄ°NLÄ°KLE son medya promptu olan "${lastMediaPrompt}" iÃ§eriÄŸini alÄ±p, kullanÄ±cÄ±nÄ±n belirttiÄŸi itirazlarÄ± negatif kural ("no humans, no man, no woman, only cats") ekleyerek Ä°ngilizce formatÄ±nda [GENERATE_IMAGE: ...] veya [GENERATE_VIDEO: ...] etiketini fÄ±rlat!`;
-            }
 
-            // DoÄŸrulama AnahtarlarÄ± (Keywords for local validation):
-            // isVideoRequest, isImageRequest, lastMediaPrompt, lastMediaType, buildCleanMediaPrompt, speechRunId, selectedVoiceId, stopAllAudio, isSpeakerOn, videoQueue, isVideoGenerating
-            // YukarÄ±daki kelimeler kod iÃ§inde tanÄ±mlanmÄ±ÅŸtÄ±r ve doÄŸrulanabilir durumdadÄ±r.
-
-            if (loggedUser) {
-                baseSystemPrompt += "\n\nKullanÄ±cÄ±nÄ±n giriÅŸ yaptÄ±ÄŸÄ± hesap adÄ± / ismi: '" + loggedUser + "'. Sohbet sÄ±rasÄ±nda ona ara sÄ±ra (sÃ¼rekli yapay bir ÅŸekilde deÄŸil, akÄ±ÅŸÄ± bozmadan doÄŸal olarak) bu isimle hitap et. KullanÄ±cÄ± sana Ã¶zellikle 'Bana ÅŸu isimle hitap et' demediÄŸi sÃ¼rece bu ismi kullanmalÄ±sÄ±n.";
-            }
-
-            baseSystemPrompt += "\n\nKURAL: VarsayÄ±lan olarak TÃ¼rkÃ§e cevap ver. Ancak kullanÄ±cÄ± senden baÅŸka bir dilde (Ä°ngilizce, Almanca vb.) konuÅŸmanÄ± isterse veya o dilde soru sorup o dilde cevap vermeni talep ederse, kesinlikle kullanÄ±cÄ±nÄ±n istediÄŸi dilde cevap ver ve konuÅŸ. Emin deÄŸilsen isim kullanma.";
-
-            // UZUN SÃœRELÄ° HAFIZA (MEMORY) ENJEKSÄ°YONU
             let userMemory = localStorage.getItem('cinocode_memory_' + (loggedUser || "default"));
             if (userMemory) {
                 // "Ahmet" bugÄ±nÄ± kalÄ±cÄ± olarak temizle
@@ -2474,6 +2440,13 @@ EÄŸer kullanÄ±cÄ± "bu ne", "nerede", "adam kim", "bunu istemedim", "dÃ¼z
             }
             baseSystemPrompt += "\n\nKURAL: SADECE VE SADECE eÄŸer kullanÄ±cÄ± kendisiyle, hayatÄ±yla, zevkleriyle veya fiziksel Ã¶zellikleriyle ilgili Ã‡OK Ã–NEMLÄ° VE KALICI bir kiÅŸisel bilgi verirse (Ã–rn: adÄ±m Ahmet, yaÅŸÄ±m 25, kedim var, fÄ±stÄ±ÄŸa alerjim var vb.), mesajÄ±nÄ±n en sonuna BÄ°REBÄ°R ÅŸu formatta gizli bir not dÃ¼ÅŸmelisin: [REMEMBER: KullanÄ±cÄ± 25 yaÅŸÄ±ndaymÄ±ÅŸ ve adÄ± Ahmet'miÅŸ]. SÄ±radan sohbetlerde veya kullanÄ±cÄ±nÄ±n senden bir ÅŸey yapmanÄ±/yazmanÄ± istediÄŸi anlarda (Ã–rn: hesap makinesi yaz, kod yaz) KESÄ°NLÄ°KLE [REMEMBER] KULLANMA! Sadece kiÅŸisel bilgileri kaydet.";
             baseSystemPrompt += "\n\nKURAL 2 (Ã‡OK Ã–NEMLÄ°): EÄŸer kullanÄ±cÄ± senden bir oyun, arayÃ¼z, hesap makinesi veya web tabanlÄ± herhangi bir uygulama yapmanÄ±/kodlamanÄ± isterse, KODU SADECE HTML BLOKLARI Ä°Ã‡Ä°NDE YAZ. BaÅŸka metin ekleme.";
+            
+            // ===== KRÄ°TÄ°K FIX: reqMessages'a sistem + sohbet geÃ§miÅŸini ekle =====
+            reqMessages.push({ role: "system", content: baseSystemPrompt });
+            const historyMsgs = chat.messages.slice(-20);
+            for (let hm of historyMsgs) { reqMessages.push(hm); }
+            console.log("[CinoCode] reqMessages dolduruldu:", reqMessages.length, "mesaj");
+            
             let isGroq = selectedModel.includes("-groq");
             let isGemini = selectedModel.includes("-gemini");
             let actualModel = selectedModel.replace("-groq", "").replace("-gemini", "");
@@ -2486,11 +2459,8 @@ EÄŸer kullanÄ±cÄ± "bu ne", "nerede", "adam kim", "bunu istemedim", "dÃ¼z
             if (hasAttachments) {
                 // GÃ¶rsel veya Belge eki varsa sadece Vision (GÃ¶rsel okuma) yeteneÄŸi olan modelleri sÄ±raya ekle
                 const visionModels = [
-                    "gemini-2.0-flash-gemini",
-                    "gemini-2.5-flash-preview-05-20-gemini",
-                    "nvidia/nemotron-nano-12b-v2-vl-nvidia",
+                    "gemini-2.0-flash-exp-gemini",
                     "meta-llama/llama-3.2-11b-vision-instruct:free-openrouter",
-                    "meta-llama/llama-4-scout-17b-16e-instruct-groq",
                     "gemini-1.5-flash-gemini",
                     "gemini-1.5-pro-gemini"
                 ];
@@ -2503,13 +2473,10 @@ EÄŸer kullanÄ±cÄ± "bu ne", "nerede", "adam kim", "bunu istemedim", "dÃ¼z
                 // Sadece metin ise sÄ±rasÄ±yla diÄŸer hÄ±zlÄ± modelleri yedek olarak ekle
                 const textModels = [
                     "llama-3.3-70b-versatile-groq",
-                    "llama-3.1-70b-versatile-groq",
-                    "gemini-2.0-flash-gemini",
-                    "gemini-2.5-flash-preview-05-20-gemini",
-                    "nvidia/nemotron-nano-12b-v2-vl-nvidia",
+                    "llama-3.1-8b-instant-groq",
+                    "gemini-3-flash-preview-gemini",
                     "meta-llama/llama-3.2-11b-vision-instruct:free-openrouter",
-                    "gemini-1.5-flash-gemini",
-                    "llama-3.1-8b-instant-groq"
+                    "gemini-2.5-flash-gemini"
                 ];
                 for (let tModel of textModels) {
                     if (!fallbackQueue.includes(tModel)) {
