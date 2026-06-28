@@ -2961,7 +2961,7 @@ Eğer kullanıcı "bu ne", "nerede", "adam kim", "bunu istemedim", "düzelt", "y
             let fetchUrl, fetchOptions;
 
             if (isGemini) {
-                const userGeminiKey = localStorage.getItem('gemini_api_key');
+                const userGeminiKey = (localStorage.getItem('gemini_api_key') || "").trim();
                 if (!userGeminiKey) {
                     removeImage();
                     alert("Lütfen önce Ayarlar (⚙️) menüsünden Google Gemini API Anahtarınızı girin!\n\nAnahtarı ücretiz alabilirsiniz: aistudio.google.com/apikey");
@@ -3044,7 +3044,7 @@ Eğer kullanıcı "bu ne", "nerede", "adam kim", "bunu istemedim", "düzelt", "y
                 speakText(sanitizeAssistantOutput(geminiBotReply).substring(0, 500));
                 return; // Gemini işlendi, normal stream akışına girme
             } else if (isGroq) {
-                const userGroqKey = localStorage.getItem('groq_api_key');
+                const userGroqKey = (localStorage.getItem('groq_api_key') || "").trim();
                 if (!userGroqKey) {
                     removeImage();
                     alert("Lütfen önce Ayarlar (⚙️) menüsünden Groq API Anahtarınızı girin!");
@@ -3108,8 +3108,7 @@ Eğer kullanıcı "bu ne", "nerede", "adam kim", "bunu istemedim", "düzelt", "y
             if (!response.ok && response.status === 429 && isGroq) {
                 // Tüm Groq modelleri aynı günlük limiti paylaşıyor!
                 // Önce Gemini'ye geç (varsa), yoksa diğer Groq modellerini dene
-                const geminiKeyForFallback = localStorage.getItem('gemini_api_key');
-                
+                const geminiKeyForFallback = (localStorage.getItem('gemini_api_key') || "").trim();
                 if (geminiKeyForFallback) {
                     // === GEMİNİ'YE OTOMATİK GEÇİŞ ===
                     messagesDiv.insertAdjacentHTML('beforeend', `<div class="message bot-message" style="background: rgba(100, 200, 100, 0.1); border-left: 3px solid #a6e3a1; padding: 10px; margin-bottom: 10px; border-radius: 5px; font-size: 0.9em; color: var(--text-color);">✨ <b>Otomatik Geçiş:</b> Groq günlük limiti doldu! <b>Google Gemini 2.0 Flash</b> modeline otomatik geçildi. Sohbet kesintisiz devam ediyor!</div>`);
