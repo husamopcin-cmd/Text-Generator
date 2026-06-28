@@ -54,7 +54,147 @@
             border-radius: 6px; font-size: 11px; cursor: pointer; align-self: flex-start;
         }
         .artifact-dl-btn:hover { background: #89b4fa; color: #11111b; }
-        
+
+        /* ===== SINAV KOÇU MOD SEÇİM MODALI ===== */
+        .sk-overlay {
+            position: fixed; inset: 0; z-index: 9999;
+            background: rgba(0,0,0,0.75);
+            backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.25s ease;
+        }
+        .sk-overlay.active { opacity: 1; pointer-events: auto; }
+        .sk-modal {
+            background: linear-gradient(145deg, #1e1e2e 0%, #181825 100%);
+            border: 1px solid rgba(203,166,247,0.3);
+            border-radius: 20px; padding: 24px;
+            width: min(720px, 95vw); max-height: 88vh; overflow-y: auto;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(203,166,247,0.1);
+            transform: translateY(20px) scale(0.97);
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            display: flex; flex-direction: column;
+        }
+        .sk-overlay.active .sk-modal { transform: translateY(0) scale(1); }
+        .sk-modal-header {
+            text-align: center; margin-bottom: 16px;
+        }
+        .sk-modal-header .sk-icon { font-size: 36px; display: block; margin-bottom: 6px;
+            animation: sk-float 3s ease-in-out infinite; }
+        @keyframes sk-float {
+            0%,100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+        }
+        .sk-modal-header h2 {
+            font-size: 22px; font-weight: 800; color: #cba6f7;
+            margin: 0 0 4px; letter-spacing: -0.3px;
+        }
+        .sk-modal-header p {
+            font-size: 13px; color: #a6adc8; margin: 0;
+        }
+        .sk-file-badge {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: rgba(137,180,250,0.1); border: 1px solid rgba(137,180,250,0.25);
+            border-radius: 20px; padding: 4px 12px; font-size: 11.5px; color: #89b4fa;
+            max-width: 100%; overflow: hidden; text-overflow: ellipsis;
+            white-space: nowrap; margin-bottom: 14px;
+        }
+        /* Tab Navigation */
+        .sk-tabs {
+            display: flex; gap: 8px; overflow-x: auto; margin-bottom: 18px;
+            padding-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.08);
+            scrollbar-width: none; -ms-overflow-style: none;
+        }
+        .sk-tabs::-webkit-scrollbar { display: none; }
+        .sk-tab-btn {
+            background: rgba(49,50,68,0.4); border: 1px solid rgba(255,255,255,0.05);
+            color: #a6adc8; padding: 8px 14px; border-radius: 8px; font-size: 12.5px;
+            font-weight: 600; cursor: pointer; white-space: nowrap; transition: all 0.2s ease;
+        }
+        .sk-tab-btn:hover { background: rgba(203,166,247,0.12); color: #cba6f7; border-color: rgba(203,166,247,0.25); }
+        .sk-tab-btn.active { background: rgba(203,166,247,0.2); color: #cba6f7; border-color: #cba6f7; }
+        .sk-tab-content { display: none; }
+        .sk-tab-content.active { display: block; }
+
+        .sk-grid {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        @media (max-width: 600px) {
+            .sk-grid { grid-template-columns: 1fr; }
+            .sk-modal { padding: 18px 14px; }
+            .sk-tabs { gap: 6px; }
+            .sk-tab-btn { padding: 6px 10px; font-size: 11.5px; }
+        }
+        .sk-card {
+            background: rgba(49,50,68,0.4);
+            border: 1.5px solid rgba(255,255,255,0.06);
+            border-radius: 14px; padding: 14px;
+            cursor: pointer; transition: all 0.2s ease;
+            display: flex; flex-direction: column; gap: 6px;
+            position: relative; overflow: hidden;
+        }
+        .sk-card::before {
+            content: ''; position: absolute; inset: 0;
+            background: radial-gradient(circle at 50% 0%, rgba(203,166,247,0.08), transparent 70%);
+            opacity: 0; transition: opacity 0.2s;
+        }
+        .sk-card:hover { border-color: rgba(203,166,247,0.45); transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(203,166,247,0.12); }
+        .sk-card:hover::before { opacity: 1; }
+        .sk-card.sk-selected { border-color: #cba6f7; background: rgba(203,166,247,0.1); }
+        .sk-card-icon { font-size: 24px; }
+        .sk-card-title { font-size: 14px; font-weight: 700; color: #cdd6f4; }
+        .sk-card-desc { font-size: 11.5px; color: #a6adc8; line-height: 1.5; }
+        .sk-card-tag {
+            display: inline-block; font-size: 10px; font-weight: 600;
+            padding: 2px 8px; border-radius: 20px; background: rgba(203,166,247,0.15);
+            color: #cba6f7; align-self: flex-start;
+        }
+        /* Sub-option pills */
+        .sk-pills {
+            display: flex; flex-wrap: wrap; gap: 6px;
+            margin-top: 6px;
+        }
+        .sk-pill {
+            background: rgba(49,50,68,0.7); border: 1px solid rgba(255,255,255,0.1);
+            color: #a6adc8; font-size: 11px; padding: 4px 10px;
+            border-radius: 20px; cursor: pointer; transition: all 0.15s;
+        }
+        .sk-pill:hover { background: rgba(203,166,247,0.2); color: #cba6f7; border-color: rgba(203,166,247,0.4); }
+        .sk-pill.sk-pill-active { background: rgba(203,166,247,0.25); color: #cba6f7; border-color: #cba6f7; }
+        .sk-pill-desc { font-size: 10px; color: #585b70; margin-top: 2px; display: block; }
+        /* Quiz count grid */
+        .sk-count-grid { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+        .sk-count-btn {
+            background: rgba(49,50,68,0.7); border: 1px solid rgba(255,255,255,0.1);
+            color: #a6adc8; font-size: 12px; font-weight: 600; padding: 5px 12px;
+            border-radius: 8px; cursor: pointer; transition: all 0.15s;
+            min-width: 44px; text-align: center;
+        }
+        .sk-count-btn:hover { background: rgba(166,227,161,0.15); color: #a6e3a1; border-color: rgba(166,227,161,0.4); }
+        .sk-count-btn.sk-count-active { background: rgba(166,227,161,0.2); color: #a6e3a1; border-color: #a6e3a1; }
+        /* Footer */
+        .sk-footer {
+            display: flex; gap: 10px; justify-content: flex-end; margin-top: 10px;
+        }
+        .sk-cancel-btn {
+            background: transparent; border: 1px solid rgba(255,255,255,0.1);
+            color: #a6adc8; padding: 10px 18px; border-radius: 10px;
+            font-size: 13px; cursor: pointer; transition: all 0.15s;
+        }
+        .sk-cancel-btn:hover { border-color: #f38ba8; color: #f38ba8; }
+        .sk-go-btn {
+            background: linear-gradient(135deg, #cba6f7, #89b4fa);
+            border: none; color: #11111b; padding: 10px 22px; border-radius: 10px;
+            font-size: 13px; font-weight: 700; cursor: pointer;
+            transition: all 0.2s; box-shadow: 0 4px 14px rgba(203,166,247,0.3);
+        }
+        .sk-go-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(203,166,247,0.45); }
+        .sk-go-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+        /* Pulse badge for Sınav Koçu button in header */
+        @keyframes sk-pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(203,166,247,0.5); } 50% { box-shadow: 0 0 0 6px rgba(203,166,247,0); } }
+
         /* ----- WELCOME SCREEN ----- */
         .welcome-screen {
             flex: 1; display: flex; flex-direction: column; align-items: center;
@@ -347,17 +487,32 @@
             border-top: 1px solid rgba(255,255,255,0.05); padding: 20px 10%; z-index: 5;
         }
         .input-box {
-            display: flex; gap: 10px; align-items: flex-end; position: relative;
+            display: flex; gap: 10px; align-items: center; position: relative;
             background: rgba(24, 24, 37, 0.7); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px;
             padding: 10px; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); box-shadow: 0 5px 20px rgba(0,0,0,0.2);
         }
         .input-box:focus-within { border-color: rgba(137, 180, 250, 0.5); box-shadow: 0 0 15px rgba(137, 180, 250, 0.15), 0 5px 20px rgba(0,0,0,0.3); transform: translateY(-1px); }
-        
+        .input-box::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 16px;
+            pointer-events: none;
+        }
+        .input-box button.icon-btn,
+        .input-box .send-btn {
+            flex-shrink: 0;
+            z-index: 2;
+        }
         textarea {
             flex: 1; background: transparent; border: none; color: #cdd6f4;
-            font-family: inherit; font-size: 15px; resize: none; padding: 8px;
-            max-height: 150px; outline: none; overflow-y: auto; line-height: 1.5;
+            font-family: inherit; font-size: 15px; resize: none; padding: 10px 12px;
+            width: 100%; min-width: 0; max-height: 150px; outline: none; overflow-y: auto;
+            line-height: 1.6; height: auto; position: relative; z-index: 1;
         }
+        textarea::placeholder { color: rgba(205,214,244,0.55); }
+        .input-box > button { pointer-events: auto; }
+        .input-box > textarea { pointer-events: auto; }
         
         .mic-btn {
             background: rgba(49, 50, 68, 0.5); border-radius: 50%; width: 40px; height: 40px; border: 1px solid rgba(255,255,255,0.05);
@@ -566,6 +721,47 @@
             .dk-label { font-size: 11px; }
             .dk-select, .dk-btn { font-size: 12px; padding: 5px 8px; }
         }
+
+        /* ===== SINAV KOÇU PANELİ ===== */
+        #sinavKocuPanel {
+            display: none;
+            background: linear-gradient(135deg, rgba(203,166,247,0.08) 0%, rgba(137,180,250,0.08) 100%);
+            border-bottom: 1px solid rgba(203,166,247,0.25);
+            padding: 12px 16px;
+            flex-direction: column;
+            gap: 8px;
+            animation: slideDown 0.3s ease;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+        #sinavKocuPanel.active { display: flex; }
+        .skp-row {
+            display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+        }
+        .skp-label {
+            font-size: 12px; font-weight: 600; color: #cba6f7; white-space: nowrap;
+            display: flex; align-items: center; gap: 5px;
+        }
+        .skp-select {
+            background: rgba(30,30,46,0.9); border: 1px solid rgba(203,166,247,0.3);
+            color: #cdd6f4; padding: 6px 10px; border-radius: 8px; font-size: 13px;
+            cursor: pointer; outline: none; transition: border-color 0.2s;
+        }
+        .skp-select:focus { border-color: #cba6f7; }
+        .skp-btn {
+            background: rgba(203,166,247,0.15); border: 1px solid rgba(203,166,247,0.3);
+            color: #cba6f7; padding: 6px 16px; border-radius: 8px; font-size: 13px;
+            cursor: pointer; transition: all 0.2s; font-weight: 700; white-space: nowrap;
+        }
+        .skp-btn:hover { background: rgba(203,166,247,0.35); transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(203,166,247,0.3); }
+        .skp-no-doc {
+            font-size: 12px; color: #f38ba8; font-style: italic;
+        }
+        @media (max-width: 600px) {
+            .skp-label { font-size: 11px; }
+            .skp-select, .skp-btn { font-size: 12px; padding: 5px 8px; }
+        }
     </style>
 
 </head>
@@ -614,26 +810,26 @@
             <select id="personaSelect" style="max-width:180px; font-weight:bold; background:#a6e3a1; color:#11111b; border:none; padding:5px; border-radius:5px;">
                 <option value="kanka">🧠 Standart Zeka (Kanka)</option>
                 <option value="usta_yazilimci">💻 Usta Yazılımcı Modu</option>
-                <option value="akademik_koc">🎓 Ders / Sınav Modu</option>
+                <option value="akademik_koc">🎓 Sınav Koçu Modu (Ders Hazırlık)</option>
                 <option value="dil_kocu">🌍 Özel Dil Koçu Modu</option>
                 <option value="derin_arastirma">🔍 Derin Araştırma Modu</option>
             </select>
             <!-- Model Seçici -->
             <select id="modelSelect">
-                <!-- Groq Bulut Modelleri -->
-                <option value="llama-3.3-70b-versatile-groq">Llama 3.3 (70B) - Groq Bulut ⚡</option>
-                <option value="llama-3.1-70b-versatile-groq">Llama 3.1 (70B) - Groq Bulut ⚡</option>
-                <option value="llama-3.1-8b-instant-groq">Llama 3.1 (8B) - Groq Bulut ⚡</option>
+                <!-- Netlify Bulut Proxy -->
+                <option value="openai">OpenAI Cloud ☁️</option>
+                <option value="cerebras">Cerebras Cloud ☁️</option>
+                <option value="deepseek">DeepSeek Cloud ☁️</option>
+                <option value="mistral">Mistral Cloud ☁️</option>
+                <option value="openrouter">OpenRouter Cloud ☁️</option>
+                <option value="gemini">Gemini Cloud ☁️</option>
+                <option value="groq">Groq Cloud ☁️</option>
+                <option value="fireworks">Fireworks Cloud ☁️</option>
+                <option value="together">Together Cloud ☁️</option>
+                <option disabled>──────────</option>
+                <!-- Görsel Modeller -->
                 <option value="meta-llama/llama-4-scout-17b-16e-instruct-groq">Llama 4 Scout (Görsel) - Groq Bulut ⚡</option>
-                <option disabled>──────────</option>
-                <!-- Google Gemini Modelleri -->
-                <option value="gemini-3-flash-preview-gemini">🤍 Gemini 3 Flash Preview - Google Bulut ✨</option>
-                <option value="gemini-2.5-flash-gemini">🤍 Gemini 2.5 Flash - Google Bulut ✨</option>
-                <option disabled>──────────</option>
-                <!-- NVIDIA NIM -->
                 <option value="nvidia/nemotron-nano-12b-v2-vl-nvidia">🟢 Nemotron Nano VL (Görsel) - NVIDIA NIM ∞</option>
-                <option disabled>──────────</option>
-                <!-- OpenRouter Ücretsiz Vision -->
                 <option value="meta-llama/llama-3.2-11b-vision-instruct:free-openrouter">🔵 Llama 3.2 Vision (11B) - OpenRouter Ücretsiz</option>
                 <option disabled>──────────</option>
                 <!-- Yerel Modeller -->
@@ -720,6 +916,55 @@
         </div>
     </div>
     <!-- ===== DİL KOÇU PANELİ BİTİŞ ===== -->
+
+    <!-- ===== SINAV KOÇU PANELİ ===== -->
+    <div id="sinavKocuPanel">
+        <div class="skp-row">
+            <span class="skp-label">📄 Kaynak:</span>
+            <select id="skp-source" class="skp-select">
+                <option value="pdf" selected>Bu PDF</option>
+                <option value="chat">Sohbet Geçmişi</option>
+                <option value="both">PDF + Sohbet</option>
+            </select>
+
+            <span class="skp-label">🎓 Mod:</span>
+            <select id="skp-mode" class="skp-select" onchange="skpOnModeChange()">
+                <optgroup label="── 📚 Öğren ──">
+                    <option value="ozet">⚡ Hızlı Özet</option>
+                    <option value="profesor_anlatim">👨‍🏫 Profesör Anlatımı</option>
+                    <option value="sifirdan">👶 Sıfırdan Anlat</option>
+                    <option value="eli5">🧠 Çocuk Anlatımı (ELI5)</option>
+                    <option value="hikaye">📖 Hikâyeleştir</option>
+                </optgroup>
+                <optgroup label="── 🃏 Ezberle ──">
+                    <option value="flashcard">🃏 Flashcard</option>
+                </optgroup>
+                <optgroup label="── 📝 Test Et ──">
+                    <option value="quiz">📝 Çoktan Seçmeli Quiz</option>
+                    <option value="sonsuz_quiz">🔁 Sonsuz Quiz</option>
+                </optgroup>
+                <optgroup label="── 🎤 Pratik Yap ──">
+                    <option value="sozlu_sinav">🎤 Sözlü Sınav</option>
+                    <option value="sokratik">🔁 Sokratik Mod</option>
+                    <option value="eksik_analizi">🛠️ Eksik Analizi</option>
+                    <option value="challenge">🧩 Challenge</option>
+                    <option value="munazara">🗣️ Münazara Modu</option>
+                </optgroup>
+                <optgroup label="── 🎯 Tahmin ──">
+                    <option value="hoca_tahmin">🎯 Hoca Ne Sorar?</option>
+                </optgroup>
+            </select>
+
+            <!-- Dinamik alt seçenek -->
+            <span id="skp-sub-label" class="skp-label" style="display:none;"></span>
+            <select id="skp-sub-select" class="skp-select" style="display:none;"></select>
+
+            <button class="skp-btn" onclick="skpTriggerGo()">▶ Başlat</button>
+
+            <span id="skp-doc-status" class="skp-no-doc" style="display:none;">📂 PDF yüklü değil</span>
+        </div>
+    </div>
+    <!-- ===== SINAV KOÇU PANELİ BİTİŞ ===== -->
 
     
     
@@ -831,10 +1076,19 @@
             </div>
         </div>
         
-        <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px; text-align: left;">
-            Google Gemini API Key <span style="color: #a6e3a1; font-size: 11px;">(aistudio.google.com/apikey)</span>:
+        <div style="background:#313244; border:1px solid #45475a; border-radius:8px; padding:10px; margin-bottom:12px; font-size:12px; color:#a6adc8; text-align:left; line-height:1.5;">
+            Cloud API anahtarları artık güvenlik için Netlify Environment Variables üzerinden yönetilir. Buraya API key yazmayın.
         </div>
-        <input type="text" id="geminiApiKeyInput" placeholder="AIza..." style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px; border-radius:8px; margin-bottom: 10px; box-sizing: border-box; outline: none; font-size: 13px;">
+
+        <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px; text-align: left;">
+            Groq API Key <span style="color: #6c7086; font-size: 11px;">(sadece Groq Vision / Scout için — cloud Netlify env)</span>:
+        </div>
+        <input type="text" id="groqApiKeyInput" placeholder="gsk_..." style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px; border-radius:8px; margin-bottom: 10px; box-sizing: border-box; outline: none; font-size: 13px;">
+
+        <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px; text-align: left;">
+            Google Gemini API Key <span style="color: #6c7086; font-size: 11px;">(devre dışı — Netlify env)</span>:
+        </div>
+        <input type="text" id="geminiApiKeyInput" placeholder="AIza..." disabled readonly style="width:100%; background:#11111b; border:1px solid #313244; color:#6c7086; padding:8px; border-radius:8px; margin-bottom: 10px; box-sizing: border-box; outline: none; font-size: 13px; cursor:not-allowed; opacity:0.7;">
 
         <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px; text-align: left;">
             NVIDIA NIM API Key <span style="color: #cba6f7; font-size: 11px;">(build.nvidia.com)</span>:
@@ -842,25 +1096,20 @@
         <input type="text" id="nvidiaApiKeyInput" placeholder="nvapi-..." style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px; border-radius:8px; margin-bottom: 10px; box-sizing: border-box; outline: none; font-size: 13px;">
 
         <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px; text-align: left;">
-            OpenRouter API Key <span style="color: #89b4fa; font-size: 11px;">(openrouter.ai)</span>:
+            OpenRouter API Key <span style="color: #6c7086; font-size: 11px;">(sadece OpenRouter Vision için — cloud Netlify env)</span>:
         </div>
         <input type="text" id="openrouterApiKeyInput" placeholder="sk-or-v1-..." style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px; border-radius:8px; margin-bottom: 10px; box-sizing: border-box; outline: none; font-size: 13px;">
 
-        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+        <div style="display: flex; gap: 10px; margin-bottom: 10px; opacity:0.55;">
             <div style="flex: 1; text-align: left;">
-                <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px;">Cloudflare Account ID:</div>
-                <input type="text" id="cloudflareAccountIdInput" placeholder="Account ID" style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px; border-radius:8px; box-sizing: border-box; outline: none; font-size: 13px;">
+                <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px;">Cloudflare Account ID <span style="color:#6c7086;font-size:11px;">(sonraki faz)</span>:</div>
+                <input type="text" id="cloudflareAccountIdInput" placeholder="Account ID" disabled readonly style="width:100%; background:#11111b; border:1px solid #313244; color:#6c7086; padding:8px; border-radius:8px; box-sizing: border-box; outline: none; font-size: 13px; cursor:not-allowed;">
             </div>
             <div style="flex: 1; text-align: left;">
-                <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px;">CF API Token:</div>
-                <input type="password" id="cloudflareApiTokenInput" placeholder="Token" style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px; border-radius:8px; box-sizing: border-box; outline: none; font-size: 13px;">
+                <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px;">CF API Token <span style="color:#6c7086;font-size:11px;">(sonraki faz)</span>:</div>
+                <input type="password" id="cloudflareApiTokenInput" placeholder="Token" disabled readonly style="width:100%; background:#11111b; border:1px solid #313244; color:#6c7086; padding:8px; border-radius:8px; box-sizing: border-box; outline: none; font-size: 13px; cursor:not-allowed;">
             </div>
         </div>
-
-        <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px; text-align: left;">
-            Groq API Key (Bulut Modelleri):
-        </div>
-        <input type="text" id="groqApiKeyInput" placeholder="gsk_..." style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px; border-radius:8px; margin-bottom: 10px; box-sizing: border-box; outline: none; font-size: 13px;">
         
         <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px; text-align: left;">
             Video Oluşturma Modu:
@@ -1045,9 +1294,9 @@
     const personas = {
         "kanka": "Sen GinoCode'sun — kullanıcının en yakın, en güvenilir kankasısın. Türkçeni C2 ana dil seviyesinde ve günlük/samimi bir şekilde kullanırsın: 'ya', 'lan', 'kanka', 'yav', 'kardeşim', 'hocam', 'ee', 'yani', 'ciddiye al' gibi doğal sokak ifadelerini bol bol kullanırsın ama kaba küfür kullanmazsın. Konuşman akıcı, esprili, doğaldır — sanki gerçek bir insan arkadaş yazıyor gibi. Türkçe yazımında büyük-küçük harf ve noktalama işaretlerine dikkat edersin, cümle yapın doğal ve akıcıdır. Aynı zamanda İngilizce, Almanca, İspanyolca, Fransızca, İtalyanca, Portekizce, Rusça, Arapça, Japonca, Çince ve Korece dillerinde de tam akıcı (C2) seviyedesin — kullanıcı hangisinde konuşmak isterse o dilde anında, kusursuz biçimde yanıt verirsin. Klişe AI cümleleri kesinlikle yasak. DİKKAT: 'knk' = 'kanka' demektir, asla K-Pop grubu zannetme!",
         "usta_yazilimci": "Sen GinoCode'sun — efsanevi bir kıdemli yazılım mühendisisin. Kullanıcının istediği oyunları, web sitelerini, uygulamaları ve algoritmaları eksiksiz şekilde yazarsın. Gereksiz açıklama minimumu tut, kod maksimumu sun. Kullanıcı bir uygulama istediğinde SADECE HTML + CSS + JS içeren TEK BİR ```html bloğu ile cevap ver — bu kodlar GinoCode Artifact sistemiyle canlı çalıştırılacak. Türkçen C2 seviyesinde, doğal ve akıcıdır. İngilizce, Almanca ve diğer dillerde de teknik açıklama yapabilirsin. Az söz çok iş.",
-        "akademik_koc": "Sen GinoCode'sun — alanında uzman bir akademik koç ve öğretmensin. Kullanıcının sorduğu konuları önce 'sanki 8 yaşındaki bir çocuğa anlatır gibi' kristal netliğinde açıkla. Sonra seviyeyi kademeli olarak artır ve akademik derinliğe taşı. En sonda konuyu pekiştirmek için A/B/C/D şıklı 1-2 soru sor; cevabı hemen verme, önce kullanıcının düşünmesini bekle. Türkçen C2 seviyesinde kusursuz, doğal ve akademik açıdan zengindir. İngilizce, Almanca ve diğer dillerde de ders verebilirsin. Sabırlı, motive edici ve bilge bir rehbersin.",
+        "akademik_koc": "Sen GinoCode'sun — efsanevi bir Sınav ve Ders Koçusun. Kullanıcı bir konu söylediğinde veya PDF paylaştığında onu adım adım sınava hazırlarsın. Çalışma sistemin şudur: 1) 30 Saniyelik Özet (En kritik hap bilgiler). 2) 5 Dakikalık Özet (Detaylı kavramlar). 3) Ezber Kartları (Flashcards) (Soru: ... / Cevap: ... formatında). 4) Hocanın Sorabileceği Yerler (Neler sorulabilir, hoca neyi sever, klasik/test tahminleri). 5) İnteraktif Sözlü Sınav (Kullanıcıya tek tek soru sor, cevabını vermesini bekle. Doğru bilirse tebrik et ve yeni soruya geç, yanlış veya eksik bilirse doğrusunu sabırla anlat). Türkçen C2 seviyesinde kusursuz, doğal, sıcak ve motive edicidir. Kullanıcıyı tam bir hoca gibi sınava hazırlarsın.",
         "dil_kocu": "Sen GinoCode'sun — dünyanın en iyi dil öğretmenisin. Aşağıdaki dillerde ana dil (C2) seviyesinde tam uzmansın ve bu dillerin dilbilgisini, telaffuzunu, deyimlerini, kültürel nüanslarını mükemmel biliyorsun: İngilizce, Almanca, İspanyolca, Fransızca, İtalyanca, Portekizce (Brezilya & Avrupa), Rusça, Arapça (Modern Standart & Levant lehçesi), Japonca (Hiragana/Katakana/Kanji dahil), Çince (Mandarin/Pinyin), Korece, Hollandaca, İsveççe, Norveççe, Danimarkaca, Yunanca, Lehçe, Ukraynaca, Hintçe. ÖĞRETIM DİLİN HER ZAMAN TÜRKÇE (kullanıcı aksi belirtmedikçe). ÇALIŞMA TARZI VE KURALLAR: 1) Kullanıcı hangi dili öğrenmek istediğini söylediğinde, 'Harika! Bugün [DİL] öğreniyoruz 🎯 Hadi başlayalım!' şeklinde coşkulu ve sıcak bir girişle başla. 2) O günün dersini planla: O dilin ses sistemi, alfabe/yazı sistemi veya telaffuz incelikleri hakkında kısa ve akılda kalıcı bir giriş yap. 3) Günlük hayatta EN ÇOK kullanılan 10-15 kelimeyi Markdown tablolarıyla sun — sütunlar: Kelime | Telaffuz (fonetik/IPA) | Türkçe Anlamı | Örnek Cümle (hedef dil) | Türkçe Çevirisi. 4) Kullanıcı seninle o dilde sohbet etmek isterse, o dilde konuş ve doğal bir konuşma akışı kur. Kullanıcının hatalarını mesajının EN SONUNDA kibarca '📝 Küçük Düzeltme:' başlığıyla Türkçe olarak düzelt, açıkla ve doğrusunu yaz. 5) Her dersin veya sohbetin sonunda '🏆 Bugünün Kelime/Deyim Ödülü:' bölümünde 3-5 yeni kelime veya kalıp deyim öğret — günlük konuşmada gerçekten kullanılan, pratik ve yaygın ifadeler seç. 6) Kullanıcı 'bana konu anlat', 'konuları öğret', 'kelime öğret' gibi bir şey söylediğinde şu sıralamayı takip et: a) Kelimeler & Telaffuz → b) Örnek Cümle (Hedef Dil) → c) Türkçe Çevirisi → d) Dilbilgisi Notu (kısa, sade). 7) Dilbilgisi konularını (çekimler, zamanlar, ekler, cümle yapısı, söz dizimi) HER ZAMAN Türkçe ile karşılaştırmalı olarak anlat — 'Türkçede nasıl diyoruz, o dilde nasıl söyleniyor' mantığıyla. 8) Motivasyon ve geri bildirim: 'Harika gidiyorsun! 🌟', 'Çok doğru!', 'Neredeyse mükemmel, küçük bir fark var:', 'Bu kelimeyi artık unutmazsın!' gibi cesaretlendirici ifadeler kullan. 9) Sohbet modunda kullanıcıyla o dilde tamamen konuşabilirsin — kullanıcı istediği zaman 'Türkçeye geç' veya 'Hadi İngilizce konuşalım' gibi komutlarla mod değiştirebilir.",
-        "derin_arastirma": "Sen GinoCode'sun — dünyaca tanınmış bir araştırmacı ve analistin. Verilen her konuyu istatistikler, tarihi veriler, akademik kaynaklar ve güncel gelişmelerle derinlemesine ele alırsın. Raporlarını şu formatla hazırlarsın: 📋 Özet → 📜 Tarihçe → 📊 Güncel Durum → 📈 Veriler & İstatistikler → 💬 Uzman Görüşleri → 🔭 Sonuç & Öngörüler. Alt başlıklar, kalın vurgular ve maddeli listeler kullanarak okunabilirliği artırırsın. Türkçen akademik, otoriter ve akıcıdır. İngilizce kaynaklara da başvurur, gerektiğinde çevirir ve derinlemesine yorumlarsın."
+        "derin_arastirma": "Sen GinoCode'sun — dünyaca tanınmış bir araştırmacı ve analistin. Verilen her konuyu istatistikler, tarihi veriler, akademik kaynaklar ve güncel gelişmelerle derinlemesine ele alırsın. Raporlarını şu formatla hazırlarsın: 📋 Özet → 📜 Tarihçe → 📊 Güncel Durum → 📈 Veriler & İstatistikler → 💬 Uzman Görüşleri → 🔭 Sonuç & Öngörüler. Alt başlıklar, kalın vurgular ve maddeli listeler kullanarak okunabilirliği artırırsın. Türkçen akademik, otoriter ve akıcıdır. İngilizce kaynaklara da başvurur, gerektiğinde çevirir ve derinlemesine yorumlaraın."
     };
 
     let selectedImageBase64 = null;
@@ -1110,8 +1359,8 @@
             function triggerPostImageLoad() {
             
             const currentModel = document.getElementById('modelSelect').value;
-            if (!currentModel.includes('-gemini')) {
-                document.getElementById('modelSelect').value = 'gemini-3-flash-preview-gemini';
+            if (!isVisionCapableModel(currentModel)) {
+                document.getElementById('modelSelect').value = 'meta-llama/llama-4-scout-17b-16e-instruct-groq';
             }
             
             // Eğer video modundaysak, doğrudan fotoğraftan sinematik WebM üretimine başla
@@ -1210,8 +1459,12 @@
         document.getElementById('imagePreview').src = '';
         document.getElementById('imagePreviewContainer').style.display = 'none';
         selectedImageBase64 = null;
+    }
+
+    function clearSelectedDocument() {
         window.selectedDocumentText = null;
         window.selectedDocumentName = null;
+        if (typeof skpUpdateDocStatus === 'function') skpUpdateDocStatus();
     }
 
     // ----- ATTACHMENT MENU (BOTTOM SHEET) FONKSIYONLARI -----
@@ -1379,33 +1632,116 @@
                 const arrayBuffer = await file.arrayBuffer();
                 const pdf = await window.pdfjsLib.getDocument({ data: arrayBuffer }).promise;
                 let fullText = "";
-                for (let i = 1; i <= pdf.numPages; i++) {
+                
+                let startPage = 1;
+                let endPage = pdf.numPages;
+                window.isExamMode = false;
+                window.pdfChunks = null; // Çok büyük PDF için chunk modu
+
+                const totalPages = pdf.numPages;
+
+                // ===== AKILLI PDF BÖLME SİSTEMİ =====
+                // ≤20 sayfa → direkt oku (tek API isteği)
+                // 20-80 sayfa → 2-4 eşit parçaya böl (API'yi ezdirme)
+                // 80+ sayfa → kullanıcıya sor (hepsi / belirli aralık)
+
+                let promptMsg = `📄 PDF Yüklendi: "${file.name}" (${totalPages} sayfa)\n\n`;
+                let autoMode = false;
+
+                if (totalPages <= 20) {
+                    // Küçük PDF → otomatik tam okuma, sadece sınav seçeneği sun
+                    promptMsg += `✅ Küçük PDF (${totalPages} sayfa) — tamamını okuyabilirim!\n\n`;
+                    promptMsg += `Ne yapmamı istersin?\n`;
+                    promptMsg += `  • Normal okuma → boş bırak veya 'hepsi'\n`;
+                    promptMsg += `  • Sınav Koçu Modu → 'sınav'`;
+                } else if (totalPages <= 80) {
+                    // Orta büyüklük → akıllı parça önerisi
+                    promptMsg += `⚡ Orta büyüklükte PDF (${totalPages} sayfa)\n\n`;
+                    promptMsg += `Seçeneklerin:\n`;
+                    promptMsg += `  • Tamamını analiz et → 'hepsi' (2-4 parçaya bölerek gönderir)\n`;
+                    promptMsg += `  • Belirli sayfalar → örn: '10-40'\n`;
+                    promptMsg += `  • Tek sayfa → örn: '5'\n`;
+                    promptMsg += `  • Sınav Koçu Modu → 'sınav'`;
+                } else {
+                    // Büyük PDF → mutlaka soruyoruz
+                    promptMsg += `⚠️ Büyük PDF (${totalPages} sayfa) — tümünü göndermek modeli yorabilir!\n\n`;
+                    promptMsg += `Önerilen Seçenekler:\n`;
+                    promptMsg += `  • Belirli sayfalar → örn: '30-60'\n`;
+                    promptMsg += `  • İlk 30 sayfa → '1-30'\n`;
+                    promptMsg += `  • Sınav Koçu Modu (ilk 20 sayfa) → 'sınav'\n`;
+                    promptMsg += `  • Tamamını dene (yavaş olabilir) → 'hepsi'`;
+                }
+
+                // Bu eski prompt/alert akışını kaldırdık.
+                // Tüm PDF'i varsayılan olarak seçiyoruz ve kullanıcı
+                // mod seçimini uygulama içindeki CinoCode Akademi panelinden yapacak.
+                if (totalPages > 80) {
+                    // Çok büyük PDF'ler için otomatik olarak ilk 30 sayfayı alıyoruz.
+                    // Uygulama içinde kullanıcı istiyorsa farklı sayfa seçebilir.
+                    startPage = 1;
+                    endPage = Math.min(30, totalPages);
+                } else {
+                    startPage = 1;
+                    endPage = totalPages;
+                }
+                if (totalPages > 20 && totalPages <= 80) {
+                    const numChunks = totalPages <= 40 ? 2 : (totalPages <= 60 ? 3 : 4);
+                    const chunkSize = Math.ceil(totalPages / numChunks);
+                    window.pdfChunks = [];
+                    for (let c = 0; c < numChunks; c++) {
+                        window.pdfChunks.push({ start: c * chunkSize + 1, end: Math.min((c + 1) * chunkSize, totalPages) });
+                    }
+                }
+
+                // Eğer uygulama zaten Sınav Koçu modundaysa, başlangıçta ilk 20 sayfayı kullan.
+                const personaSel = document.getElementById('personaSelect');
+                if (personaSel && personaSel.value === 'akademik_koc') {
+                    window.isExamMode = true;
+                    endPage = Math.min(20, totalPages);
+                }
+
+                // PDF sayfalarını oku
+                for (let i = startPage; i <= endPage; i++) {
                     const page = await pdf.getPage(i);
                     const textContent = await page.getTextContent();
-                    const pageText = textContent.items.map(item => item.str).join(" ");
-                    fullText += pageText + "\n";
+                    const pageText = textContent.items.map(item => item.str).join(' ');
+                    fullText += pageText + '\n';
                 }
                 
-                // PDF okunduktan sonra text alanına GİRME, arka plana (window.selectedDocumentText) kaydet.
-                window.selectedDocumentText = `\n[${file.name} İÇERİĞİ]:\n${fullText}\n`;
-                window.selectedDocumentName = file.name;
+                let docName = file.name;
+                if (window.isExamMode) {
+                    docName += ` (Sınav Koçu Modu)`;
+                } else if (startPage !== 1 || endPage !== totalPages) {
+                    docName += ` (S. ${startPage}-${endPage})`;
+                } else if (window.pdfChunks) {
+                    docName += ` (Akıllı Bölme: ${window.pdfChunks.length} parça)`;
+                }
+                
+                window.selectedDocumentText = `\n[${docName} İÇERİĞİ]:\n${fullText}\n`;
+                window.selectedDocumentName = docName;
+                window.activeDocText = window.selectedDocumentText;
+                window.activeDocName = window.selectedDocumentName;
+                window.activeDocCursor = 0;
+                if (typeof skpUpdateDocStatus === 'function') skpUpdateDocStatus();
                 
                 // UI'da dosyanın seçildiğini göster
                 const previewContainer = document.getElementById('imagePreviewContainer');
                 const previewImg = document.getElementById('imagePreview');
-                // Basit bir doküman ikonu SVG'si
                 previewImg.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 24 24' fill='none' stroke='%2389b4fa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'></path><polyline points='14 2 14 8 20 8'></polyline><line x1='16' y1='13' x2='8' y2='13'></line><line x1='16' y1='17' x2='8' y2='17'></line><polyline points='10 9 9 9 8 9'></polyline></svg>";
                 previewContainer.style.display = 'inline-block';
-                
-                // Seçili diğer resmi sıfırla
                 selectedImageBase64 = null;
+                
+                if (window.isExamMode) {
+                    // Sınav Koçu modu aktif, ancak otomatik gönderme yapmıyoruz.
+                    // Kullanıcı önce metnini yazarak onaylamalı.
+                    document.getElementById("userInput").placeholder = "PDF hazır. Ne yapmamı istediğini yaz...";
+                }
                 
             } catch (err) {
                 console.error("PDF okuma hatası:", err);
                 alert("PDF okunamadı. Lütfen içeriği kopyalayıp yapıştırın.");
             }
         } else {
-            // txt, py, js vb. dosyalar için Base64'e çevirip normal eki olarak ekle (bunu da düzeltebiliriz, ama şimdilik kalsın)
             processFileAsBase64(file, false);
         }
         
@@ -1464,12 +1800,25 @@
         return keys[Math.floor(Math.random() * keys.length)];
     }
 
-    function saveSettings() {
-        const key = document.getElementById('groqApiKeyInput').value.trim();
-        localStorage.setItem('groq_api_key', key);
+    const PROXY_CLOUD_MODELS = ['openai', 'cerebras', 'deepseek', 'mistral', 'openrouter', 'gemini', 'groq', 'fireworks', 'together'];
 
-        const geminiKey = document.getElementById('geminiApiKeyInput').value.trim();
-        localStorage.setItem('gemini_api_key', geminiKey);
+    function isProxyCloudModel(modelValue) {
+        return PROXY_CLOUD_MODELS.includes(String(modelValue || '').trim().toLowerCase());
+    }
+
+    function isVisionCapableModel(modelValue) {
+        if (!modelValue || isProxyCloudModel(modelValue)) return false;
+        const v = modelValue.toLowerCase();
+        return v.includes('llava')
+            || v.includes('nvidia')
+            || v.includes('vision-instruct')
+            || v.includes('vision')
+            || v.includes('scout');
+    }
+
+    function saveSettings() {
+        const groqKey = document.getElementById('groqApiKeyInput').value.trim();
+        localStorage.setItem('groq_api_key', groqKey);
 
         const nvidiaKey = document.getElementById('nvidiaApiKeyInput').value.trim();
         localStorage.setItem('nvidia_api_key', nvidiaKey);
@@ -1477,11 +1826,7 @@
         const openrouterKey = document.getElementById('openrouterApiKeyInput').value.trim();
         localStorage.setItem('openrouter_api_key', openrouterKey);
 
-        const cloudflareAccountId = document.getElementById('cloudflareAccountIdInput').value.trim();
-        localStorage.setItem('cloudflare_account_id', cloudflareAccountId);
-
-        const cloudflareApiToken = document.getElementById('cloudflareApiTokenInput').value.trim();
-        localStorage.setItem('cloudflare_api_token', cloudflareApiToken);
+        // Cloudflare sonraki faz — kaydetme devre dışı
 
         const ollamaIp = document.getElementById('ollamaIpInput').value.trim();
         localStorage.setItem('ollama_ip', ollamaIp);
@@ -2307,8 +2652,9 @@
     let isRecording = false;
     let recognition = null;
     
-    if ('webkitSpeechRecognition' in window) {
-        recognition = new webkitSpeechRecognition();
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+        recognition = new SpeechRecognition();
         recognition.continuous = true; // Kapanmadan sürekli dinlemeye çalışsın
         recognition.interimResults = true; // Gerçek zamanlı (interim) sonuçları göster, böylece kelimeleri anında yakalar
         recognition.maxAlternatives = 3; // En yüksek olasılıklı 3 alternatifi getir
@@ -2337,29 +2683,23 @@
             if (finalStr !== '') { 
                 userInput.value += (userInput.value ? " " : "") + finalStr.trim(); 
                 autoResize(userInput); 
-                // Geçici (interim) placeholder'ı sıfırla
-                userInput.placeholder = "Dinliyorum... Konuşun...";
+                userInput.placeholder = "CinoCode'a bir şeyler sor...";
+                try { const sendBtn = document.getElementById('sendBtn') || document.querySelector('.send-btn'); if (sendBtn) sendBtn.disabled = false; } catch(e) {}
             } else if (interimStr !== '') {
-                // Konuşma devam ederken ekrana geçici olarak bas ki hızlı algılansın
                 userInput.placeholder = interimStr;
             }
-            
-            // Otomatik gönderme (timeout) İPTAL EDİLDİ! Artık kullanıcı ne kadar susarsa sussun göndermeyecek.
-            // Sadece kaydetmeye devam edecek. Göndermek için Gönder butonuna basması gerekecek.
         };
         
         recognition.onerror = (err) => {
             console.error("STT Hatası:", err);
             if (err.error === 'not-allowed') {
-                alert("Telefondan mikrofona izin vermemiş olabilirsin! Lütfen tarayıcı ayarlarından siteye mikrofon izni ver.");
+                alert("Tarayıcı mikrofon iznini engellemiş olabilir. Lütfen siteye mikrofon izni verin.");
             } else if (err.error !== 'no-speech') {
                 console.log("Mikrofon hatası: " + err.error);
             }
-            // "no-speech" hatasında kapatma, devam etsin.
             if (err.error !== 'no-speech') stopMic();
         };
         recognition.onend = () => {
-            // Sürekli dinleme koptuysa ve hala isRecording ise yeniden başlat (kısa duraklamalarda kapanmasını önler)
             if (isRecording) {
                 try { recognition.start(); } catch(e) { stopMic(); }
             } else {
@@ -2369,7 +2709,7 @@
     }
 
     function toggleMic() {
-        if (!recognition) return alert("Tarayıcınız mikrofon desteklemiyor.");
+        if (!recognition) return alert("Tarayıcınız mikrofon desteklemiyor veya sayfa yeniden yüklenmesi gerekebilir.");
         if (isRecording) {
             stopMic();
         } else {
@@ -3102,33 +3442,42 @@
         setTimeout(scrollToBottom, 1200);
         setTimeout(scrollToBottom, 2500);
 
-        // ===== DİL KOÇU MODU: persona değişim dinleyicisi =====
+        // ===== DİL KOÇU + SINAV KOÇU: persona değişim dinleyicisi =====
         const personaSel = document.getElementById('personaSelect');
         if (personaSel) {
             personaSel.addEventListener('change', function() {
                 const val = this.value;
-                const panel = document.getElementById('dilKocuPanel');
+                const dilPanel = document.getElementById('dilKocuPanel');
+                const sinavPanel = document.getElementById('sinavKocuPanel');
+                dilPanel.classList.remove('active');
+                sinavPanel.classList.remove('active');
+
                 if (val === 'dil_kocu') {
-                    panel.classList.add('active');
+                    dilPanel.classList.add('active');
                     // Gemini'ye otomatik geç
                     const modelSel = document.getElementById('modelSelect');
-                    if (modelSel && !modelSel.value.includes('-gemini')) {
-                        modelSel.value = 'gemini-3-flash-preview-gemini';
+                    if (modelSel && !isProxyCloudModel(modelSel.value)) {
+                        modelSel.value = 'gemini';
                     }
                     updateDilKocuPrompt();
                     updateDilKocuProgress();
                     updateDilKocuStreak();
-                } else {
-                    panel.classList.remove('active');
+                } else if (val === 'akademik_koc') {
+                    sinavPanel.classList.add('active');
+                    skpOnModeChange();
+                    skpUpdateDocStatus();
                 }
             });
         }
 
-        // Sayfa açılışında dil koçu zaten seçiliyse paneli aç
+        // Sayfa açılışında seçili persona panelini aç
         if (personaSel && personaSel.value === 'dil_kocu') {
             document.getElementById('dilKocuPanel').classList.add('active');
             updateDilKocuProgress();
             updateDilKocuStreak();
+        } else if (personaSel && personaSel.value === 'akademik_koc') {
+            document.getElementById('sinavKocuPanel').classList.add('active');
+            skpOnModeChange();
         }
     };
 
@@ -3263,7 +3612,7 @@
         document.getElementById('dilKocuPanel').classList.add('active');
         // Gemini'ye geç
         const modelSel = document.getElementById('modelSelect');
-        if (modelSel && !modelSel.value.includes('-gemini')) modelSel.value = 'gemini-3-flash-preview-gemini';
+        if (modelSel && !isProxyCloudModel(modelSel.value)) modelSel.value = 'gemini';
         const text = `Bugün ${lang} dersimize başlayalım! Seviyem: ${level}. Bugün ${goal} yeni kelime öğrenmek istiyorum. Lütfen o dili hiç bilmiyormuşum gibi en temel ve günlük hayatta en çok kullanılan kelime ve kalıplardan başla. Tablolar ve örneklerle anlat.`;
         userInput.value = text;
         autoResize(userInput);
@@ -3278,7 +3627,7 @@
         if (personaSel) personaSel.value = 'dil_kocu';
         document.getElementById('dilKocuPanel').classList.add('active');
         const modelSel = document.getElementById('modelSelect');
-        if (modelSel && !modelSel.value.includes('-gemini')) modelSel.value = 'gemini-3-flash-preview-gemini';
+        if (modelSel && !isProxyCloudModel(modelSel.value)) modelSel.value = 'gemini';
         const text = `Hadi ${lang} sohbet edelim! Seviyem ${level}. Seninle ${lang} pratik yapmak istiyorum. Sen de ${lang} konuş, hatalarımı sonunda Türkçe düzelt.`;
         userInput.value = text;
         autoResize(userInput);
@@ -3471,6 +3820,50 @@
     // Mobile ses kilidini açmak için bayrak
     let isAudioUnlocked = false;
 
+    function getDocumentChunkPayload(fullText, selectedModel, isExamMode) {
+        if (!fullText) return { chunk: null, docNameSuffix: '', note: '', done: false };
+
+        const weakModelLimit = 12000;
+        const normalLimit = isExamMode ? 25000 : 20000;
+        const proxyCloudIds = PROXY_CLOUD_MODELS;
+        const strongModel = proxyCloudIds.includes(selectedModel.toLowerCase()) || selectedModel.includes("-nvidia") || selectedModel.includes("-openrouter") || selectedModel.toLowerCase().includes("llava") || selectedModel.toLowerCase().includes("vision") || selectedModel.toLowerCase().includes("scout") || selectedModel.toLowerCase().includes("maverick");
+        const limit = strongModel ? normalLimit : Math.min(normalLimit, weakModelLimit);
+
+        if (window.activeDocCursor == null || window.activeDocCursor < 0) window.activeDocCursor = 0;
+        if (window.activeDocCursor >= fullText.length) {
+            return { chunk: null, docNameSuffix: '', note: '', done: true };
+        }
+
+        const start = window.activeDocCursor;
+        let end = Math.min(fullText.length, start + limit);
+        let chunk = fullText.slice(start, end);
+
+        const lastSpace = chunk.lastIndexOf(' ');
+        if (lastSpace > Math.floor(chunk.length * 0.7)) {
+            chunk = chunk.slice(0, lastSpace);
+            end = start + chunk.length;
+        }
+
+        window.activeDocCursor = end;
+        const totalChunks = Math.max(1, Math.ceil(fullText.length / limit));
+        const currentChunkIndex = Math.floor(start / limit) + 1;
+        const remainingChars = fullText.length - end;
+
+        const note = remainingChars > 0
+            ? `Bu belgenin ${currentChunkIndex}. parçasını (yaklaşık ${chunk.length} karakter) kullandım. Daha fazlasına devam etmek için lütfen "devam et" yaz.`
+            : `Bu belgenin son parçasını kullandım.`;
+        const docNameSuffix = remainingChars > 0
+            ? ` [PDF Parça ${currentChunkIndex}/${totalChunks}]`
+            : ` [PDF Son Parça]`;
+
+        return {
+            chunk,
+            docNameSuffix,
+            note,
+            done: false
+        };
+    }
+
     async function sendMessage() {
         // Mobil cihazlarda TTS (Text-to-Speech) sesinin çalabilmesi için 
         // kullanıcı "Gönder" tuşuna bastığı an (user interaction sırasında) sessiz bir ses çalarak kilidi açıyoruz.
@@ -3490,15 +3883,26 @@
         }
 
         const text = userInput.value.trim();
+        // Prevent concurrent generation: if already generating, show a short notice and refuse to queue
+        if (window.isGenerating) {
+            const infoHtml = `<div class="message bot-message" style="background: rgba(64,64,64,0.12); border-left: 3px solid #89b4fa; padding: 8px; margin-bottom:10px; border-radius:6px; font-size:0.9em;">⏳ Yanıt hazırlanıyor, lütfen bekle.</div>`;
+            messagesDiv.insertAdjacentHTML('beforeend', infoHtml);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            return;
+        }
+
         if (!text && !selectedImageBase64 && !window.selectedDocumentText) return;
+        if (!text && (selectedImageBase64 || window.selectedDocumentText)) {
+            userInput.placeholder = "PDF/fotoğraf hazır. Lütfen bir talimat yaz ve gönder.";
+            userInput.focus();
+            return;
+        }
 
         const selectedModel = document.getElementById("modelSelect").value;
-        const isGroqSelected = selectedModel.includes("-groq");
-        const isGeminiSelected = selectedModel.includes("-gemini");
-        const isVisionCapable = isGroqSelected || isGeminiSelected || selectedModel.toLowerCase().includes("llava") || selectedModel.toLowerCase().includes("vision") || selectedModel.toLowerCase().includes("scout") || selectedModel.toLowerCase().includes("maverick");
+        const isVisionCapable = isVisionCapableModel(selectedModel);
         
         if (selectedImageBase64 && !isVisionCapable) {
-            alert("Bu modeli görsel analiz için kullanamam. Lütfen Gemini veya Görsel Model seç.");
+            alert("Bu modeli görsel analiz için kullanamam. Lütfen bir Görsel Model seç.");
             return;
         }
 
@@ -3518,9 +3922,52 @@
         if (selectedImageBase64) {
             msgObj.images = [selectedImageBase64];
         }
+        // ===== SINAV KOÇU: aktif doküman kalıcı hafıza =====
+        // akademik_koc seçiliyken yüklenen PDF kaybolmasın
+        const isAkademikKocNow = (document.getElementById('personaSelect') && document.getElementById('personaSelect').value === 'akademik_koc');
         if (window.selectedDocumentText) {
-            msgObj.documentText = window.selectedDocumentText;
-            msgObj.documentName = window.selectedDocumentName || "Belge";
+            // PDF yeni yüklendi — aktif hafızaya kaydet
+            window.activeDocText = window.selectedDocumentText;
+            window.activeDocName = window.selectedDocumentName || 'Belge';
+        }
+
+        const docTextToUse = window.selectedDocumentText ||
+            (isAkademikKocNow && window.activeDocText ? window.activeDocText : null);
+        const docNameToUse = window.selectedDocumentName || window.activeDocName || 'Belge';
+
+        if (docTextToUse) {
+            // Kaynak seçimi (skp-source): chat → doc metni gönderme
+            const srcVal = document.getElementById('skp-source') ? document.getElementById('skp-source').value : 'pdf';
+            if (srcVal !== 'chat') {
+                const chunkInfo = getDocumentChunkPayload(docTextToUse, selectedModel, window.isExamMode || isAkademikKocNow);
+                if (chunkInfo.done) {
+                    // PDF chunkları bittiğinde kullanıcı mesajına otomatik ekleme yapmayalım.
+                    // Gerekirse bu uyarıyı bot tarafında göster.
+                } else if (chunkInfo.chunk) {
+                    msgObj.documentText = chunkInfo.chunk;
+                    msgObj.documentName = docNameToUse + chunkInfo.docNameSuffix;
+                    msgObj.promptSuffix = (msgObj.promptSuffix || "") + "\n\n" + chunkInfo.note;
+                } else {
+                    msgObj.documentText = docTextToUse;
+                    msgObj.documentName = docNameToUse;
+                }
+            }
+            if (window.isExamMode) {
+                skpSyncStateFromPanel();
+                if (typeof buildExamCoachSuffix === "function") {
+                    msgObj.promptSuffix = (msgObj.promptSuffix || "") + "\n\n" + buildExamCoachSuffix();
+                } else {
+                    msgObj.promptSuffix = (msgObj.promptSuffix || "") + "\n\n[🎓 SINAV KOÇU MODU]\nBu belgeyi analiz et, özet çıkar, önemli kavramları listele ve 10 soruluk test oluştur.";
+                }
+                window.isExamMode = false;
+            } else if (isAkademikKocNow && !window.selectedDocumentText) {
+                // İkinci+ mesaj: panel dropdownlarından suffix üret
+                skpSyncStateFromPanel();
+                if (typeof buildExamCoachSuffix === "function") {
+                    const suffix = buildExamCoachSuffix();
+                    if (suffix) msgObj.promptSuffix = (msgObj.promptSuffix || "") + "\n\n" + suffix;
+                }
+            }
         }
         
         chat.messages.push(msgObj);
@@ -3530,14 +3977,23 @@
         
         userInput.value = ""; autoResize(userInput);
         
-        // Gönderimden sonra dokümanı ve önizlemeyi temizle
-        window.selectedDocumentText = null;
-        window.selectedDocumentName = null;
-        document.getElementById('imagePreviewContainer').style.display = 'none';
+        // Sadece görsel varsa preview temizle, PDF durumunu koru
+        if (selectedImageBase64) {
+            selectedImageBase64 = null;
+            const previewContainer = document.getElementById('imagePreviewContainer');
+            if (previewContainer) previewContainer.style.display = 'none';
+        }
 
         const botId = "bot-" + Date.now();
         const typingDiv = document.createElement("div");
-        typingDiv.className = "message bot"; typingDiv.id = botId; typingDiv.innerHTML = "<i>...</i>";
+        typingDiv.className = "message bot"; typingDiv.id = botId;
+        
+        if (selectedImageBase64) {
+            typingDiv.innerHTML = "<i>📸 Görsel analiz ediliyor (Biraz uzun sürebilir, lütfen bekleyin)...</i>";
+        } else {
+            typingDiv.innerHTML = "<i>...</i>";
+        }
+        
         messagesDiv.appendChild(typingDiv);
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
 
@@ -3573,140 +4029,255 @@
             baseSystemPrompt += "\n\nKURAL: SADECE VE SADECE eğer kullanıcı kendisiyle, hayatıyla, zevkleriyle veya fiziksel özellikleriyle ilgili ÇOK ÖNEMLİ VE KALICI bir kişisel bilgi verirse (Örn: adım Ahmet, yaşım 25, kedim var, fıstığa alerjim var vb.), mesajının en sonuna BİREBİR şu formatta gizli bir not düşmelisin: [REMEMBER: Kullanıcı 25 yaşındaymış ve adı Ahmet'miş]. Sıradan sohbetlerde veya kullanıcının senden bir şey yapmanı/yazmanı istediği anlarda (Örn: hesap makinesi yaz, kod yaz) KESİNLİKLE [REMEMBER] KULLANMA! Sadece kişisel bilgileri kaydet.";
             baseSystemPrompt += "\n\nKURAL 2 (ÇOK ÖNEMLİ): Eğer kullanıcı senden bir oyun, arayüz, hesap makinesi veya web tabanlı herhangi bir uygulama yapmanı/kodlamanı isterse, KODU SADECE HTML BLOKLARI İÇİNDE YAZ. Başka metin ekleme.";
             
-            // ===== KRİTİK FIX: reqMessages'a sistem + sohbet geçmişini ekle =====
+            // ===== KRİTİK FIX: reqMessages'a sistem + sınırlı sohbet geçmişini ekle =====
+            // Determine task type early to avoid TDZ errors
+            const isVisionTask = !!selectedImageBase64;
+            const docSource = document.getElementById('skp-source') ? document.getElementById('skp-source').value : 'pdf';
+            const isPdfTask = !!docTextToUse && docSource !== 'chat';
+            const taskType = isVisionTask ? 'vision' : isPdfTask ? 'pdf' : 'chat';
+            // Always include system prompt, but limit conversation history for normal chat to avoid huge requests
             reqMessages.push({ role: "system", content: baseSystemPrompt });
-            const historyMsgs = chat.messages.slice(-20);
-            for (let hm of historyMsgs) { 
-                let hmClone = { ...hm };
-                if (hmClone.documentText) {
-                    hmClone.content = (hmClone.content ? "Kullanıcının Mesajı:\n" + hmClone.content + "\n\n" : "") + hmClone.documentText;
-                    delete hmClone.documentText;
-                    delete hmClone.documentName;
+            const historyLimit = (taskType === 'chat') ? 4 : 20;
+            const rawHistory = chat.messages || [];
+            // collect recent messages but filter out UI/system notifications and document chunks for normal chat
+            const historyMsgs = [];
+            for (let i = rawHistory.length - 1; i >= 0 && historyMsgs.length < historyLimit; i--) {
+                const hm = rawHistory[i];
+                if (!hm || !hm.role) continue;
+                // skip system/notification-like assistant messages that we use for UI hints
+                if (hm.role === 'assistant' && typeof hm.content === 'string') {
+                    const low = hm.content.toLowerCase();
+                    if (low.includes('otomatik yedekleme') || low.includes('yedek model') || low.includes('yanıt hazırlanıyor') || low.includes('kota') || low.includes('hata:')) continue;
                 }
-                reqMessages.push(hmClone); 
+                // skip messages that were inserted as UI/system warnings
+                if (hm.meta && hm.meta.ui) continue;
+                // if normal chat, skip documentText / promptSuffix entirely
+                if (taskType === 'chat') {
+                    if (hm.documentText) continue;
+                }
+                historyMsgs.unshift(hm);
+            }
+
+            for (let hm of historyMsgs) {
+                let hmClone = { role: hm.role, content: (hm.content || '') };
+                // Do not include document text or prompt suffix in normal chat
+                if (taskType !== 'chat') {
+                    if (hm.documentText) {
+                        // attach document text but ensure it's not huge
+                        hmClone.content = ((hmClone.content ? hmClone.content + "\n\n" : "") + (String(hm.documentText).substring(0, 2000)));
+                    }
+                    if (hm.promptSuffix) {
+                        hmClone.content = (hmClone.content || "") + String(hm.promptSuffix).substring(0, 2000);
+                    }
+                }
+                // truncate each message content to max 2000 chars
+                if (hmClone.content && hmClone.content.length > 2000) hmClone.content = hmClone.content.substring(0, 2000);
+                reqMessages.push(hmClone);
             }
             console.log("[CinoCode] reqMessages dolduruldu:", reqMessages.length, "mesaj");
             
-            let isGroq = selectedModel.includes("-groq");
-            let isGemini = selectedModel.includes("-gemini");
-            let actualModel = selectedModel.replace("-groq", "").replace("-gemini", "");
-            
-            // Fallback (Yedekleme) Kuyruğu Hazırlığı
-            let fallbackQueue = [selectedModel]; // Öncelikle kullanıcının seçtiği modeli dene
-            
-            const hasAttachments = selectedImageBase64 ? true : false;
-            
-            if (hasAttachments) {
-                // Görsel veya Belge eki varsa sadece Vision (Görsel okuma) yeteneği olan modelleri sıraya ekle
-                const visionModels = [
-                    "gemini-2.0-flash-exp-gemini",
-                    "meta-llama/llama-3.2-11b-vision-instruct:free-openrouter",
-                    "gemini-1.5-flash-gemini",
-                    "gemini-1.5-pro-gemini"
-                ];
-                for (let vModel of visionModels) {
-                    if (!fallbackQueue.includes(vModel)) {
-                        fallbackQueue.push(vModel);
-                    }
+            function parseModelLabel(label) {
+                const normalized = String(label || '').trim();
+                const lower = normalized.toLowerCase();
+                if (PROXY_CLOUD_MODELS.includes(lower)) {
+                    return { provider: lower, modelId: lower, displayLabel: normalized };
                 }
+                const providerMatch = normalized.match(/(?:[-:])(openai|cerebras|deepseek|mistral|openrouter|gemini|groq|fireworks|together|nvidia)(?:\b|$)/i);
+                const provider = providerMatch ? providerMatch[1].toLowerCase() : null;
+                const modelId = provider ? normalized.replace(new RegExp(`(?:[-:])${provider}(?:\b|$)`, 'i'), '').trim() : normalized;
+                return { provider, modelId, displayLabel: normalized };
+            }
+
+            function isProxyCloudProvider(provider) {
+                return PROXY_CLOUD_MODELS.includes(provider);
+            }
+
+            // taskType and related flags computed earlier above the reqMessages builder
+
+            function getProviderApiKey(provider) {
+                if (!provider) return "";
+                const keyStr = (localStorage.getItem(provider + '_api_key') || "").trim();
+                if (!keyStr) return "";
+                const keys = keyStr.split(',').map(k => k.trim()).filter(Boolean);
+                return keys.length ? keys[Math.floor(Math.random() * keys.length)] : "";
+            }
+
+            function hasProviderApiKey(provider) {
+                if (!provider) return false;
+                if (isProxyCloudProvider(provider)) return true;
+                return !!getProviderApiKey(provider);
+            }
+
+            function getRequestTimeoutMs() {
+                if (taskType === 'vision') return 35000;
+                if (taskType === 'pdf') return 30000;
+                return 15000;
+            }
+
+            // Model cooldowns (store in localStorage to persist across reloads)
+            function getCooldowns() {
+                try { return JSON.parse(localStorage.getItem('cinocode_model_cooldowns') || '{}'); } catch(e) { return {}; }
+            }
+            function setCooldown(modelId, ttlMs) {
+                const cds = getCooldowns();
+                cds[modelId] = Date.now() + ttlMs;
+                localStorage.setItem('cinocode_model_cooldowns', JSON.stringify(cds));
+            }
+            function isModelOnCooldown(modelId) {
+                if (!modelId) return false;
+                const cds = getCooldowns();
+                const until = cds[modelId];
+                if (!until) return false;
+                if (Date.now() > until) {
+                    // expired
+                    delete cds[modelId];
+                    localStorage.setItem('cinocode_model_cooldowns', JSON.stringify(cds));
+                    return false;
+                }
+                return true;
+            }
+
+            function isVisionModel(modelValue) {
+                if (!modelValue) return false;
+                const v = modelValue.toLowerCase();
+                return v.includes('vision') || v.includes('scout') || v.includes('llava') || v.includes('nvidia') || v.includes('vision-instruct');
+            }
+
+            let fallbackQueue = [selectedModel];
+            
+            // ===== AI ROUTER — Model Sağlık Takip Sistemi =====
+            // Her modelin başarı/başarısızlık geçmişini localStorage'da puan olarak tutar.
+            // Başarılı istek → +2 puan (maks 10). Başarısız istek → -3 puan (min 0).
+            // Fallback kuyruğu puana göre yeniden sıralanır.
+            const MODEL_HEALTH_KEY = 'cinocode_model_health';
+            function getModelHealth() {
+                try { return JSON.parse(localStorage.getItem(MODEL_HEALTH_KEY) || '{}'); } catch(e) { return {}; }
+            }
+            function setModelScore(modelId, delta) {
+                const h = getModelHealth();
+                h[modelId] = Math.max(0, Math.min(10, (h[modelId] ?? 5) + delta));
+                localStorage.setItem(MODEL_HEALTH_KEY, JSON.stringify(h));
+            }
+            function getModelScore(modelId) {
+                return getModelHealth()[modelId] ?? 5; // Varsayılan: 5 (nötr)
+            }
+
+            // Fallback (Yedekleme) Kuyruğu Hazırlığı
+            const hasAttachments = !!selectedImageBase64;
+            const isPdfCoaching = isAkademikKocNow || (document.getElementById('personaSelect') && document.getElementById('personaSelect').value === 'dil_kocu');
+            const visionModels = [
+                "meta-llama/llama-4-scout-17b-16e-instruct-groq",
+                "nvidia/nemotron-nano-12b-v2-vl-nvidia",
+                "meta-llama/llama-3.2-11b-vision-instruct:free-openrouter"
+            ];
+            const normalTextModels = [
+                "openai", "cerebras", "deepseek", "mistral", "openrouter", "gemini", "groq",
+                "qwen2.5:14b", "qwen2.5"
+            ];
+            const pdfTextModels = [
+                "gemini", "openai", "deepseek", "cerebras", "mistral", "openrouter",
+                "qwen2.5:14b", "qwen2.5"
+            ];
+
+            if (hasAttachments) {
+                // Vision task: use vision models but ensure selectedModel first
+                fallbackQueue = [...new Set([selectedModel, ...visionModels.filter(m => m !== selectedModel)])];
+            } else if (isPdfTask || isPdfCoaching) {
+                // PDF task: use pdfTextModels order
+                fallbackQueue = [...new Set([selectedModel, ...pdfTextModels.filter(m => m !== selectedModel)])];
             } else {
-                // Sadece metin ise sırasıyla diğer hızlı modelleri yedek olarak ekle
-                // Dil Koçu modunda Gemini önce gelsin (Llama Türkçe + çok dil desteği zayıf)
-                const isDilKocu = (document.getElementById('personaSelect') && document.getElementById('personaSelect').value === 'dil_kocu');
-                const textModels = isDilKocu ? [
-                    "gemini-3-flash-preview-gemini",
-                    "gemini-2.5-flash-gemini",
-                    "llama-3.3-70b-versatile-groq",
-                    "meta-llama/llama-3.2-11b-vision-instruct:free-openrouter",
-                    "llama-3.1-8b-instant-groq"
-                ] : [
-                    "llama-3.3-70b-versatile-groq",
-                    "llama-3.1-8b-instant-groq",
-                    "gemini-3-flash-preview-gemini",
-                    "meta-llama/llama-3.2-11b-vision-instruct:free-openrouter",
-                    "gemini-2.5-flash-gemini"
-                ];
-                for (let tModel of textModels) {
-                    if (!fallbackQueue.includes(tModel)) {
-                        fallbackQueue.push(tModel);
+                // Emergency stabilization: for normal chat only try the selected model (no fallback)
+                if (taskType === 'chat') {
+                    fallbackQueue = [selectedModel];
+                } else {
+                    const chatPriority = [];
+                    if (window.lastWorkingModel && window.lastWorkingProvider && !isModelOnCooldown(window.lastWorkingModel)) {
+                        const lastLabel = window.lastWorkingModel + (window.lastWorkingProvider ? `-${window.lastWorkingProvider}` : '');
+                        const pInfo = parseModelLabel(lastLabel);
+                        if (!pInfo.provider || hasProviderApiKey(pInfo.provider)) chatPriority.push(lastLabel);
                     }
+                    if (selectedModel) chatPriority.push(selectedModel);
+                    const canonical = [
+                        "openai",
+                        "gemini",
+                        "groq"
+                    ];
+                    fallbackQueue = [...new Set([...chatPriority, ...canonical])];
                 }
             }
 
+            // Filter out models that lack provider key, are on cooldown, or are vision models for chat
+            const availableModels = fallbackQueue.filter(modelValue => {
+                const parsed = parseModelLabel(modelValue);
+                if (!parsed) return false;
+                if (isModelOnCooldown(parsed.modelId)) return false;
+                if (taskType === 'chat' && isVisionModel(parsed.modelId)) return false;
+                if (parsed.provider && !hasProviderApiKey(parsed.provider)) return false;
+                return true;
+            });
+            if (availableModels.length === 0) {
+                throw new Error("Hiçbir uygun model denenemedi. Cloud sağlayıcılar Netlify Environment Variables ile yapılandırılmalıdır.");
+            }
+            fallbackQueue = availableModels;
+
             let response = null;
-            
+            // Set generation lock and UI state
+            window.isGenerating = true;
+            try { document.querySelector('.send-btn').disabled = true; } catch(e) {}
+            try { document.getElementById('userInput').disabled = true; } catch(e) {}
+            // show a small status message
+            const genStatusId = 'cinocode_generating_status';
+            let existingStatus = document.getElementById(genStatusId);
+            if (!existingStatus) {
+                const statusHtml = `<div id="${genStatusId}" class="message bot-message" style="background: rgba(24,24,37,0.6); border-left: 3px solid #89b4fa; padding: 8px; margin-bottom:10px; border-radius:6px; font-size:0.9em; color:var(--text-color);">⏳ Yanıt hazırlanıyor...</div>`;
+                messagesDiv.insertAdjacentHTML('beforeend', statusHtml);
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            }
+            const triedModels = new Set();
+            let lastErrorMessage = null;
+            let lastErrorDetails = null;
+
             for (let i = 0; i < fallbackQueue.length; i++) {
                 const currentTryModel = fallbackQueue[i];
-                isGroq = currentTryModel.includes("-groq");
-                isGemini = currentTryModel.includes("-gemini");
-                const isNvidia = currentTryModel.includes("-nvidia");
-                const isOpenRouter = currentTryModel.includes("-openrouter");
-                actualModel = currentTryModel
-                    .replace("-groq", "")
-                    .replace("-gemini", "")
-                    .replace("-nvidia", "")
-                    .replace("-openrouter", "");
-                
-                // Eğer bu model için API anahtarı girilmemişse doğrudan sonraki yedek modele geç
-                if (isGemini && !(localStorage.getItem('gemini_api_key') || "").trim()) { continue; }
-                if (isGroq && !(localStorage.getItem('groq_api_key') || "").trim()) { continue; }
-                if (isNvidia && !(localStorage.getItem('nvidia_api_key') || "").trim()) { continue; }
-                if (isOpenRouter && !(localStorage.getItem('openrouter_api_key') || "").trim()) { continue; }
-                
-                // Eğer ilk denemede hata alıp otomatik geçiş yapıyorsak ekranda bilgilendirme göster
+                if (triedModels.has(currentTryModel)) continue;
+                triedModels.add(currentTryModel);
+                const currentTryInfo = parseModelLabel(currentTryModel);
+                const isProxyCloud = isProxyCloudModel(currentTryModel);
+                isGroq = currentTryInfo.provider === "groq" && !isProxyCloud;
+                isGemini = false;
+                isNvidia = currentTryInfo.provider === "nvidia";
+                isOpenRouter = currentTryInfo.provider === "openrouter" && !isProxyCloud;
+                actualModel = currentTryInfo.modelId;
+                const displayLabel = currentTryInfo.displayLabel;
+                const provider = currentTryInfo.provider;
+                const providerKey = provider ? (isProxyCloud ? 'proxy' : getProviderApiKey(provider)) : "";
+                if (provider && !providerKey) {
+                    console.warn(`[AI Router] API anahtarı yok, atlanıyor: ${currentTryModel}`);
+                    continue;
+                }
+
+                const timeoutMs = getRequestTimeoutMs();
+                const cleanModelName = actualModel.split("/").pop();
                 if (i > 0) {
-                    const cleanModelName = actualModel.split("/").pop();
-                    const warningHtml = `<div class="message bot-message" style="background: rgba(255, 150, 0, 0.1); border-left: 3px solid orange; padding: 10px; margin-bottom: 10px; border-radius: 5px; font-size: 0.9em; color: var(--text-color);">✨ <b>Otomatik Yedekleme:</b> Limit aşımı veya bağlantı hatası nedeniyle sistem otomatik olarak <b>${cleanModelName}</b> modelini deniyor...</div>`;
+                    const warningHtml = `<div class="message bot-message" style="background: rgba(255, 150, 0, 0.1); border-left: 3px solid orange; padding: 10px; margin-bottom: 10px; border-radius: 5px; font-size: 0.9em; color: var(--text-color);">✨ <b>Otomatik Yedekleme:</b> Bir sonraki model <b>${cleanModelName}</b> deneniyor...</div>`;
                     messagesDiv.insertAdjacentHTML('beforeend', warningHtml);
                     messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                    const stEl = document.getElementById('cinocode_generating_status'); if (stEl) stEl.innerText = `🔁 Yedek model deneniyor: ${cleanModelName}`;
                 }
-                
+
                 let fetchUrl, fetchOptions;
-                
-                if (isGemini) {
-                    // --- GOOGLE GEMINI ---
-                    const userGeminiKey = (localStorage.getItem('gemini_api_key') || "").trim();
-                    let geminiContents = [];
-                    let systemText = '';
-                    
-                    for (let msg of reqMessages) {
-                        if (msg.role === 'system') {
-                            systemText = msg.content;
-                            break;
-                        }
-                    }
-                    
-                    if (systemText) {
-                        geminiContents.push({ role: 'user', parts: [{ text: '(Sistem Yönergesi: ' + systemText + ')' }] });
-                        geminiContents.push({ role: 'model', parts: [{ text: 'Anlaştık, kurallara uyacağım!' }] });
-                    }
-                    
-                    for (let msg of reqMessages) {
-                        if (msg.role === 'system') continue;
-                        let parts = [];
-                        if (msg.content) parts.push({ text: msg.content });
-                        if (msg.images && msg.images.length > 0) {
-                            for (let img of msg.images) {
-                                let base64Data = img.split(',')[1] || img;
-                                let mimeType = img.match(/^data:([^;]+);/)?.[1] || 'image/jpeg';
-                                parts.push({ inline_data: { mime_type: mimeType, data: base64Data } });
-                            }
-                        }
-                        let gemRole = msg.role === 'assistant' ? 'model' : 'user';
-                        if (geminiContents.length > 0 && geminiContents[geminiContents.length - 1].role === gemRole) {
-                            geminiContents[geminiContents.length - 1].parts.push(...parts);
-                        } else {
-                            geminiContents.push({ role: gemRole, parts });
-                        }
-                    }
-                    
-                    fetchUrl = `https://generativelanguage.googleapis.com/v1beta/models/${actualModel}:generateContent?key=${userGeminiKey}`;
+
+                if (isProxyCloud) {
+                    fetchUrl = '/.netlify/functions/ai-chat';
                     fetchOptions = {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            contents: geminiContents,
-                            generationConfig: { temperature: 0.9, maxOutputTokens: 8192 }
+                            messages: reqMessages,
+                            taskType,
+                            selectedModel: currentTryInfo.provider,
+                            temperature: 0.7,
+                            maxTokens: taskType === 'pdf' ? 4096 : 1024
                         })
                     };
                 } else if (isNvidia) {
@@ -3780,7 +4351,7 @@
                     };
                 } else if (isGroq) {
                     // --- GROQ ---
-                    const userGroqKey = (localStorage.getItem('groq_api_key') || "").trim();
+                    const userGroqKey = getRandomApiKey(localStorage.getItem('groq_api_key'));
                     fetchUrl = "https://api.groq.com/openai/v1/chat/completions";
                     
                     let groqModel = actualModel;
@@ -3832,59 +4403,146 @@
                 }
                 
                 try {
-                    if (isGemini) {
-                        removeImage();
-                        let geminiResponse = await fetch(fetchUrl, fetchOptions);
-                        if (!geminiResponse.ok) {
-                            const errText = await geminiResponse.text();
-                            console.warn(`Gemini API hatası verdi (${geminiResponse.status}): ${errText}`);
+                    if (isProxyCloud) {
+                        const controller = new AbortController();
+                        const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+                        fetchOptions.signal = controller.signal;
+                        let proxyResponse;
+                        try {
+                            proxyResponse = await fetch(fetchUrl, fetchOptions);
+                        } finally {
+                            clearTimeout(timeoutId);
+                        }
+
+                        const jsonData = await proxyResponse.json().catch(() => null);
+                        if (!proxyResponse.ok || !jsonData || !jsonData.ok) {
+                            lastErrorMessage = jsonData?.error
+                                || (proxyResponse.status === 401 || proxyResponse.status === 403 ? 'API anahtarı geçersiz veya yetkisiz.'
+                                : proxyResponse.status === 429 ? 'Kota/rate limit doldu, yedek sağlayıcı deneniyor.'
+                                : proxyResponse.status === 413 ? 'İstek çok büyük.'
+                                : 'Bulut proxy hatası oluştu.');
+                            lastErrorDetails = { provider: currentTryInfo.provider, model: actualModel, timeout: false, status: proxyResponse.status, errorBody: jsonData?.error || '', endpoint: fetchUrl, taskType };
+                            setModelScore(currentTryModel, -3);
                             continue;
                         }
-                        const geminiData = await geminiResponse.json();
-                        const geminiBotReply = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-                        if (!geminiBotReply) {
-                            console.warn("Gemini boş cevap döndü, sonraki yedek deneniyor...");
-                            continue;
-                        }
-                        
+
+                        setModelScore(currentTryModel, +2);
                         document.getElementById("modelSelect").value = currentTryModel;
-                        document.getElementById(botId).innerHTML = renderContentWithImages(geminiBotReply, true);
+                        window.lastWorkingProvider = currentTryInfo.provider;
+                        window.lastWorkingModel = actualModel;
+                        window.lastWorkingModelAt = Date.now();
+
+                        const botReply = String(jsonData.content || '').trim();
+                        document.getElementById(botId).innerHTML = renderContentWithImages(botReply, true);
                         addCopyButtons(document.getElementById(botId));
-                        chat.messages.push({ role: 'assistant', content: geminiBotReply });
+                        chat.messages.push({ role: 'assistant', content: botReply });
                         chat.updatedAt = Date.now();
                         saveDatabase();
                         scrollToBottom();
                         setTimeout(scrollToBottom, 300);
-                        speakText(sanitizeAssistantOutput(geminiBotReply).substring(0, 500));
+                        speakText(sanitizeAssistantOutput(botReply).substring(0, 500));
+
+                        window.isGenerating = false;
+                        try { document.querySelector('.send-btn').disabled = false; } catch(e) {}
+                        try { document.getElementById('userInput').disabled = false; } catch(e) {}
+                        const stElProxy = document.getElementById(genStatusId); if (stElProxy) stElProxy.remove();
                         return;
-                    } else {
-                        // Groq / NVIDIA NIM / OpenRouter / Yerel Ollama — hepsi SSE streaming
-                        let streamResponse = await fetch(fetchUrl, fetchOptions);
+                    } else if (isNvidia || isOpenRouter || isGroq) {
+                        const controller = new AbortController();
+                        const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+                        fetchOptions.signal = controller.signal;
+
+                        let streamResponse;
+                        try {
+                            streamResponse = await fetch(fetchUrl, fetchOptions);
+                        } finally {
+                            clearTimeout(timeoutId);
+                        }
+
                         if (!streamResponse.ok) {
-                            const errText = await streamResponse.text();
-                            console.warn(`Streaming API hatası (${streamResponse.status}): ${errText}`);
+                            const errText = await streamResponse.text().catch(() => "");
+                            lastErrorMessage = streamResponse.status === 401 || streamResponse.status === 403
+                                ? "API key geçersiz olabilir."
+                                : streamResponse.status === 429
+                                    ? "Kota/limit dolmuş olabilir."
+                                    : `Model hatası: ${streamResponse.status}`;
+                            lastErrorDetails = { provider: provider || 'unknown', model: actualModel, timeout: false, status: streamResponse.status, errorBody: errText, endpoint: fetchUrl, taskType };
+                            console.error(lastErrorDetails);
+                            setModelScore(currentTryModel, -3); // AI Router: HTTP hatası
                             continue;
                         }
-                        
+
+                        setModelScore(currentTryModel, +2); // AI Router: başarı
                         document.getElementById("modelSelect").value = currentTryModel;
+                        // mark last working early so next message can prefer it
+                        window.lastWorkingProvider = provider || window.lastWorkingProvider;
+                        window.lastWorkingModel = actualModel;
+                        window.lastWorkingModelAt = Date.now();
+                        response = streamResponse;
+                        break;
+                    } else {
+                        const controller = new AbortController();
+                        const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+                        fetchOptions.signal = controller.signal;
+
+                        let streamResponse;
+                        try {
+                            streamResponse = await fetch(fetchUrl, fetchOptions);
+                        } finally {
+                            clearTimeout(timeoutId);
+                        }
+
+                        if (!streamResponse.ok) {
+                            const errText = await streamResponse.text().catch(() => "");
+                            lastErrorMessage = streamResponse.status === 401 || streamResponse.status === 403
+                                ? "API key geçersiz olabilir."
+                                : streamResponse.status === 429
+                                    ? "Kota/limit dolmuş olabilir."
+                                    : `Model hatası: ${streamResponse.status}`;
+                            lastErrorDetails = { provider: 'ollama', model: actualModel, timeout: false, status: streamResponse.status, errorBody: errText, endpoint: fetchUrl, taskType };
+                            setModelScore(currentTryModel, -3);
+                            continue;
+                        }
+
+                        setModelScore(currentTryModel, +2);
+                        document.getElementById("modelSelect").value = currentTryModel;
+                        window.lastWorkingProvider = 'ollama';
+                        window.lastWorkingModel = actualModel;
+                        window.lastWorkingModelAt = Date.now();
                         response = streamResponse;
                         break;
                     }
                 } catch (fetchErr) {
-                    console.error("Yapay zeka bağlantı hatası, sonraki yedek deneniyor:", fetchErr);
+                    const timedOut = fetchErr.name === 'AbortError';
+                    lastErrorMessage = timedOut ? "Model zaman aşımına uğradı." : "Network veya CORS hatası oluştu.";
+                    lastErrorDetails = { provider: provider || 'unknown', model: actualModel, timeout: timedOut, status: timedOut ? 'timeout' : 'network', errorBody: fetchErr.message, endpoint: fetchUrl, taskType };
+                    console.error(lastErrorDetails);
+                    // If timeout, set cooldown for this model for 5 minutes
+                    if (timedOut) setCooldown(actualModel, 5 * 60 * 1000);
+                    setModelScore(currentTryModel, -3); // AI Router: başarısızlık
                     continue;
                 }
             }
             
             if (!response) {
                 removeImage();
-                throw new Error("Tüm yapay zeka yedek modelleri denendi ancak yanıt alınamadı. Lütfen API anahtarlarınızı veya kotanızı kontrol edin.");
+                const fallbackCandidate = fallbackQueue.find(modelValue => {
+                    const provider = parseModelLabel(modelValue).provider;
+                    return !provider || hasProviderApiKey(provider);
+                });
+                if (!fallbackCandidate) {
+                    throw new Error("Hiçbir uygun model denenemedi. Lütfen yapay zeka API anahtarlarınızı kontrol edin.");
+                }
+                throw new Error(lastErrorMessage || `Tüm yapay zeka yedek modelleri denendi ancak yanıt alınamadı. Cloud sağlayıcılar Netlify Environment Variables ile yapılandırılmalıdır.`);
             }
 
             removeImage(); // Fotoğraf gönderildikten sonra temizle
 
             if (!response.ok) {
                 const errorText = await response.text();
+                // release lock before throwing
+                window.isGenerating = false; try { document.querySelector('.send-btn').disabled = false; } catch(e) {} try { document.getElementById('userInput').disabled = false; } catch(e) {}
+                const stEl2 = document.getElementById(genStatusId); if (stEl2) stEl2.remove();
                 throw new Error(`API Hatası (${response.status}): ` + errorText);
             }
 
@@ -3912,20 +4570,7 @@
                     if (line.trim() === "") continue;
                     
                     let word = null;
-                    if (isGemini) {
-                        if (line.startsWith("data: ")) {
-                            try {
-                                const data = JSON.parse(line.substring(6));
-                                if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) {
-                                    word = data.candidates[0].content.parts
-                                        .filter(p => p.text)
-                                        .map(p => p.text)
-                                        .join('');
-                                    if (word === '') word = null; // boş string yerine null
-                                }
-                            } catch (e) { /* sessizce geç */ }
-                        }
-                    } else if (isGroq) {
+                    if (isGroq || isNvidia || isOpenRouter) {
                         if (line.trim() === "data: [DONE]") continue;
                         if (line.startsWith("data: ")) {
                             try {
@@ -3933,7 +4578,7 @@
                                 if (data.choices && data.choices[0].delta && data.choices[0].delta.content) {
                                     word = data.choices[0].delta.content;
                                 }
-                            } catch (e) { console.error("Groq JSON parse error", e); }
+                            } catch (e) { console.error("OpenAI format parse error", e); }
                         }
                     } else {
                         try {
@@ -4023,14 +4668,40 @@
             setTimeout(scrollToBottom, 300);
             setTimeout(scrollToBottom, 800);
 
+            // clear generation lock and process pending queue
+            window.isGenerating = false;
+            try { document.querySelector('.send-btn').disabled = false; } catch(e) {}
+            try { document.getElementById('userInput').disabled = false; } catch(e) {}
+            const stEl3 = document.getElementById('cinocode_generating_status'); if (stEl3) stEl3.remove();
+            // Clear any pendingMessages queue (queueing disabled in this hotfix)
+            try { window.pendingMessages = []; } catch(e) {}
+
         } catch (error) {
-            document.getElementById(botId).innerHTML = "<b>Hata:</b> " + error.message;
+            console.error('sendMessage error:', error);
+            try { document.getElementById(botId).innerHTML = "<b>Hata:</b> " + error.message; } catch(e) {}
+        } finally {
+            // Ensure UI is always re-enabled to avoid permanent lock
+            try { window.isGenerating = false; } catch(e) {}
+            try { window.pendingMessages = []; } catch(e) {}
+            try { const userInputEl = document.getElementById('userInput'); if (userInputEl) userInputEl.disabled = false; } catch(e) {}
+            try { const sendBtn = document.getElementById('sendBtn') || document.querySelector('.send-btn'); if (sendBtn) sendBtn.disabled = false; } catch(e) {}
+            try { const st = document.getElementById('cinocode_generating_status'); if (st) st.remove(); } catch(e) {}
         }
     }
 
     // ----- DRAG AND DROP (SÜRÜKLE BIRAK) -----
     const inputBox = document.querySelector(".input-box");
     let dragCounter = 0;
+
+    if (inputBox) {
+        inputBox.addEventListener('click', (event) => {
+            const userInputEl = document.getElementById('userInput');
+            if (!userInputEl) return;
+            if (event.target === inputBox || inputBox.contains(event.target)) {
+                userInputEl.focus();
+            }
+        });
+    }
 
     function showDropState() {
         inputBox.classList.add("drag-active");
@@ -4082,7 +4753,599 @@
 
     // Sayfa dışına çıkıldığında veya ESC basıldığında sıfırla
     window.addEventListener("blur", hideDropState);
-    document.addEventListener("keydown", (e) => { if (e.key === "Escape") hideDropState(); });
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") { hideDropState(); closeSinavKocuModal(); } });
+</script>
+
+<!-- ===== SINAV KOÇU MOD SEÇİM MODALI ===== -->
+<div class="sk-overlay" id="sinavKocuOverlay" onclick="skOverlayClick(event)">
+  <div class="sk-modal" id="sinavKocuModal">
+    <div class="sk-modal-header">
+      <span class="sk-icon">🎓</span>
+      <h2>CinoCode Akademi</h2>
+      <p>Öğrenciyi sınava hazırlayan akıllı koç paneli</p>
+    </div>
+    <div style="text-align:center;">
+      <span class="sk-file-badge" id="skFileBadge">📄 —</span>
+    </div>
+
+    <!-- Kategori Sekmeleri -->
+    <div class="sk-tabs">
+      <button class="sk-tab-btn active" onclick="skSwitchTab(event, 'tab-ogren')">📚 Öğren</button>
+      <button class="sk-tab-btn" onclick="skSwitchTab(event, 'tab-ezberle')">🃏 Ezberle</button>
+      <button class="sk-tab-btn" onclick="skSwitchTab(event, 'tab-test')">📝 Test Et</button>
+      <button class="sk-tab-btn" onclick="skSwitchTab(event, 'tab-pratik')">🎤 Pratik Yap</button>
+      <button class="sk-tab-btn" onclick="skSwitchTab(event, 'tab-tahmin')">🎯 Tahmin</button>
+    </div>
+
+    <!-- 1. ÖĞREN SEKME İÇERİĞİ -->
+    <div class="sk-tab-content active" id="tab-ogren">
+      <div class="sk-grid">
+        <!-- Hızlı Özetler -->
+        <div class="sk-card" onclick="event.stopPropagation();">
+          <div class="sk-card-icon">⚡</div>
+          <div class="sk-card-title">Hızlı Özetler</div>
+          <div class="sk-card-desc">Süreye göre özelleştirilmiş pratik özet oluşturur. Süre seçin:</div>
+          <div class="sk-pills">
+            <span class="sk-pill" onclick="skDirectConfirm('ozet', '30s')">⚡ 30 sn</span>
+            <span class="sk-pill" onclick="skDirectConfirm('ozet', '1dk')">📌 1 dk</span>
+            <span class="sk-pill" onclick="skDirectConfirm('ozet', '2dk')">📖 2 dk</span>
+            <span class="sk-pill" onclick="skDirectConfirm('ozet', '5dk')">🎯 5 dk</span>
+            <span class="sk-pill" onclick="skDirectConfirm('ozet', '10dk')">📚 10 dk</span>
+          </div>
+        </div>
+        <!-- Profesör Anlatımı -->
+        <div class="sk-card" onclick="skDirectConfirm('profesor_anlatim')">
+          <div class="sk-card-icon">👨‍🏫</div>
+          <div class="sk-card-title">Profesör Anlatımı</div>
+          <div class="sk-card-desc">Akademik, derin ama son derece anlaşılır dille konunun püf noktalarını açıklar.</div>
+          <div class="sk-card-tag">Akademik Mod</div>
+        </div>
+        <!-- Sıfırdan Anlat -->
+        <div class="sk-card" onclick="skDirectConfirm('sifirdan')">
+          <div class="sk-card-icon">👶</div>
+          <div class="sk-card-title">Sıfırdan Anlat</div>
+          <div class="sk-card-desc">Konuyu ilk defa görüyormuşsun gibi basit dille anlatır, sonuna mini alıştırma ekler.</div>
+          <div class="sk-card-tag">Temel Seviye</div>
+        </div>
+        <!-- ELI5 -->
+        <div class="sk-card" onclick="skDirectConfirm('eli5')">
+          <div class="sk-card-icon">🧠</div>
+          <div class="sk-card-title">Çocuk Anlatımı (ELI5)</div>
+          <div class="sk-card-desc">Karmaşık teknik terimleri 5 yaşındaki bir çocuğa anlatır gibi analojilerle açıklar.</div>
+          <div class="sk-card-tag">Basit Dil</div>
+        </div>
+        <!-- Hikâyeleştir -->
+        <div class="sk-card" onclick="skDirectConfirm('hikaye')">
+          <div class="sk-card-icon">📖</div>
+          <div class="sk-card-title">Hikâyeleştir</div>
+          <div class="sk-card-desc">Ezber bilgiler yerine konuyu akılda kalıcı, eğlenceli bir hikaye kurgusuyla anlatır.</div>
+          <div class="sk-card-tag">Hafıza Modu</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. EZBERLE SEKME İÇERİĞİ -->
+    <div class="sk-tab-content" id="tab-ezberle">
+      <div class="sk-grid">
+        <!-- Flashcards -->
+        <div class="sk-card" onclick="event.stopPropagation();">
+          <div class="sk-card-icon">🃏</div>
+          <div class="sk-card-title">Kavram Flashcard'ları</div>
+          <div class="sk-card-desc">Ön yüz: Terim, Arka yüz: Türkçe açıklama + İngilizce karşılık. Kart sayısı seçin:</div>
+          <div class="sk-pills">
+            <span class="sk-pill" onclick="skDirectConfirm('flashcard', '10')">10 Kart</span>
+            <span class="sk-pill" onclick="skDirectConfirm('flashcard', '20')">20 Kart</span>
+            <span class="sk-pill" onclick="skDirectConfirm('flashcard', '30')">30 Kart</span>
+            <span class="sk-pill" onclick="skDirectConfirm('flashcard', '50')">50 Kart</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. TEST ET SEKME İÇERİĞİ -->
+    <div class="sk-tab-content" id="tab-test">
+      <div class="sk-grid">
+        <!-- Çoktan Seçmeli Quiz -->
+        <div class="sk-card" onclick="event.stopPropagation();">
+          <div class="sk-card-icon">📝</div>
+          <div class="sk-card-title">Çoktan Seçmeli Quiz</div>
+          <div class="sk-card-desc">A/B/C/D şıklı sorular + cevap anahtarı. Soru sayısı seçin:</div>
+          <div class="sk-count-grid">
+            <button class="sk-count-btn" onclick="skDirectConfirm('quiz', 5)">5</button>
+            <button class="sk-count-btn" onclick="skDirectConfirm('quiz', 10)">10</button>
+            <button class="sk-count-btn" onclick="skDirectConfirm('quiz', 15)">15</button>
+            <button class="sk-count-btn" onclick="skDirectConfirm('quiz', 20)">20</button>
+            <button class="sk-count-btn" onclick="skDirectConfirm('quiz', 50)">50</button>
+          </div>
+        </div>
+        <!-- Sonsuz Quiz -->
+        <div class="sk-card" onclick="skDirectConfirm('sonsuz_quiz')">
+          <div class="sk-card-icon">🔁</div>
+          <div class="sk-card-title">Sonsuz Quiz</div>
+          <div class="sk-card-desc">Kullanıcı "durdur" diyene kadar sürekli yeni soru soran ve yanlışlarını tekrar soran mod.</div>
+          <div class="sk-card-tag">Dinamik Soru</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. İNTERAKTİF PRATİK SEKME İÇERİĞİ -->
+    <div class="sk-tab-content" id="tab-pratik">
+      <div class="sk-grid">
+        <!-- Sözlü/Sesli Sınav -->
+        <div class="sk-card" onclick="skDirectConfirm('sozlu_sinav')">
+          <div class="sk-card-icon">🎤</div>
+          <div class="sk-card-title">Sözlü / Sesli Sınav</div>
+          <div class="sk-card-desc">CinoCode sana tek tek soru sorar. Cevap verirsin, değerlendirip yeni soruya geçer.</div>
+          <div class="sk-card-tag">Sesli Uyumluluk</div>
+        </div>
+        <!-- Sokratik Mod -->
+        <div class="sk-card" onclick="skDirectConfirm('sokratik')">
+          <div class="sk-card-icon">🔁</div>
+          <div class="sk-card-title">Sokratik Mod</div>
+          <div class="sk-card-desc">Cevabı direkt vermez, seni düşündürerek konuyu derinlemesine keşfetmeni sağlar.</div>
+          <div class="sk-card-tag">Felsefi Derinlik</div>
+        </div>
+        <!-- Eksik Analizi -->
+        <div class="sk-card" onclick="skDirectConfirm('eksik_analizi')">
+          <div class="sk-card-icon">🛠️</div>
+          <div class="sk-card-title">Eksik Analizi (Tanı Testi)</div>
+          <div class="sk-card-desc">10 kısa soruluk test ile eksiklerini yüzdesel raporlar, sadece zayıf konulara çalıştırır.</div>
+          <div class="sk-card-tag">Tanı Modu</div>
+        </div>
+        <!-- Challenge Modu -->
+        <div class="sk-card" onclick="event.stopPropagation();">
+          <div class="sk-card-icon">🧩</div>
+          <div class="sk-card-title">Challenge Modu</div>
+          <div class="sk-card-desc">Kademeli olarak zorlaşan soru-cevap düellosu. Zorluk seviyesi seçin:</div>
+          <div class="sk-pills">
+            <span class="sk-pill" onclick="skDirectConfirm('challenge', 'easy')">🌱 Kolay</span>
+            <span class="sk-pill" onclick="skDirectConfirm('challenge', 'medium')">🔥 Orta</span>
+            <span class="sk-pill" onclick="skDirectConfirm('challenge', 'hard')">🚀 Zor</span>
+            <span class="sk-pill" onclick="skDirectConfirm('challenge', 'professor')">🎓 Hoca</span>
+            <span class="sk-pill" onclick="skDirectConfirm('challenge', 'interview')">💻 Mülakat</span>
+          </div>
+        </div>
+        <!-- Münazara Modu -->
+        <div class="sk-card" onclick="skDirectConfirm('munazara')">
+          <div class="sk-card-icon">🗣️</div>
+          <div class="sk-card-title">Münazara Modu</div>
+          <div class="sk-card-desc">Model sana karşı tezleri savunur, seni kendi argümanlarını kurmaya ve savunmaya zorlar.</div>
+          <div class="sk-card-tag">Tartışma Modu</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. TAHMİN SEKME İÇERİĞİ -->
+    <div class="sk-tab-content" id="tab-tahmin">
+      <div class="sk-grid">
+        <!-- Hoca Ne Sorar? -->
+        <div class="sk-card" onclick="skDirectConfirm('hoca_tahmin')">
+          <div class="sk-card-icon">🎯</div>
+          <div class="sk-card-title">Hoca Ne Sorar? (Tahmin)</div>
+          <div class="sk-card-desc">Bu belgeden sınavda çıkabilecek klasik ve test sorularını, kritik ezber kelimelerini tahmin eder.</div>
+          <div class="sk-card-tag">Hoca Modu</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sk-footer" style="margin-top:20px;">
+      <button class="sk-cancel-btn" onclick="closeSinavKocuModal()">İptal</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== SINAV KOÇU MOD SEÇİM SİSTEMİ =====
+window.skState = { mode: null, ozet: null, flashcardCount: 10, quizCount: 10, challengeDiff: 'medium', resolve: null };
+if (!window.skQuizHistory) window.skQuizHistory = [];
+
+function openSinavKocuModal(fileName) {
+    window.skState = { mode: null, ozet: null, flashcardCount: 10, quizCount: 10, challengeDiff: 'medium', resolve: null };
+    document.getElementById('skFileBadge').textContent = '📄 ' + fileName;
+    
+    // UI Sıfırlama
+    document.querySelectorAll('.sk-card').forEach(c => c.classList.remove('sk-selected'));
+    document.querySelectorAll('.sk-pill').forEach(p => p.classList.remove('sk-pill-active'));
+    document.querySelectorAll('.sk-count-btn').forEach(b => b.classList.remove('sk-count-active'));
+    
+    // Tab sıfırlama (İlk tabı aktif yap)
+    skSwitchTab(null, 'tab-ogren');
+    document.querySelectorAll('.sk-tab-btn').forEach((btn, idx) => {
+        if (idx === 0) btn.classList.add('active');
+        else btn.classList.remove('active');
+    });
+
+    document.getElementById('sinavKocuOverlay').classList.add('active');
+    return new Promise(resolve => { window.skState.resolve = resolve; });
+}
+
+function closeSinavKocuModal() {
+    document.getElementById('sinavKocuOverlay').classList.remove('active');
+    if (window.skState.resolve) { window.skState.resolve(null); window.skState.resolve = null; }
+}
+
+function skOverlayClick(e) {
+    if (e.target === document.getElementById('sinavKocuOverlay')) closeSinavKocuModal();
+}
+
+function skSwitchTab(e, tabId) {
+    if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+    // Tüm tab butonlarının aktifliğini kaldır
+    document.querySelectorAll('.sk-tab-btn').forEach(btn => btn.classList.remove('active'));
+    // Tüm tab içeriklerini gizle
+    document.querySelectorAll('.sk-tab-content').forEach(content => content.classList.remove('active'));
+    
+    // Tıklananı aktif et
+    if (e && e.target) e.target.classList.add('active');
+    const targetContent = document.getElementById(tabId);
+    if (targetContent) targetContent.classList.add('active');
+}
+
+function skDirectConfirm(mode, subVal) {
+    window.skState.mode = mode;
+    if (mode === 'ozet') {
+        window.skState.ozet = subVal;
+    } else if (mode === 'flashcard') {
+        window.skState.flashcardCount = parseInt(subVal);
+    } else if (mode === 'quiz') {
+        window.skState.quizCount = parseInt(subVal);
+    } else if (mode === 'challenge') {
+        window.skState.challengeDiff = subVal;
+    }
+    
+    document.getElementById('sinavKocuOverlay').classList.remove('active');
+
+    // Paneli senkronize et ve kalıcı yap
+    skpSyncPanelFromState();
+    // Persona'yı akademik_koc'a çek → panel görünür kalır
+    const personaSel = document.getElementById('personaSelect');
+    if (personaSel && personaSel.value !== 'akademik_koc') {
+        personaSel.value = 'akademik_koc';
+    }
+    const sinavPanel = document.getElementById('sinavKocuPanel');
+    if (sinavPanel) sinavPanel.classList.add('active');
+    const dilPanel = document.getElementById('dilKocuPanel');
+    if (dilPanel) dilPanel.classList.remove('active');
+
+    if (window.skState.resolve) {
+        window.skState.resolve(mode);
+        window.skState.resolve = null;
+    }
+}
+
+// ===== SINAV KOÇU PANELİ FONKSİYONLARI =====
+
+// Panel dropdownlarını window.skState'e göre güncelle (modal → panel senkronu)
+function skpSyncPanelFromState() {
+    const modeEl = document.getElementById('skp-mode');
+    if (modeEl && window.skState.mode) {
+        modeEl.value = window.skState.mode;
+    }
+    skpOnModeChange();
+    // Sub seçeneği de ayarla
+    const subEl = document.getElementById('skp-sub-select');
+    if (subEl) {
+        let subVal = '';
+        if (window.skState.mode === 'ozet') subVal = window.skState.ozet || '5dk';
+        else if (window.skState.mode === 'flashcard') subVal = String(window.skState.flashcardCount || 10);
+        else if (window.skState.mode === 'quiz') subVal = String(window.skState.quizCount || 10);
+        else if (window.skState.mode === 'challenge') subVal = window.skState.challengeDiff || 'medium';
+        if (subVal) subEl.value = subVal;
+    }
+}
+
+// Panel dropdownlarını okuyup window.skState'i güncelle (gönderim öncesi)
+function skpSyncStateFromPanel() {
+    const modeEl = document.getElementById('skp-mode');
+    const subEl = document.getElementById('skp-sub-select');
+    const mode = modeEl ? modeEl.value : null;
+    const subVal = subEl ? subEl.value : '';
+    if (!mode) return;
+    window.skState.mode = mode;
+    if (mode === 'ozet') window.skState.ozet = subVal || '5dk';
+    else if (mode === 'flashcard') window.skState.flashcardCount = parseInt(subVal) || 10;
+    else if (mode === 'quiz') window.skState.quizCount = parseInt(subVal) || 10;
+    else if (mode === 'challenge') window.skState.challengeDiff = subVal || 'medium';
+}
+
+function skpBuildStartInstruction() {
+    const modeEl = document.getElementById('skp-mode');
+    const subEl = document.getElementById('skp-sub-select');
+    const mode = window.skState.mode || (modeEl ? modeEl.value : null);
+    const subVal = window.skState.mode === 'ozet' ? window.skState.ozet : (subEl ? subEl.value : '');
+    if (!mode) return null;
+
+    let modeLabel = '';
+    let extra = '';
+    switch (mode) {
+        case 'ozet':
+            modeLabel = 'Hızlı Özet';
+            extra = `Süre: ${subVal || window.skState.ozet || '5dk'}.`;
+            break;
+        case 'flashcard':
+            modeLabel = `Flashcard (${window.skState.flashcardCount || parseInt(subEl?.value) || 10} kart)`;
+            break;
+        case 'quiz':
+            modeLabel = `Quiz (${window.skState.quizCount || parseInt(subEl?.value) || 10} soru)`;
+            break;
+        case 'challenge':
+            modeLabel = `Challenge (${window.skState.challengeDiff || subVal || 'medium'})`;
+            break;
+        case 'ozet':
+            modeLabel = 'Hızlı Özet';
+            extra = `Süre: ${window.skState.ozet || '5dk'}.`;
+            break;
+        case 'profesor_anlatim':
+            modeLabel = 'Profesör Anlatımı';
+            break;
+        case 'sifirdan':
+            modeLabel = 'Sıfırdan Anlatım';
+            break;
+        case 'eli5':
+            modeLabel = 'ELI5';
+            break;
+        case 'hikaye':
+            modeLabel = 'Hikâyeleştirme';
+            break;
+        case 'flashcard':
+            modeLabel = `Flashcard (${window.skState.flashcardCount || 10} kart)`;
+            break;
+        case 'quiz':
+            modeLabel = `Quiz (${window.skState.quizCount || 10} soru)`;
+            break;
+        case 'sonsuz_quiz':
+            modeLabel = 'Sonsuz Quiz';
+            break;
+        case 'sozlu_sinav':
+            modeLabel = 'Sözlü Sınav';
+            break;
+        case 'sokratik':
+            modeLabel = 'Sokratik Mod';
+            break;
+        case 'eksik_analizi':
+            modeLabel = 'Eksik Analizi';
+            break;
+        case 'challenge':
+            modeLabel = `Challenge (${window.skState.challengeDiff || 'medium'})`;
+            break;
+        default:
+            modeLabel = 'Bilinmeyen Mod';
+    }
+
+    return `Bu PDF'yi seçili Sınav Koçu moduna göre işle. Mod: ${modeLabel}. ${extra}`.trim();
+}
+
+// Mod değişince dinamik alt seçenek göster
+function skpOnModeChange() {
+    const modeEl = document.getElementById('skp-mode');
+    const labelEl = document.getElementById('skp-sub-label');
+    const subEl = document.getElementById('skp-sub-select');
+    if (!modeEl || !labelEl || !subEl) return;
+    const mode = modeEl.value;
+
+    const subConfigs = {
+        ozet: {
+            label: '⏱️ Süre:',
+            options: [
+                { value: '30s', text: '⚡ 30 sn' },
+                { value: '1dk', text: '📌 1 dk' },
+                { value: '2dk', text: '📖 2 dk' },
+                { value: '5dk', text: '🎯 5 dk', selected: true },
+                { value: '10dk', text: '📚 10 dk' }
+            ]
+        },
+        flashcard: {
+            label: '🃏 Kart:',
+            options: [
+                { value: '10', text: '10 Kart', selected: true },
+                { value: '20', text: '20 Kart' },
+                { value: '30', text: '30 Kart' },
+                { value: '50', text: '50 Kart' }
+            ]
+        },
+        quiz: {
+            label: '📝 Soru:',
+            options: [
+                { value: '5', text: '5 Soru' },
+                { value: '10', text: '10 Soru', selected: true },
+                { value: '15', text: '15 Soru' },
+                { value: '20', text: '20 Soru' },
+                { value: '50', text: '50 Soru' }
+            ]
+        },
+        challenge: {
+            label: '🧩 Zorluk:',
+            options: [
+                { value: 'easy', text: '🌱 Kolay' },
+                { value: 'medium', text: '🔥 Orta', selected: true },
+                { value: 'hard', text: '🚀 Zor' },
+                { value: 'professor', text: '🎓 Hoca' },
+                { value: 'interview', text: '💻 Mülakat' }
+            ]
+        }
+    };
+
+    const cfg = subConfigs[mode];
+    if (cfg) {
+        labelEl.textContent = cfg.label;
+        labelEl.style.display = 'flex';
+        subEl.style.display = '';
+        subEl.innerHTML = cfg.options.map(o =>
+            `<option value="${o.value}"${o.selected ? ' selected' : ''}>${o.text}</option>`
+        ).join('');
+    } else {
+        labelEl.style.display = 'none';
+        subEl.style.display = 'none';
+        subEl.innerHTML = '';
+    }
+}
+
+// PDF yüklü mü kontrolü — durum yazısını güncelle
+function skpUpdateDocStatus() {
+    const el = document.getElementById('skp-doc-status');
+    if (!el) return;
+    const hasDoc = !!(window.activeDocText || window.selectedDocumentText);
+    const docName = window.activeDocName || window.selectedDocumentName || '';
+    if (hasDoc) {
+        el.style.display = 'none';
+    } else {
+        el.textContent = '📂 PDF yüklü değil';
+        el.style.display = 'inline';
+    }
+}
+
+// ▶ Başlat butonuna tıklanınca
+function skpTriggerGo() {
+    const personaSel = document.getElementById('personaSelect');
+    if (personaSel && personaSel.value !== 'akademik_koc') {
+        personaSel.value = 'akademik_koc';
+    }
+    skpSyncStateFromPanel();
+
+    const userInputEl = document.getElementById('userInput');
+    if (!userInputEl) return;
+
+    const hasDocument = !!(window.selectedDocumentText || window.activeDocText);
+    if (!hasDocument) {
+        userInputEl.placeholder = "Önce bir PDF yükle veya normal bir mesaj yaz.";
+        userInputEl.focus();
+        return;
+    }
+
+    const startInstruction = skpBuildStartInstruction();
+    if (!startInstruction) {
+        userInputEl.placeholder = "Sınav Koçu modunu seçip yeniden başlat.";
+        userInputEl.focus();
+        return;
+    }
+
+    const currentText = userInputEl.value.trim();
+    if (currentText) {
+        userInputEl.value = `${currentText}\n\n${startInstruction}`;
+    } else {
+        userInputEl.value = startInstruction;
+    }
+
+    window.isExamMode = true;
+    if (typeof skpUpdateDocStatus === 'function') skpUpdateDocStatus();
+    sendMessage();
+}
+
+function buildExamCoachSuffix() {
+    let mode = window.skState.mode;
+    if (!mode) return '';
+
+    // Geçmiş Soru/Konu tekrarlarını önlemek için not oluştur
+    let histNote = '';
+    if (window.skQuizHistory && window.skQuizHistory.length > 0) {
+        let items = window.skQuizHistory.map(h => `- Konu/Açıklama: "${h.topic}", Soru Tipi: "${h.questionType}", Zorluk: "${h.difficulty}"`).join('\n');
+        histNote = `\n\n⚠️ ÖNEMLİ (Tekrar Önleme): Bu belge için daha önce şu soru/konu setleri çalışılmıştır:\n${items}\nLütfen bu konuların, soru tarzlarının ve zorluk derecelerinin dışına çık. Tamamen özgün, farklı alt başlıklara değinen sorular ve kavramlar üret!`;
+    }
+
+    if (mode === 'ozet') {
+        let t = window.skState.ozet || '5dk';
+        let configs = {
+            '30s': { label: '30 Saniyelik', desc: 'sınav kapısında son okumayla tüm konuya hızlıca hâkim olmak için', len: '3-4 cümle', style: 'son derece özlü, ezbere kolay, madde işareti yok' },
+            '1dk': { label: '1 Dakikalık', desc: 'temel kavramları hızlıca taramak için', len: '2-3 madde veya kısa paragraf', style: 'net, madde işaretli' },
+            '2dk': { label: '2 Dakikalık', desc: 'ana başlıkları ve önemli örnekleri kavramak için', len: '4-6 madde', style: 'başlıklı, somut örnekler ekle' },
+            '5dk': { label: '5 Dakikalık', desc: 'ağırlıklı konuları ve detayları anlamak için', len: '8-12 madde', style: 'başlıklı, alt madde de kullan, önemli terimleri bold yaz' },
+            '10dk': { label: '10 Dakikalık', desc: 'kapsamlı çalışma rehberi olarak', len: 'kapsamlı bölümler halinde', style: 'başlıklı bölümler, detaylı açıklamalar, örnekler, önemli formüller/kurallar' }
+        };
+        let c = configs[t];
+        return `\n\n[🎓 SINAV KOÇU — ${c.label} ÖZET]\nBu belgeyi ${c.desc} özetle. Uzunluk: ${c.len}. Stil: ${c.style}.\nSon satırda şunu ekle: "📌 Bu özet ${c.label.toLowerCase()} okuma için optimize edilmiştir."`;
+    }
+
+    if (mode === 'profesor_anlatim') {
+        return `\n\n[👨‍🏫 SINAV KOÇU — PROFESÖR ANLATIMI]\nBu belge içeriğini kıdemli bir profesör edasıyla anlat. Konunun en kritik noktalarını, akademik detaylarını bozmadan ama öğrencinin kolayca anlayabileceği formda açıkla. Önemli akademik kavramları **kalın yazı (bold)** olarak vurgula ve sonuna 'Sormak istediğin bir detay var mı?' şeklinde bitir.`;
+    }
+
+    if (mode === 'sifirdan') {
+        return `\n\n[👶 SINAV KOÇU — SIFIRDAN ANLATIM]\nBu belgedeki konuyu, sanki hayatında ilk kez duyuyormuşum gibi en baştan ve en yalın haliyle anlat. Günlük hayattan benzetmeler (analojiler) ve örnekler kullan. Anlatımın sonuna 3 maddelik kısa bir 'Öğrenme Alıştırması (Mini Egzersiz)' ekle ve benden bunu yapmamı iste.`;
+    }
+
+    if (mode === 'eli5') {
+        return `\n\n[🧠 SINAV KOÇU — ÇOCUK ANLATIMI (ELI5)]\nBu belgeyi 5 yaşındaki bir çocuğa anlatır gibi son derece basit, eğlenceli ve anlaşılır bir dille açıkla. Karmaşık teknik terimler yerine oyuncaklar, hayvanlar veya gündelik basit olaylar üzerinden analojiler kur.`;
+    }
+
+    if (mode === 'hikaye') {
+        return `\n\n[📖 SINAV KOÇU — HİKÂYELEŞTİRME MODU]\nBu belgedeki teorik ve sıkıcı olabilecek tüm bilgileri, akılda kalıcı, macera dolu veya eğlenceli bir hikaye kurgusuna dönüştürerek anlat. Hikayedeki karakterler veya olaylar belgedeki teknik kavramları (örneğin Entity, Normalization, Database vs.) temsil etsin veya simgelesin.`;
+    }
+
+    if (mode === 'flashcard') {
+        let count = window.skState.flashcardCount || 10;
+        return `\n\n[🃏 SINAV KOÇU — FLASHCARD MODU]\nBu belgedeki en önemli ${count} kavramı flashcard formatında oluştur.\n\nHer kart için kesinlikle şu formatı kullan:\n\n---\n**[KART X / ${count}]**\n- 🏷️ **Terim:** (İngilizce teknik terim)\n- 📖 **İngilizce Açıklama:** (1-2 cümle, sade İngilizce)\n- 🇹🇷 **Türkçe Karşılık:** (Türkçe adı)\n- 💡 **Türkçe Açıklama:** (kısa, anlaşılır Türkçe)\n---\n\nEn önemli kavramlardan başla. Son kart bittikten sonra şunu ekle:\n"✅ ${count} flashcard hazır! 'Bana bu kartları sınav formatında sor' yazarsan seni test edebilirim."`;
+    }
+
+    if (mode === 'quiz') {
+        let count = window.skState.quizCount || 10;
+        
+        let histItem = {
+            topic: `Çoktan seçmeli genel quiz (${count} soru)`,
+            questionType: "multiple-choice",
+            difficulty: "mixed",
+            timestamp: Date.now()
+        };
+        window.skQuizHistory.push(histItem);
+        if (window.skQuizHistory.length > 10) window.skQuizHistory.shift();
+
+        return `\n\n[📝 SINAV KOÇU — QUIZ MODU — ${count} SORU]${histNote}\n\nBu belgeye dayanarak ${count} adet özgün çoktan seçmeli soru hazırla. Sorular farklı zorluk seviyelerinde olsun (kolay, orta, zor).\n\nHer soru için format:\n**Soru X:** [Soru metni]\nA) ...\nB) ...\nC) ...\nD) ...\n\nTüm sorular bittikten sonra:\n## ✅ CEVAP ANAHTARI\nSoru 1: [Harf] — [Kısa açıklama neden doğru]\n...\n\nEn sona şunu ekle: "🔁 Farklı sorular için 'Yeni Quiz' yaz. Sözlü sınav için 'Sokratik mod başlat' yaz."`;
+    }
+
+    if (mode === 'sonsuz_quiz') {
+        return `\n\n[🔁 SINAV KOÇU — SONSUZ QUIZ MODU]\nBu belgeyle ilgili interaktif bir test başlatıyoruz. Kurallar:\n1. Bana her seferinde sadece TEK bir çoktan seçmeli soru sor.\n2. Ben cevabı (A, B, C veya D) yazana kadar yeni soru sorma.\n3. Ben cevap verince: Doğruluğunu kontrol et. Yanlışsa mini bir anlatım ile neden yanlış olduğunu ve doğrusunu açıkla.\n4. Yanlış yaptığım konuları hafızanda tut ve birkaç soru sonra benzer konudan tekrar soru sor.\n5. Ben 'Durdur' veya 'Bitir' diyene kadar bu döngüyü sürdür.\n\nHadi ilk soruyla hemen başla!`;
+    }
+
+    if (mode === 'sozlu_sinav') {
+        return `\n\n[🎤 SINAV KOÇU — SÖZLÜ / SESLİ SINAV]\nBu belge üzerinden benimle bir sözlü sınav gerçekleştir. Kurallar:\n1. Rolün: Deneyimli ve titiz bir ders hocası. Sesli yanıtlara uygun kısa, net sorular soracaksın.\n2. Bana her seferinde sadece TEK bir açık uçlu soru yönelt.\n3. Ben yanıtımı verene kadar bekle.\n4. Verdiğim yanıtı değerlendir: Eksik veya yanlış bir yer varsa kibarca düzelt, hoca gözüyle ekleme yap (örn: 'Güzel ama Primary Key detayını unuttun').\n5. Hemen ardından sıradaki soruya geç.\n\nHadi hocam, ilk sorunuzla başlayın!`;
+    }
+
+    if (mode === 'sokratik') {
+        return `\n\n[🔁 SINAV KOÇU — SOKRATİK ÖĞRENME MODU]\nBu belge içeriğiyle ilgili beni eğiteceksin. Ancak bana doğrudan cevapları verme! Kurallar:\n1. Bana konunun mantığını kavratacak sorular sor.\n2. Her seferinde sadece TEK soru sor ve cevabımı bekle.\n3. Verdiğim cevaba göre beni yönlendir. Doğru yoldaysam bir sonraki aşamaya geçmek için takip sorusu sor. Yanlış yoldaysam ipucu vererek beni doğru düşünmeye sevk et.\n4. Örnek: 'Entity nedir?' sorusuna ben cevap verince 'Peki Student neden bir entity olur da student name neden attribute olur?' gibi tümdengelim sorularıyla beni konunun içine sok.\n\nHadi ilk sorunla başla!`;
+    }
+
+    if (mode === 'eksik_analizi') {
+        let histItem = {
+            topic: "Eksik Analizi Tanı Testi",
+            questionType: "diagnostic-test",
+            difficulty: "mixed",
+            timestamp: Date.now()
+        };
+        window.skQuizHistory.push(histItem);
+        if (window.skQuizHistory.length > 10) window.skQuizHistory.shift();
+
+        return `\n\n[🛠️ SINAV KOÇU — EKSİK ANALİZİ (TANI TESTİ)]\nBu belge üzerinden benim eksiklerimi tespit etmek için 10 adet kısa soruluk bir tanı testi hazırla.\n\nKurallar:\n1. 10 soruyu peş peşe listele (kısa cevaplı veya boşluk doldurma tarzında olsunlar).\n2. Soruların altına benden cevaplarımı yazmamı iste.\n3. Ben cevaplarımı girince, her soru alt konusunu (Örn: Normalization, Normal Formlar, Primary Key, Weak Entity vs.) analiz et ve bana yüzdelik bir tablo çıkart:\n   - Konu A: %95 Başarı\n   - Konu B: %30 Başarı (Eksik Yakalandı!)\n4. Bu tablonun ardından, bana sadece en zayıf kaldığım (%50 altı) konuları çalıştırmak üzere özel bir ders planı öner.\n\nHadi soruları listele!`;
+    }
+
+    if (mode === 'challenge') {
+        let diff = window.skState.challengeDiff || 'medium';
+        let diffLabels = { easy: 'Kolay', medium: 'Orta', hard: 'Zor', professor: 'Hoca Seviyesi', interview: 'Google Mülakat Seviyesi' };
+        let diffLabel = diffLabels[diff];
+        
+        let histItem = {
+            topic: `Challenge Modu (${diffLabel})`,
+            questionType: "challenge-duel",
+            difficulty: diff,
+            timestamp: Date.now()
+        };
+        window.skQuizHistory.push(histItem);
+        if (window.skQuizHistory.length > 10) window.skQuizHistory.shift();
+
+        return `\n\n[🧩 SINAV KOÇU — CHALLENGE MODU (${diffLabel.toUpperCase()})]${histNote}\n\nBu belgeden benim için ${diffLabel} zorluk derecesinde son derece zorlayıcı, zeka gerektiren 5 adet soru hazırla. Sorular klasik veya çoktan seçmeli olabilir. Formatı serbest bırakıyorum ancak seçtiğim zorluk derecesinin hakkını sonuna kadar ver! En sona cevap anahtarını ve detaylı çözümlerini ekle.`;
+    }
+
+    if (mode === 'munazara') {
+        return `\n\n[🗣️ SINAV KOÇU — MÜNAZARA MODU]\nBu belgedeki tartışmalı veya farklı yorumlanabilecek bir konuyu ele alalım. Kurallar:\n1. Sen belgedeki bir görüşün/tezin tam karşıt tarafını (şeytanın avukatını) savunacaksın.\n2. Bana tezini sun ve beni kendi tezimi savunmaya, kanıt göstermeye zorla.\n3. Her mesajda sadece kendi karşı argümanını sunup sözü bana bırak.\n4. Bu fikir düellosu sayesinde benim konuyu çok yönlü kavramamı sağla.\n\nHadi münazara konusunu ve senin ilk karşı tezini sunarak tartışmayı başlat!`;
+    }
+
+    if (mode === 'hoca_tahmin') {
+        return `\n\n[🎯 SINAV KOÇU — HOCA NE SORAR? TAHMİNİ]\nBu belgeyi hazırlayan akademisyenin gözünden bir analiz yap:\n\n## 📝 1. Klasik Soru Gelebilecek Yerler\nBelgeden 3 adet klasik (açık uçlu) soru tahmin et ve hocanın hangi anahtar kelimeleri (keywords) cevap kâğıdında arayacağını yaz.\n\n## 📊 2. Test Sorusuna Uygun Püf Noktaları\nÇoktan seçmeli sınavlarda çeldirici olarak kullanılabilecek, ezberlenmesi gereken 3-4 kritik ayrımı veya kuralı listele.\n\n## 🔑 3. Mutlaka Ezberlenecek Kavramlar Listesi\nSınavda çıkma olasılığı %90+ olan terimleri **bold** olarak listele ve tek cümleyle açıkla.`;
+    }
+
+    return '';
+}
 </script>
 
 </body>
