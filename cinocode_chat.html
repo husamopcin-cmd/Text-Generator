@@ -56,10 +56,13 @@
         .artifact-dl-btn {
             background: #313244; color: #cdd6f4; border: none; padding: 4px 8px;
             border-radius: 6px; font-size: 11px; cursor: pointer; align-self: flex-start;
+            pointer-events: auto;
+            position: relative;
+            z-index: 10;
         }
         .artifact-dl-btn:hover { background: #89b4fa; color: #11111b; }
-        .artifact-card-actions { display:flex; flex-wrap:wrap; gap:8px; justify-content:flex-start; margin-top:10px; }
-        .artifact-card-actions button { flex:1 1 auto; min-width: 90px; }
+        .artifact-card-actions { display:flex; flex-wrap:wrap; gap:8px; justify-content:flex-start; margin-top:10px; position: relative; z-index: 5; }
+        .artifact-card-actions button { flex:1 1 auto; min-width: 90px; pointer-events: auto; }
         
         @media (max-width: 768px) {
             .artifact-card-actions {
@@ -2175,6 +2178,49 @@
     document.addEventListener('click', () => {
         document.querySelectorAll('.chat-action-menu').forEach(menu => menu.classList.remove('active'));
     });
+
+    // Video butonları için event delegation
+    document.addEventListener('click', (e) => {
+        const button = e.target.closest('[data-video-action]');
+        if (!button) return;
+
+        const action = button.getAttribute('data-video-action');
+        const prompt = button.getAttribute('data-video-prompt');
+        const containerId = button.getAttribute('data-video-container');
+        const videoUrl = button.getAttribute('data-video-url');
+
+        switch(action) {
+            case 'regenerate':
+                if (prompt && containerId) {
+                    window.regenerateVideo(prompt, containerId);
+                } else {
+                    alert('Bu video için prompt bulunamadı.');
+                }
+                break;
+            case 'edit':
+                if (prompt) {
+                    window.editVideoPrompt(prompt);
+                }
+                break;
+            case 'delete':
+                if (containerId) {
+                    window.deleteVideoCard(containerId);
+                }
+                break;
+            case 'copy':
+                if (prompt) {
+                    window.copyPromptToClipboard(prompt);
+                }
+                break;
+            case 'download':
+                if (videoUrl) {
+                    window.downloadVideo(videoUrl);
+                } else {
+                    alert('Video indirilemedi.');
+                }
+                break;
+        }
+    });
     function pinChat(id, event) {
         event.stopPropagation();
         sessions[id].isPinned = !sessions[id].isPinned;
@@ -2762,11 +2808,11 @@
                     <div style="color: #a6e3a1; font-size: 14px; margin-bottom: 10px;">✅ AI Video başarıyla oluşturuldu! (${images.length} sahne, ~${videoDurationSec} saniye)</div>
                     <video controls autoplay style="max-width:100%; border-radius: 8px; border: 2px solid #89b4fa; box-shadow: 0 4px 12px rgba(0,0,0,0.5);" src="${videoUrl}"></video>
                     <div class="artifact-card-actions" style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 12px;">
-                        <button class="artifact-dl-btn" onclick="downloadVideo('${videoUrl}', 'CinoCode_Video.webm')">⬇️ İndir</button>
-                        <button class="artifact-dl-btn" style="background:#cba6f7; color:#11111b;" onclick="regenerateVideo('${prompt}', '${containerId}')">🔁 Yeniden Oluştur</button>
-                        <button class="artifact-dl-btn" style="background:#89b4fa; color:#11111b;" onclick="editVideoPrompt('${prompt}')">✏️ Düzenle</button>
-                        <button class="artifact-dl-btn" style="background:#f38ba8; color:#11111b;" onclick="deleteVideoCard('${containerId}')">🗑️ Sil</button>
-                        <button class="artifact-dl-btn" style="background:#a6e3a1; color:#11111b;" onclick="copyPromptToClipboard('${prompt}')">📋 Promptu Kopyala</button>
+                        <button class="artifact-dl-btn" data-video-action="download" data-video-url="${videoUrl}">⬇️ İndir</button>
+                        <button class="artifact-dl-btn" style="background:#cba6f7; color:#11111b;" data-video-action="regenerate" data-video-prompt="${prompt}" data-video-container="${containerId}">🔁 Yeniden Oluştur</button>
+                        <button class="artifact-dl-btn" style="background:#89b4fa; color:#11111b;" data-video-action="edit" data-video-prompt="${prompt}">✏️ Düzenle</button>
+                        <button class="artifact-dl-btn" style="background:#f38ba8; color:#11111b;" data-video-action="delete" data-video-container="${containerId}">🗑️ Sil</button>
+                        <button class="artifact-dl-btn" style="background:#a6e3a1; color:#11111b;" data-video-action="copy" data-video-prompt="${prompt}">📋 Promptu Kopyala</button>
                     </div>
                 </div>
             `;
@@ -2887,6 +2933,13 @@
             alert("❌ Kopyalama başarısız");
         });
     }
+
+    // Global scope'a ata
+    window.downloadVideo = downloadVideo;
+    window.regenerateVideo = regenerateVideo;
+    window.editVideoPrompt = editVideoPrompt;
+    window.deleteVideoCard = deleteVideoCard;
+    window.copyPromptToClipboard = copyPromptToClipboard;
 
     function enhanceVideoPrompt(basePrompt, quality, isLongVideo) {
         let enhanced = basePrompt;
@@ -3724,8 +3777,15 @@
 
             let icon = item.type === 'image' ? '🖼️' : (item.type === 'video' ? '🎬' : '💻');
             let action = item.type === 'image' ? `downloadImage('${item.content}', 'CinoCode_Gorsel.jpg')` : `openArtifactOverlay('${item.content}')`;
-            if (item.type === 'video') action = `downloadVideo('${item.content}', 'CinoCode_Video.webm')`;
             let btnText = item.type === 'image' ? '📥 İndir' : (item.type === 'video' ? '📥 İndir' : '▶️ Önizle');
+            let dataAction = '';
+            let dataUrl = '';
+            
+            if (item.type === 'video') {
+                dataAction = 'data-video-action="download"';
+                dataUrl = `data-video-url="${item.content}"`;
+                action = ''; // Video için onclick kullanma, event delegation kullan
+            }
 
             let previewHtml = '';
             if(item.type === 'image') {
@@ -3739,9 +3799,9 @@
             let extraButtons = '';
             if(item.type === 'video' && item.prompt) {
                 extraButtons = `
-                    <button class="artifact-dl-btn" style="background:#cba6f7; color:#11111b; padding:8px; border-radius:6px; font-size:11px;" onclick="regenerateVideo('${item.prompt}', 'archive-${item.id}')" title="Yeniden Oluştur">🔁</button>
-                    <button class="artifact-dl-btn" style="background:#89b4fa; color:#11111b; padding:8px; border-radius:6px; font-size:11px;" onclick="editVideoPrompt('${item.prompt}')" title="Düzenle">✏️</button>
-                    <button class="artifact-dl-btn" style="background:#a6e3a1; color:#11111b; padding:8px; border-radius:6px; font-size:11px;" onclick="copyPromptToClipboard('${item.prompt}')" title="Promptu Kopyala">📋</button>
+                    <button class="artifact-dl-btn" style="background:#cba6f7; color:#11111b; padding:8px; border-radius:6px; font-size:11px;" data-video-action="regenerate" data-video-prompt="${item.prompt}" data-video-container="archive-${item.id}" title="Yeniden Oluştur">🔁</button>
+                    <button class="artifact-dl-btn" style="background:#89b4fa; color:#11111b; padding:8px; border-radius:6px; font-size:11px;" data-video-action="edit" data-video-prompt="${item.prompt}" title="Düzenle">✏️</button>
+                    <button class="artifact-dl-btn" style="background:#a6e3a1; color:#11111b; padding:8px; border-radius:6px; font-size:11px;" data-video-action="copy" data-video-prompt="${item.prompt}" title="Promptu Kopyala">📋</button>
                 `;
             }
 
@@ -3750,7 +3810,7 @@
                     ${previewHtml}
                     <div class="artifact-card-title" style="font-size:13px; margin-bottom:10px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${icon} <span title="${item.title}">${item.title}</span></div>
                     <div style="display:flex; gap:5px; margin-top:auto; flex-wrap:wrap;">
-                        <button class="artifact-dl-btn" style="flex:1; text-align:center; padding:8px; font-weight:bold;" onclick="${action}">${btnText}</button>
+                        <button class="artifact-dl-btn" style="flex:1; text-align:center; padding:8px; font-weight:bold;" ${dataAction} ${dataUrl} ${action ? `onclick="${action}"` : ''}>${btnText}</button>
                         ${extraButtons}
                         <button class="artifact-dl-btn" style="background:#f38ba8; color:#11111b; padding:8px; border-radius:6px;" onclick="deleteFromLibrary('${item.id}')" title="Sil">🗑️</button>
                     </div>
