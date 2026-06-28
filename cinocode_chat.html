@@ -204,6 +204,8 @@
             flex: 1; display: flex; flex-direction: column; align-items: center;
             justify-content: center; padding: 40px; text-align: center;
             background: transparent;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
         }
         .welcome-logo { font-size: 56px; margin-bottom: 10px; animation: float 3s ease-in-out infinite; }
         @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0px); } }
@@ -710,6 +712,10 @@
             }
             .main-chat { width: 100% !important; padding: 0 !important; min-height: calc(100dvh - 160px); }
             .messages { padding-bottom: calc(140px + env(safe-area-inset-bottom, 0px)); }
+            .welcome-screen { padding-bottom: calc(180px + env(safe-area-inset-bottom, 0px)); overflow-y: auto; -webkit-overflow-scrolling: touch; justify-content: flex-start; padding-top: 24px; }
+            .welcome-screen h2 { margin-bottom: 18px; font-size: 24px; }
+            .welcome-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; justify-items: center; width: 100%; max-width: 100%; }
+            .welcome-btn { width: 100%; min-width: 0; padding: 10px 14px; font-size: 13px; }
             .header { flex-wrap: wrap; gap: 8px; align-items: flex-start; }
             .header-controls { position: relative; flex-wrap: wrap; gap: 8px; align-items: center; width: 100%; }
             .header-controls select { max-width: 100%; min-width: 100px; }
