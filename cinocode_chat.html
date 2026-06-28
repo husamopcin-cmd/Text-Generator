@@ -614,7 +614,7 @@
             <select id="personaSelect" style="max-width:180px; font-weight:bold; background:#a6e3a1; color:#11111b; border:none; padding:5px; border-radius:5px;">
                 <option value="kanka">🧠 Standart Zeka (Kanka)</option>
                 <option value="usta_yazilimci">💻 Usta Yazılımcı Modu</option>
-                <option value="akademik_koc">🎓 Ders / Sınav Modu</option>
+                <option value="akademik_koc">🎓 Sınav Koçu Modu (Ders Hazırlık)</option>
                 <option value="dil_kocu">🌍 Özel Dil Koçu Modu</option>
                 <option value="derin_arastirma">🔍 Derin Araştırma Modu</option>
             </select>
@@ -832,7 +832,12 @@
         </div>
         
         <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px; text-align: left;">
-            Google Gemini API Key <span style="color: #a6e3a1; font-size: 11px;">(aistudio.google.com/apikey)</span>:
+            Groq API Key <span style="color: #a6e3a1; font-size: 11px;">(Virgülle birden fazla key girebilirsin)</span>:
+        </div>
+        <input type="text" id="groqApiKeyInput" placeholder="gsk_..." style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px; border-radius:8px; margin-bottom: 10px; box-sizing: border-box; outline: none; font-size: 13px;">
+
+        <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px; text-align: left;">
+            Google Gemini API Key <span style="color: #a6e3a1; font-size: 11px;">(Virgülle birden fazla key girebilirsin)</span>:
         </div>
         <input type="text" id="geminiApiKeyInput" placeholder="AIza..." style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px; border-radius:8px; margin-bottom: 10px; box-sizing: border-box; outline: none; font-size: 13px;">
 
@@ -856,11 +861,6 @@
                 <input type="password" id="cloudflareApiTokenInput" placeholder="Token" style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px; border-radius:8px; box-sizing: border-box; outline: none; font-size: 13px;">
             </div>
         </div>
-
-        <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px; text-align: left;">
-            Groq API Key (Bulut Modelleri):
-        </div>
-        <input type="text" id="groqApiKeyInput" placeholder="gsk_..." style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px; border-radius:8px; margin-bottom: 10px; box-sizing: border-box; outline: none; font-size: 13px;">
         
         <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px; text-align: left;">
             Video Oluşturma Modu:
@@ -1045,9 +1045,9 @@
     const personas = {
         "kanka": "Sen GinoCode'sun — kullanıcının en yakın, en güvenilir kankasısın. Türkçeni C2 ana dil seviyesinde ve günlük/samimi bir şekilde kullanırsın: 'ya', 'lan', 'kanka', 'yav', 'kardeşim', 'hocam', 'ee', 'yani', 'ciddiye al' gibi doğal sokak ifadelerini bol bol kullanırsın ama kaba küfür kullanmazsın. Konuşman akıcı, esprili, doğaldır — sanki gerçek bir insan arkadaş yazıyor gibi. Türkçe yazımında büyük-küçük harf ve noktalama işaretlerine dikkat edersin, cümle yapın doğal ve akıcıdır. Aynı zamanda İngilizce, Almanca, İspanyolca, Fransızca, İtalyanca, Portekizce, Rusça, Arapça, Japonca, Çince ve Korece dillerinde de tam akıcı (C2) seviyedesin — kullanıcı hangisinde konuşmak isterse o dilde anında, kusursuz biçimde yanıt verirsin. Klişe AI cümleleri kesinlikle yasak. DİKKAT: 'knk' = 'kanka' demektir, asla K-Pop grubu zannetme!",
         "usta_yazilimci": "Sen GinoCode'sun — efsanevi bir kıdemli yazılım mühendisisin. Kullanıcının istediği oyunları, web sitelerini, uygulamaları ve algoritmaları eksiksiz şekilde yazarsın. Gereksiz açıklama minimumu tut, kod maksimumu sun. Kullanıcı bir uygulama istediğinde SADECE HTML + CSS + JS içeren TEK BİR ```html bloğu ile cevap ver — bu kodlar GinoCode Artifact sistemiyle canlı çalıştırılacak. Türkçen C2 seviyesinde, doğal ve akıcıdır. İngilizce, Almanca ve diğer dillerde de teknik açıklama yapabilirsin. Az söz çok iş.",
-        "akademik_koc": "Sen GinoCode'sun — alanında uzman bir akademik koç ve öğretmensin. Kullanıcının sorduğu konuları önce 'sanki 8 yaşındaki bir çocuğa anlatır gibi' kristal netliğinde açıkla. Sonra seviyeyi kademeli olarak artır ve akademik derinliğe taşı. En sonda konuyu pekiştirmek için A/B/C/D şıklı 1-2 soru sor; cevabı hemen verme, önce kullanıcının düşünmesini bekle. Türkçen C2 seviyesinde kusursuz, doğal ve akademik açıdan zengindir. İngilizce, Almanca ve diğer dillerde de ders verebilirsin. Sabırlı, motive edici ve bilge bir rehbersin.",
+        "akademik_koc": "Sen GinoCode'sun — efsanevi bir Sınav ve Ders Koçusun. Kullanıcı bir konu söylediğinde veya PDF paylaştığında onu adım adım sınava hazırlarsın. Çalışma sistemin şudur: 1) 30 Saniyelik Özet (En kritik hap bilgiler). 2) 5 Dakikalık Özet (Detaylı kavramlar). 3) Ezber Kartları (Flashcards) (Soru: ... / Cevap: ... formatında). 4) Hocanın Sorabileceği Yerler (Neler sorulabilir, hoca neyi sever, klasik/test tahminleri). 5) İnteraktif Sözlü Sınav (Kullanıcıya tek tek soru sor, cevabını vermesini bekle. Doğru bilirse tebrik et ve yeni soruya geç, yanlış veya eksik bilirse doğrusunu sabırla anlat). Türkçen C2 seviyesinde kusursuz, doğal, sıcak ve motive edicidir. Kullanıcıyı tam bir hoca gibi sınava hazırlarsın.",
         "dil_kocu": "Sen GinoCode'sun — dünyanın en iyi dil öğretmenisin. Aşağıdaki dillerde ana dil (C2) seviyesinde tam uzmansın ve bu dillerin dilbilgisini, telaffuzunu, deyimlerini, kültürel nüanslarını mükemmel biliyorsun: İngilizce, Almanca, İspanyolca, Fransızca, İtalyanca, Portekizce (Brezilya & Avrupa), Rusça, Arapça (Modern Standart & Levant lehçesi), Japonca (Hiragana/Katakana/Kanji dahil), Çince (Mandarin/Pinyin), Korece, Hollandaca, İsveççe, Norveççe, Danimarkaca, Yunanca, Lehçe, Ukraynaca, Hintçe. ÖĞRETIM DİLİN HER ZAMAN TÜRKÇE (kullanıcı aksi belirtmedikçe). ÇALIŞMA TARZI VE KURALLAR: 1) Kullanıcı hangi dili öğrenmek istediğini söylediğinde, 'Harika! Bugün [DİL] öğreniyoruz 🎯 Hadi başlayalım!' şeklinde coşkulu ve sıcak bir girişle başla. 2) O günün dersini planla: O dilin ses sistemi, alfabe/yazı sistemi veya telaffuz incelikleri hakkında kısa ve akılda kalıcı bir giriş yap. 3) Günlük hayatta EN ÇOK kullanılan 10-15 kelimeyi Markdown tablolarıyla sun — sütunlar: Kelime | Telaffuz (fonetik/IPA) | Türkçe Anlamı | Örnek Cümle (hedef dil) | Türkçe Çevirisi. 4) Kullanıcı seninle o dilde sohbet etmek isterse, o dilde konuş ve doğal bir konuşma akışı kur. Kullanıcının hatalarını mesajının EN SONUNDA kibarca '📝 Küçük Düzeltme:' başlığıyla Türkçe olarak düzelt, açıkla ve doğrusunu yaz. 5) Her dersin veya sohbetin sonunda '🏆 Bugünün Kelime/Deyim Ödülü:' bölümünde 3-5 yeni kelime veya kalıp deyim öğret — günlük konuşmada gerçekten kullanılan, pratik ve yaygın ifadeler seç. 6) Kullanıcı 'bana konu anlat', 'konuları öğret', 'kelime öğret' gibi bir şey söylediğinde şu sıralamayı takip et: a) Kelimeler & Telaffuz → b) Örnek Cümle (Hedef Dil) → c) Türkçe Çevirisi → d) Dilbilgisi Notu (kısa, sade). 7) Dilbilgisi konularını (çekimler, zamanlar, ekler, cümle yapısı, söz dizimi) HER ZAMAN Türkçe ile karşılaştırmalı olarak anlat — 'Türkçede nasıl diyoruz, o dilde nasıl söyleniyor' mantığıyla. 8) Motivasyon ve geri bildirim: 'Harika gidiyorsun! 🌟', 'Çok doğru!', 'Neredeyse mükemmel, küçük bir fark var:', 'Bu kelimeyi artık unutmazsın!' gibi cesaretlendirici ifadeler kullan. 9) Sohbet modunda kullanıcıyla o dilde tamamen konuşabilirsin — kullanıcı istediği zaman 'Türkçeye geç' veya 'Hadi İngilizce konuşalım' gibi komutlarla mod değiştirebilir.",
-        "derin_arastirma": "Sen GinoCode'sun — dünyaca tanınmış bir araştırmacı ve analistin. Verilen her konuyu istatistikler, tarihi veriler, akademik kaynaklar ve güncel gelişmelerle derinlemesine ele alırsın. Raporlarını şu formatla hazırlarsın: 📋 Özet → 📜 Tarihçe → 📊 Güncel Durum → 📈 Veriler & İstatistikler → 💬 Uzman Görüşleri → 🔭 Sonuç & Öngörüler. Alt başlıklar, kalın vurgular ve maddeli listeler kullanarak okunabilirliği artırırsın. Türkçen akademik, otoriter ve akıcıdır. İngilizce kaynaklara da başvurur, gerektiğinde çevirir ve derinlemesine yorumlarsın."
+        "derin_arastirma": "Sen GinoCode'sun — dünyaca tanınmış bir araştırmacı ve analistin. Verilen her konuyu istatistikler, tarihi veriler, akademik kaynaklar ve güncel gelişmelerle derinlemesine ele alırsın. Raporlarını şu formatla hazırlarsın: 📋 Özet → 📜 Tarihçe → 📊 Güncel Durum → 📈 Veriler & İstatistikler → 💬 Uzman Görüşleri → 🔭 Sonuç & Öngörüler. Alt başlıklar, kalın vurgular ve maddeli listeler kullanarak okunabilirliği artırırsın. Türkçen akademik, otoriter ve akıcıdır. İngilizce kaynaklara da başvurur, gerektiğinde çevirir ve derinlemesine yorumlaraın."
     };
 
     let selectedImageBase64 = null;
@@ -1379,25 +1379,117 @@
                 const arrayBuffer = await file.arrayBuffer();
                 const pdf = await window.pdfjsLib.getDocument({ data: arrayBuffer }).promise;
                 let fullText = "";
-                for (let i = 1; i <= pdf.numPages; i++) {
+                
+                let startPage = 1;
+                let endPage = pdf.numPages;
+                window.isExamMode = false;
+                window.pdfChunks = null; // Çok büyük PDF için chunk modu
+
+                const totalPages = pdf.numPages;
+
+                // ===== AKILLI PDF BÖLME SİSTEMİ =====
+                // ≤20 sayfa → direkt oku (tek API isteği)
+                // 20-80 sayfa → 2-4 eşit parçaya böl (API'yi ezdirme)
+                // 80+ sayfa → kullanıcıya sor (hepsi / belirli aralık)
+
+                let promptMsg = `📄 PDF Yüklendi: "${file.name}" (${totalPages} sayfa)\n\n`;
+                let autoMode = false;
+
+                if (totalPages <= 20) {
+                    // Küçük PDF → otomatik tam okuma, sadece sınav seçeneği sun
+                    promptMsg += `✅ Küçük PDF (${totalPages} sayfa) — tamamını okuyabilirim!\n\n`;
+                    promptMsg += `Ne yapmamı istersin?\n`;
+                    promptMsg += `  • Normal okuma → boş bırak veya 'hepsi'\n`;
+                    promptMsg += `  • Sınav Koçu Modu → 'sınav'`;
+                } else if (totalPages <= 80) {
+                    // Orta büyüklük → akıllı parça önerisi
+                    promptMsg += `⚡ Orta büyüklükte PDF (${totalPages} sayfa)\n\n`;
+                    promptMsg += `Seçeneklerin:\n`;
+                    promptMsg += `  • Tamamını analiz et → 'hepsi' (2-4 parçaya bölerek gönderir)\n`;
+                    promptMsg += `  • Belirli sayfalar → örn: '10-40'\n`;
+                    promptMsg += `  • Tek sayfa → örn: '5'\n`;
+                    promptMsg += `  • Sınav Koçu Modu → 'sınav'`;
+                } else {
+                    // Büyük PDF → mutlaka soruyoruz
+                    promptMsg += `⚠️ Büyük PDF (${totalPages} sayfa) — tümünü göndermek modeli yorabilir!\n\n`;
+                    promptMsg += `Önerilen Seçenekler:\n`;
+                    promptMsg += `  • Belirli sayfalar → örn: '30-60'\n`;
+                    promptMsg += `  • İlk 30 sayfa → '1-30'\n`;
+                    promptMsg += `  • Sınav Koçu Modu (ilk 20 sayfa) → 'sınav'\n`;
+                    promptMsg += `  • Tamamını dene (yavaş olabilir) → 'hepsi'`;
+                }
+
+                let userInputRange = prompt(promptMsg);
+                if (userInputRange !== null) {
+                    userInputRange = (userInputRange || 'hepsi').trim().toLowerCase();
+                    if (userInputRange === 'sınav' || userInputRange === 'sinav') {
+                        window.isExamMode = true;
+                        startPage = 1;
+                        endPage = Math.min(20, totalPages);
+                    } else if (userInputRange === 'hepsi' || userInputRange === '') {
+                        startPage = 1;
+                        endPage = totalPages;
+                        // Orta büyüklük → chunk modunu aktif et
+                        if (totalPages > 20 && totalPages <= 80) {
+                            const numChunks = totalPages <= 40 ? 2 : (totalPages <= 60 ? 3 : 4);
+                            const chunkSize = Math.ceil(totalPages / numChunks);
+                            window.pdfChunks = [];
+                            for (let c = 0; c < numChunks; c++) {
+                                window.pdfChunks.push({ start: c * chunkSize + 1, end: Math.min((c + 1) * chunkSize, totalPages) });
+                            }
+                        }
+                    } else {
+                        let matchRange = userInputRange.match(/^(\d+)-(\d+)$/);
+                        let matchSingle = userInputRange.match(/^(\d+)$/);
+                        if (matchRange) {
+                            let s = parseInt(matchRange[1]);
+                            let e = parseInt(matchRange[2]);
+                            if (s >= 1 && e <= totalPages && s <= e) {
+                                startPage = s; endPage = e;
+                            } else {
+                                alert(`Geçersiz aralık (1-${totalPages}). Tamamını okuyorum.`);
+                            }
+                        } else if (matchSingle) {
+                            let s = parseInt(matchSingle[1]);
+                            if (s >= 1 && s <= totalPages) {
+                                startPage = s; endPage = s;
+                            } else {
+                                alert(`Geçersiz sayfa (1-${totalPages}). Tamamını okuyorum.`);
+                            }
+                        } else {
+                            alert('Formatı anlayamadım. Tamamını okuyorum.');
+                        }
+                    }
+                } else {
+                    // İptal → hiçbir şey yapma
+                    return;
+                }
+
+                // PDF sayfalarını oku
+                for (let i = startPage; i <= endPage; i++) {
                     const page = await pdf.getPage(i);
                     const textContent = await page.getTextContent();
-                    const pageText = textContent.items.map(item => item.str).join(" ");
-                    fullText += pageText + "\n";
+                    const pageText = textContent.items.map(item => item.str).join(' ');
+                    fullText += pageText + '\n';
                 }
                 
-                // PDF okunduktan sonra text alanına GİRME, arka plana (window.selectedDocumentText) kaydet.
-                window.selectedDocumentText = `\n[${file.name} İÇERİĞİ]:\n${fullText}\n`;
-                window.selectedDocumentName = file.name;
+                let docName = file.name;
+                if (window.isExamMode) {
+                    docName += ` (Sınav Koçu Modu)`;
+                } else if (startPage !== 1 || endPage !== totalPages) {
+                    docName += ` (S. ${startPage}-${endPage})`;
+                } else if (window.pdfChunks) {
+                    docName += ` (Akıllı Bölme: ${window.pdfChunks.length} parça)`;
+                }
+                
+                window.selectedDocumentText = `\n[${docName} İÇERİĞİ]:\n${fullText}\n`;
+                window.selectedDocumentName = docName;
                 
                 // UI'da dosyanın seçildiğini göster
                 const previewContainer = document.getElementById('imagePreviewContainer');
                 const previewImg = document.getElementById('imagePreview');
-                // Basit bir doküman ikonu SVG'si
                 previewImg.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 24 24' fill='none' stroke='%2389b4fa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'></path><polyline points='14 2 14 8 20 8'></polyline><line x1='16' y1='13' x2='8' y2='13'></line><line x1='16' y1='17' x2='8' y2='17'></line><polyline points='10 9 9 9 8 9'></polyline></svg>";
                 previewContainer.style.display = 'inline-block';
-                
-                // Seçili diğer resmi sıfırla
                 selectedImageBase64 = null;
                 
             } catch (err) {
@@ -1405,7 +1497,6 @@
                 alert("PDF okunamadı. Lütfen içeriği kopyalayıp yapıştırın.");
             }
         } else {
-            // txt, py, js vb. dosyalar için Base64'e çevirip normal eki olarak ekle (bunu da düzeltebiliriz, ama şimdilik kalsın)
             processFileAsBase64(file, false);
         }
         
@@ -3521,6 +3612,36 @@
         if (window.selectedDocumentText) {
             msgObj.documentText = window.selectedDocumentText;
             msgObj.documentName = window.selectedDocumentName || "Belge";
+            if (window.isExamMode) {
+                msgObj.promptSuffix = `
+
+[🎓 SINAV KOÇU MODU - KRİTİK TALİMAT]
+Bu belgeyi bir sınav koçu olarak analiz et. Şu adımları sırayla takip et:
+
+## 1. ⚡ 30 Saniyelik Özet
+Belgenin tamamını 3-4 cümleyle özetle. Öğrenci sınavdan 30 saniye önce okuyacakmış gibi yaz.
+
+## 2. 📖 5 Dakikalık Çalışma Özeti
+Ana başlıkları ve alt kavramları madde madde listele. Hangi konuların daha ağırlıklı olduğunu belirt.
+
+## 3. 🃏 Flashcard'lar (En Az 8 Kart)
+Her kart için:
+**[KART X]**
+- Ön: (Kavram / Soru)
+- Arka: (Kısa, net cevap)
+
+## 4. 🧑‍🏫 Profesör Analizi
+- "Sınavda büyük ihtimalle şu sorular çıkacak:" diyerek 3-5 olası soru tahmini yap.
+- Öğrencinin mutlaka ezberlemesi gereken anahtar kavramları bold yaz.
+
+## 5. 📝 10 Soruluk Test
+Her soru için A/B/C/D şıkları hazırla. En sona cevap anahtarı ekle.
+
+## 6. 🔁 Sokratik Mod Hazır
+Testin sonuna şunu ekle: "✅ Sınav Koçun hazır! Herhangi bir konuyu daha derin anlamak istersen 'bana [konu] hakkında soru sor' yazabilirsin."
+`;
+                window.isExamMode = false;
+            }
         }
         
         chat.messages.push(msgObj);
@@ -3537,7 +3658,14 @@
 
         const botId = "bot-" + Date.now();
         const typingDiv = document.createElement("div");
-        typingDiv.className = "message bot"; typingDiv.id = botId; typingDiv.innerHTML = "<i>...</i>";
+        typingDiv.className = "message bot"; typingDiv.id = botId;
+        
+        if (selectedImageBase64) {
+            typingDiv.innerHTML = "<i>📸 Görsel analiz ediliyor (Biraz uzun sürebilir, lütfen bekleyin)...</i>";
+        } else {
+            typingDiv.innerHTML = "<i>...</i>";
+        }
+        
         messagesDiv.appendChild(typingDiv);
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
 
@@ -3583,21 +3711,43 @@
                     delete hmClone.documentText;
                     delete hmClone.documentName;
                 }
+                if (hmClone.promptSuffix) {
+                    hmClone.content = (hmClone.content || "") + hmClone.promptSuffix;
+                    delete hmClone.promptSuffix;
+                }
                 reqMessages.push(hmClone); 
             }
             console.log("[CinoCode] reqMessages dolduruldu:", reqMessages.length, "mesaj");
             
             let isGroq = selectedModel.includes("-groq");
             let isGemini = selectedModel.includes("-gemini");
-            let actualModel = selectedModel.replace("-groq", "").replace("-gemini", "");
+            let isNvidia = selectedModel.includes("-nvidia");
+            let isOpenRouter = selectedModel.includes("-openrouter");
+            let actualModel = selectedModel.replace("-groq", "").replace("-gemini", "").replace("-nvidia", "").replace("-openrouter", "");
             
+            // ===== AI ROUTER — Model Sağlık Takip Sistemi =====
+            // Her modelin başarı/başarısızlık geçmişini localStorage'da puan olarak tutar.
+            // Başarılı istek → +2 puan (maks 10). Başarısız istek → -3 puan (min 0).
+            // Fallback kuyruğu puana göre yeniden sıralanır.
+            const MODEL_HEALTH_KEY = 'cinocode_model_health';
+            function getModelHealth() {
+                try { return JSON.parse(localStorage.getItem(MODEL_HEALTH_KEY) || '{}'); } catch(e) { return {}; }
+            }
+            function setModelScore(modelId, delta) {
+                const h = getModelHealth();
+                h[modelId] = Math.max(0, Math.min(10, (h[modelId] ?? 5) + delta));
+                localStorage.setItem(MODEL_HEALTH_KEY, JSON.stringify(h));
+            }
+            function getModelScore(modelId) {
+                return getModelHealth()[modelId] ?? 5; // Varsayılan: 5 (nötr)
+            }
+
             // Fallback (Yedekleme) Kuyruğu Hazırlığı
-            let fallbackQueue = [selectedModel]; // Öncelikle kullanıcının seçtiği modeli dene
+            let fallbackQueue = [selectedModel];
             
             const hasAttachments = selectedImageBase64 ? true : false;
             
             if (hasAttachments) {
-                // Görsel veya Belge eki varsa sadece Vision (Görsel okuma) yeteneği olan modelleri sıraya ekle
                 const visionModels = [
                     "gemini-2.0-flash-exp-gemini",
                     "meta-llama/llama-3.2-11b-vision-instruct:free-openrouter",
@@ -3605,32 +3755,39 @@
                     "gemini-1.5-pro-gemini"
                 ];
                 for (let vModel of visionModels) {
-                    if (!fallbackQueue.includes(vModel)) {
-                        fallbackQueue.push(vModel);
-                    }
+                    if (!fallbackQueue.includes(vModel)) fallbackQueue.push(vModel);
                 }
             } else {
-                // Sadece metin ise sırasıyla diğer hızlı modelleri yedek olarak ekle
-                // Dil Koçu modunda Gemini önce gelsin (Llama Türkçe + çok dil desteği zayıf)
                 const isDilKocu = (document.getElementById('personaSelect') && document.getElementById('personaSelect').value === 'dil_kocu');
-                const textModels = isDilKocu ? [
-                    "gemini-3-flash-preview-gemini",
-                    "gemini-2.5-flash-gemini",
-                    "llama-3.3-70b-versatile-groq",
-                    "meta-llama/llama-3.2-11b-vision-instruct:free-openrouter",
-                    "llama-3.1-8b-instant-groq"
-                ] : [
-                    "llama-3.3-70b-versatile-groq",
-                    "llama-3.1-8b-instant-groq",
-                    "gemini-3-flash-preview-gemini",
-                    "meta-llama/llama-3.2-11b-vision-instruct:free-openrouter",
-                    "gemini-2.5-flash-gemini"
-                ];
-                for (let tModel of textModels) {
-                    if (!fallbackQueue.includes(tModel)) {
-                        fallbackQueue.push(tModel);
-                    }
+                const isSinavKocu = (document.getElementById('personaSelect') && document.getElementById('personaSelect').value === 'akademik_koc');
+                let textModels;
+                if (isDilKocu || isSinavKocu) {
+                    // Dil/Sınav Koçu → Gemini önce (Türkçe + uzun metin daha iyi)
+                    textModels = [
+                        "gemini-3-flash-preview-gemini",
+                        "gemini-2.5-flash-gemini",
+                        "llama-3.3-70b-versatile-groq",
+                        "meta-llama/llama-3.2-11b-vision-instruct:free-openrouter",
+                        "llama-3.1-8b-instant-groq"
+                    ];
+                } else {
+                    textModels = [
+                        "llama-3.3-70b-versatile-groq",
+                        "llama-3.1-8b-instant-groq",
+                        "gemini-3-flash-preview-gemini",
+                        "meta-llama/llama-3.2-11b-vision-instruct:free-openrouter",
+                        "gemini-2.5-flash-gemini"
+                    ];
                 }
+                for (let tModel of textModels) {
+                    if (!fallbackQueue.includes(tModel)) fallbackQueue.push(tModel);
+                }
+
+                // AI Router: Kullanıcının seçtiği model dışındakiler puanlarına göre sıralansın
+                const [firstModel, ...restModels] = fallbackQueue;
+                restModels.sort((a, b) => getModelScore(b) - getModelScore(a));
+                fallbackQueue = [firstModel, ...restModels];
+                console.log('[AI Router] Fallback sırası (puana göre):', fallbackQueue.map(m => `${m.split('-').pop()}:${getModelScore(m)}`));
             }
 
             let response = null;
@@ -3639,8 +3796,8 @@
                 const currentTryModel = fallbackQueue[i];
                 isGroq = currentTryModel.includes("-groq");
                 isGemini = currentTryModel.includes("-gemini");
-                const isNvidia = currentTryModel.includes("-nvidia");
-                const isOpenRouter = currentTryModel.includes("-openrouter");
+                isNvidia = currentTryModel.includes("-nvidia");
+                isOpenRouter = currentTryModel.includes("-openrouter");
                 actualModel = currentTryModel
                     .replace("-groq", "")
                     .replace("-gemini", "")
@@ -3648,10 +3805,10 @@
                     .replace("-openrouter", "");
                 
                 // Eğer bu model için API anahtarı girilmemişse doğrudan sonraki yedek modele geç
-                if (isGemini && !(localStorage.getItem('gemini_api_key') || "").trim()) { continue; }
-                if (isGroq && !(localStorage.getItem('groq_api_key') || "").trim()) { continue; }
-                if (isNvidia && !(localStorage.getItem('nvidia_api_key') || "").trim()) { continue; }
-                if (isOpenRouter && !(localStorage.getItem('openrouter_api_key') || "").trim()) { continue; }
+                if (isGemini && !getRandomApiKey(localStorage.getItem('gemini_api_key'))) { continue; }
+                if (isGroq && !getRandomApiKey(localStorage.getItem('groq_api_key'))) { continue; }
+                if (isNvidia && !getRandomApiKey(localStorage.getItem('nvidia_api_key'))) { continue; }
+                if (isOpenRouter && !getRandomApiKey(localStorage.getItem('openrouter_api_key'))) { continue; }
                 
                 // Eğer ilk denemede hata alıp otomatik geçiş yapıyorsak ekranda bilgilendirme göster
                 if (i > 0) {
@@ -3665,7 +3822,7 @@
                 
                 if (isGemini) {
                     // --- GOOGLE GEMINI ---
-                    const userGeminiKey = (localStorage.getItem('gemini_api_key') || "").trim();
+                    const userGeminiKey = getRandomApiKey(localStorage.getItem('gemini_api_key'));
                     let geminiContents = [];
                     let systemText = '';
                     
@@ -3780,7 +3937,7 @@
                     };
                 } else if (isGroq) {
                     // --- GROQ ---
-                    const userGroqKey = (localStorage.getItem('groq_api_key') || "").trim();
+                    const userGroqKey = getRandomApiKey(localStorage.getItem('groq_api_key'));
                     fetchUrl = "https://api.groq.com/openai/v1/chat/completions";
                     
                     let groqModel = actualModel;
@@ -3834,10 +3991,17 @@
                 try {
                     if (isGemini) {
                         removeImage();
+                        const controller = new AbortController();
+                        const timeoutId = setTimeout(() => controller.abort(), 60000);
+                        fetchOptions.signal = controller.signal;
+
                         let geminiResponse = await fetch(fetchUrl, fetchOptions);
+                        clearTimeout(timeoutId);
+
                         if (!geminiResponse.ok) {
                             const errText = await geminiResponse.text();
                             console.warn(`Gemini API hatası verdi (${geminiResponse.status}): ${errText}`);
+                            setModelScore(currentTryModel, -3); // AI Router: HTTP hatası
                             continue;
                         }
                         const geminiData = await geminiResponse.json();
@@ -3847,6 +4011,7 @@
                             continue;
                         }
                         
+                        setModelScore(currentTryModel, +2); // AI Router: başarı
                         document.getElementById("modelSelect").value = currentTryModel;
                         document.getElementById(botId).innerHTML = renderContentWithImages(geminiBotReply, true);
                         addCopyButtons(document.getElementById(botId));
@@ -3859,18 +4024,27 @@
                         return;
                     } else {
                         // Groq / NVIDIA NIM / OpenRouter / Yerel Ollama — hepsi SSE streaming
+                        const controller = new AbortController();
+                        const timeoutId = setTimeout(() => controller.abort(), 60000);
+                        fetchOptions.signal = controller.signal;
+
                         let streamResponse = await fetch(fetchUrl, fetchOptions);
+                        clearTimeout(timeoutId);
+
                         if (!streamResponse.ok) {
                             const errText = await streamResponse.text();
                             console.warn(`Streaming API hatası (${streamResponse.status}): ${errText}`);
+                            setModelScore(currentTryModel, -3); // AI Router: HTTP hatası
                             continue;
                         }
                         
+                        setModelScore(currentTryModel, +2); // AI Router: başarı
                         document.getElementById("modelSelect").value = currentTryModel;
                         response = streamResponse;
                         break;
                     }
                 } catch (fetchErr) {
+                    setModelScore(currentTryModel, -3); // AI Router: başarısızlık
                     console.error("Yapay zeka bağlantı hatası, sonraki yedek deneniyor:", fetchErr);
                     continue;
                 }
@@ -3925,7 +4099,7 @@
                                 }
                             } catch (e) { /* sessizce geç */ }
                         }
-                    } else if (isGroq) {
+                    } else if (isGroq || isNvidia || isOpenRouter) {
                         if (line.trim() === "data: [DONE]") continue;
                         if (line.startsWith("data: ")) {
                             try {
@@ -3933,7 +4107,7 @@
                                 if (data.choices && data.choices[0].delta && data.choices[0].delta.content) {
                                     word = data.choices[0].delta.content;
                                 }
-                            } catch (e) { console.error("Groq JSON parse error", e); }
+                            } catch (e) { console.error("OpenAI format parse error", e); }
                         }
                     } else {
                         try {
