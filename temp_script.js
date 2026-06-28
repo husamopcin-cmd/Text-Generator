@@ -1,6 +1,7 @@
 ﻿
 
 
+
     console.log("CINOCODE_VERSION_0afe80e_voicefix");
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.getRegistrations().then(rs => {
@@ -182,17 +183,51 @@
     function processFileAsBase64(file, isImage) {
         const reader = new FileReader();
         reader.onload = function(e) {
-            selectedImageBase64 = e.target.result;
-            
             const previewContainer = document.getElementById('imagePreviewContainer');
             const previewImg = document.getElementById('imagePreview');
             
             if (isImage) {
-                previewImg.src = e.target.result;
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 1024;
+                    const MAX_HEIGHT = 1024;
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > height) {
+                        if (width > MAX_WIDTH) {
+                            height *= MAX_WIDTH / width;
+                            width = MAX_WIDTH;
+                        }
+                    } else {
+                        if (height > MAX_HEIGHT) {
+                            width *= MAX_HEIGHT / height;
+                            height = MAX_HEIGHT;
+                        }
+                    }
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.85); // JPEG compression
+                    selectedImageBase64 = dataUrl;
+                    previewImg.src = dataUrl;
+                    previewContainer.style.display = 'inline-block';
+                    
+                    // Video modu tetikleyicisi asekron olduÄŸu iÃ§in burada Ã§aÄŸÄ±rmamÄ±z gerek
+                    triggerPostImageLoad();
+                };
+                img.src = e.target.result;
             } else {
+                selectedImageBase64 = e.target.result;
                 previewImg.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 24 24' fill='none' stroke='%2389b4fa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'></path><polyline points='14 2 14 8 20 8'></polyline><line x1='16' y1='13' x2='8' y2='13'></line><line x1='16' y1='17' x2='8' y2='17'></line><polyline points='10 9 9 9 8 9'></polyline></svg>";
+                previewContainer.style.display = 'inline-block';
+                triggerPostImageLoad();
             }
-            previewContainer.style.display = 'inline-block';
+            
+            function triggerPostImageLoad() {
             
             const currentModel = document.getElementById('modelSelect').value;
             if (!currentModel.includes('-gemini')) {
@@ -268,7 +303,6 @@
                         setTimeout(drawFrame, 1000 / FPS);
                     };
                     drawFrame();
-                    
                     const videoBlob = await videoReady;
                     const videoUrl = URL.createObjectURL(videoBlob);
                     const container = document.getElementById(videoId);
@@ -285,6 +319,7 @@
                 };
                 img.src = e.target.result;
             }
+            } // Close triggerPostImageLoad
         };
         reader.readAsDataURL(file);
     }
@@ -441,7 +476,7 @@
         renderSuggestions('game');
     }
 
-    function handleDocSelect(event) {
+    async function handleDocSelect(event) {
         const file = event.target.files[0];
         if (!file) return;
         
@@ -452,7 +487,35 @@
         }
 
         selectedStudyFileName = file.name;
-        processFileAsBase64(file, false);
+        
+        if (file.type === "application/pdf") {
+            try {
+                // PDF.js worker ayarÄ±
+                if (!window.pdfjsLib.GlobalWorkerOptions.workerSrc) {
+                    window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+                }
+                const arrayBuffer = await file.arrayBuffer();
+                const pdf = await window.pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                let fullText = "";
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    const page = await pdf.getPage(i);
+                    const textContent = await page.getTextContent();
+                    const pageText = textContent.items.map(item => item.str).join(" ");
+                    fullText += pageText + "\n";
+                }
+                
+                const userInput = document.getElementById("userInput");
+                userInput.value += `\n[${file.name} Ä°Ã‡ERÄ°ÄžÄ°]:\n${fullText}\n`;
+                autoResize(userInput);
+                alert("âœ… PDF baÅŸarÄ±yla okundu ve yazÄ± alanÄ±na metin olarak eklendi!");
+            } catch (err) {
+                console.error("PDF okuma hatasÄ±:", err);
+                alert("PDF okunamadÄ±. LÃ¼tfen iÃ§eriÄŸi kopyalayÄ±p yapÄ±ÅŸtÄ±rÄ±n.");
+            }
+        } else {
+            // txt, py, js vb. dosyalar iÃ§in Base64'e Ã§evirip normal eki olarak ekle
+            processFileAsBase64(file, false);
+        }
         
         if (event.target.id === 'docUpload') event.target.value = '';
     }
@@ -1932,7 +1995,8 @@
                     if (item.type.indexOf('image') !== -1) {
                         let file = item.getAsFile();
                         if (file) {
-                            processImageFile(file);
+                            const fakeEvent = { target: { files: [file] } };
+                            handleImageSelect(fakeEvent);
                             e.preventDefault(); // Metin kutusuna karmaÅŸÄ±k data yapÄ±ÅŸmasÄ±nÄ± engelle
                             return;
                         }
@@ -2409,7 +2473,8 @@ EÄŸer kullanÄ±cÄ± "bu ne", "nerede", "adam kim", "bunu istemedim", "dÃ¼z
                 baseSystemPrompt += "\n\nHATIRLADIÄžIN BÄ°LGÄ°LER (LONG-TERM MEMORY):\nÅžu ana kadar kullanÄ±cÄ± hakkÄ±nda Ã¶ÄŸrendiÄŸin ve asla unutmaman gereken kalÄ±cÄ± bilgiler ÅŸunlardÄ±r:\n" + userMemory;
             }
             baseSystemPrompt += "\n\nKURAL: SADECE VE SADECE eÄŸer kullanÄ±cÄ± kendisiyle, hayatÄ±yla, zevkleriyle veya fiziksel Ã¶zellikleriyle ilgili Ã‡OK Ã–NEMLÄ° VE KALICI bir kiÅŸisel bilgi verirse (Ã–rn: adÄ±m Ahmet, yaÅŸÄ±m 25, kedim var, fÄ±stÄ±ÄŸa alerjim var vb.), mesajÄ±nÄ±n en sonuna BÄ°REBÄ°R ÅŸu formatta gizli bir not dÃ¼ÅŸmelisin: [REMEMBER: KullanÄ±cÄ± 25 yaÅŸÄ±ndaymÄ±ÅŸ ve adÄ± Ahmet'miÅŸ]. SÄ±radan sohbetlerde veya kullanÄ±cÄ±nÄ±n senden bir ÅŸey yapmanÄ±/yazmanÄ± istediÄŸi anlarda (Ã–rn: hesap makinesi yaz, kod yaz) KESÄ°NLÄ°KLE [REMEMBER] KULLANMA! Sadece kiÅŸisel bilgileri kaydet.";
-            baseSystemPrompt += "\n\nKURAL 2 (Ã‡OK Ã–NEMLÄ°): EÄŸer kullanÄ±cÄ± senden bir oyun, arayÃ¼z, hesap makinesi veya web tabanlÄ± herhangi bir uygulama yapmanÄ±/kodlamanÄ±            let isGroq = selectedModel.includes("-groq");
+            baseSystemPrompt += "\n\nKURAL 2 (Ã‡OK Ã–NEMLÄ°): EÄŸer kullanÄ±cÄ± senden bir oyun, arayÃ¼z, hesap makinesi veya web tabanlÄ± herhangi bir uygulama yapmanÄ±/kodlamanÄ± isterse, KODU SADECE HTML BLOKLARI Ä°Ã‡Ä°NDE YAZ. BaÅŸka metin ekleme.";
+            let isGroq = selectedModel.includes("-groq");
             let isGemini = selectedModel.includes("-gemini");
             let actualModel = selectedModel.replace("-groq", "").replace("-gemini", "");
             
