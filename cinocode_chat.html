@@ -54,7 +54,124 @@
             border-radius: 6px; font-size: 11px; cursor: pointer; align-self: flex-start;
         }
         .artifact-dl-btn:hover { background: #89b4fa; color: #11111b; }
-        
+
+        /* ===== SINAV KOÇU MOD SEÇİM MODALI ===== */
+        .sk-overlay {
+            position: fixed; inset: 0; z-index: 9999;
+            background: rgba(0,0,0,0.75);
+            backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.25s ease;
+        }
+        .sk-overlay.active { opacity: 1; pointer-events: auto; }
+        .sk-modal {
+            background: linear-gradient(145deg, #1e1e2e 0%, #181825 100%);
+            border: 1px solid rgba(203,166,247,0.3);
+            border-radius: 20px; padding: 28px 24px 24px;
+            width: min(640px, 95vw); max-height: 88vh; overflow-y: auto;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(203,166,247,0.1);
+            transform: translateY(20px) scale(0.97);
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .sk-overlay.active .sk-modal { transform: translateY(0) scale(1); }
+        .sk-modal-header {
+            text-align: center; margin-bottom: 22px;
+        }
+        .sk-modal-header .sk-icon { font-size: 40px; display: block; margin-bottom: 8px;
+            animation: sk-float 3s ease-in-out infinite; }
+        @keyframes sk-float {
+            0%,100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+        }
+        .sk-modal-header h2 {
+            font-size: 20px; font-weight: 700; color: #cba6f7;
+            margin: 0 0 4px; letter-spacing: -0.3px;
+        }
+        .sk-modal-header p {
+            font-size: 13px; color: #6c7086; margin: 0;
+        }
+        .sk-file-badge {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: rgba(137,180,250,0.1); border: 1px solid rgba(137,180,250,0.25);
+            border-radius: 20px; padding: 4px 12px; font-size: 12px; color: #89b4fa;
+            margin-bottom: 20px; max-width: 100%; overflow: hidden; text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .sk-grid {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 12px; margin-bottom: 14px;
+        }
+        @media (max-width: 500px) { .sk-grid { grid-template-columns: 1fr; } }
+        .sk-card {
+            background: rgba(49,50,68,0.4);
+            border: 1.5px solid rgba(255,255,255,0.06);
+            border-radius: 14px; padding: 16px 14px 14px;
+            cursor: pointer; transition: all 0.2s ease;
+            display: flex; flex-direction: column; gap: 8px;
+            position: relative; overflow: hidden;
+        }
+        .sk-card::before {
+            content: ''; position: absolute; inset: 0;
+            background: radial-gradient(circle at 50% 0%, rgba(203,166,247,0.08), transparent 70%);
+            opacity: 0; transition: opacity 0.2s;
+        }
+        .sk-card:hover { border-color: rgba(203,166,247,0.45); transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(203,166,247,0.12); }
+        .sk-card:hover::before { opacity: 1; }
+        .sk-card.sk-selected { border-color: #cba6f7; background: rgba(203,166,247,0.1); }
+        .sk-card-icon { font-size: 26px; }
+        .sk-card-title { font-size: 14px; font-weight: 600; color: #cdd6f4; }
+        .sk-card-desc { font-size: 11.5px; color: #6c7086; line-height: 1.5; }
+        .sk-card-tag {
+            display: inline-block; font-size: 10px; font-weight: 600;
+            padding: 2px 8px; border-radius: 20px; background: rgba(203,166,247,0.15);
+            color: #cba6f7; align-self: flex-start;
+        }
+        /* Sub-option pills */
+        .sk-pills {
+            display: flex; flex-wrap: wrap; gap: 6px;
+            margin-top: 6px;
+        }
+        .sk-pill {
+            background: rgba(49,50,68,0.7); border: 1px solid rgba(255,255,255,0.1);
+            color: #a6adc8; font-size: 11px; padding: 3px 10px;
+            border-radius: 20px; cursor: pointer; transition: all 0.15s;
+        }
+        .sk-pill:hover { background: rgba(203,166,247,0.2); color: #cba6f7; border-color: rgba(203,166,247,0.4); }
+        .sk-pill.sk-pill-active { background: rgba(203,166,247,0.25); color: #cba6f7; border-color: #cba6f7; }
+        .sk-pill-desc { font-size: 10px; color: #585b70; margin-top: 2px; display: block; }
+        /* Quiz count grid */
+        .sk-count-grid { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+        .sk-count-btn {
+            background: rgba(49,50,68,0.7); border: 1px solid rgba(255,255,255,0.1);
+            color: #a6adc8; font-size: 12px; font-weight: 600; padding: 5px 12px;
+            border-radius: 8px; cursor: pointer; transition: all 0.15s;
+            min-width: 44px; text-align: center;
+        }
+        .sk-count-btn:hover { background: rgba(166,227,161,0.15); color: #a6e3a1; border-color: rgba(166,227,161,0.4); }
+        .sk-count-btn.sk-count-active { background: rgba(166,227,161,0.2); color: #a6e3a1; border-color: #a6e3a1; }
+        /* Footer */
+        .sk-footer {
+            display: flex; gap: 10px; justify-content: flex-end; margin-top: 6px;
+        }
+        .sk-cancel-btn {
+            background: transparent; border: 1px solid rgba(255,255,255,0.1);
+            color: #6c7086; padding: 10px 18px; border-radius: 10px;
+            font-size: 13px; cursor: pointer; transition: all 0.15s;
+        }
+        .sk-cancel-btn:hover { border-color: #f38ba8; color: #f38ba8; }
+        .sk-go-btn {
+            background: linear-gradient(135deg, #cba6f7, #89b4fa);
+            border: none; color: #11111b; padding: 10px 22px; border-radius: 10px;
+            font-size: 13px; font-weight: 700; cursor: pointer;
+            transition: all 0.2s; box-shadow: 0 4px 14px rgba(203,166,247,0.3);
+        }
+        .sk-go-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(203,166,247,0.45); }
+        .sk-go-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+        /* Pulse badge for Sınav Koçu button in header */
+        @keyframes sk-pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(203,166,247,0.5); } 50% { box-shadow: 0 0 0 6px rgba(203,166,247,0); } }
+
         /* ----- WELCOME SCREEN ----- */
         .welcome-screen {
             flex: 1; display: flex; flex-direction: column; align-items: center;
@@ -1423,13 +1540,16 @@
                 if (userInputRange !== null) {
                     userInputRange = (userInputRange || 'hepsi').trim().toLowerCase();
                     if (userInputRange === 'sınav' || userInputRange === 'sinav') {
+                        // Sınav Koçu v3 Modalını aç
+                        let selectedMode = await openSinavKocuModal(file.name);
+                        if (!selectedMode) return; // İptal edildi
+                        
                         window.isExamMode = true;
                         startPage = 1;
                         endPage = Math.min(20, totalPages);
                     } else if (userInputRange === 'hepsi' || userInputRange === '') {
                         startPage = 1;
                         endPage = totalPages;
-                        // Orta büyüklük → chunk modunu aktif et
                         if (totalPages > 20 && totalPages <= 80) {
                             const numChunks = totalPages <= 40 ? 2 : (totalPages <= 60 ? 3 : 4);
                             const chunkSize = Math.ceil(totalPages / numChunks);
@@ -1461,7 +1581,6 @@
                         }
                     }
                 } else {
-                    // İptal → hiçbir şey yapma
                     return;
                 }
 
@@ -3613,33 +3732,11 @@
             msgObj.documentText = window.selectedDocumentText;
             msgObj.documentName = window.selectedDocumentName || "Belge";
             if (window.isExamMode) {
-                msgObj.promptSuffix = `
-
-[🎓 SINAV KOÇU MODU - KRİTİK TALİMAT]
-Bu belgeyi bir sınav koçu olarak analiz et. Şu adımları sırayla takip et:
-
-## 1. ⚡ 30 Saniyelik Özet
-Belgenin tamamını 3-4 cümleyle özetle. Öğrenci sınavdan 30 saniye önce okuyacakmış gibi yaz.
-
-## 2. 📖 5 Dakikalık Çalışma Özeti
-Ana başlıkları ve alt kavramları madde madde listele. Hangi konuların daha ağırlıklı olduğunu belirt.
-
-## 3. 🃏 Flashcard'lar (En Az 8 Kart)
-Her kart için:
-**[KART X]**
-- Ön: (Kavram / Soru)
-- Arka: (Kısa, net cevap)
-
-## 4. 🧑‍🏫 Profesör Analizi
-- "Sınavda büyük ihtimalle şu sorular çıkacak:" diyerek 3-5 olası soru tahmini yap.
-- Öğrencinin mutlaka ezberlemesi gereken anahtar kavramları bold yaz.
-
-## 5. 📝 10 Soruluk Test
-Her soru için A/B/C/D şıkları hazırla. En sona cevap anahtarı ekle.
-
-## 6. 🔁 Sokratik Mod Hazır
-Testin sonuna şunu ekle: "✅ Sınav Koçun hazır! Herhangi bir konuyu daha derin anlamak istersen 'bana [konu] hakkında soru sor' yazabilirsin."
-`;
+                if (typeof buildExamCoachSuffix === "function") {
+                    msgObj.promptSuffix = buildExamCoachSuffix();
+                } else {
+                    msgObj.promptSuffix = "\n\n[🎓 SINAV KOÇU MODU]\nBu belgeyi analiz et, özet çıkar, önemli kavramları listele ve 10 soruluk test oluştur.";
+                }
                 window.isExamMode = false;
             }
         }
@@ -4256,7 +4353,210 @@ Testin sonuna şunu ekle: "✅ Sınav Koçun hazır! Herhangi bir konuyu daha de
 
     // Sayfa dışına çıkıldığında veya ESC basıldığında sıfırla
     window.addEventListener("blur", hideDropState);
-    document.addEventListener("keydown", (e) => { if (e.key === "Escape") hideDropState(); });
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") { hideDropState(); closeSinavKocuModal(); } });
+</script>
+
+<!-- ===== SINAV KOÇU MOD SEÇİM MODALI ===== -->
+<div class="sk-overlay" id="sinavKocuOverlay" onclick="skOverlayClick(event)">
+  <div class="sk-modal" id="sinavKocuModal">
+    <div class="sk-modal-header">
+      <span class="sk-icon">🎓</span>
+      <h2>Sınav Koçu — Mod Seç</h2>
+      <p>Hangi modda çalışmamı istersin?</p>
+    </div>
+    <div style="text-align:center; margin-bottom:16px;">
+      <span class="sk-file-badge" id="skFileBadge">📄 —</span>
+    </div>
+
+    <div class="sk-grid">
+
+      <!-- 1. HIZLI ÖZET -->
+      <div class="sk-card" id="skCard-ozet" onclick="skSelectCard('ozet')">
+        <div class="sk-card-icon">⚡</div>
+        <div class="sk-card-title">Hızlı Özet</div>
+        <div class="sk-card-desc">Sınava ne kadar vaktin var? Süreye göre özel özet oluşturur.</div>
+        <div class="sk-card-tag">Özet Modu</div>
+        <div class="sk-pills" id="skPills-ozet">
+          <span class="sk-pill" data-desc="Sınav kapısında son okuma" onclick="skPickPill(event,'ozet','30s')">⚡ 30 sn</span>
+          <span class="sk-pill" data-desc="Temel kavramlar hızlı tarama" onclick="skPickPill(event,'ozet','1dk')">📌 1 dk</span>
+          <span class="sk-pill" data-desc="Ana başlıklar ve örnekler" onclick="skPickPill(event,'ozet','2dk')">📖 2 dk</span>
+          <span class="sk-pill" data-desc="Ağırlıklı konular ve detaylar" onclick="skPickPill(event,'ozet','5dk')">🎯 5 dk</span>
+          <span class="sk-pill" data-desc="Kapsamlı çalışma rehberi" onclick="skPickPill(event,'ozet','10dk')">📚 10 dk</span>
+        </div>
+        <span class="sk-pill-desc" id="skPillDesc-ozet"></span>
+      </div>
+
+      <!-- 2. FLASHCARD -->
+      <div class="sk-card" id="skCard-flashcard" onclick="skSelectCard('flashcard')">
+        <div class="sk-card-icon">🃏</div>
+        <div class="sk-card-title">Flashcard'lar</div>
+        <div class="sk-card-desc">Anahtar kavramları kart formatında oluşturur. Her kart: İngilizce terim + açıklama + Türkçe karşılık.</div>
+        <div class="sk-card-tag">Ezberleme Modu</div>
+        <div class="sk-pills" id="skPills-flashcard">
+          <span class="sk-pill" onclick="skPickPill(event,'flashcard','8')">8 kart</span>
+          <span class="sk-pill" onclick="skPickPill(event,'flashcard','12')">12 kart</span>
+          <span class="sk-pill" onclick="skPickPill(event,'flashcard','20')">20 kart</span>
+        </div>
+      </div>
+
+      <!-- 3. PROFESÖR ANALİZİ -->
+      <div class="sk-card" id="skCard-profesor" onclick="skSelectCard('profesor')">
+        <div class="sk-card-icon">🧑‍🏫</div>
+        <div class="sk-card-title">Profesör Analizi</div>
+        <div class="sk-card-desc">Sınavda hangi soruların çıkabileceğini tahmin eder. Kesinlikle ezberlenecek kavramları işaretler.</div>
+        <div class="sk-card-tag">Tahmin Modu</div>
+      </div>
+
+      <!-- 4. QUIZ -->
+      <div class="sk-card" id="skCard-quiz" onclick="skSelectCard('quiz')">
+        <div class="sk-card-icon">📝</div>
+        <div class="sk-card-title">Quiz — Çoktan Seçmeli</div>
+        <div class="sk-card-desc">A/B/C/D şıklı sorular + cevap anahtarı. Her seferinde farklı sorular!</div>
+        <div class="sk-card-tag">Test Modu</div>
+        <div class="sk-count-grid" id="skCount-quiz">
+          <button class="sk-count-btn" onclick="skPickCount(event,'quiz',5)">5</button>
+          <button class="sk-count-btn" onclick="skPickCount(event,'quiz',10)">10</button>
+          <button class="sk-count-btn" onclick="skPickCount(event,'quiz',15)">15</button>
+          <button class="sk-count-btn" onclick="skPickCount(event,'quiz',20)">20</button>
+          <button class="sk-count-btn" onclick="skPickCount(event,'quiz',50)">50</button>
+        </div>
+      </div>
+
+      <!-- 5. SOKRATİK MOD (tam genişlik) -->
+      <div class="sk-card" id="skCard-sokratik" onclick="skSelectCard('sokratik')" style="grid-column: 1 / -1; flex-direction: row; align-items: flex-start; gap: 14px;">
+        <div class="sk-card-icon" style="margin-top:2px;">🔁</div>
+        <div style="flex:1;">
+          <div class="sk-card-title">Sokratik Mod — İnteraktif Öğrenme</div>
+          <div class="sk-card-desc">Sınav koçun sana konuyla ilgili sorular sorar, cevaplarını değerlendirir, yanlışlarını düzeltir. Gerçek bir öğretmen gibi!</div>
+          <div class="sk-card-tag">İnteraktif Mod</div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="sk-footer">
+      <button class="sk-cancel-btn" onclick="closeSinavKocuModal()">İptal</button>
+      <button class="sk-go-btn" id="skGoBtn" disabled onclick="skConfirm()">Başlat 🚀</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== SINAV KOÇU MOD SEÇİM SİSTEMİ =====
+window.skState = { mode: null, ozet: null, flashcardCount: 8, quizCount: 10, resolve: null };
+if (!window.skQuizHistory) window.skQuizHistory = [];
+
+function openSinavKocuModal(fileName) {
+    window.skState = { mode: null, ozet: null, flashcardCount: 8, quizCount: 10, resolve: null };
+    document.getElementById('skFileBadge').textContent = '📄 ' + fileName;
+    document.querySelectorAll('.sk-card').forEach(c => c.classList.remove('sk-selected'));
+    document.querySelectorAll('.sk-pill').forEach(p => p.classList.remove('sk-pill-active'));
+    document.querySelectorAll('.sk-count-btn').forEach(b => b.classList.remove('sk-count-active'));
+    let descEl = document.getElementById('skPillDesc-ozet');
+    if (descEl) descEl.textContent = '';
+    document.getElementById('skGoBtn').disabled = true;
+    document.getElementById('sinavKocuOverlay').classList.add('active');
+    return new Promise(resolve => { window.skState.resolve = resolve; });
+}
+
+function closeSinavKocuModal() {
+    document.getElementById('sinavKocuOverlay').classList.remove('active');
+    if (window.skState.resolve) { window.skState.resolve(null); window.skState.resolve = null; }
+}
+
+function skOverlayClick(e) {
+    if (e.target === document.getElementById('sinavKocuOverlay')) closeSinavKocuModal();
+}
+
+function skSelectCard(mode) {
+    window.skState.mode = mode;
+    document.querySelectorAll('.sk-card').forEach(c => c.classList.remove('sk-selected'));
+    let card = document.getElementById('skCard-' + mode);
+    if (card) card.classList.add('sk-selected');
+    let needsPill = (mode === 'ozet');
+    document.getElementById('skGoBtn').disabled = needsPill ? !window.skState.ozet : false;
+}
+
+function skPickPill(e, mode, val) {
+    e.stopPropagation();
+    skSelectCard(mode);
+    let container = document.getElementById('skPills-' + mode);
+    if (container) container.querySelectorAll('.sk-pill').forEach(p => p.classList.remove('sk-pill-active'));
+    e.target.classList.add('sk-pill-active');
+    if (mode === 'ozet') {
+        window.skState.ozet = val;
+        let desc = e.target.dataset.desc || '';
+        let descEl = document.getElementById('skPillDesc-ozet');
+        if (descEl) descEl.textContent = desc ? '→ ' + desc : '';
+        document.getElementById('skGoBtn').disabled = false;
+    } else if (mode === 'flashcard') {
+        window.skState.flashcardCount = parseInt(val);
+        document.getElementById('skGoBtn').disabled = false;
+    }
+}
+
+function skPickCount(e, mode, val) {
+    e.stopPropagation();
+    skSelectCard(mode);
+    let container = document.getElementById('skCount-' + mode);
+    if (container) container.querySelectorAll('.sk-count-btn').forEach(b => b.classList.remove('sk-count-active'));
+    e.target.classList.add('sk-count-active');
+    if (mode === 'quiz') window.skState.quizCount = val;
+    document.getElementById('skGoBtn').disabled = false;
+}
+
+function skConfirm() {
+    if (!window.skState.mode) return;
+    document.getElementById('sinavKocuOverlay').classList.remove('active');
+    if (window.skState.resolve) { window.skState.resolve(window.skState.mode); window.skState.resolve = null; }
+}
+
+function buildExamCoachSuffix() {
+    let mode = window.skState.mode;
+    if (!mode) return '';
+
+    if (mode === 'ozet') {
+        let t = window.skState.ozet || '5dk';
+        let configs = {
+            '30s': { label: '30 Saniyelik', desc: 'sınav kapısında son okumayla tüm konuya hâkim olmak için', len: '3-4 cümle', style: 'son derece özlü, ezbere kolay, madde işareti yok' },
+            '1dk': { label: '1 Dakikalık', desc: 'temel kavramları hızlıca taramak için', len: '2-3 madde veya kısa paragraf', style: 'net, madde işaretli' },
+            '2dk': { label: '2 Dakikalık', desc: 'ana başlıkları ve önemli örnekleri kavramak için', len: '4-6 madde', style: 'başlıklı, somut örnekler ekle' },
+            '5dk': { label: '5 Dakikalık', desc: 'ağırlıklı konuları ve detayları anlamak için', len: '8-12 madde', style: 'başlıklı, alt madde de kullan, önemli terimleri bold yaz' },
+            '10dk': { label: '10 Dakikalık', desc: 'kapsamlı çalışma rehberi olarak', len: 'kapsamlı bölümler halinde', style: 'başlıklı bölümler, detaylı açıklamalar, örnekler, önemli formüller/kurallar' }
+        };
+        let c = configs[t];
+        return `\n\n[🎓 SINAV KOÇU — ${c.label} ÖZET]\nBu belgeyi ${c.desc} özetle. Uzunluk: ${c.len}. Stil: ${c.style}.\nSon satırda şunu ekle: "📌 Bu özet ${c.label.toLowerCase()} okuma için optimize edilmiştir."`;
+    }
+
+    if (mode === 'flashcard') {
+        let count = window.skState.flashcardCount || 8;
+        return `\n\n[🃏 SINAV KOÇU — FLASHCARD MODU]\nBu belgedeki en önemli ${count} kavramı flashcard formatında oluştur.\n\nHer kart için kesinlikle şu formatı kullan:\n\n---\n**[KART X / ${count}]**\n- 🏷️ **Terim:** (İngilizce teknik terim)\n- 📖 **İngilizce Açıklama:** (1-2 cümle, sade İngilizce)\n- 🇹🇷 **Türkçe Karşılık:** (Türkçe adı)\n- 💡 **Türkçe Açıklama:** (kısa, anlaşılır Türkçe)\n---\n\nEn önemli kavramlardan başla. Son kart bittikten sonra şunu ekle:\n"✅ ${count} flashcard hazır! 'Bana bu kartları sınav formatında sor' yazarsan seni test edebilirim."`;
+    }
+
+    if (mode === 'profesor') {
+        return `\n\n[🧑‍🏫 SINAV KOÇU — PROFESÖR ANALİZİ]\nBu belgeyi deneyimli bir sınav hazırlama uzmanı gibi analiz et:\n\n## 🎯 Sınavda Büyük İhtimalle Çıkacak Sorular\n3-5 adet muhtemel soru tahmini yap. Her soru için neden çıkma ihtimalinin yüksek olduğunu kısaca açıkla.\n\n## 🔑 Mutlaka Ezberlenmesi Gereken Kavramlar\nBunları **bold** yaz ve yanlarına neden kritik olduklarını ekle.\n\n## ⚠️ Sık Yapılan Hatalar\nÖğrencilerin bu konuda en çok neyi karıştırdığını belirt.\n\n## 📌 Son Dakika Tavsiyesi\nSınava girmeden önce bakılacak tek şeyi 1 cümleyle söyle.`;
+    }
+
+    if (mode === 'quiz') {
+        let count = window.skState.quizCount || 10;
+        let histLen = window.skQuizHistory.length;
+        let histNote = '';
+        if (histLen > 0) {
+            histNote = `\n\n⚠️ ÖNEMLİ: Daha önce bu belge için ${histLen} kez quiz yapıldı. Bu sefer TAMAMEN FARKLI alt konulardan, farklı açılardan soru üret. Geçmiş sorularla aynı kavramı tekrar sorma.`;
+        }
+        let sessionTag = 'Q' + count + '@' + Date.now().toString(36);
+        window.skQuizHistory.push(sessionTag);
+        if (window.skQuizHistory.length > 10) window.skQuizHistory.shift();
+
+        return `\n\n[📝 SINAV KOÇU — QUIZ MODU — ${count} SORU]${histNote}\n\nBu belgeye dayanarak ${count} adet özgün çoktan seçmeli soru hazırla. Sorular farklı zorluk seviyelerinde olsun (kolay, orta, zor).\n\nHer soru için format:\n**Soru X:** [Soru metni]\nA) ...\nB) ...\nC) ...\nD) ...\n\nTüm sorular bittikten sonra:\n## ✅ CEVAP ANAHTARI\nSoru 1: [Harf] — [Kısa açıklama neden doğru]\n...\n\nEn sona şunu ekle: "🔁 Farklı sorular için 'Yeni Quiz' yaz. Sözlü sınav için 'Sokratik mod başlat' yaz."`;
+    }
+
+    if (mode === 'sokratik') {
+        return `\n\n[🔁 SINAV KOÇU — SOKRATİK MOD]\nBu belge içeriğini kullanarak beni interaktif olarak sınava hazırla. Şu kurallarla çalış:\n\n1. Konuyu direkt anlatma. Bunun yerine bana sorular sor.\n2. Her seferinde TEK soru sor ve cevabımı bekle.\n3. Cevabım doğruysa → tebrik et, neden doğru olduğunu açıkla, sonraki soruya geç.\n4. Cevabım yanlışsa → neden yanlış olduğunu açıkla, doğru cevabı ver, konuyu kısaca özetle.\n5. 5 sorudan sonra bana kısa bir puan ver (örn: 4/5 doğru).\n6. En sona şunu ekle: "Devam etmemi istersen 'devam' yaz, belirli bir konuya odaklanmamı istersen konuyu yaz."\n\nHemen ilk soruyla başla!`;
+    }
+
+    return '';
+}
 </script>
 
 </body>
