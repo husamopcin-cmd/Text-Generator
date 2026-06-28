@@ -678,9 +678,20 @@
 
             <span class="dk-label">📊 Seviye:</span>
             <select id="dk-level" class="dk-select" onchange="updateDilKocuPrompt()">
-                <option value="Başlangıç (A1-A2)">🌱 Başlangıç</option>
-                <option value="Orta (B1-B2)">🔥 Orta</option>
-                <option value="İleri (C1-C2)">🚀 İleri</option>
+                <optgroup label="── Genel ──">
+                    <option value="Başlangıç (A1-A2)">🌱 Başlangıç</option>
+                    <option value="Orta (B1-B2)">🔥 Orta</option>
+                    <option value="İleri (C1-C2)">🚀 İleri</option>
+                </optgroup>
+                <optgroup label="── CEFR Seviyeleri ──">
+                    <option value="A0 (Sıfırdan Başlayan)">A0 — Hiç bilmiyorum</option>
+                    <option value="A1 (Başlangıç)">A1 — Başlangıç</option>
+                    <option value="A2 (Temel)">A2 — Temel</option>
+                    <option value="B1 (Orta Öncesi)">B1 — Orta Öncesi</option>
+                    <option value="B2 (Orta Üstü)">B2 — Orta Üstü</option>
+                    <option value="C1 (İleri)">C1 — İleri</option>
+                    <option value="C2 (Ustalık)">C2 — Ustalık / Ana Dil</option>
+                </optgroup>
             </select>
 
             <span class="dk-label">🎯 Hedef:</span>
@@ -689,7 +700,12 @@
                 <option value="10" selected>10 kelime/gün</option>
                 <option value="15">15 kelime/gün</option>
                 <option value="20">20 kelime/gün</option>
+                <option value="30">30 kelime/gün</option>
+                <option value="40">40 kelime/gün</option>
+                <option value="50">50 kelime/gün</option>
+                <option value="custom">✏️ Özel...</option>
             </select>
+            <input type="number" id="dk-goal-custom" min="1" max="500" placeholder="Sayı gir" class="dk-select" style="width:90px; display:none;" oninput="updateDilKocuGoalCustom()" title="Kendi kelime hedefini gir">
 
             <button class="dk-btn quiz-btn" id="dk-quiz-btn" onclick="startDilKocuQuiz()" title="Öğrendiklerini test et!">🧠 Quiz Başlat</button>
             <button class="dk-btn" onclick="startDilKocuLesson()" title="Bugünün dersini başlat">📖 Derse Başla</button>
@@ -1194,6 +1210,8 @@
         document.getElementById('imagePreview').src = '';
         document.getElementById('imagePreviewContainer').style.display = 'none';
         selectedImageBase64 = null;
+        window.selectedDocumentText = null;
+        window.selectedDocumentName = null;
     }
 
     // ----- ATTACHMENT MENU (BOTTOM SHEET) FONKSIYONLARI -----
@@ -1368,16 +1386,26 @@
                     fullText += pageText + "\n";
                 }
                 
-                const userInput = document.getElementById("userInput");
-                userInput.value += `\n[${file.name} İÇERİĞİ]:\n${fullText}\n`;
-                autoResize(userInput);
-                alert("✅ PDF başarıyla okundu ve yazı alanına metin olarak eklendi!");
+                // PDF okunduktan sonra text alanına GİRME, arka plana (window.selectedDocumentText) kaydet.
+                window.selectedDocumentText = `\n[${file.name} İÇERİĞİ]:\n${fullText}\n`;
+                window.selectedDocumentName = file.name;
+                
+                // UI'da dosyanın seçildiğini göster
+                const previewContainer = document.getElementById('imagePreviewContainer');
+                const previewImg = document.getElementById('imagePreview');
+                // Basit bir doküman ikonu SVG'si
+                previewImg.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 24 24' fill='none' stroke='%2389b4fa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'></path><polyline points='14 2 14 8 20 8'></polyline><line x1='16' y1='13' x2='8' y2='13'></line><line x1='16' y1='17' x2='8' y2='17'></line><polyline points='10 9 9 9 8 9'></polyline></svg>";
+                previewContainer.style.display = 'inline-block';
+                
+                // Seçili diğer resmi sıfırla
+                selectedImageBase64 = null;
+                
             } catch (err) {
                 console.error("PDF okuma hatası:", err);
                 alert("PDF okunamadı. Lütfen içeriği kopyalayıp yapıştırın.");
             }
         } else {
-            // txt, py, js vb. dosyalar için Base64'e çevirip normal eki olarak ekle
+            // txt, py, js vb. dosyalar için Base64'e çevirip normal eki olarak ekle (bunu da düzeltebiliriz, ama şimdilik kalsın)
             processFileAsBase64(file, false);
         }
         
@@ -1427,6 +1455,13 @@
             settingsMenu.style.display = 'none';
             document.getElementById('settingsOverlay').classList.remove('active');
         }, 300);
+    }
+
+    function getRandomApiKey(keyStr) {
+        if (!keyStr) return "";
+        const keys = keyStr.split(',').map(k => k.trim()).filter(k => k);
+        if (keys.length === 0) return "";
+        return keys[Math.floor(Math.random() * keys.length)];
     }
 
     function saveSettings() {
@@ -2223,6 +2258,12 @@
                 if (msg.images && msg.images.length > 0) {
                     htmlContent += `<img src="${msg.images[0]}" style="max-height:200px; border-radius:8px; display:block; margin-top:8px; border: 2px solid #89b4fa;">`;
                 }
+                if (msg.documentText) {
+                    htmlContent += `<div style="margin-top:8px; padding:8px 12px; border-radius:8px; background:rgba(255,255,255,0.1); border:1px solid #89b4fa; display:inline-flex; align-items:center; gap:8px;">
+                        <span style="font-size:1.5em;">📄</span> 
+                        <span><b>${msg.documentName || 'Ekli Belge'}</b></span>
+                    </div>`;
+                }
                 htmlContent += `<div class="msg-actions"><button class="msg-action-btn" onclick="editMessage(${index})" title="Düzenle">✏️</button></div>`;
                 div.innerHTML = htmlContent;
             } else {
@@ -2265,7 +2306,6 @@
     // ----- SESLİ KONUŞMA (TTS & STT) -----
     let isRecording = false;
     let recognition = null;
-    let speechTimeout = null;
     
     if ('webkitSpeechRecognition' in window) {
         recognition = new webkitSpeechRecognition();
@@ -2286,9 +2326,6 @@
             for (let i = e.resultIndex; i < e.results.length; ++i) {
                 const result = e.results[i];
                 const textVal = result[0].transcript;
-                const confidence = result[0].confidence !== undefined && result[0].confidence !== null ? result[0].confidence : 1.0;
-                
-                console.log(`STT Transcript: "${textVal}" | Güven Oranı (Confidence): ${confidence}`);
                 
                 if (result.isFinal) {
                     finalStr += textVal;
@@ -2300,20 +2337,15 @@
             if (finalStr !== '') { 
                 userInput.value += (userInput.value ? " " : "") + finalStr.trim(); 
                 autoResize(userInput); 
+                // Geçici (interim) placeholder'ı sıfırla
+                userInput.placeholder = "Dinliyorum... Konuşun...";
             } else if (interimStr !== '') {
                 // Konuşma devam ederken ekrana geçici olarak bas ki hızlı algılansın
                 userInput.placeholder = interimStr;
             }
             
-            // Ses geldiği anda sayacı sıfırla
-            clearTimeout(speechTimeout);
-            
-            // Eğer 3.5 saniye boyunca yeni ses gelmezse ve kutu boş değilse GÖNDER!
-            speechTimeout = setTimeout(() => {
-                if (userInput.value.trim() !== "") {
-                    sendMessage();
-                }
-            }, 3500);
+            // Otomatik gönderme (timeout) İPTAL EDİLDİ! Artık kullanıcı ne kadar susarsa sussun göndermeyecek.
+            // Sadece kaydetmeye devam edecek. Göndermek için Gönder butonuna basması gerekecek.
         };
         
         recognition.onerror = (err) => {
@@ -2321,11 +2353,19 @@
             if (err.error === 'not-allowed') {
                 alert("Telefondan mikrofona izin vermemiş olabilirsin! Lütfen tarayıcı ayarlarından siteye mikrofon izni ver.");
             } else if (err.error !== 'no-speech') {
-                alert("Telefon mikrofon hatası: " + err.error);
+                console.log("Mikrofon hatası: " + err.error);
             }
-            stopMic();
+            // "no-speech" hatasında kapatma, devam etsin.
+            if (err.error !== 'no-speech') stopMic();
         };
-        recognition.onend = () => stopMic();
+        recognition.onend = () => {
+            // Sürekli dinleme koptuysa ve hala isRecording ise yeniden başlat (kısa duraklamalarda kapanmasını önler)
+            if (isRecording) {
+                try { recognition.start(); } catch(e) { stopMic(); }
+            } else {
+                stopMic();
+            }
+        };
     }
 
     function toggleMic() {
@@ -2333,7 +2373,7 @@
         if (isRecording) {
             stopMic();
         } else {
-            userInput.value = "";
+            // userInput.value = ""; // İPTAL! Artık eski yazdıklarını veya dosya eklerini silmeyecek!
             try {
                 recognition.start();
             } catch(e) {
@@ -2348,7 +2388,6 @@
         if (recognition) {
             try { recognition.stop(); } catch(e) {}
         }
-        clearTimeout(speechTimeout);
         document.getElementById("micBtn").classList.remove("listening");
         userInput.placeholder = "CinoCode'a bir şeyler sor...";
     }
@@ -2441,6 +2480,140 @@
         return "http://" + window.location.hostname + ":8001/api/tts";
     }
 
+    // Dil Koçu: hedef dil adı → BCP-47 dil kodu haritası
+    const dilKocuLangMap = {
+        "İngilizce":           "en-US",
+        "İspanyolca":          "es-ES",
+        "Almanca":             "de-DE",
+        "Rusça":               "ru-RU",
+        "Çince (Mandarin)":    "zh-CN",
+        "Fransızca":           "fr-FR",
+        "Japonca":             "ja-JP",
+        "Korece":              "ko-KR",
+        "Arapça":              "ar-SA",
+        "İtalyanca":           "it-IT",
+        "Portekizce":          "pt-BR",
+        "Hollandaca":          "nl-NL",
+        "İsveççe":             "sv-SE",
+        "Yunanca":             "el-GR",
+        "Hintçe":              "hi-IN"
+    };
+
+    // ===== SAYI → KELİME ÇEVİRİCİ (İngilizce, Almanca, İspanyolca, Fransızca) =====
+    function numberToWords(n, langCode) {
+        if (isNaN(n) || n < 0 || n > 999999) return n.toString();
+        const lang = (langCode || 'en-US').split('-')[0];
+
+        if (lang === 'en') {
+            const ones = ['zero','one','two','three','four','five','six','seven','eight','nine',
+                          'ten','eleven','twelve','thirteen','fourteen','fifteen','sixteen',
+                          'seventeen','eighteen','nineteen'];
+            const tens = ['','','twenty','thirty','forty','fifty','sixty','seventy','eighty','ninety'];
+            if (n < 20) return ones[n];
+            if (n < 100) return tens[Math.floor(n/10)] + (n%10 ? '-' + ones[n%10] : '');
+            if (n < 1000) return ones[Math.floor(n/100)] + ' hundred' + (n%100 ? ' and ' + numberToWords(n%100, langCode) : '');
+            return Math.floor(n/1000) + ' thousand' + (n%1000 ? ' ' + numberToWords(n%1000, langCode) : '');
+        }
+        if (lang === 'de') {
+            const ones = ['null','ein','zwei','drei','vier','fünf','sechs','sieben','acht','neun',
+                          'zehn','elf','zwölf','dreizehn','vierzehn','fünfzehn','sechzehn',
+                          'siebzehn','achtzehn','neunzehn'];
+            const tens = ['','','zwanzig','dreißig','vierzig','fünfzig','sechzig','siebzig','achtzig','neunzig'];
+            if (n < 20) return ones[n];
+            if (n < 100) return (n%10 ? ones[n%10] + 'und' : '') + tens[Math.floor(n/10)];
+            return ones[Math.floor(n/100)] + 'hundert' + (n%100 ? numberToWords(n%100, langCode) : '');
+        }
+        if (lang === 'es') {
+            const ones = ['cero','uno','dos','tres','cuatro','cinco','seis','siete','ocho','nueve',
+                          'diez','once','doce','trece','catorce','quince','dieciséis',
+                          'diecisiete','dieciocho','diecinueve'];
+            const tens = ['','','veinte','treinta','cuarenta','cincuenta','sesenta','setenta','ochenta','noventa'];
+            if (n < 20) return ones[n];
+            if (n < 100) return tens[Math.floor(n/10)] + (n%10 ? ' y ' + ones[n%10] : '');
+            return n.toString();
+        }
+        if (lang === 'fr') {
+            const ones = ['zéro','un','deux','trois','quatre','cinq','six','sept','huit','neuf',
+                          'dix','onze','douze','treize','quatorze','quinze','seize',
+                          'dix-sept','dix-huit','dix-neuf'];
+            const tens = ['','','vingt','trente','quarante','cinquante','soixante','soixante','quatre-vingt','quatre-vingt'];
+            if (n < 20) return ones[n];
+            if (n < 100) return tens[Math.floor(n/10)] + (n%10 ? '-' + ones[n%10] : '');
+            return n.toString();
+        }
+        // Diğer diller: rakamı olduğu gibi bırak, TTS motoru halleder
+        return n.toString();
+    }
+
+    function convertNumbersToWords(text, langCode) {
+        // Sadece tek başına duran rakamları dönüştür (IPA içindeki rakamları değil)
+        return text.replace(/\b(\d{1,6})\b/g, (match, num) => {
+            return numberToWords(parseInt(num), langCode);
+        });
+    }
+
+    // Dil koçu modunda metinden SADECE hedef dil satırlarını çıkar
+    function splitDilKocuSegments(rawText) {
+        const targetLang = (typeof getDilKocuLang === 'function') ? getDilKocuLang() : 'İngilizce';
+        const targetCode = dilKocuLangMap[targetLang] || 'en-US';
+        const results = []; // { text, lang }
+
+        const lines = rawText.split(/\n/);
+        for (const line of lines) {
+            const trimmed = line.trim();
+            if (!trimmed) continue;
+
+            // "→ Türkçe: ..." → ATLA
+            if (trimmed.match(/^→\s*Türkçe\s*:/i)) continue;
+            // Türkçe anlamı / açıklama satırları → ATLA
+            if (trimmed.match(/^(🇹🇷|Türkçe anlamı|💡|📝 Örnek|Dilbilgisi|Motivasyon|Harika|Çok doğru|Neredeyse|Bu kelimeyi)/i)) continue;
+            // [KELİME ÖĞRENİLDİ] etiketi → ATLA
+            if (trimmed.includes('KELİME ÖĞRENİLDİ')) continue;
+            // Başlık/meta satırlar → ATLA
+            if (trimmed.match(/^(Hedef Dil:|DİL KOÇU MODU|Günlük Hedef:|Seviye:|===)/i)) continue;
+
+            // "→ [Herhangi dil]: cümle" formatı — hedef dil cümlesi
+            const arrowMatch = trimmed.match(/^→\s*[A-Za-zÀ-ÿğüşıöçĞÜŞİÖÇ ()]+:\s*(.+)$/i);
+            if (arrowMatch) {
+                let sentence = arrowMatch[1];
+                sentence = convertNumbersToWords(sentence, targetCode);
+                results.push({ text: sentence, lang: targetCode });
+                continue;
+            }
+
+            // **Kelime** bold satırı — hedef dil kelimesi
+            const boldMatch = trimmed.match(/^\*{1,2}(.+?)\*{1,2}$/);
+            if (boldMatch) {
+                let word = boldMatch[1].replace(/\[.*?\]/g, '').trim();
+                word = convertNumbersToWords(word, targetCode);
+                results.push({ text: word, lang: targetCode });
+                continue;
+            }
+
+            // IPA / fonetik satırı — ATLA (okunuşu parantez içinde, TTS'e uygun değil)
+            if (trimmed.match(/^[*(]*(Okunuşu|IPA|fonetik)/i)) continue;
+            if (trimmed.match(/\/[a-zæøɑɛɪɔʊəˈˌ]+\//)) continue; // IPA sembolleri içeren satır
+
+            // Tablo satırı (|) → ATLA
+            if (trimmed.startsWith('|')) continue;
+
+            // Kısa Türkçe açıklamalar ("Rica ederim", "Merhaba" vb tablodan gelen) — ATLA
+            // Eğer satır tamamen ASCII+Türkçe harflerden oluşuyorsa ve çok kısa değilse büyük ihtimal Türkçe
+            // Basit heuristic: hedef dil İngilizce ise Türkçe karakter içeriyorsa atla
+            const trChars = /[ğüşıöçĞÜŞİÖÇ]/;
+            if (trChars.test(trimmed) && targetCode !== 'tr-TR') continue;
+
+            // Geri kalan — büyük ihtimalle hedef dil içeriği, oku
+            const cleaned = trimmed.replace(/[*_#`[\]()]/g, '').trim();
+            if (cleaned.length > 1) {
+                const withWords = convertNumbersToWords(cleaned, targetCode);
+                results.push({ text: withWords, lang: targetCode });
+            }
+        }
+
+        return results.filter(s => s.text.trim().length > 0);
+    }
+
     function playNextTTS() {
         if (!isSpeakerOn || ttsQueue.length === 0) {
             isPlayingTTS = false;
@@ -2459,12 +2632,67 @@
         const currentSpeechRunId = speechRunId;
         const currentSelectedVoiceId = voiceSelect.value;
 
+        // ===== DİL KOÇU MODU: Çok dilli TTS =====
+        const isDilKocuActive = (document.getElementById('personaSelect') &&
+                                  document.getElementById('personaSelect').value === 'dil_kocu');
+        if (isDilKocuActive && (currentSelectedVoiceId === "male_local" || currentSelectedVoiceId.startsWith("native_"))) {
+            // Metni segmentlere böl, sırayla her birini kendi diliyle oku
+            const segments = splitDilKocuSegments(text);
+            if (segments.length > 0) {
+                speakSegments(segments, 0, currentSpeechRunId, currentSelectedVoiceId);
+                return;
+            }
+        }
+
         if (currentSelectedVoiceId === "male_local" || currentSelectedVoiceId.startsWith("native_")) {
-            speakWithLocalVoice(cleanText, currentSpeechRunId, currentSelectedVoiceId);
+            speakWithLocalVoice(cleanText, currentSpeechRunId, currentSelectedVoiceId, "tr-TR");
         } else {
             speakWithServer(cleanText, currentSpeechRunId, currentSelectedVoiceId);
         }
     }
+
+    // Segmentleri sırayla oku (recursive)
+    function speakSegments(segments, idx, expectedRunId, expectedVoiceId) {
+        if (!isSpeakerOn || speechRunId !== expectedRunId || idx >= segments.length) {
+            if (isSpeakerOn && speechRunId === expectedRunId) playNextTTS();
+            else isPlayingTTS = false;
+            return;
+        }
+        const seg = segments[idx];
+        const cleanSeg = seg.text.replace(/[#*_[\]()]/g, "").trim();
+        if (!cleanSeg) { speakSegments(segments, idx + 1, expectedRunId, expectedVoiceId); return; }
+
+        const utterance = new SpeechSynthesisUtterance(cleanSeg);
+        const voices = synth.getVoices();
+
+        // Dil koduna göre en uygun sesi seç
+        const langVoices = voices.filter(v => v.lang.startsWith(seg.lang.split("-")[0]));
+        const exactVoices = voices.filter(v => v.lang === seg.lang);
+
+        if (exactVoices.length > 0) {
+            utterance.voice = exactVoices[0];
+        } else if (langVoices.length > 0) {
+            utterance.voice = langVoices[0];
+        }
+        utterance.lang = seg.lang;
+        utterance.rate = seg.lang === "tr-TR" ? 0.95 : 0.88; // Yabancı dilde biraz yavaş
+        utterance.pitch = 1.0;
+
+        utterance.onend = () => {
+            if (isSpeakerOn && speechRunId === expectedRunId) {
+                speakSegments(segments, idx + 1, expectedRunId, expectedVoiceId);
+            } else {
+                isPlayingTTS = false;
+            }
+        };
+        utterance.onerror = () => {
+            speakSegments(segments, idx + 1, expectedRunId, expectedVoiceId);
+        };
+
+        window.currentUtterance = utterance;
+        synth.speak(utterance);
+    }
+
 
     function speakWithServer(cleanText, expectedRunId, expectedVoiceId) {
         if (!isSpeakerOn || speechRunId !== expectedRunId || voiceSelect.value !== expectedVoiceId) {
@@ -2882,7 +3110,7 @@
                 const panel = document.getElementById('dilKocuPanel');
                 if (val === 'dil_kocu') {
                     panel.classList.add('active');
-                    // Gemini'ye otomatik geç (Türkçe + çok dil için en iyi model)
+                    // Gemini'ye otomatik geç
                     const modelSel = document.getElementById('modelSelect');
                     if (modelSel && !modelSel.value.includes('-gemini')) {
                         modelSel.value = 'gemini-3-flash-preview-gemini';
@@ -2906,7 +3134,7 @@
 
     // ===== DİL KOÇU MODU: Global değişkenler =====
     let dilKocuQuizActive = false;
-    let dilKocuLessonPrompt = ""; // sendMessage'a enjekte edilecek özel prompt
+    let dilKocuLessonPrompt = "";
 
     function getDilKocuLang() {
         const el = document.getElementById('dk-lang');
@@ -2918,19 +3146,32 @@
     }
     function getDilKocuGoal() {
         const el = document.getElementById('dk-goal');
-        return el ? parseInt(el.value) : 10;
+        if (!el) return 10;
+        if (el.value === 'custom') {
+            const custom = document.getElementById('dk-goal-custom');
+            const val = custom ? parseInt(custom.value) : 10;
+            return (val && val > 0) ? val : 10;
+        }
+        return parseInt(el.value) || 10;
     }
 
-    // Dil koçu sistemi promptunu (lang+level+quiz) sendMessage'a ekler
-    // Bu fonksiyon updateDilKocuPrompt'tan çağrılır, personas["dil_kocu"] üzerine eklenir
+    function updateDilKocuGoalCustom() {
+        updateDilKocuProgress();
+    }
+
+    // Dil koçu injection — personas["dil_kocu"] üzerine eklenir
     function getDilKocuInjection() {
         const lang = getDilKocuLang();
         const level = getDilKocuLevel();
         const goal = getDilKocuGoal();
+        
+        // Quiz soru sayısını hedefe göre biraz dinamik yapalım (Maksimum 10 soru)
+        const quizQuestionCount = Math.min(goal, 10);
+        
         const quizNote = dilKocuQuizActive
-            ? `\n\n🧠 QUIZ MODU AKTİF: Şu anda kullanıcı quiz modunda. Ona daha önce öğrettiğin ${lang} kelimelerden seçerek 3-5 soru sor. Format: "Türkçesi '...' olan ${lang} kelimesi nedir?" veya "${lang}'de '...' ne anlama gelir?". Her doğru cevabı tebrik et, yanlışı nazikçe düzelt. Quiz bittikten sonra skoru Türkçe olarak söyle.`
+            ? `\n\n🧠 QUIZ MODU AKTİF: Şu anda kullanıcı quiz modunda. Ona daha önce öğrettiğin ${lang} kelimelerden seçerek ${quizQuestionCount} adet soru sor. Format: "Türkçesi '...' olan ${lang} kelimesi nedir?" veya "${lang}'de '...' ne anlama gelir?". Her doğru cevabı tebrik et, yanlışı nazikçe düzelt. Quiz bittikten sonra skoru Türkçe olarak söyle.`
             : '';
-        return `\n\n===== DİL KOÇU MODU AKTİF =====\nHedef Dil: ${lang} | Seviye: ${level} | Günlük Hedef: ${goal} kelime\n\nBu modda MUTLAKA şu formatta öğret:\n\n**[HEDEF DİLDEKİ KELİME / CÜMLE]**\n*(Okunuşu: fonetik/IPA)*\n🇹🇷 Türkçe anlamı: ...\n📝 Örnek cümle:\n  → ${lang}: [örnek cümle]\n  → Türkçe: [çevirisi]\n💡 Dilbilgisi/Mantık notu: [Türkçe açıklama]\n\n- Seviye ${level} için uygun kelime ve yapılar kullan.\n- Eğer ${level} = 'Başlangıç (A1-A2)' ise: selamlama, sayılar, renkler, günlük eylemler, temel kalıplar.\n- Eğer ${level} = 'Orta (B1-B2)' ise: zaman kalıpları, alışveriş/iş/seyahat diyalogları, yaygın deyimler.\n- Eğer ${level} = 'İleri (C1-C2)' ise: deyimler, atasözleri, resmi/edebi dil, nüanslar.\n- Açıklamaları HER ZAMAN Türkçe yap (kullanıcı o dilde konuşmanı istemediği sürece).\n- Her cevapta en az 1 yeni kelime/kalıp öğret ve '[KELİME ÖĞRENİLDİ ✅]' etiketini cevabın sonuna ekle.\n- Motivasyon cümleleri kullan: 'Harika!', 'Çok doğru!', 'Neredeyse!', 'Bu kelimeyi artık unutmazsın!'${quizNote}`;
+        return `\n\n===== DİL KOÇU MODU AKTİF =====\nHedef Dil: ${lang} | Seviye: ${level} | Günlük Hedef: ${goal} kelime\n\n⚠️ KRİTİK KURAL: Cevaplarına kesinlikle başka dil karıştırma! Hedef dil ${lang}, açıklamalar Türkçe. Çince, Japonca, Endonezce, Arapça vb. hiçbir dilde harf veya kelime kullanma. SADECE ${lang} + Türkçe.\n\nBu modda MUTLAKA şu formatta öğret:\n\n**[HEDEF DİLDEKİ KELİME / CÜMLE]**\n*(Okunuşu: fonetik/IPA)*\n🇹🇷 Türkçe anlamı: ...\n📝 Örnek cümle:\n  → ${lang}: [örnek cümle]\n  → Türkçe: [çevirisi]\n💡 Dilbilgisi/Mantık notu: [Türkçe açıklama]\n\n- Seviye ${level} için uygun kelime ve yapılar kullan.\n- Eğer ${level} Başlangıç/A0/A1/A2 ise: selamlama, sayılar, renkler, günlük eylemler, temel kalıplar.\n- Eğer ${level} Orta/B1/B2 ise: zaman kalıpları, alışveriş/iş/seyahat diyalogları, yaygın deyimler.\n- Eğer ${level} İleri/C1/C2 ise: deyimler, atasözleri, resmi/edebi dil, nüanslar.\n- Kullanıcının seçtiği Günlük Hedef: ${goal} kelime! Dersi ve vereceğin kelimeleri bu hedefe (veya kullanıcının istediği miktara) uygun şekilde gruplara ayırarak öğret. Örneğin 90 kelime istediyse, 15'li gruplar halinde ver.\n- Açıklamaları HER ZAMAN Türkçe yap (kullanıcı o dilde konuşmanı istemediği sürece).\n- Her cevapta en az 1 yeni kelime/kalıp öğret ve '[KELİME ÖĞRENİLDİ ✅]' etiketini cevabın sonuna ekle.\n- Motivasyon cümleleri kullan: 'Harika!', 'Çok doğru!', 'Neredeyse!', 'Bu kelimeyi artık unutmazsın!'${quizNote}`;
     }
 
     function updateDilKocuPrompt() {
@@ -2940,6 +3181,17 @@
     }
 
     function updateDilKocuGoal() {
+        const el = document.getElementById('dk-goal');
+        const customEl = document.getElementById('dk-goal-custom');
+        if (el && customEl) {
+            if (el.value === 'custom') {
+                customEl.style.display = 'inline-block';
+                customEl.focus();
+            } else {
+                customEl.style.display = 'none';
+                customEl.value = '';
+            }
+        }
         updateDilKocuProgress();
     }
 
@@ -3238,7 +3490,7 @@
         }
 
         const text = userInput.value.trim();
-        if (!text && !selectedImageBase64) return;
+        if (!text && !selectedImageBase64 && !window.selectedDocumentText) return;
 
         const selectedModel = document.getElementById("modelSelect").value;
         const isGroqSelected = selectedModel.includes("-groq");
@@ -3259,11 +3511,16 @@
         const chat = sessions[currentChatId];
         let attachmentInfo = null;
         if (selectedImageBase64) attachmentInfo = { type: "image/" };
+        else if (window.selectedDocumentText) attachmentInfo = { type: "document/" };
         ensureChatTitleFromUserInput(text, attachmentInfo);
         
         let msgObj = { role: "user", content: text };
         if (selectedImageBase64) {
             msgObj.images = [selectedImageBase64];
+        }
+        if (window.selectedDocumentText) {
+            msgObj.documentText = window.selectedDocumentText;
+            msgObj.documentName = window.selectedDocumentName || "Belge";
         }
         
         chat.messages.push(msgObj);
@@ -3272,6 +3529,11 @@
         renderCurrentChat();
         
         userInput.value = ""; autoResize(userInput);
+        
+        // Gönderimden sonra dokümanı ve önizlemeyi temizle
+        window.selectedDocumentText = null;
+        window.selectedDocumentName = null;
+        document.getElementById('imagePreviewContainer').style.display = 'none';
 
         const botId = "bot-" + Date.now();
         const typingDiv = document.createElement("div");
@@ -3293,6 +3555,12 @@
             const personaValue = document.getElementById("personaSelect") ? document.getElementById("personaSelect").value : "kanka";
             let baseSystemPrompt = personas[personaValue] || systemPrompt;
 
+            // ===== DİL KOÇU ENJEKSİYONU =====
+            // Dil Koçu seçiliyse → dil, seviye, kural ve quiz talimatlarını sisteme ekle
+            if (personaValue === 'dil_kocu') {
+                baseSystemPrompt += getDilKocuInjection();
+            }
+
             let userMemory = localStorage.getItem('cinocode_memory_' + (loggedUser || "default"));
             if (userMemory) {
                 // "Ahmet" bugını kalıcı olarak temizle
@@ -3308,7 +3576,15 @@
             // ===== KRİTİK FIX: reqMessages'a sistem + sohbet geçmişini ekle =====
             reqMessages.push({ role: "system", content: baseSystemPrompt });
             const historyMsgs = chat.messages.slice(-20);
-            for (let hm of historyMsgs) { reqMessages.push(hm); }
+            for (let hm of historyMsgs) { 
+                let hmClone = { ...hm };
+                if (hmClone.documentText) {
+                    hmClone.content = (hmClone.content ? "Kullanıcının Mesajı:\n" + hmClone.content + "\n\n" : "") + hmClone.documentText;
+                    delete hmClone.documentText;
+                    delete hmClone.documentName;
+                }
+                reqMessages.push(hmClone); 
+            }
             console.log("[CinoCode] reqMessages dolduruldu:", reqMessages.length, "mesaj");
             
             let isGroq = selectedModel.includes("-groq");
@@ -3335,7 +3611,15 @@
                 }
             } else {
                 // Sadece metin ise sırasıyla diğer hızlı modelleri yedek olarak ekle
-                const textModels = [
+                // Dil Koçu modunda Gemini önce gelsin (Llama Türkçe + çok dil desteği zayıf)
+                const isDilKocu = (document.getElementById('personaSelect') && document.getElementById('personaSelect').value === 'dil_kocu');
+                const textModels = isDilKocu ? [
+                    "gemini-3-flash-preview-gemini",
+                    "gemini-2.5-flash-gemini",
+                    "llama-3.3-70b-versatile-groq",
+                    "meta-llama/llama-3.2-11b-vision-instruct:free-openrouter",
+                    "llama-3.1-8b-instant-groq"
+                ] : [
                     "llama-3.3-70b-versatile-groq",
                     "llama-3.1-8b-instant-groq",
                     "gemini-3-flash-preview-gemini",

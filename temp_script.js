@@ -1577,6 +1577,140 @@
         return "http://" + window.location.hostname + ":8001/api/tts";
     }
 
+    // Dil KoÃ§u: hedef dil adÄ± â†’ BCP-47 dil kodu haritasÄ±
+    const dilKocuLangMap = {
+        "Ä°ngilizce":           "en-US",
+        "Ä°spanyolca":          "es-ES",
+        "Almanca":             "de-DE",
+        "RusÃ§a":               "ru-RU",
+        "Ã‡ince (Mandarin)":    "zh-CN",
+        "FransÄ±zca":           "fr-FR",
+        "Japonca":             "ja-JP",
+        "Korece":              "ko-KR",
+        "ArapÃ§a":              "ar-SA",
+        "Ä°talyanca":           "it-IT",
+        "Portekizce":          "pt-BR",
+        "Hollandaca":          "nl-NL",
+        "Ä°sveÃ§Ã§e":             "sv-SE",
+        "Yunanca":             "el-GR",
+        "HintÃ§e":              "hi-IN"
+    };
+
+    // ===== SAYI â†’ KELÄ°ME Ã‡EVÄ°RÄ°CÄ° (Ä°ngilizce, Almanca, Ä°spanyolca, FransÄ±zca) =====
+    function numberToWords(n, langCode) {
+        if (isNaN(n) || n < 0 || n > 999999) return n.toString();
+        const lang = (langCode || 'en-US').split('-')[0];
+
+        if (lang === 'en') {
+            const ones = ['zero','one','two','three','four','five','six','seven','eight','nine',
+                          'ten','eleven','twelve','thirteen','fourteen','fifteen','sixteen',
+                          'seventeen','eighteen','nineteen'];
+            const tens = ['','','twenty','thirty','forty','fifty','sixty','seventy','eighty','ninety'];
+            if (n < 20) return ones[n];
+            if (n < 100) return tens[Math.floor(n/10)] + (n%10 ? '-' + ones[n%10] : '');
+            if (n < 1000) return ones[Math.floor(n/100)] + ' hundred' + (n%100 ? ' and ' + numberToWords(n%100, langCode) : '');
+            return Math.floor(n/1000) + ' thousand' + (n%1000 ? ' ' + numberToWords(n%1000, langCode) : '');
+        }
+        if (lang === 'de') {
+            const ones = ['null','ein','zwei','drei','vier','fÃ¼nf','sechs','sieben','acht','neun',
+                          'zehn','elf','zwÃ¶lf','dreizehn','vierzehn','fÃ¼nfzehn','sechzehn',
+                          'siebzehn','achtzehn','neunzehn'];
+            const tens = ['','','zwanzig','dreiÃŸig','vierzig','fÃ¼nfzig','sechzig','siebzig','achtzig','neunzig'];
+            if (n < 20) return ones[n];
+            if (n < 100) return (n%10 ? ones[n%10] + 'und' : '') + tens[Math.floor(n/10)];
+            return ones[Math.floor(n/100)] + 'hundert' + (n%100 ? numberToWords(n%100, langCode) : '');
+        }
+        if (lang === 'es') {
+            const ones = ['cero','uno','dos','tres','cuatro','cinco','seis','siete','ocho','nueve',
+                          'diez','once','doce','trece','catorce','quince','diecisÃ©is',
+                          'diecisiete','dieciocho','diecinueve'];
+            const tens = ['','','veinte','treinta','cuarenta','cincuenta','sesenta','setenta','ochenta','noventa'];
+            if (n < 20) return ones[n];
+            if (n < 100) return tens[Math.floor(n/10)] + (n%10 ? ' y ' + ones[n%10] : '');
+            return n.toString();
+        }
+        if (lang === 'fr') {
+            const ones = ['zÃ©ro','un','deux','trois','quatre','cinq','six','sept','huit','neuf',
+                          'dix','onze','douze','treize','quatorze','quinze','seize',
+                          'dix-sept','dix-huit','dix-neuf'];
+            const tens = ['','','vingt','trente','quarante','cinquante','soixante','soixante','quatre-vingt','quatre-vingt'];
+            if (n < 20) return ones[n];
+            if (n < 100) return tens[Math.floor(n/10)] + (n%10 ? '-' + ones[n%10] : '');
+            return n.toString();
+        }
+        // DiÄŸer diller: rakamÄ± olduÄŸu gibi bÄ±rak, TTS motoru halleder
+        return n.toString();
+    }
+
+    function convertNumbersToWords(text, langCode) {
+        // Sadece tek baÅŸÄ±na duran rakamlarÄ± dÃ¶nÃ¼ÅŸtÃ¼r (IPA iÃ§indeki rakamlarÄ± deÄŸil)
+        return text.replace(/\b(\d{1,6})\b/g, (match, num) => {
+            return numberToWords(parseInt(num), langCode);
+        });
+    }
+
+    // Dil koÃ§u modunda metinden SADECE hedef dil satÄ±rlarÄ±nÄ± Ã§Ä±kar
+    function splitDilKocuSegments(rawText) {
+        const targetLang = (typeof getDilKocuLang === 'function') ? getDilKocuLang() : 'Ä°ngilizce';
+        const targetCode = dilKocuLangMap[targetLang] || 'en-US';
+        const results = []; // { text, lang }
+
+        const lines = rawText.split(/\n/);
+        for (const line of lines) {
+            const trimmed = line.trim();
+            if (!trimmed) continue;
+
+            // "â†’ TÃ¼rkÃ§e: ..." â†’ ATLA
+            if (trimmed.match(/^â†’\s*TÃ¼rkÃ§e\s*:/i)) continue;
+            // TÃ¼rkÃ§e anlamÄ± / aÃ§Ä±klama satÄ±rlarÄ± â†’ ATLA
+            if (trimmed.match(/^(ðŸ‡¹ðŸ‡·|TÃ¼rkÃ§e anlamÄ±|ðŸ’¡|ðŸ“ Ã–rnek|Dilbilgisi|Motivasyon|Harika|Ã‡ok doÄŸru|Neredeyse|Bu kelimeyi)/i)) continue;
+            // [KELÄ°ME Ã–ÄžRENÄ°LDÄ°] etiketi â†’ ATLA
+            if (trimmed.includes('KELÄ°ME Ã–ÄžRENÄ°LDÄ°')) continue;
+            // BaÅŸlÄ±k/meta satÄ±rlar â†’ ATLA
+            if (trimmed.match(/^(Hedef Dil:|DÄ°L KOÃ‡U MODU|GÃ¼nlÃ¼k Hedef:|Seviye:|===)/i)) continue;
+
+            // "â†’ [Herhangi dil]: cÃ¼mle" formatÄ± â€” hedef dil cÃ¼mlesi
+            const arrowMatch = trimmed.match(/^â†’\s*[A-Za-zÃ€-Ã¿ÄŸÃ¼ÅŸÄ±Ã¶Ã§ÄžÃœÅžÄ°Ã–Ã‡ ()]+:\s*(.+)$/i);
+            if (arrowMatch) {
+                let sentence = arrowMatch[1];
+                sentence = convertNumbersToWords(sentence, targetCode);
+                results.push({ text: sentence, lang: targetCode });
+                continue;
+            }
+
+            // **Kelime** bold satÄ±rÄ± â€” hedef dil kelimesi
+            const boldMatch = trimmed.match(/^\*{1,2}(.+?)\*{1,2}$/);
+            if (boldMatch) {
+                let word = boldMatch[1].replace(/\[.*?\]/g, '').trim();
+                word = convertNumbersToWords(word, targetCode);
+                results.push({ text: word, lang: targetCode });
+                continue;
+            }
+
+            // IPA / fonetik satÄ±rÄ± â€” ATLA (okunuÅŸu parantez iÃ§inde, TTS'e uygun deÄŸil)
+            if (trimmed.match(/^[*(]*(OkunuÅŸu|IPA|fonetik)/i)) continue;
+            if (trimmed.match(/\/[a-zÃ¦Ã¸É‘É›ÉªÉ”ÊŠÉ™ËˆËŒ]+\//)) continue; // IPA sembolleri iÃ§eren satÄ±r
+
+            // Tablo satÄ±rÄ± (|) â†’ ATLA
+            if (trimmed.startsWith('|')) continue;
+
+            // KÄ±sa TÃ¼rkÃ§e aÃ§Ä±klamalar ("Rica ederim", "Merhaba" vb tablodan gelen) â€” ATLA
+            // EÄŸer satÄ±r tamamen ASCII+TÃ¼rkÃ§e harflerden oluÅŸuyorsa ve Ã§ok kÄ±sa deÄŸilse bÃ¼yÃ¼k ihtimal TÃ¼rkÃ§e
+            // Basit heuristic: hedef dil Ä°ngilizce ise TÃ¼rkÃ§e karakter iÃ§eriyorsa atla
+            const trChars = /[ÄŸÃ¼ÅŸÄ±Ã¶Ã§ÄžÃœÅžÄ°Ã–Ã‡]/;
+            if (trChars.test(trimmed) && targetCode !== 'tr-TR') continue;
+
+            // Geri kalan â€” bÃ¼yÃ¼k ihtimalle hedef dil iÃ§eriÄŸi, oku
+            const cleaned = trimmed.replace(/[*_#`[\]()]/g, '').trim();
+            if (cleaned.length > 1) {
+                const withWords = convertNumbersToWords(cleaned, targetCode);
+                results.push({ text: withWords, lang: targetCode });
+            }
+        }
+
+        return results.filter(s => s.text.trim().length > 0);
+    }
+
     function playNextTTS() {
         if (!isSpeakerOn || ttsQueue.length === 0) {
             isPlayingTTS = false;
@@ -1595,12 +1729,67 @@
         const currentSpeechRunId = speechRunId;
         const currentSelectedVoiceId = voiceSelect.value;
 
+        // ===== DÄ°L KOÃ‡U MODU: Ã‡ok dilli TTS =====
+        const isDilKocuActive = (document.getElementById('personaSelect') &&
+                                  document.getElementById('personaSelect').value === 'dil_kocu');
+        if (isDilKocuActive && (currentSelectedVoiceId === "male_local" || currentSelectedVoiceId.startsWith("native_"))) {
+            // Metni segmentlere bÃ¶l, sÄ±rayla her birini kendi diliyle oku
+            const segments = splitDilKocuSegments(text);
+            if (segments.length > 0) {
+                speakSegments(segments, 0, currentSpeechRunId, currentSelectedVoiceId);
+                return;
+            }
+        }
+
         if (currentSelectedVoiceId === "male_local" || currentSelectedVoiceId.startsWith("native_")) {
-            speakWithLocalVoice(cleanText, currentSpeechRunId, currentSelectedVoiceId);
+            speakWithLocalVoice(cleanText, currentSpeechRunId, currentSelectedVoiceId, "tr-TR");
         } else {
             speakWithServer(cleanText, currentSpeechRunId, currentSelectedVoiceId);
         }
     }
+
+    // Segmentleri sÄ±rayla oku (recursive)
+    function speakSegments(segments, idx, expectedRunId, expectedVoiceId) {
+        if (!isSpeakerOn || speechRunId !== expectedRunId || idx >= segments.length) {
+            if (isSpeakerOn && speechRunId === expectedRunId) playNextTTS();
+            else isPlayingTTS = false;
+            return;
+        }
+        const seg = segments[idx];
+        const cleanSeg = seg.text.replace(/[#*_[\]()]/g, "").trim();
+        if (!cleanSeg) { speakSegments(segments, idx + 1, expectedRunId, expectedVoiceId); return; }
+
+        const utterance = new SpeechSynthesisUtterance(cleanSeg);
+        const voices = synth.getVoices();
+
+        // Dil koduna gÃ¶re en uygun sesi seÃ§
+        const langVoices = voices.filter(v => v.lang.startsWith(seg.lang.split("-")[0]));
+        const exactVoices = voices.filter(v => v.lang === seg.lang);
+
+        if (exactVoices.length > 0) {
+            utterance.voice = exactVoices[0];
+        } else if (langVoices.length > 0) {
+            utterance.voice = langVoices[0];
+        }
+        utterance.lang = seg.lang;
+        utterance.rate = seg.lang === "tr-TR" ? 0.95 : 0.88; // YabancÄ± dilde biraz yavaÅŸ
+        utterance.pitch = 1.0;
+
+        utterance.onend = () => {
+            if (isSpeakerOn && speechRunId === expectedRunId) {
+                speakSegments(segments, idx + 1, expectedRunId, expectedVoiceId);
+            } else {
+                isPlayingTTS = false;
+            }
+        };
+        utterance.onerror = () => {
+            speakSegments(segments, idx + 1, expectedRunId, expectedVoiceId);
+        };
+
+        window.currentUtterance = utterance;
+        synth.speak(utterance);
+    }
+
 
     function speakWithServer(cleanText, expectedRunId, expectedVoiceId) {
         if (!isSpeakerOn || speechRunId !== expectedRunId || voiceSelect.value !== expectedVoiceId) {
@@ -2018,7 +2207,7 @@
                 const panel = document.getElementById('dilKocuPanel');
                 if (val === 'dil_kocu') {
                     panel.classList.add('active');
-                    // Gemini'ye otomatik geÃ§ (TÃ¼rkÃ§e + Ã§ok dil iÃ§in en iyi model)
+                    // Gemini'ye otomatik geÃ§
                     const modelSel = document.getElementById('modelSelect');
                     if (modelSel && !modelSel.value.includes('-gemini')) {
                         modelSel.value = 'gemini-3-flash-preview-gemini';
@@ -2042,7 +2231,7 @@
 
     // ===== DÄ°L KOÃ‡U MODU: Global deÄŸiÅŸkenler =====
     let dilKocuQuizActive = false;
-    let dilKocuLessonPrompt = ""; // sendMessage'a enjekte edilecek Ã¶zel prompt
+    let dilKocuLessonPrompt = "";
 
     function getDilKocuLang() {
         const el = document.getElementById('dk-lang');
@@ -2054,11 +2243,20 @@
     }
     function getDilKocuGoal() {
         const el = document.getElementById('dk-goal');
-        return el ? parseInt(el.value) : 10;
+        if (!el) return 10;
+        if (el.value === 'custom') {
+            const custom = document.getElementById('dk-goal-custom');
+            const val = custom ? parseInt(custom.value) : 10;
+            return (val && val > 0) ? val : 10;
+        }
+        return parseInt(el.value) || 10;
     }
 
-    // Dil koÃ§u sistemi promptunu (lang+level+quiz) sendMessage'a ekler
-    // Bu fonksiyon updateDilKocuPrompt'tan Ã§aÄŸrÄ±lÄ±r, personas["dil_kocu"] Ã¼zerine eklenir
+    function updateDilKocuGoalCustom() {
+        updateDilKocuProgress();
+    }
+
+    // Dil koÃ§u injection â€” personas["dil_kocu"] Ã¼zerine eklenir
     function getDilKocuInjection() {
         const lang = getDilKocuLang();
         const level = getDilKocuLevel();
@@ -2066,7 +2264,7 @@
         const quizNote = dilKocuQuizActive
             ? `\n\nðŸ§  QUIZ MODU AKTÄ°F: Åžu anda kullanÄ±cÄ± quiz modunda. Ona daha Ã¶nce Ã¶ÄŸrettiÄŸin ${lang} kelimelerden seÃ§erek 3-5 soru sor. Format: "TÃ¼rkÃ§esi '...' olan ${lang} kelimesi nedir?" veya "${lang}'de '...' ne anlama gelir?". Her doÄŸru cevabÄ± tebrik et, yanlÄ±ÅŸÄ± nazikÃ§e dÃ¼zelt. Quiz bittikten sonra skoru TÃ¼rkÃ§e olarak sÃ¶yle.`
             : '';
-        return `\n\n===== DÄ°L KOÃ‡U MODU AKTÄ°F =====\nHedef Dil: ${lang} | Seviye: ${level} | GÃ¼nlÃ¼k Hedef: ${goal} kelime\n\nBu modda MUTLAKA ÅŸu formatta Ã¶ÄŸret:\n\n**[HEDEF DÄ°LDEKÄ° KELÄ°ME / CÃœMLE]**\n*(OkunuÅŸu: fonetik/IPA)*\nðŸ‡¹ðŸ‡· TÃ¼rkÃ§e anlamÄ±: ...\nðŸ“ Ã–rnek cÃ¼mle:\n  â†’ ${lang}: [Ã¶rnek cÃ¼mle]\n  â†’ TÃ¼rkÃ§e: [Ã§evirisi]\nðŸ’¡ Dilbilgisi/MantÄ±k notu: [TÃ¼rkÃ§e aÃ§Ä±klama]\n\n- Seviye ${level} iÃ§in uygun kelime ve yapÄ±lar kullan.\n- EÄŸer ${level} = 'BaÅŸlangÄ±Ã§ (A1-A2)' ise: selamlama, sayÄ±lar, renkler, gÃ¼nlÃ¼k eylemler, temel kalÄ±plar.\n- EÄŸer ${level} = 'Orta (B1-B2)' ise: zaman kalÄ±plarÄ±, alÄ±ÅŸveriÅŸ/iÅŸ/seyahat diyaloglarÄ±, yaygÄ±n deyimler.\n- EÄŸer ${level} = 'Ä°leri (C1-C2)' ise: deyimler, atasÃ¶zleri, resmi/edebi dil, nÃ¼anslar.\n- AÃ§Ä±klamalarÄ± HER ZAMAN TÃ¼rkÃ§e yap (kullanÄ±cÄ± o dilde konuÅŸmanÄ± istemediÄŸi sÃ¼rece).\n- Her cevapta en az 1 yeni kelime/kalÄ±p Ã¶ÄŸret ve '[KELÄ°ME Ã–ÄžRENÄ°LDÄ° âœ…]' etiketini cevabÄ±n sonuna ekle.\n- Motivasyon cÃ¼mleleri kullan: 'Harika!', 'Ã‡ok doÄŸru!', 'Neredeyse!', 'Bu kelimeyi artÄ±k unutmazsÄ±n!'${quizNote}`;
+        return `\n\n===== DÄ°L KOÃ‡U MODU AKTÄ°F =====\nHedef Dil: ${lang} | Seviye: ${level} | GÃ¼nlÃ¼k Hedef: ${goal} kelime\n\nâš ï¸ KRÄ°TÄ°K KURAL: CevaplarÄ±na kesinlikle baÅŸka dil karÄ±ÅŸtÄ±rma! Hedef dil ${lang}, aÃ§Ä±klamalar TÃ¼rkÃ§e. Ã‡ince, Japonca, Endonezce, ArapÃ§a vb. hiÃ§bir dilde harf veya kelime kullanma. SADECE ${lang} + TÃ¼rkÃ§e.\n\nBu modda MUTLAKA ÅŸu formatta Ã¶ÄŸret:\n\n**[HEDEF DÄ°LDEKÄ° KELÄ°ME / CÃœMLE]**\n*(OkunuÅŸu: fonetik/IPA)*\nðŸ‡¹ðŸ‡· TÃ¼rkÃ§e anlamÄ±: ...\nðŸ“ Ã–rnek cÃ¼mle:\n  â†’ ${lang}: [Ã¶rnek cÃ¼mle]\n  â†’ TÃ¼rkÃ§e: [Ã§evirisi]\nðŸ’¡ Dilbilgisi/MantÄ±k notu: [TÃ¼rkÃ§e aÃ§Ä±klama]\n\n- Seviye ${level} iÃ§in uygun kelime ve yapÄ±lar kullan.\n- EÄŸer ${level} BaÅŸlangÄ±Ã§/A0/A1/A2 ise: selamlama, sayÄ±lar, renkler, gÃ¼nlÃ¼k eylemler, temel kalÄ±plar.\n- EÄŸer ${level} Orta/B1/B2 ise: zaman kalÄ±plarÄ±, alÄ±ÅŸveriÅŸ/iÅŸ/seyahat diyaloglarÄ±, yaygÄ±n deyimler.\n- EÄŸer ${level} Ä°leri/C1/C2 ise: deyimler, atasÃ¶zleri, resmi/edebi dil, nÃ¼anslar.\n- AÃ§Ä±klamalarÄ± HER ZAMAN TÃ¼rkÃ§e yap (kullanÄ±cÄ± o dilde konuÅŸmanÄ± istemediÄŸi sÃ¼rece).\n- Her cevapta en az 1 yeni kelime/kalÄ±p Ã¶ÄŸret ve '[KELÄ°ME Ã–ÄžRENÄ°LDÄ° âœ…]' etiketini cevabÄ±n sonuna ekle.\n- Motivasyon cÃ¼mleleri kullan: 'Harika!', 'Ã‡ok doÄŸru!', 'Neredeyse!', 'Bu kelimeyi artÄ±k unutmazsÄ±n!'${quizNote}`;
     }
 
     function updateDilKocuPrompt() {
@@ -2076,6 +2274,17 @@
     }
 
     function updateDilKocuGoal() {
+        const el = document.getElementById('dk-goal');
+        const customEl = document.getElementById('dk-goal-custom');
+        if (el && customEl) {
+            if (el.value === 'custom') {
+                customEl.style.display = 'inline-block';
+                customEl.focus();
+            } else {
+                customEl.style.display = 'none';
+                customEl.value = '';
+            }
+        }
         updateDilKocuProgress();
     }
 
@@ -2429,6 +2638,12 @@
             const personaValue = document.getElementById("personaSelect") ? document.getElementById("personaSelect").value : "kanka";
             let baseSystemPrompt = personas[personaValue] || systemPrompt;
 
+            // ===== DÄ°L KOÃ‡U ENJEKSÄ°YONU =====
+            // Dil KoÃ§u seÃ§iliyse â†’ dil, seviye, kural ve quiz talimatlarÄ±nÄ± sisteme ekle
+            if (personaValue === 'dil_kocu') {
+                baseSystemPrompt += getDilKocuInjection();
+            }
+
             let userMemory = localStorage.getItem('cinocode_memory_' + (loggedUser || "default"));
             if (userMemory) {
                 // "Ahmet" bugÄ±nÄ± kalÄ±cÄ± olarak temizle
@@ -2471,7 +2686,15 @@
                 }
             } else {
                 // Sadece metin ise sÄ±rasÄ±yla diÄŸer hÄ±zlÄ± modelleri yedek olarak ekle
-                const textModels = [
+                // Dil KoÃ§u modunda Gemini Ã¶nce gelsin (Llama TÃ¼rkÃ§e + Ã§ok dil desteÄŸi zayÄ±f)
+                const isDilKocu = (document.getElementById('personaSelect') && document.getElementById('personaSelect').value === 'dil_kocu');
+                const textModels = isDilKocu ? [
+                    "gemini-3-flash-preview-gemini",
+                    "gemini-2.5-flash-gemini",
+                    "llama-3.3-70b-versatile-groq",
+                    "meta-llama/llama-3.2-11b-vision-instruct:free-openrouter",
+                    "llama-3.1-8b-instant-groq"
+                ] : [
                     "llama-3.3-70b-versatile-groq",
                     "llama-3.1-8b-instant-groq",
                     "gemini-3-flash-preview-gemini",
