@@ -627,8 +627,7 @@
                 <option value="meta-llama/llama-4-scout-17b-16e-instruct-groq">Llama 4 Scout (Görsel) - Groq Bulut ⚡</option>
                 <option disabled>──────────</option>
                 <!-- Google Gemini Modelleri -->
-                <option value="gemini-2.0-flash-gemini">🤍 Gemini 2.0 Flash - Google Bulut ✨</option>
-                <option value="gemini-2.5-flash-preview-05-20-gemini">🤍 Gemini 2.5 Flash - Google Bulut ✨</option>
+                <option value="gemini-2.0-flash-exp-gemini">🤍 Gemini 2.0 Flash - Google Bulut ✨</option>
                 <option value="gemini-1.5-flash-gemini">🤍 Gemini 1.5 Flash - Google Bulut ✨</option>
                 <option value="gemini-1.5-pro-gemini">🤍 Gemini 1.5 Pro - Google Bulut ✨</option>
                 <option disabled>──────────</option>
@@ -3352,11 +3351,8 @@ Eğer kullanıcı "bu ne", "nerede", "adam kim", "bunu istemedim", "düzelt", "y
             if (hasAttachments) {
                 // Görsel veya Belge eki varsa sadece Vision (Görsel okuma) yeteneği olan modelleri sıraya ekle
                 const visionModels = [
-                    "gemini-2.0-flash-gemini",
-                    "gemini-2.5-flash-preview-05-20-gemini",
-                    "nvidia/nemotron-nano-12b-v2-vl-nvidia",
+                    "gemini-2.0-flash-exp-gemini",
                     "meta-llama/llama-3.2-11b-vision-instruct:free-openrouter",
-                    "meta-llama/llama-4-scout-17b-16e-instruct-groq",
                     "gemini-1.5-flash-gemini",
                     "gemini-1.5-pro-gemini"
                 ];
@@ -3369,13 +3365,10 @@ Eğer kullanıcı "bu ne", "nerede", "adam kim", "bunu istemedim", "düzelt", "y
                 // Sadece metin ise sırasıyla diğer hızlı modelleri yedek olarak ekle
                 const textModels = [
                     "llama-3.3-70b-versatile-groq",
-                    "llama-3.1-70b-versatile-groq",
-                    "gemini-2.0-flash-gemini",
-                    "gemini-2.5-flash-preview-05-20-gemini",
-                    "nvidia/nemotron-nano-12b-v2-vl-nvidia",
+                    "llama-3.1-8b-instant-groq",
+                    "gemini-2.0-flash-exp-gemini",
                     "meta-llama/llama-3.2-11b-vision-instruct:free-openrouter",
-                    "gemini-1.5-flash-gemini",
-                    "llama-3.1-8b-instant-groq"
+                    "gemini-1.5-flash-gemini"
                 ];
                 for (let tModel of textModels) {
                     if (!fallbackQueue.includes(tModel)) {
