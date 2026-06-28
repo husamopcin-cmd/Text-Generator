@@ -58,6 +58,8 @@
             border-radius: 6px; font-size: 11px; cursor: pointer; align-self: flex-start;
         }
         .artifact-dl-btn:hover { background: #89b4fa; color: #11111b; }
+        .artifact-card-actions { display:flex; flex-wrap:wrap; gap:8px; justify-content:flex-start; margin-top:10px; }
+        .artifact-card-actions button { flex:1 1 auto; min-width: 90px; }
 
         /* ===== SINAV KOÇU MOD SEÇİM MODALI ===== */
         .sk-overlay {
@@ -1255,7 +1257,16 @@
             <option value="standard">🎬 Standart (8 Sahne, ~32 sn)</option>
             <option value="cinematic">🎥 Sinematik (12 Sahne, ~60 sn)</option>
         </select>
-        
+
+        <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px; text-align: left;">
+            Video Kalitesi:
+        </div>
+        <select id="videoQualitySelect" style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px; border-radius:8px; margin-bottom: 15px; outline: none; font-size: 13px;">
+            <option value="standard">📶 Standart 512x512</option>
+            <option value="high">🏞️ Yüksek 640x640</option>
+            <option value="ultra">🧨 Ultra 768x768</option>
+        </select>
+
         <button class="send-btn" style="width: 100%; border-radius: 8px; padding: 10px;" onclick="saveSettings()">Kaydet</button>
     </div>
 
@@ -1413,6 +1424,23 @@
         
         // Temel İngilizce kaçınma/negatif kurallarını prompta yedir
         let avoidance = ", no humans, no men, no women, no extra limbs, no deformed anatomy, no text, no watermark, high quality, cinematic";
+        
+        if (type === 'video') {
+            const savedVideoMode = localStorage.getItem('video_mode') || 'fast';
+            const savedVideoQuality = localStorage.getItem('video_quality') || 'standard';
+            if (savedVideoMode === 'turbo') {
+                clean += ', punchy fast cuts, energetic storytelling, punchy motion blur';
+            } else if (savedVideoMode === 'standard') {
+                clean += ', polished cinematic structure, smooth camera moves, professional framing';
+            } else if (savedVideoMode === 'cinematic') {
+                clean += ', slow cinematic reveals, dramatic lighting, epic atmosphere';
+            }
+            if (savedVideoQuality === 'high') {
+                clean += ', crisp detail, fine texture details, 4k inspired clarity';
+            } else if (savedVideoQuality === 'ultra') {
+                clean += ', ultra high resolution detail, filmic grading, premium studio polish';
+            }
+        }
         
         // Sayı kurallarını güçlendir:
         if (clean.match(/\b(bir|1)\b/i)) {
@@ -1963,6 +1991,9 @@
 
         const currentVideoMode = localStorage.getItem('video_mode') || "fast";
         document.getElementById('videoModeSelect').value = currentVideoMode;
+        const currentVideoQuality = localStorage.getItem('video_quality') || "standard";
+        const qualitySelect = document.getElementById('videoQualitySelect');
+        if (qualitySelect) qualitySelect.value = currentVideoQuality;
         
         setTimeout(() => { settingsMenu.style.opacity = '1'; }, 10);
     }
@@ -2025,6 +2056,8 @@
 
         const videoMode = document.getElementById('videoModeSelect').value;
         localStorage.setItem('video_mode', videoMode);
+        const videoQuality = document.getElementById('videoQualitySelect').value;
+        localStorage.setItem('video_quality', videoQuality);
 
         closeSettings();
         alert("Ayarlar kaydedildi!");
@@ -2210,6 +2243,7 @@
             let finalPrompt = buildCleanMediaPrompt(promptText, "video");
             lastMediaPrompt = finalPrompt;
             lastMediaType = "video";
+            const safePromptValue = finalPrompt.replace(/'/g, "\\'").replace(/"/g, '&quot;');
             
             window.videoCache = window.videoCache || {};
             if (window.videoCache[finalPrompt]) {
@@ -2217,8 +2251,11 @@
                 return `<div style="text-align:center; background: #181825; padding: 15px; border-radius: 12px; border: 1px solid #45475a;">
                             <div style="color: #a6e3a1; font-size: 14px; margin-bottom: 10px;">✅ AI Video (Önbellekten)</div>
                             <video controls autoplay style="max-width:100%; border-radius: 8px; border: 2px solid #89b4fa; box-shadow: 0 4px 12px rgba(0,0,0,0.5);" src="${cachedUrl}"></video>
-                            <br>
-                            <button class="run-code-btn" style="background: linear-gradient(135deg, #89b4fa, #cba6f7); color:#11111b; width:auto; padding:10px 20px; margin-top:10px; font-weight:bold; border-radius: 8px;" onclick="downloadVideo('${cachedUrl}')">📥 Videoyu İndir (WebM)</button>
+                            <div class="artifact-card-actions">
+                                <button class="artifact-dl-btn" onclick="downloadVideo('${cachedUrl}', 'CinoCode_Video.webm')">📥 İndir</button>
+                                <button class="artifact-dl-btn" style="background:#89b4fa; color:#11111b;" onclick="replayVideo('${safePromptValue}', '${cachedUrl}')">🔁 Yeniden Oynat</button>
+                                <button class="artifact-dl-btn" style="background:#f38ba8; color:#11111b;" onclick="copyPromptToClipboard('${safePromptValue}')">📋 Promptu Kopyala</button>
+                            </div>
                         </div>`;
             }
             
@@ -2236,6 +2273,7 @@
                         </div>`;
             }
             
+            const safePromptValue = finalPrompt.replace(/'/g, "\\'").replace(/"/g, '&quot;');
             if (isLast) {
                 window.queuedVideoPrompts.add(finalPrompt);
                 setTimeout(() => queueVideoSlideshow(finalPrompt, videoId), 200);
@@ -2245,10 +2283,13 @@
                                 <div id="${videoId}-progress" style="background: linear-gradient(90deg, #89b4fa, #cba6f7); height: 100%; width: 0%; border-radius: 8px; transition: width 0.5s ease;"></div>
                             </div>
                             <div id="${videoId}-status" style="color: #a6adc8; font-size: 13px;">Sahneler hazırlanıyor...</div>
-                            <button class="run-code-btn" style="background: #f38ba8; color: #11111b; font-size: 11px; padding: 4px 8px; margin-top: 8px; font-weight: bold;" onclick="cancelVideoGeneration('${videoId}')">❌ İptal Et</button>
+                            <div class="artifact-card-actions">
+                                <button class="artifact-dl-btn" style="background: #f38ba8; color: #11111b; font-size: 11px; padding: 4px 8px;" onclick="cancelVideoGeneration('${videoId}')">❌ İptal Et</button>
+                                <button class="artifact-dl-btn" style="background:#89b4fa; color:#11111b;" onclick="copyPromptToClipboard('${safePromptValue}')">📋 Promptu Kopyala</button>
+                            </div>
                         </div>`;
             } else {
-                const escapedPrompt = promptText.replace(/'/g, "\\'");
+                const escapedPrompt = promptText.replace(/'/g, "\\'").replace(/"/g, '&quot;');
                 return `<div id="${videoId}" style="text-align:center; margin: 15px 0; background: #181825; padding: 15px; border-radius: 12px; border: 1px solid #45475a;">
                             <div style="color: #a6adc8; font-size: 14px; margin-bottom: 10px;">🎬 Video İsteği: "${promptText.substring(0, 40)}${promptText.length > 40 ? '...' : ''}"</div>
                             <button class="run-code-btn" style="background: linear-gradient(135deg, #89b4fa, #cba6f7); color:#11111b; width:auto; padding:10px 20px; font-weight:bold; border-radius: 8px;" onclick="triggerVideoRenderOnDemand('${escapedPrompt}', '${videoId}')">🎬 Videoyu Oluştur</button>
@@ -2435,6 +2476,7 @@
             let WIDTH = 384;
             let HEIGHT = 384;
             let modeLabel = "Hızlı";
+            const savedVideoQuality = localStorage.getItem('video_quality') || 'standard';
 
             if (savedMode === 'turbo') {
                 SCENE_COUNT = 4;
@@ -2457,6 +2499,21 @@
                 WIDTH = 512;
                 HEIGHT = 512;
                 modeLabel = "Sinematik";
+            }
+
+            if (savedVideoQuality === 'high') {
+                WIDTH = Math.max(WIDTH, 640);
+                HEIGHT = Math.max(HEIGHT, 640);
+            } else if (savedVideoQuality === 'ultra') {
+                WIDTH = Math.max(WIDTH, 768);
+                HEIGHT = Math.max(HEIGHT, 768);
+                if (savedMode === 'turbo') {
+                    SCENE_COUNT = 5;
+                    SCENE_DURATION = 3000;
+                } else if (savedMode === 'fast') {
+                    SCENE_COUNT = 5;
+                    SCENE_DURATION = 3600;
+                }
             }
 
             const videoDurationSec = Math.round((SCENE_COUNT * SCENE_DURATION) / 1000);
@@ -2648,8 +2705,11 @@
                 <div style="text-align:center; background: #181825; padding: 15px; border-radius: 12px; border: 1px solid #45475a;">
                     <div style="color: #a6e3a1; font-size: 14px; margin-bottom: 10px;">✅ AI Video başarıyla oluşturuldu! (${images.length} sahne, ~${videoDurationSec} saniye)</div>
                     <video controls autoplay style="max-width:100%; border-radius: 8px; border: 2px solid #89b4fa; box-shadow: 0 4px 12px rgba(0,0,0,0.5);" src="${videoUrl}"></video>
-                    <br>
-                    <button class="run-code-btn" style="background: linear-gradient(135deg, #89b4fa, #cba6f7); color:#11111b; width:auto; padding:10px 20px; margin-top:10px; font-weight:bold; border-radius: 8px;" onclick="downloadVideo('${videoUrl}')">📥 Videoyu İndir (WebM)</button>
+                    <div class="artifact-card-actions">
+                        <button class="artifact-dl-btn" onclick="downloadVideo('${videoUrl}', 'CinoCode_Video.webm')">📥 İndir</button>
+                        <button class="artifact-dl-btn" style="background:#89b4fa; color:#11111b;" onclick="replayVideo('${prompt}', '${videoUrl}')">🔁 Yeniden Oynat</button>
+                        <button class="artifact-dl-btn" style="background:#89b4fa; color:#11111b;" onclick="copyPromptToClipboard('${prompt}')">📋 Promptu Kopyala</button>
+                    </div>
                 </div>
             `;
 
