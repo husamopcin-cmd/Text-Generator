@@ -253,6 +253,121 @@
         }
         .welcome-btn:hover { background: rgba(49, 50, 68, 0.6); border-color: #89b4fa; transform: translateY(-3px); box-shadow: 0 5px 15px rgba(137,180,250,0.2); }
 
+        .style-mode-badge {
+            display: none;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 10px;
+            border-radius: 999px;
+            border: 1px solid rgba(249, 226, 175, 0.55);
+            background: rgba(249, 226, 175, 0.1);
+            color: #f9e2af;
+            font-size: 12px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+        .provider-shell {
+            display: none;
+            gap: 6px;
+            align-items: center;
+            max-width: 360px;
+        }
+        .provider-shell select {
+            min-width: 120px;
+        }
+        .provider-hint {
+            max-width: 170px;
+            color: #a6adc8;
+            font-size: 11px;
+            line-height: 1.2;
+            white-space: normal;
+        }
+        .new-project-panel {
+            width: min(900px, 100%);
+            display: none;
+            flex-direction: column;
+            gap: 14px;
+        }
+        .new-project-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 10px;
+        }
+        .new-project-card {
+            min-height: 94px;
+            border: 1px solid rgba(137, 180, 250, 0.22);
+            background: rgba(49, 50, 68, 0.35);
+            color: #cdd6f4;
+            border-radius: 8px;
+            padding: 12px;
+            text-align: left;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            transition: border-color 0.2s, background 0.2s, transform 0.2s;
+        }
+        .new-project-card:hover {
+            border-color: #89b4fa;
+            background: rgba(49, 50, 68, 0.6);
+            transform: translateY(-1px);
+        }
+        .new-project-card strong {
+            font-size: 14px;
+        }
+        .new-project-card span {
+            color: #a6adc8;
+            font-size: 12px;
+            line-height: 1.3;
+        }
+        .new-project-controls {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px;
+            text-align: left;
+        }
+        .new-project-controls label {
+            color: #a6adc8;
+            font-size: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .new-project-controls input,
+        .new-project-controls select {
+            width: 100%;
+            box-sizing: border-box;
+            background: #181825;
+            border: 1px solid #45475a;
+            color: #cdd6f4;
+            padding: 8px;
+            border-radius: 8px;
+            outline: none;
+            font-size: 13px;
+        }
+        .smart-suggestion-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        .smart-suggestion-chip {
+            border: 1px solid rgba(137, 180, 250, 0.5);
+            background: rgba(137, 180, 250, 0.1);
+            color: #cdd6f4;
+            border-radius: 999px;
+            padding: 6px 10px;
+            font-size: 12px;
+            cursor: pointer;
+            max-width: 260px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .smart-suggestion-chip:hover {
+            background: rgba(137, 180, 250, 0.2);
+        }
+
         /* ----- ATTACH MENU (POPUP) ----- */
         .attach-menu {
             position: absolute; bottom: 80px; left: 10%; transform: none;
@@ -907,6 +1022,14 @@
             .header-controls { position: relative; flex-wrap: wrap; gap: 8px; align-items: center; width: 100%; }
             .header-controls select { max-width: 100%; min-width: 100px; }
             #modelSelect, #voiceSelect, #personaSelect { max-width: 100%; font-size: 12px; padding: 6px 8px; }
+            .style-mode-badge { width: 100%; justify-content: center; white-space: normal; text-align: center; }
+            .provider-shell { width: 100%; max-width: 100%; flex-wrap: wrap; }
+            .provider-shell select { flex: 1 1 130px; max-width: 100%; }
+            .provider-hint { flex: 1 1 100%; max-width: 100%; }
+            .new-project-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .new-project-controls { grid-template-columns: 1fr; }
+            .smart-suggestion-row { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; }
+            .smart-suggestion-chip { flex: 0 0 auto; max-width: 82vw; }
             .input-wrapper {
                 position: fixed;
                 left: 12px;
@@ -1125,6 +1248,23 @@
             CinoCode
         </div>
         <div class="header-controls">
+            <div class="style-mode-badge" id="styleModeBadge">Serbest Üslup Aktif</div>
+            <select id="styleModeSelect" title="Uslup Modu" onchange="onStyleModeHeaderChange()" style="max-width:150px; background:#181825; color:#cdd6f4; border:1px solid #45475a; padding:5px; border-radius:5px;">
+                <option value="safe">Guvenli Mod</option>
+                <option value="balanced">Dengeli Mod</option>
+                <option value="free">Serbest Uslup</option>
+            </select>
+            <select id="speechStyleSelect" title="Konusma Tarzi" onchange="onSpeechStyleHeaderChange()" style="max-width:170px; background:#181825; color:#cdd6f4; border:1px solid #45475a; padding:5px; border-radius:5px;">
+                <option value="default">Varsayilan</option>
+                <option value="kanka">Kanka</option>
+                <option value="teacher">Resmi / Ogretmen</option>
+                <option value="short">Kisa-net</option>
+                <option value="grokish">Grokvari</option>
+                <option value="expert">Ciddi uzman</option>
+                <option value="izmir">Izmir rahat tonu</option>
+                <option value="diyarbakir">Diyarbakir agzi denemesi</option>
+                <option value="kurdish_zazaki">Kurtce / Zazaca denemesi</option>
+            </select>
             <!-- Kişilik Seçici -->
             <select id="personaSelect" style="max-width:180px; font-weight:bold; background:#a6e3a1; color:#11111b; border:none; padding:5px; border-radius:5px;">
                 <option value="kanka">🧠 Standart Zeka (Kanka)</option>
@@ -1291,6 +1431,59 @@
     <div class="welcome-screen" id="welcomeScreen" style="display:none;">
         <div class="welcome-logo">✨</div>
         <h2>Bugün ne üretmek istersin?</h2>
+        <div class="new-project-panel" id="newProjectPanel">
+            <div class="new-project-controls">
+                <label>Proje adi
+                    <input id="newProjectName" type="text" placeholder="Yeni proje">
+                </label>
+                <label>Kullanilacak model
+                    <select id="newProjectModel"></select>
+                </label>
+                <label>Dil
+                    <select id="newProjectLang">
+                        <option value="auto">Otomatik</option>
+                        <option value="tr">Turkce</option>
+                        <option value="en">Ingilizce</option>
+                    </select>
+                </label>
+                <label>Uslup modu
+                    <select id="newProjectStyle">
+                        <option value="safe">Guvenli Mod</option>
+                        <option value="balanced">Dengeli Mod</option>
+                        <option value="free">Serbest Uslup</option>
+                    </select>
+                </label>
+                <label>Konusma tarzi
+                    <select id="newProjectSpeechStyle">
+                        <option value="default">Varsayilan</option>
+                        <option value="kanka">Kanka</option>
+                        <option value="teacher">Resmi / Ogretmen</option>
+                        <option value="short">Kisa-net</option>
+                        <option value="grokish">Grokvari</option>
+                        <option value="expert">Ciddi uzman</option>
+                    </select>
+                </label>
+                <label>Cikti tipi
+                    <select id="newProjectOutput">
+                        <option value="chat">Chat</option>
+                        <option value="code">Kod</option>
+                        <option value="image">Gorsel</option>
+                        <option value="video">Video</option>
+                        <option value="file">Dosya</option>
+                    </select>
+                </label>
+            </div>
+            <div class="new-project-grid">
+                <button class="new-project-card" onclick="startNewProject('webapp')"><strong>Web App Yap</strong><span>Arayuz, kod ve calisir HTML akisi.</span></button>
+                <button class="new-project-card" onclick="startNewProject('game')"><strong>Oyun Yap</strong><span>HTML5/Canvas oyun baslangici.</span></button>
+                <button class="new-project-card" onclick="startNewProject('video')"><strong>Video Studyosu</strong><span>Video prompt ve studio modu.</span></button>
+                <button class="new-project-card" onclick="startNewProject('image')"><strong>Gorsel Uret</strong><span>Gorsel prompt ve studio modu.</span></button>
+                <button class="new-project-card" onclick="startNewProject('fixcode')"><strong>Kod Duzelt</strong><span>Hata analizi ve patch odakli akis.</span></button>
+                <button class="new-project-card" onclick="startNewProject('pdf')"><strong>PDF / Dosya Analiz</strong><span>Dosya yukleme ve ozet/analiz.</span></button>
+                <button class="new-project-card" onclick="startNewProject('voice')"><strong>Sesli Asistan</strong><span>TTS ve mikrofon odakli sohbet.</span></button>
+                <button class="new-project-card" onclick="startNewProject('blank')"><strong>Bos Sohbet</strong><span>Klasik bos chat baslat.</span></button>
+            </div>
+        </div>
         <div class="welcome-actions">
             <button class="welcome-btn" onclick="setQuickStart('Bana Python ile basit bir API yazıp açıkla.')">💻 Kod Yazdır</button>
             <button class="welcome-btn" onclick="triggerImageGeneration()">🎨 Görsel Stüdyosu</button>
@@ -1461,6 +1654,49 @@
             </span>
         </label>
 
+        <div style="border-top:1px solid #313244; padding-top:12px; margin-top:4px; text-align:left;">
+            <div style="color:#cdd6f4; font-size:13px; font-weight:700; margin-bottom:8px;">Mod Sistemi v2</div>
+            <label style="display:block; color:#a6adc8; font-size:12px; margin-bottom:5px;">Uslup Modu</label>
+            <select id="settingsStyleModeSelect" style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px; border-radius:8px; margin-bottom:10px; outline:none; font-size:13px;">
+                <option value="safe">Guvenli Mod</option>
+                <option value="balanced">Dengeli Mod</option>
+                <option value="free">Serbest Uslup</option>
+            </select>
+
+            <label style="display:block; color:#a6adc8; font-size:12px; margin-bottom:5px;">Konusma Tarzi</label>
+            <select id="settingsSpeechStyleSelect" style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px; border-radius:8px; margin-bottom:10px; outline:none; font-size:13px;">
+                <option value="default">Varsayilan</option>
+                <option value="kanka">Kanka</option>
+                <option value="teacher">Resmi / Ogretmen</option>
+                <option value="short">Kisa-net</option>
+                <option value="grokish">Grokvari</option>
+                <option value="expert">Ciddi uzman</option>
+                <option value="izmir">Izmir rahat tonu</option>
+                <option value="diyarbakir">Diyarbakir agzi denemesi</option>
+                <option value="kurdish_zazaki">Kurtce / Zazaca denemesi</option>
+            </select>
+
+            <label style="display:flex; align-items:center; gap:8px; color:#cdd6f4; font-size:13px; margin-bottom:8px;">
+                <input type="checkbox" id="smartSuggestionsInput" style="accent-color:#89b4fa;"> Akilli Devam Onerileri
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; color:#cdd6f4; font-size:13px; margin-bottom:8px;">
+                <input type="checkbox" id="newProjectInput" style="accent-color:#89b4fa;"> Yeni Proje ekrani
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; color:#cdd6f4; font-size:13px; margin-bottom:8px;">
+                <input type="checkbox" id="providerViewInput" style="accent-color:#89b4fa;"> Provider deneysel gorunumu
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; color:#cdd6f4; font-size:13px; margin-bottom:10px;">
+                <input type="checkbox" id="liveSearchInput" style="accent-color:#89b4fa;"> Canli Arama
+            </label>
+            <div style="background:#181825; border:1px solid #45475a; border-radius:8px; padding:10px; margin-bottom:10px; font-size:12px; color:#a6adc8; line-height:1.45;">
+                Grok/xAI baglantisi icin guvenli backend/proxy gerekir. XAI_API_KEY frontend icinde tutulmaz; Netlify/backend environment uzerinden baglanmalidir.
+            </div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;">
+                <button class="run-code-btn" style="flex:1; min-width:150px; background:#f38ba8; color:#11111b;" onclick="returnLegacyMode()">Eski Moda Don / Yeni Ozellikleri Kapat</button>
+                <button class="run-code-btn" style="flex:1; min-width:150px; background:#a6e3a1; color:#11111b;" onclick="enableNewFeatures()">Yeni Ozellikleri Tekrar Ac</button>
+            </div>
+        </div>
+
         <button class="send-btn" style="width: 100%; border-radius: 8px; padding: 10px;" onclick="saveSettings()">Kaydet</button>
     </div>
 
@@ -1514,9 +1750,230 @@
     const voiceSelect = document.getElementById("voiceSelect");
     const speakerBtn = document.getElementById("speakerBtn");
     
+    const COMPOSER_DRAFT_KEY = 'cinocode_composer_draft';
+    let lastSttFinalText = '';
+    let lastSttFinalAt = 0;
+
+    function getComposerText() {
+        const input = document.getElementById('userInput');
+        return input ? input.value : '';
+    }
+
+    function saveComposerDraft() {
+        const text = getComposerText();
+        try {
+            if (text && text.trim().length > 0) {
+                localStorage.setItem(COMPOSER_DRAFT_KEY, text);
+            } else {
+                localStorage.removeItem(COMPOSER_DRAFT_KEY);
+            }
+        } catch(e) {}
+    }
+
+    function clearComposerDraft() {
+        try { localStorage.removeItem(COMPOSER_DRAFT_KEY); } catch(e) {}
+    }
+
+    function clearComposerAttachments() {
+        try {
+            selectedImageBase64 = null;
+            selectedStudyFileName = "";
+            const imageUpload = document.getElementById('imageUpload');
+            const cameraUpload = document.getElementById('cameraUpload');
+            const docUpload = document.getElementById('docUpload');
+            const previewImg = document.getElementById('imagePreview');
+            const previewContainer = document.getElementById('imagePreviewContainer');
+            if (imageUpload) imageUpload.value = '';
+            if (cameraUpload) cameraUpload.value = '';
+            if (docUpload) docUpload.value = '';
+            if (previewImg) previewImg.src = '';
+            if (previewContainer) previewContainer.style.display = 'none';
+            window.selectedDocumentText = null;
+            window.selectedDocumentName = null;
+            window.activeDocText = null;
+            window.activeDocName = null;
+            window.activeDocCursor = 0;
+            window.pdfChunks = null;
+            if (typeof skpUpdateDocStatus === 'function') skpUpdateDocStatus();
+        } catch(e) {}
+    }
+
+    function restoreComposerDraftIfNeeded() {
+        const input = document.getElementById('userInput');
+        if (!input || input.value.trim()) return;
+        let draft = '';
+        try { draft = localStorage.getItem(COMPOSER_DRAFT_KEY) || ''; } catch(e) {}
+        if (!draft) return;
+        input.value = draft;
+        autoResize(input);
+    }
+
+    function setComposerValue(text, options = {}) {
+        const input = document.getElementById('userInput');
+        if (!input) return;
+        input.value = text || '';
+        autoResize(input);
+        if (options.focus !== false) input.focus();
+        if (options.save !== false) saveComposerDraft();
+    }
+
+    function bindComposerDraftPreservation() {
+        const input = document.getElementById('userInput');
+        if (input && input.dataset.draftBound !== '1') {
+            input.dataset.draftBound = '1';
+            input.addEventListener('input', saveComposerDraft);
+            input.addEventListener('paste', () => setTimeout(saveComposerDraft, 0));
+        }
+
+        ['modelSelect', 'personaSelect', 'voiceSelect', 'styleModeSelect', 'speechStyleSelect', 'providerSelect', 'providerModelSelect'].forEach(id => {
+            const el = document.getElementById(id);
+            if (!el || el.dataset.draftPreserveBound === '1') return;
+            el.dataset.draftPreserveBound = '1';
+            el.addEventListener('change', () => setTimeout(restoreComposerDraftIfNeeded, 0));
+        });
+    }
+
+    function normalizeSttText(text) {
+        return String(text || '')
+            .toLocaleLowerCase('tr-TR')
+            .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+    }
+
+    function isDuplicateSttFinal(text) {
+        const normalized = normalizeSttText(text);
+        if (!normalized) return true;
+        const now = Date.now();
+        const last = normalizeSttText(lastSttFinalText);
+        const recent = now - lastSttFinalAt < 2000;
+        const currentTail = normalizeSttText(getComposerText()).slice(-Math.max(80, normalized.length + 20));
+        if (recent && last && (normalized === last || normalized.includes(last) || last.includes(normalized))) return true;
+        if (currentTail && currentTail.endsWith(normalized)) return true;
+        lastSttFinalText = text;
+        lastSttFinalAt = now;
+        return false;
+    }
+
     const SIDEBAR_STATE_KEY = 'cinocode_sidebar_collapsed';
     let isSidebarCollapsed = false;
     let isMobileSidebarOpen = false;
+
+    const FEATURE_KEYS = {
+        styleMode: 'cinocode_style_mode_v2',
+        speechStyle: 'cinocode_speech_style_v2',
+        smartSuggestions: 'cinocode_smart_suggestions_v2',
+        newProject: 'cinocode_new_project_v2',
+        providerView: 'cinocode_provider_view_v2',
+        liveSearch: 'cinocode_live_search_v2'
+    };
+    const DEFAULT_FEATURE_STATE = {
+        styleMode: 'safe',
+        speechStyle: 'default',
+        smartSuggestions: '1',
+        newProject: '1',
+        providerView: '1',
+        liveSearch: '0'
+    };
+
+    function getFeatureValue(key) {
+        const storageKey = FEATURE_KEYS[key];
+        if (!storageKey) return '';
+        const stored = localStorage.getItem(storageKey);
+        return stored == null ? DEFAULT_FEATURE_STATE[key] : stored;
+    }
+
+    function setFeatureValue(key, value) {
+        const storageKey = FEATURE_KEYS[key];
+        if (!storageKey) return;
+        localStorage.setItem(storageKey, String(value));
+    }
+
+    function isFeatureEnabled(key) {
+        return getFeatureValue(key) === '1';
+    }
+
+    function applyFeatureUiState() {
+        const styleMode = getFeatureValue('styleMode') || 'safe';
+        const speechStyle = getFeatureValue('speechStyle') || 'default';
+        const styleHeader = document.getElementById('styleModeSelect');
+        const speechHeader = document.getElementById('speechStyleSelect');
+        const settingsStyle = document.getElementById('settingsStyleModeSelect');
+        const settingsSpeech = document.getElementById('settingsSpeechStyleSelect');
+        if (styleHeader) styleHeader.value = styleMode;
+        if (speechHeader) speechHeader.value = speechStyle;
+        if (settingsStyle) settingsStyle.value = styleMode;
+        if (settingsSpeech) settingsSpeech.value = speechStyle;
+
+        const badge = document.getElementById('styleModeBadge');
+        if (badge) badge.style.display = styleMode === 'free' ? 'inline-flex' : 'none';
+
+        const smartInput = document.getElementById('smartSuggestionsInput');
+        const newProjectInput = document.getElementById('newProjectInput');
+        const providerInput = document.getElementById('providerViewInput');
+        const liveInput = document.getElementById('liveSearchInput');
+        if (smartInput) smartInput.checked = isFeatureEnabled('smartSuggestions');
+        if (newProjectInput) newProjectInput.checked = isFeatureEnabled('newProject');
+        if (providerInput) providerInput.checked = isFeatureEnabled('providerView');
+        if (liveInput) liveInput.checked = isFeatureEnabled('liveSearch');
+
+        const newProjectPanel = document.getElementById('newProjectPanel');
+        const welcomeActions = document.querySelector('.welcome-actions');
+        if (newProjectPanel) newProjectPanel.style.display = isFeatureEnabled('newProject') ? 'flex' : 'none';
+        if (welcomeActions) welcomeActions.style.display = isFeatureEnabled('newProject') ? 'none' : 'flex';
+
+        ensureProviderShell();
+        const providerShell = document.getElementById('providerShell');
+        const legacyModel = document.getElementById('modelSelect');
+        if (providerShell) providerShell.style.display = isFeatureEnabled('providerView') ? 'flex' : 'none';
+        if (legacyModel) legacyModel.style.display = isFeatureEnabled('providerView') ? 'none' : '';
+
+        const webBtn = document.getElementById('webSearchBtn');
+        if (webBtn) webBtn.title = isFeatureEnabled('liveSearch') ? 'Canli Arama' : 'Canli Arama Kapali';
+        populateNewProjectModels();
+        bindComposerDraftPreservation();
+    }
+
+    function onStyleModeHeaderChange() {
+        const el = document.getElementById('styleModeSelect');
+        if (!el) return;
+        setFeatureValue('styleMode', el.value || 'safe');
+        localStorage.setItem('free_content_mode', el.value === 'free' ? '1' : '0');
+        applyFeatureUiState();
+    }
+
+    function onSpeechStyleHeaderChange() {
+        const el = document.getElementById('speechStyleSelect');
+        if (!el) return;
+        setFeatureValue('speechStyle', el.value || 'default');
+        applyFeatureUiState();
+    }
+
+    function returnLegacyMode() {
+        setFeatureValue('styleMode', 'safe');
+        setFeatureValue('speechStyle', 'default');
+        setFeatureValue('smartSuggestions', '0');
+        setFeatureValue('newProject', '0');
+        setFeatureValue('providerView', '0');
+        setFeatureValue('liveSearch', '0');
+        localStorage.setItem('free_content_mode', '0');
+        isWebSearchEnabled = false;
+        applyFeatureUiState();
+        if (typeof toggleWebSearchVisualState === 'function') toggleWebSearchVisualState();
+        alert('Yeni ozellikler kapatildi. Chat gecmisi ve eski medya/TTS/PDF ayarlari korunur.');
+        return false;
+    }
+
+    function enableNewFeatures() {
+        setFeatureValue('styleMode', 'safe');
+        setFeatureValue('smartSuggestions', '1');
+        setFeatureValue('newProject', '1');
+        setFeatureValue('providerView', '1');
+        localStorage.setItem('free_content_mode', '0');
+        applyFeatureUiState();
+        alert('Yeni ozellikler acildi. Uslup Modu Guvenli Mod olarak kalir.');
+        return false;
+    }
 
     function isMobileViewport() {
         return window.matchMedia('(max-width: 768px)').matches;
@@ -1569,6 +2026,7 @@
     function setAppMode(mode) {
         currentMode = mode;
         console.log("CinoCode Aktif Mod Değişti: " + currentMode);
+        restoreComposerDraftIfNeeded();
         
         const suggestionContainer = document.getElementById("suggestionChipsContainer");
         if (suggestionContainer && mode !== "image" && mode !== "video" && mode !== "game") {
@@ -1914,12 +2372,14 @@
         document.getElementById('imagePreview').src = '';
         document.getElementById('imagePreviewContainer').style.display = 'none';
         selectedImageBase64 = null;
+        saveComposerDraft();
     }
 
     function clearSelectedDocument() {
         window.selectedDocumentText = null;
         window.selectedDocumentName = null;
         if (typeof skpUpdateDocStatus === 'function') skpUpdateDocStatus();
+        saveComposerDraft();
     }
 
     // ----- ATTACHMENT MENU (BOTTOM SHEET) FONKSIYONLARI -----
@@ -2037,15 +2497,13 @@
 
     function applySuggestion(prefix, text) {
         const input = document.getElementById("userInput");
-        input.value = prefix + text;
-        autoResize(input);
-        input.focus();
+        setComposerValue(prefix + text);
     }
 
     function triggerImageGeneration() {
         closeAttachMenu();
         setAppMode("image");
-        document.getElementById("userInput").value = "";
+        restoreComposerDraftIfNeeded();
         document.getElementById("userInput").focus();
         renderSuggestions('image');
     }
@@ -2064,7 +2522,7 @@
     function triggerVideoGeneration() {
         closeAttachMenu();
         setAppMode("video");
-        document.getElementById("userInput").value = "";
+        restoreComposerDraftIfNeeded();
         document.getElementById("userInput").focus();
         renderSuggestions('video');
     }
@@ -2156,6 +2614,51 @@
         return instruction;
     }
 
+    function maybeApplyDynamicSpeechStyle(text) {
+        const normalized = (text || "").toLocaleLowerCase("tr-TR");
+        let nextStyle = null;
+        if (/(kanka moduna ge|kanka gibi|kanka tarz)/i.test(normalized)) nextStyle = 'kanka';
+        else if (/(ogretmen gibi|öğretmen gibi|resmi anlat|hoca gibi)/i.test(normalized)) nextStyle = 'teacher';
+        else if (/(kisa net|kısa net|kisa cevap|kısa cevap|uzatma)/i.test(normalized)) nextStyle = 'short';
+        else if (/(grokvari|grok gibi)/i.test(normalized)) nextStyle = 'grokish';
+        else if (/(ciddi uzman|uzman gibi|avukat gibi|doktor gibi|muhendis gibi)/i.test(normalized)) nextStyle = 'expert';
+        else if (/(izmir rahat|izmirli gibi)/i.test(normalized)) nextStyle = 'izmir';
+        else if (/(diyarbakir agzi|diyarbakır ağzı|diyarbakir gibi|diyarbakır gibi)/i.test(normalized)) nextStyle = 'diyarbakir';
+        else if (/(kurtce|kürtçe|zazaca)/i.test(normalized)) nextStyle = 'kurdish_zazaki';
+        if (nextStyle) {
+            setFeatureValue('speechStyle', nextStyle);
+            applyFeatureUiState();
+        }
+    }
+
+    function getStyleModeInstruction() {
+        const mode = getFeatureValue('styleMode') || 'safe';
+        const shared = "\n\nHER MODDA SINIRLAR: Yasa disi faaliyet, gercek zarar, zararli kod, dolandiricilik, kimlik avi, siddet tesviki, cocuk guvenligi/istismari, hedefli kisisel saldiri ve benzeri riskli konularda sinir koy. 'Sinirsiz/sansursuz her seyi yaparim' diye davranma. Kullanici Serbest Uslup'un sinirsiz olup olmadigini sorarsa kisa ve net soyle: Serbest Uslup daha direkt, samimi, esprili ve cesur bir konusma tarzidir; sinirsiz/sansursuz/her seyi yapan mod degildir ve guvenlik sinirlari her modda gecerlidir.";
+        if (mode === 'free') {
+            return "\n\nUSLUP MODU: Serbest Uslup aktif. Daha direkt, dobra, sivri, komik ve cesur konusabilirsin. Gerektiginde dusuk-orta doz argo kullanabilirsin; karanlik, horror, mature kurgu ve sert atmosferli yaratici metinlerde daha rahat yaz. Durduk yere kullaniciya hakaret etme, surekli agir kufur kusma, bozuk persona gibi davranma." + shared;
+        }
+        if (mode === 'balanced') {
+            return "\n\nUSLUP MODU: Dengeli Mod aktif. Samimi, dogal ve esprili ol; kanka tarzi konusabilirsin ama abartma. Argo dusuk seviyede ve seyrek olsun. Ciddi teknik/debug konularda saka dozunu azalt." + shared;
+        }
+        return "\n\nUSLUP MODU: Guvenli Mod aktif. Temiz, kontrollu, daha az argo kullanan ve yeni kullanicilar icin guvenli bir tonla cevap ver. Gorsel/video tarafinda guvenli ve dengeli bir dil kullan." + shared;
+    }
+
+    function getSpeechStyleInstruction() {
+        const style = getFeatureValue('speechStyle') || 'default';
+        const map = {
+            default: "Konusma tarzi varsayilan: dogal, net ve yardimci.",
+            kanka: "Konusma tarzi Kanka: samimi ve sicak ol ama tiyatro gibi abartma.",
+            teacher: "Konusma tarzi Resmi/Ogretmen: duzenli, sabirli, adim adim ve ogretici anlat.",
+            short: "Konusma tarzi Kisa-net: kisa, net, direkt cevap ver; gereksiz giris yapma.",
+            grokish: "Konusma tarzi Grokvari: daha dobra, esprili ve zeki bir ritim kullan; riskli konularda yine sinir koy.",
+            expert: "Konusma tarzi Ciddi uzman: profesyonel, kaynakli dusunen ve temkinli ol. Tibbi/hukuki/finansal konularda kesin profesyonel karar veriyormus gibi davranma; gerekirse uzman destegi oner.",
+            izmir: "Konusma tarzi Izmir rahat tonu: sakin, ferah ve samimi bir Turkce kullan; karikaturize etme.",
+            diyarbakir: "Konusma tarzi Diyarbakir agzi denemesi: hafif yerel renk kat ama saygili ol, stereotip veya alayci taklit yapma.",
+            kurdish_zazaki: "Konusma tarzi Kurtce/Zazaca denemesi: kullanici isterse sinirli kelime/selamlama deneyebilirsin; emin olmadigin yerde Turkce acikla ve dilsel kesinlik iddia etme."
+        };
+        return "\n\nKONUSMA TARZI: " + (map[style] || map.default);
+    }
+
     function getResponseStyleGovernorInstruction() {
         return "\n\nCEVAP STİLİ FRENI: Samimi ve doğal konuş ama ölçülü kal. Kullanıcının her kelimesini taklit etme; her cevabı 'hahaha', 'hadi bakalım', 'ne diyelim' veya roleplay/persona şovu formatına çevirme. Kullanıcı açıkça istemedikçe rol yapma, abartılı karakter performansı, gereksiz seçenek listesi ve her satıra emoji koyma. Normal soruya normal, kısa ve işe yarar cevap ver; kanka tonunu cevabın odağını bozmayacak kadar kullan. Kullanıcı sinirli veya argo konuşursa bunu argo/küfürlü üslup isteği sayma; sakin kal ve sorunu çözmeye odaklan. Bilinmeyen kullanıcı adı için '[Senin adın]' gibi placeholder yazma; gerekirse 'kanka' de.";
     }
@@ -2183,21 +2686,75 @@
         el.appendChild(card);
     }
 
+    function getSmartSuggestions(assistantText, userText) {
+        const combined = ((assistantText || "") + " " + (userText || "")).toLocaleLowerCase("tr-TR");
+        const sensitive = /(reddedemem|yardimci olamam|yardımcı olamam|guvenlik|güvenlik|zarar|kimlik avi|phishing|dolandiricilik|dolandırıcılık|siddet|şiddet|cocuk|çocuk)/i.test(combined);
+        if (sensitive) {
+            return ["Güvenli alternatif öner", "Kısa özet ver", "Riskleri açıkla"];
+        }
+        if (/(hata|bug|debug|test|patch|kod|function|api|endpoint|stack|log)/i.test(combined)) {
+            return ["Test adımlarını yaz", "Teknik detayları göster", "Bunu Codex prompt'una çevir", "Daha kısa çözüm ver"];
+        }
+        if (/(prompt|görsel|gorsel|video|sahne|image|film|senaryo)/i.test(combined)) {
+            return ["Promptu Türkçe yeniden yaz", "Daha sinematik yap", "Kısa özet ver", "API entegrasyon detaylarını aç"];
+        }
+        if (/(pdf|dosya|özet|ozet|ders|sınav|sinav|quiz)/i.test(combined)) {
+            return ["Bunu daha detaylı açıkla", "Sadece kısa özet ver", "Quiz soruları hazırla", "Önemli noktaları listele"];
+        }
+        const pool = [
+            "Bunu daha detaylı açıkla",
+            "Sadece kısa özet ver",
+            "Teknik detayları göster",
+            "Bunu Codex prompt'una çevir",
+            "Örneklerle anlat",
+            "Sonraki adımları yaz"
+        ];
+        const offset = Math.abs((assistantText || "").length + (userText || "").length) % 3;
+        return pool.slice(offset, offset + 4).concat(pool.slice(0, Math.max(0, offset + 4 - pool.length))).slice(0, 4);
+    }
+
+    function appendSmartSuggestions(target, assistantText, userText = "") {
+        if (!isFeatureEnabled('smartSuggestions')) return;
+        const el = typeof target === 'string' ? document.getElementById(target) : target;
+        if (!el || el.querySelector('.smart-suggestion-row')) return;
+        const suggestions = getSmartSuggestions(assistantText, userText).slice(0, window.innerWidth <= 768 ? 3 : 4);
+        if (!suggestions.length) return;
+        const row = document.createElement('div');
+        row.className = 'smart-suggestion-row';
+        suggestions.forEach(text => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'smart-suggestion-chip';
+            btn.textContent = text;
+            btn.onclick = () => submitSmartSuggestion(text);
+            row.appendChild(btn);
+        });
+        el.appendChild(row);
+    }
+
+    function submitSmartSuggestion(text) {
+        const input = document.getElementById('userInput');
+        if (!input) return;
+        input.value = text;
+        autoResize(input);
+        input.focus();
+        sendMessage();
+    }
+
     function continueLastAnswer() {
         const chat = sessions[currentChatId];
         if (!chat || !chat.messages || chat.messages.length === 0) return;
         const lastAssistant = [...chat.messages].reverse().find(m => m.role === "assistant" && m.content);
         if (!lastAssistant) return;
         const tail = String(lastAssistant.content).slice(-1800);
-        userInput.value = `Önceki cevabı kaldığı yerden devam ettir. Tekrar baştan yazma.\n\nSon kısım:\n${tail}`;
-        autoResize(userInput);
+        setComposerValue(`Önceki cevabı kaldığı yerden devam ettir. Tekrar baştan yazma.\n\nSon kısım:\n${tail}`, { focus: false });
         sendMessage();
     }
 
     function triggerGameGeneration() {
         closeAttachMenu();
         setAppMode("game");
-        document.getElementById("userInput").value = "";
+        restoreComposerDraftIfNeeded();
         document.getElementById("userInput").focus();
         renderSuggestions('game');
     }
@@ -2376,6 +2933,7 @@
         if (qualitySelect) qualitySelect.value = currentVideoQuality;
         const freeContentModeInput = document.getElementById('freeContentModeInput');
         if (freeContentModeInput) freeContentModeInput.checked = isFreeContentModeEnabled();
+        applyFeatureUiState();
         
         setTimeout(() => { settingsMenu.style.opacity = '1'; }, 10);
     }
@@ -2436,6 +2994,99 @@
         return orderedVisionModels.find(hasOption) || "";
     }
 
+    const PROVIDER_MODEL_GROUPS = {
+        openai: [
+            { value: 'openai', label: 'GPT-5.5', desc: 'En guclu genel zeka' },
+            { value: 'openai', label: 'GPT-5.5 Thinking', desc: 'Zor isler / uzun akil yurutme' },
+            { value: 'openai', label: 'Image', desc: 'Gorsel uretim' }
+        ],
+        xai: [
+            { value: 'grok', label: 'Grok 4.3', desc: 'Grok tarzi sohbet' },
+            { value: 'grok', label: 'Grok Build', desc: 'Kod / proje gelistirme' },
+            { value: 'grok', label: 'Grok Imagine', desc: 'Gorsel / video icin guvenli proxy gerekir' },
+            { value: 'grok', label: 'Grok Voice', desc: 'Ses icin backend gerekir' }
+        ],
+        gemini: [
+            { value: 'gemini', label: 'Gemini', desc: 'Uzun baglam / dosya / multimodal' }
+        ],
+        claude: [
+            { value: 'openrouter', label: 'Claude', desc: 'Yazi kalitesi / planlama / UI metni' }
+        ],
+        ollama: [
+            { value: 'qwen2.5:14b', label: 'Qwen 2.5 14B', desc: 'Yerel model / ucretsiz deneme' },
+            { value: 'qwen2.5', label: 'Qwen 2.5 7B', desc: 'Yerel hizli deneme' },
+            { value: 'llama3:8b', label: 'Llama 3 8B', desc: 'Yerel sohbet' },
+            { value: 'llava', label: 'LLaVA', desc: 'Yerel gorsel analiz' }
+        ]
+    };
+
+    function ensureProviderShell() {
+        if (document.getElementById('providerShell')) return;
+        const modelSelect = document.getElementById('modelSelect');
+        if (!modelSelect || !modelSelect.parentNode) return;
+        const shell = document.createElement('div');
+        shell.className = 'provider-shell';
+        shell.id = 'providerShell';
+        shell.innerHTML = '<select id="providerSelect" title="Provider" onchange="renderProviderModels()"></select><select id="providerModelSelect" title="Provider Modeli" onchange="syncProviderModelToLegacySelect()"></select><div class="provider-hint" id="providerHint">Provider secimi deneysel kabuktur.</div>';
+        modelSelect.parentNode.insertBefore(shell, modelSelect.nextSibling);
+        const providerSelect = document.getElementById('providerSelect');
+        if (providerSelect) {
+            providerSelect.innerHTML = [
+                '<option value="openai">OpenAI</option>',
+                '<option value="xai">Grok / xAI</option>',
+                '<option value="gemini">Gemini</option>',
+                '<option value="claude">Claude</option>',
+                '<option value="ollama">Ollama</option>'
+            ].join('');
+        }
+        renderProviderModels();
+    }
+
+    function renderProviderModels() {
+        const providerSelect = document.getElementById('providerSelect');
+        const modelSelect = document.getElementById('providerModelSelect');
+        const hint = document.getElementById('providerHint');
+        if (!providerSelect || !modelSelect) return;
+        const provider = providerSelect.value || 'openai';
+        const models = PROVIDER_MODEL_GROUPS[provider] || PROVIDER_MODEL_GROUPS.openai;
+        modelSelect.innerHTML = models.map((model, index) => `<option value="${model.value}" data-desc="${model.desc.replace(/"/g, '&quot;')}" ${index === 0 ? 'selected' : ''}>${model.label}</option>`).join('');
+        if (hint) {
+            const desc = models[0] ? models[0].desc : '';
+            hint.textContent = provider === 'xai'
+                ? 'Grok/xAI baglantisi icin guvenli backend/proxy gerekir.'
+                : desc;
+        }
+        syncProviderModelToLegacySelect();
+    }
+
+    function syncProviderModelToLegacySelect() {
+        const providerModel = document.getElementById('providerModelSelect');
+        const legacyModel = document.getElementById('modelSelect');
+        const hint = document.getElementById('providerHint');
+        if (!providerModel || !legacyModel) return;
+        const value = providerModel.value;
+        const hasOption = Array.from(legacyModel.options).some(opt => opt.value === value);
+        if (hasOption) legacyModel.value = value;
+        const selected = providerModel.options[providerModel.selectedIndex];
+        if (hint && selected && selected.dataset.desc) {
+            const provider = document.getElementById('providerSelect')?.value;
+            hint.textContent = provider === 'xai'
+                ? selected.dataset.desc + '. Guvenli backend/proxy gerekir.'
+                : selected.dataset.desc;
+        }
+    }
+
+    function populateNewProjectModels() {
+        const target = document.getElementById('newProjectModel');
+        const legacyModel = document.getElementById('modelSelect');
+        if (!target || !legacyModel || target.dataset.ready === '1') return;
+        target.innerHTML = Array.from(legacyModel.options)
+            .filter(opt => !opt.disabled && opt.value)
+            .map(opt => `<option value="${opt.value}">${opt.textContent}</option>`)
+            .join('');
+        target.dataset.ready = '1';
+    }
+
     function saveSettings() {
         const groqKey = document.getElementById('groqApiKeyInput').value.trim();
         localStorage.setItem('groq_api_key', groqKey);
@@ -2466,6 +3117,19 @@
         localStorage.setItem('video_quality', videoQuality);
         const freeContentModeInput = document.getElementById('freeContentModeInput');
         localStorage.setItem('free_content_mode', freeContentModeInput && freeContentModeInput.checked ? '1' : '0');
+        const settingsStyle = document.getElementById('settingsStyleModeSelect');
+        const settingsSpeech = document.getElementById('settingsSpeechStyleSelect');
+        const smartInput = document.getElementById('smartSuggestionsInput');
+        const newProjectInput = document.getElementById('newProjectInput');
+        const providerInput = document.getElementById('providerViewInput');
+        const liveInput = document.getElementById('liveSearchInput');
+        if (settingsStyle) setFeatureValue('styleMode', settingsStyle.value || 'safe');
+        if (settingsSpeech) setFeatureValue('speechStyle', settingsSpeech.value || 'default');
+        if (smartInput) setFeatureValue('smartSuggestions', smartInput.checked ? '1' : '0');
+        if (newProjectInput) setFeatureValue('newProject', newProjectInput.checked ? '1' : '0');
+        if (providerInput) setFeatureValue('providerView', providerInput.checked ? '1' : '0');
+        if (liveInput) setFeatureValue('liveSearch', liveInput.checked ? '1' : '0');
+        applyFeatureUiState();
 
         closeSettings();
         alert("Ayarlar kaydedildi!");
@@ -2503,14 +3167,19 @@
 
         // Eğer hiç sohbet yoksa yeni oluştur
         if (Object.keys(sessions).length === 0 || !currentChatId || !sessions[currentChatId]) {
-            createNewChat();
+            createNewChat({ preserveComposer: true });
         } else {
             renderSidebar();
             renderCurrentChat();
         }
     }
 
-    function createNewChat() {
+    function createNewChat(options = {}) {
+        if (!options.preserveComposer) {
+            clearComposerDraft();
+            clearComposerAttachments();
+            setComposerValue('', { save: false, focus: false });
+        }
         const newId = "chat_" + Date.now();
         sessions[newId] = {
             title: "Yeni Sohbet",
@@ -2770,11 +3439,11 @@
         const container = document.getElementById(containerId);
         if (container) {
             container.innerHTML = `
-                <div style="color: #cdd6f4; font-size: 16px; margin-bottom: 10px;">🎬 AI Video Oluşturuluyor...</div>
+                <div style="color: #cdd6f4; font-size: 16px; margin-bottom: 10px;">🎬 Video modeli bağlı değil; storyboard/slideshow önizlemesi hazırlanıyor...</div>
                 <div style="background: #313244; border-radius: 8px; height: 20px; overflow: hidden; margin-bottom: 8px;">
                     <div id="${containerId}-progress" style="background: linear-gradient(90deg, #89b4fa, #cba6f7); height: 100%; width: 0%; border-radius: 8px; transition: width 0.5s ease;"></div>
                 </div>
-                <div id="${containerId}-status" style="color: #a6adc8; font-size: 13px;">Sahneler hazırlanıyor...</div>
+                <div id="${containerId}-status" style="color: #a6adc8; font-size: 13px;">Sahneler hazırlanıyor. Gerçek video API için Ayarlar > API Anahtarları bölümünden sağlayıcı ekle.</div>
                 <button class="run-code-btn" style="background: #f38ba8; color: #11111b; font-size: 11px; padding: 4px 8px; margin-top: 8px; font-weight: bold;" onclick="cancelVideoGeneration('${containerId}')">❌ İptal Et</button>
             `;
         }
@@ -2791,11 +3460,11 @@
             const card = document.createElement("div");
             card.className = "message bot";
             card.innerHTML = `<div id="${videoId}" style="text-align:center; margin: 15px 0; background: #181825; padding: 15px; border-radius: 12px; border: 1px solid #45475a;">
-                                <div style="color: #cdd6f4; font-size: 16px; margin-bottom: 10px;">🎬 AI Video Oluşturuluyor...</div>
+                                <div style="color: #cdd6f4; font-size: 16px; margin-bottom: 10px;">🎬 Video modeli bağlı değil; storyboard/slideshow önizlemesi hazırlanıyor...</div>
                                 <div style="background: #313244; border-radius: 8px; height: 20px; overflow: hidden; margin-bottom: 8px;">
                                     <div id="${videoId}-progress" style="background: linear-gradient(90deg, #89b4fa, #cba6f7); height: 100%; width: 0%; border-radius: 8px; transition: width 0.5s ease;"></div>
                                 </div>
-                                <div id="${videoId}-status" style="color: #a6adc8; font-size: 13px;">Sahneler hazırlanıyor...</div>
+                                <div id="${videoId}-status" style="color: #a6adc8; font-size: 13px;">Sahneler hazırlanıyor. Gerçek video API için Ayarlar > API Anahtarları bölümünden sağlayıcı ekle.</div>
                             </div>`;
             list.appendChild(card);
             scrollToBottom();
@@ -3334,9 +4003,7 @@
     }
 
     function editVideoPrompt(prompt) {
-        document.getElementById("userInput").value = prompt;
-        autoResize(document.getElementById("userInput"));
-        document.getElementById("userInput").focus();
+        setComposerValue(prompt);
     }
 
     function deleteVideoCard(containerId) {
@@ -3397,9 +4064,7 @@
     function editMessage(index) {
         const chat = sessions[currentChatId];
         const msg = chat.messages[index];
-        userInput.value = msg.content;
-        autoResize(userInput);
-        userInput.focus();
+        setComposerValue(msg.content);
         chat.messages = chat.messages.slice(0, index);
         saveDatabase();
         renderCurrentChat();
@@ -3429,7 +4094,7 @@
             chat.messages.pop(); // Pop user msg to re-send it
             saveDatabase();
             
-            userInput.value = lastUserMsg.content;
+            setComposerValue(lastUserMsg.content);
             if(lastUserMsg.images && lastUserMsg.images.length > 0) {
                 selectedImageBase64 = lastUserMsg.images[0];
                 document.getElementById('imagePreview').src = selectedImageBase64;
@@ -3485,6 +4150,8 @@
                     ${index === history.length - 1 ? `<button class="msg-action-btn" onclick="regenerateMessage()" title="Yeniden Üret">🔄</button>` : ''}
                 `;
                 div.appendChild(actionDiv);
+                const prevUser = [...history.slice(0, index)].reverse().find(m => m.role === "user" && m.content);
+                appendSmartSuggestions(div, msg.content, prevUser ? prevUser.content : "");
             }
             messagesDiv.appendChild(div);
         });
@@ -3542,11 +4209,15 @@
                 }
             }
             
-            if (finalStr !== '') { 
-                userInput.value += (userInput.value ? " " : "") + finalStr.trim(); 
-                autoResize(userInput); 
+            if (finalStr !== '') {
+                const cleanFinal = finalStr.trim();
+                if (!isDuplicateSttFinal(cleanFinal)) {
+                    userInput.value += (userInput.value ? " " : "") + cleanFinal;
+                    autoResize(userInput);
+                    saveComposerDraft();
+                    try { const sendBtn = document.getElementById('sendBtn') || document.querySelector('.send-btn'); if (sendBtn) sendBtn.disabled = false; } catch(e) {}
+                }
                 userInput.placeholder = "CinoCode'a bir şeyler sor...";
-                try { const sendBtn = document.getElementById('sendBtn') || document.querySelector('.send-btn'); if (sendBtn) sendBtn.disabled = false; } catch(e) {}
             } else if (interimStr !== '') {
                 userInput.placeholder = interimStr;
             }
@@ -4309,6 +4980,13 @@
 
     let isWebSearchEnabled = false;
     function toggleWebSearch() {
+        if (!isFeatureEnabled('liveSearch')) {
+            isWebSearchEnabled = false;
+            const btn = document.getElementById("webSearchBtn");
+            if (btn) btn.classList.remove("active");
+            alert("Canli arama saglayicisi bagli degil. Ayarlar > API Anahtarlari bolumunden saglayici ekle.");
+            return;
+        }
         isWebSearchEnabled = !isWebSearchEnabled;
         const btn = document.getElementById("webSearchBtn");
         const menuText = document.getElementById("menuWebSearchText");
@@ -4332,6 +5010,9 @@
         toggleWebSearch();
     }
     async function doWebSearch(query) {
+        if (!isFeatureEnabled('liveSearch')) {
+            return "";
+        }
         try {
             const url = `https://tr.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query)}&utf8=&format=json&origin=*`;
             const res = await fetch(url);
@@ -4354,6 +5035,8 @@
             }
         }
         loadDatabase();
+        bindComposerDraftPreservation();
+        restoreComposerDraftIfNeeded();
         repairBadChatTitles();
         checkOllamaStatus();
         setInterval(checkOllamaStatus, 5000);
@@ -4361,6 +5044,8 @@
 
         isSidebarCollapsed = localStorage.getItem(SIDEBAR_STATE_KEY) === '1';
         applySidebarState(isSidebarCollapsed, false);
+        applyFeatureUiState();
+        restoreComposerDraftIfNeeded();
 
         // Paste (CTRL+V) olayını dinle ve kopyalanan resimleri yakala
         document.addEventListener('paste', function(e) {
@@ -4557,8 +5242,7 @@
         const modelSel = document.getElementById('modelSelect');
         if (modelSel && !isProxyCloudModel(modelSel.value)) modelSel.value = 'gemini';
         const text = `Bugün ${lang} dersimize başlayalım! Seviyem: ${level}. Bugün ${goal} yeni kelime öğrenmek istiyorum. Lütfen o dili hiç bilmiyormuşum gibi en temel ve günlük hayatta en çok kullanılan kelime ve kalıplardan başla. Tablolar ve örneklerle anlat.`;
-        userInput.value = text;
-        autoResize(userInput);
+        setComposerValue(text, { focus: false });
         sendMessage();
     }
 
@@ -4572,8 +5256,7 @@
         const modelSel = document.getElementById('modelSelect');
         if (modelSel && !isProxyCloudModel(modelSel.value)) modelSel.value = 'gemini';
         const text = `Hadi ${lang} sohbet edelim! Seviyem ${level}. Seninle ${lang} pratik yapmak istiyorum. Sen de ${lang} konuş, hatalarımı sonunda Türkçe düzelt.`;
-        userInput.value = text;
-        autoResize(userInput);
+        setComposerValue(text, { focus: false });
         sendMessage();
     }
 
@@ -4587,8 +5270,7 @@
                 btn.textContent = '🧠 Quiz Aktif ✓';
                 const lang = getDilKocuLang();
                 const text = `Quiz zamanı! Bana bugüne kadar öğrettiğin ${lang} kelimelerden 5 soru sor. Ben cevaplayacağım.`;
-                userInput.value = text;
-                autoResize(userInput);
+                setComposerValue(text, { focus: false });
                 sendMessage();
             } else {
                 btn.classList.remove('active-quiz');
@@ -4603,7 +5285,50 @@
         el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 150) + 'px';
     }
     function handleKey(e) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }
-    function setQuickStart(text) { userInput.value = text; autoResize(userInput); userInput.focus(); }
+    function setQuickStart(text) { setComposerValue(text); }
+
+    function startNewProject(type) {
+        const name = (document.getElementById('newProjectName')?.value || '').trim();
+        const model = document.getElementById('newProjectModel')?.value;
+        const style = document.getElementById('newProjectStyle')?.value || 'safe';
+        const speech = document.getElementById('newProjectSpeechStyle')?.value || 'default';
+        const lang = document.getElementById('newProjectLang')?.value || 'auto';
+        const output = document.getElementById('newProjectOutput')?.value || 'chat';
+        if (model && document.getElementById('modelSelect')) document.getElementById('modelSelect').value = model;
+        setFeatureValue('styleMode', style);
+        setFeatureValue('speechStyle', speech);
+        applyFeatureUiState();
+
+        if (type === 'blank') {
+            createNewChat();
+            return;
+        }
+        if (type === 'image') {
+            setAppMode('image');
+            setQuickStart(`${name ? name + ': ' : ''}Gorsel uretim icin yaratıcı ve net bir prompt hazirla. Dil: ${lang}.`);
+            return;
+        }
+        if (type === 'video') {
+            setAppMode('video');
+            setQuickStart(`${name ? name + ': ' : ''}Video icin sahne, kamera, atmosfer ve sure detaylari olan bir prompt hazirla. Dil: ${lang}.`);
+            return;
+        }
+        if (type === 'pdf') {
+            triggerFileInput('docUpload');
+            return;
+        }
+        if (type === 'voice') {
+            setQuickStart(`${name ? name + ': ' : ''}Sesli asistan gibi cevap ver. Once kisa bir selamlama yap, sonra benden ne yapmak istedigimi sor.`);
+            return;
+        }
+        const prompts = {
+            webapp: `${name || 'Yeni web app'} icin tek dosyalik HTML/CSS/JS calisir prototip hazirla. Cikti tipi: ${output}. Once kisa plan ver, sonra kodu yaz.`,
+            game: `${name || 'Yeni oyun'} icin HTML5/Canvas ile oynanabilir bir oyun yap. Kontroller, skor ve yeniden baslatma olsun.`,
+            fixcode: `${name || 'Kod duzeltme'} icin kodu analiz et, hatayi bul, minimal patch oner ve test adimlarini yaz. Kodu birazdan paylasacagim.`
+        };
+        setAppMode(type === 'game' ? 'game' : 'chat');
+        setQuickStart(prompts[type] || `${name || 'Yeni proje'} icin baslangic plani hazirla.`);
+    }
 
     const SEND_BUTTON_IDLE_HTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>';
     const SEND_BUTTON_STOP_HTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"></rect></svg>';
@@ -4619,6 +5344,15 @@
         return `<span class="thinking-indicator"><span>${label}</span><span class="thinking-dots" aria-hidden="true"><span></span><span></span><span></span></span></span>`;
     }
 
+    function clearTransientTypingIndicators() {
+        try { const st = document.getElementById('cinocode_generating_status'); if (st) st.remove(); } catch(e) {}
+        try {
+            document.querySelectorAll('[data-typing-indicator="1"]').forEach(node => {
+                if (node && node.textContent && node.textContent.includes("CinoCode düşünüyor")) node.remove();
+            });
+        } catch(e) {}
+    }
+
     function setGenerationUiBusy(isBusy) {
         const sendBtn = getMainSendButton();
         const input = document.getElementById('userInput');
@@ -4632,7 +5366,7 @@
         if (input) {
             if (isBusy) {
                 if (!input.dataset.idlePlaceholder) input.dataset.idlePlaceholder = input.placeholder || "CinoCode'a bir şeyler sor...";
-                input.placeholder = "CinoCode düşünüyor...";
+                input.placeholder = "Yanıt oluşturuluyor...";
             } else {
                 input.placeholder = input.dataset.idlePlaceholder || "CinoCode'a bir şeyler sor...";
                 delete input.dataset.idlePlaceholder;
@@ -4646,7 +5380,7 @@
         window.activeGenerationBotId = null;
         setGenerationUiBusy(false);
         try { const userInputEl = document.getElementById('userInput'); if (userInputEl) userInputEl.disabled = false; } catch(e) {}
-        try { const st = document.getElementById('cinocode_generating_status'); if (st) st.remove(); } catch(e) {}
+        clearTransientTypingIndicators();
     }
 
     function stopGeneration() {
@@ -4903,6 +5637,7 @@
         window.generationStopRequested = false;
 
         if (!text && !selectedImageBase64 && !window.selectedDocumentText) return;
+        maybeApplyDynamicSpeechStyle(text);
         if (!text && (selectedImageBase64 || window.selectedDocumentText)) {
             userInput.placeholder = "PDF/fotoğraf hazır. Lütfen bir talimat yaz ve gönder.";
             userInput.focus();
@@ -4992,6 +5727,7 @@
         renderCurrentChat();
         
         userInput.value = ""; autoResize(userInput);
+        clearComposerDraft();
         
         // Sadece görsel varsa preview temizle, PDF durumunu koru
         if (selectedImageBase64) {
@@ -5001,9 +5737,11 @@
         }
 
         const botId = "bot-" + Date.now();
+        clearTransientTypingIndicators();
         window.activeGenerationBotId = botId;
         const typingDiv = document.createElement("div");
         typingDiv.className = "message bot"; typingDiv.id = botId;
+        typingDiv.dataset.typingIndicator = "1";
         
         if (msgObj.images && msgObj.images.length > 0) {
             typingDiv.innerHTML = "<i>📸 Görsel analiz ediliyor (Biraz uzun sürebilir, lütfen bekleyin)...</i>";
@@ -5017,6 +5755,7 @@
         if (!msgObj.images && !docTextToUse && !isDirectVideoCreationRequest(text) && (currentMode === "image" || isDirectImageGenerationRequest(text))) {
             setAppMode("image");
             const cleanPrompt = buildCleanMediaPrompt(text, "image");
+            delete typingDiv.dataset.typingIndicator;
             typingDiv.innerHTML = renderContentWithImages(`[GENERATE_IMAGE: ${cleanPrompt}]`, true);
             addCopyButtons(typingDiv);
             chat.messages.push({ role: "assistant", content: `[GENERATE_IMAGE: ${cleanPrompt}]` });
@@ -5028,13 +5767,14 @@
 
         if (currentMode === "chat" && isDirectVideoCreationRequest(text) && !msgObj.images && !docTextToUse) {
             setAppMode("video");
+            delete typingDiv.dataset.typingIndicator;
             typingDiv.innerHTML = `<div style="color:#cdd6f4; margin-bottom:10px;">🎬 Video isteğin algılandı, Video Stüdyosu açılıyor...</div>
                 <div id="${botId}-video" style="text-align:center; margin: 15px 0; background: #181825; padding: 15px; border-radius: 12px; border: 1px solid #45475a;">
-                    <div style="color: #cdd6f4; font-size: 16px; margin-bottom: 10px;">🎬 AI Video Oluşturuluyor...</div>
+                    <div style="color: #cdd6f4; font-size: 16px; margin-bottom: 10px;">🎬 Video modeli bağlı değil; storyboard/slideshow önizlemesi hazırlanıyor...</div>
                     <div style="background: #313244; border-radius: 8px; height: 20px; overflow: hidden; margin-bottom: 8px;">
                         <div id="${botId}-video-progress" style="background: linear-gradient(90deg, #89b4fa, #cba6f7); height: 100%; width: 0%; border-radius: 8px; transition: width 0.5s ease;"></div>
                     </div>
-                    <div id="${botId}-video-status" style="color: #a6adc8; font-size: 13px;">Sahneler hazırlanıyor...</div>
+                    <div id="${botId}-video-status" style="color: #a6adc8; font-size: 13px;">Sahneler hazırlanıyor. Gerçek video API için Ayarlar > API Anahtarları bölümünden sağlayıcı ekle.</div>
                     <button class="run-code-btn" style="background: #f38ba8; color: #11111b; font-size: 11px; padding: 4px 8px; margin-top: 8px; font-weight: bold;" onclick="cancelVideoGeneration('${botId}-video')">❌ İptal Et</button>
                 </div>`;
             const cleanPrompt = buildCleanMediaPrompt(text, "video");
@@ -5081,6 +5821,8 @@
             }
             baseSystemPrompt += "\n\nKURAL: SADECE VE SADECE eğer kullanıcı kendisiyle, hayatıyla, zevkleriyle veya fiziksel özellikleriyle ilgili ÇOK ÖNEMLİ VE KALICI bir kişisel bilgi verirse (Örn: adım Ahmet, yaşım 25, kedim var, fıstığa alerjim var vb.), mesajının en sonuna BİREBİR şu formatta gizli bir not düşmelisin: [REMEMBER: Kullanıcı 25 yaşındaymış ve adı Ahmet'miş]. Sıradan sohbetlerde veya kullanıcının senden bir şey yapmanı/yazmanı istediği anlarda (Örn: hesap makinesi yaz, kod yaz) KESİNLİKLE [REMEMBER] KULLANMA! Sadece kişisel bilgileri kaydet.";
             baseSystemPrompt += "\n\nKURAL 2 (ÇOK ÖNEMLİ): Eğer kullanıcı senden bir oyun, arayüz, hesap makinesi veya web tabanlı herhangi bir uygulama yapmanı/kodlamanı isterse, KODU SADECE HTML BLOKLARI İÇİNDE YAZ. Başka metin ekleme.";
+            baseSystemPrompt += getStyleModeInstruction();
+            baseSystemPrompt += getSpeechStyleInstruction();
             baseSystemPrompt += getResponseStyleGovernorInstruction();
             baseSystemPrompt += getResponseControlInstruction(text);
             
@@ -5301,14 +6043,7 @@
             window.isGenerating = true;
             setGenerationUiBusy(true);
             try { document.getElementById('userInput').disabled = true; } catch(e) {}
-            // show a small status message
-            const genStatusId = 'cinocode_generating_status';
-            let existingStatus = document.getElementById(genStatusId);
-            if (!existingStatus) {
-                const statusHtml = `<div id="${genStatusId}" class="message bot-message" style="background: rgba(24,24,37,0.6); border-left: 3px solid #89b4fa; padding: 8px; margin-bottom:10px; border-radius:6px; font-size:0.9em; color:var(--text-color);">${getThinkingIndicatorHtml()}</div>`;
-                messagesDiv.insertAdjacentHTML('beforeend', statusHtml);
-                messagesDiv.scrollTop = messagesDiv.scrollHeight;
-            }
+            // Tek typing indicator mesaj akışındaki bot placeholder'ıdır; floating status oluşturma.
             const triedModels = new Set();
             let lastErrorMessage = null;
             let lastErrorDetails = null;
@@ -5338,7 +6073,6 @@
                     const warningHtml = `<div class="message bot-message" style="background: rgba(255, 150, 0, 0.1); border-left: 3px solid orange; padding: 10px; margin-bottom: 10px; border-radius: 5px; font-size: 0.9em; color: var(--text-color);">✨ <b>Otomatik Yedekleme:</b> Bir sonraki model <b>${cleanModelName}</b> deneniyor...</div>`;
                     messagesDiv.insertAdjacentHTML('beforeend', warningHtml);
                     messagesDiv.scrollTop = messagesDiv.scrollHeight;
-                    const stEl = document.getElementById('cinocode_generating_status'); if (stEl) stEl.innerText = `🔁 Yedek model deneniyor: ${cleanModelName}`;
                 }
 
                 let fetchUrl, fetchOptions;
@@ -5516,8 +6250,10 @@
                         window.lastWorkingModelAt = Date.now();
 
                         const botReply = sanitizeAssistantOutput(String(jsonData.content || '').trim());
+                        document.getElementById(botId).removeAttribute('data-typing-indicator');
                         document.getElementById(botId).innerHTML = renderContentWithImages(botReply, true);
                         addCopyButtons(document.getElementById(botId));
+                        appendSmartSuggestions(botId, botReply, text);
                         chat.messages.push({ role: 'assistant', content: botReply });
                         chat.updatedAt = Date.now();
                         saveDatabase();
@@ -5741,8 +6477,10 @@
             }
             
             botReply = sanitizeAssistantOutput(botReply);
+            document.getElementById(botId).removeAttribute('data-typing-indicator');
             document.getElementById(botId).innerHTML = renderContentWithImages(botReply, true);
             addCopyButtons(document.getElementById(botId));
+            appendSmartSuggestions(botId, botReply, text);
 
             // Intent ve prompt kontrol mekanizması doğrulaması
             const lowerText = text.toLowerCase();
@@ -5771,7 +6509,7 @@
                 const fallbackContainer = document.createElement("div");
                 fallbackContainer.innerHTML = `<div id="${videoId}" style="text-align:center; margin: 15px 0; background: #181825; padding: 15px; border-radius: 12px; border: 1px solid #45475a;">
                             <div style="color:#f9e2af; font-size: 13px; margin-bottom: 10px;">Bu gerçek video değil; normal sohbet cevabı başarı sayılmadı. Video motoru başlatılıyor.</div>
-                            <div style="color: #cdd6f4; font-size: 16px; margin-bottom: 10px;">🎬 AI Video Hazırlanıyor (Otomatik Fallback)...</div>
+                            <div style="color: #cdd6f4; font-size: 16px; margin-bottom: 10px;">🎬 Video modeli bağlı değil; storyboard/slideshow önizlemesi hazırlanıyor...</div>
                             <div style="background: #313244; border-radius: 8px; height: 20px; overflow: hidden; margin-bottom: 8px;">
                                 <div id="${videoId}-progress" style="background: linear-gradient(90deg, #89b4fa, #cba6f7); height: 100%; width: 0%; border-radius: 8px; transition: width 0.5s ease;"></div>
                             </div>
@@ -5794,7 +6532,7 @@
                 const botNode = document.getElementById(botId);
                 if (botNode) botNode.remove();
             } else {
-                chat.messages.push({ role: "assistant", content: hasVideoFallback ? "Video isteği algılandı; gerçek video motoru başlatıldı." : botReply });
+                chat.messages.push({ role: "assistant", content: hasVideoFallback ? "Video isteği algılandı; gerçek video API bağlı değil, storyboard/slideshow önizlemesi başlatıldı." : botReply });
             }
             
             chat.updatedAt = Date.now();
