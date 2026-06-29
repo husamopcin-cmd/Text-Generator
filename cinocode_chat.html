@@ -1453,6 +1453,14 @@
             <option value="cinematic">🎥 Sinematik</option>
         </select>
 
+        <label style="display:flex; align-items:flex-start; gap:10px; color:#cdd6f4; font-size:13px; line-height:1.35; text-align:left; margin-bottom: 15px;">
+            <input type="checkbox" id="freeContentModeInput" style="margin-top:2px; accent-color:#f38ba8;">
+            <span>
+                <strong>Serbest İçerik Modu</strong><br>
+                <span style="color:#a6adc8; font-size:12px;">Görsel/video üretiminde daha karanlık, sert ve yetişkin tonlar kullanır. Yasa dışı, açık cinsel, nefret, aşırı şiddet veya rıza dışı içerikler üretilmez.</span>
+            </span>
+        </label>
+
         <button class="send-btn" style="width: 100%; border-radius: 8px; padding: 10px;" onclick="saveSettings()">Kaydet</button>
     </div>
 
@@ -1588,6 +1596,8 @@
             .replace(/\[REMEMBER:[\s\S]*?\]/gi, "")
             .replace(/\[SYSTEM:[\s\S]*?\]/gi, "")
             .replace(/\[DEVELOPER:[\s\S]*?\]/gi, "")
+            .replace(/\[(?:senin\s+ad[ıi]n|kullanıcı\s+ad[ıi]|ad[ıi]n|isim)\]/gi, "kanka")
+            .replace(/\bSenin\s+ad[ıi]n?\b/gi, "kanka")
             .replace(/Ahmet\w*/gi, "")
             .replace(/^\s*(Sen|Kullanıcı|User|Assistant|Bot):\s*.*$/gmi, "")
             .replace(/^\s*Viewed\s+.*$/gmi, "")
@@ -1597,6 +1607,18 @@
             .replace(/^\s*Thought for\s+.*$/gmi, "")
             .replace(/^\s*node\s+-e\s+.*$/gmi, "")
             .trim();
+    }
+
+    function isFreeContentModeEnabled() {
+        return localStorage.getItem('free_content_mode') === '1';
+    }
+
+    function getContentModePromptSuffix(type) {
+        if (type !== 'image' && type !== 'video') return "";
+        if (isFreeContentModeEnabled()) {
+            return ", darker cinematic tone, intense mature atmosphere, dramatic lighting, gritty style, non-graphic, no explicit sexual content, no minors, no sexual violence, no hate content, no extreme gore, no illegal harm instructions, no real person sexualization";
+        }
+        return ", clean, friendly, safe, balanced, non-graphic";
     }
 
     function buildCleanMediaPrompt(rawPrompt, type) {
@@ -1658,12 +1680,12 @@
             avoidance += ", no humans, no people, no man, no woman";
         }
 
-        return clean + avoidance;
+        return clean + avoidance + getContentModePromptSuffix(type);
     }
 
     function getCoreVideoPrompt(rawPrompt) {
         return buildCleanMediaPrompt(rawPrompt || "", "video")
-            .replace(/,\s*(punchy fast cuts|energetic storytelling|punchy motion blur|polished cinematic structure|smooth camera moves|professional framing|slow cinematic reveals|dramatic lighting|epic atmosphere|consistent character design|scene-to-scene continuity|detailed environment|narrative flow|crisp detail|fine texture details|4k inspired clarity|ultra high resolution detail|filmic grading|premium studio polish|cinematic depth of field|no humans|no men|no women|no extra limbs|no deformed anatomy|no text|no watermark|high quality|cinematic|exactly one subject|single focal subject|exactly two subjects|two separate characters|exactly three subjects|three independent characters|exactly four subjects|four independent characters|exactly five subjects|five independent characters|exactly six separate full-body subjects|six independent characters)+/gi, "")
+            .replace(/,\s*(punchy fast cuts|energetic storytelling|punchy motion blur|polished cinematic structure|smooth camera moves|professional framing|slow cinematic reveals|dramatic lighting|epic atmosphere|consistent character design|scene-to-scene continuity|detailed environment|narrative flow|crisp detail|fine texture details|4k inspired clarity|ultra high resolution detail|filmic grading|premium studio polish|cinematic depth of field|no humans|no men|no women|no extra limbs|no deformed anatomy|no text|no watermark|high quality|cinematic|exactly one subject|single focal subject|exactly two subjects|two separate characters|exactly three subjects|three independent characters|exactly four subjects|four independent characters|exactly five subjects|five independent characters|exactly six separate full-body subjects|six independent characters|clean|friendly|safe|balanced|non-graphic|darker cinematic tone|intense mature atmosphere|gritty style|no explicit sexual content|no minors|no sexual violence|no hate content|no extreme gore|no illegal harm instructions|no real person sexualization)+/gi, "")
             .trim();
     }
 
@@ -2128,7 +2150,14 @@
         if (isDirectVideoCreationRequest(text)) {
             instruction += "\n\nVİDEO GÜVENLİK KURALI: Kullanıcı video üretmek istiyor. Gerçek video üretilmeden 'video hazır', 'film hazır', 'tıkla izle', 'tamamlandı', sahte link veya başarı iddiası yazma. Video üretilemiyorsa bunun gerçek video olmadığını açıkça söyle.";
         }
+        if (isFreeContentModeEnabled() && (isDirectVideoCreationRequest(text) || isDirectImageGenerationRequest(text))) {
+            instruction += "\n\nSERBEST İÇERİK MODU: Görsel/video promptlarında daha karanlık, sert ve yetişkin sinematik ton kullanılabilir. Yine de açık cinsel içerik, çocuk/ergen cinsel içerik, rıza dışı cinsellik, nefret, aşırı gore, gerçek kişiyi müstehcenleştirme ve suç/zarar talimatı üretme.";
+        }
         return instruction;
+    }
+
+    function getResponseStyleGovernorInstruction() {
+        return "\n\nCEVAP STİLİ FRENI: Samimi ve doğal konuş ama ölçülü kal. Kullanıcının her kelimesini taklit etme; her cevabı 'hahaha', 'hadi bakalım', 'ne diyelim' veya roleplay/persona şovu formatına çevirme. Kullanıcı açıkça istemedikçe rol yapma, abartılı karakter performansı, gereksiz seçenek listesi ve her satıra emoji koyma. Normal soruya normal, kısa ve işe yarar cevap ver; kanka tonunu cevabın odağını bozmayacak kadar kullan. Kullanıcı sinirli veya argo konuşursa bunu argo/küfürlü üslup isteği sayma; sakin kal ve sorunu çözmeye odaklan. Bilinmeyen kullanıcı adı için '[Senin adın]' gibi placeholder yazma; gerekirse 'kanka' de.";
     }
 
     function isLimitFinishReason(reason) {
@@ -2345,6 +2374,8 @@
         const currentVideoQuality = localStorage.getItem('video_quality') || "standard";
         const qualitySelect = document.getElementById('videoQualitySelect');
         if (qualitySelect) qualitySelect.value = currentVideoQuality;
+        const freeContentModeInput = document.getElementById('freeContentModeInput');
+        if (freeContentModeInput) freeContentModeInput.checked = isFreeContentModeEnabled();
         
         setTimeout(() => { settingsMenu.style.opacity = '1'; }, 10);
     }
@@ -2433,6 +2464,8 @@
         localStorage.setItem('video_mode', videoMode);
         const videoQuality = document.getElementById('videoQualitySelect').value;
         localStorage.setItem('video_quality', videoQuality);
+        const freeContentModeInput = document.getElementById('freeContentModeInput');
+        localStorage.setItem('free_content_mode', freeContentModeInput && freeContentModeInput.checked ? '1' : '0');
 
         closeSettings();
         alert("Ayarlar kaydedildi!");
@@ -5048,6 +5081,7 @@
             }
             baseSystemPrompt += "\n\nKURAL: SADECE VE SADECE eğer kullanıcı kendisiyle, hayatıyla, zevkleriyle veya fiziksel özellikleriyle ilgili ÇOK ÖNEMLİ VE KALICI bir kişisel bilgi verirse (Örn: adım Ahmet, yaşım 25, kedim var, fıstığa alerjim var vb.), mesajının en sonuna BİREBİR şu formatta gizli bir not düşmelisin: [REMEMBER: Kullanıcı 25 yaşındaymış ve adı Ahmet'miş]. Sıradan sohbetlerde veya kullanıcının senden bir şey yapmanı/yazmanı istediği anlarda (Örn: hesap makinesi yaz, kod yaz) KESİNLİKLE [REMEMBER] KULLANMA! Sadece kişisel bilgileri kaydet.";
             baseSystemPrompt += "\n\nKURAL 2 (ÇOK ÖNEMLİ): Eğer kullanıcı senden bir oyun, arayüz, hesap makinesi veya web tabanlı herhangi bir uygulama yapmanı/kodlamanı isterse, KODU SADECE HTML BLOKLARI İÇİNDE YAZ. Başka metin ekleme.";
+            baseSystemPrompt += getResponseStyleGovernorInstruction();
             baseSystemPrompt += getResponseControlInstruction(text);
             
             // ===== KRİTİK FIX: reqMessages'a sistem + sınırlı sohbet geçmişini ekle =====
@@ -5481,7 +5515,7 @@
                         window.lastWorkingModel = actualModel;
                         window.lastWorkingModelAt = Date.now();
 
-                        const botReply = String(jsonData.content || '').trim();
+                        const botReply = sanitizeAssistantOutput(String(jsonData.content || '').trim());
                         document.getElementById(botId).innerHTML = renderContentWithImages(botReply, true);
                         addCopyButtons(document.getElementById(botId));
                         chat.messages.push({ role: 'assistant', content: botReply });
@@ -5706,6 +5740,7 @@
                 console.warn("Stream yarıda kesilmiş olabilir:", streamErr);
             }
             
+            botReply = sanitizeAssistantOutput(botReply);
             document.getElementById(botId).innerHTML = renderContentWithImages(botReply, true);
             addCopyButtons(document.getElementById(botId));
 
