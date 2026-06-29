@@ -425,15 +425,9 @@
             transition: width 0.2s ease, padding 0.2s ease, transform 0.2s ease;
             z-index: 10;
             overflow: hidden;
-            overflow-y: auto;
             overflow-x: hidden;
-            scrollbar-width: thin;
-            scrollbar-color: #45475a transparent;
         }
-        .sidebar::-webkit-scrollbar { width: 8px; }
-        .sidebar::-webkit-scrollbar-track { background: transparent; }
-        .sidebar::-webkit-scrollbar-thumb { background: #45475a; border-radius: 999px; }
-        .sidebar::-webkit-scrollbar-thumb:hover { background: #585b70; }
+        .sidebar::-webkit-scrollbar { display: none; }
         .sidebar.collapsed {
             width: 72px;
             min-width: 72px;
@@ -1293,6 +1287,9 @@
                 <option value="groq">Groq Cloud ☁️</option>
                 <option value="fireworks">Fireworks Cloud ☁️</option>
                 <option value="together">Together Cloud ☁️</option>
+                <!-- xAI / Grok (doğrudan API) -->
+                <option value="grok-3-xai">Grok 3 - xAI</option>
+                <option value="grok-3-mini-xai">Grok 3 Mini - xAI</option>
                 <option disabled>──────────</option>
                 <!-- Görsel Modeller -->
                 <option value="meta-llama/llama-4-scout-17b-16e-instruct-groq">Llama 4 Scout (Görsel) - Groq Bulut ⚡</option>
@@ -1627,6 +1624,11 @@
             Runware API Key <span style="color: #a6e3a1; font-size: 11px;">(Görsel Üretim — runware.ai, filtresiz)</span>:
         </div>
         <input type="text" id="runwareApiKeyInput" placeholder="runware API key..." style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px; border-radius:8px; margin-bottom: 10px; box-sizing: border-box; outline: none; font-size: 13px;">
+
+        <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px; text-align: left;">
+            xAI API Key <span style="color: #f38ba8; font-size: 11px;">(Grok 3 / Grok 3 Mini — console.x.ai)</span>:
+        </div>
+        <input type="password" id="xaiApiKeyInput" placeholder="xai-..." style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px; border-radius:8px; margin-bottom: 10px; box-sizing: border-box; outline: none; font-size: 13px;">
 
         <div style="display: flex; gap: 10px; margin-bottom: 10px; opacity:0.55;">
             <div style="flex: 1; text-align: left;">
@@ -2115,8 +2117,10 @@
 
     function getContentModePromptSuffix(type) {
         if (type !== 'image' && type !== 'video') return "";
+        if (type === 'image') return ", high quality, detailed, sharp";
+        // Video: free content mode darker tone uygulanabilir
         if (isFreeContentModeEnabled()) {
-            return ", darker cinematic tone, intense mature atmosphere, sensual aesthetic, tasteful boudoir style, tasteful lingerie or sheer clothing, elegant body-line posing, heated gaze, romantic tension, adult passionate kissing, neck and shoulder implied intimacy, embracing, elegant bedroom mood, dramatic lighting, gritty style, non-graphic, no explicit sexual content, no pornographic sex acts, no visible genitals, no minors, no sexual violence, no hate content, no extreme gore, no illegal harm instructions, no real person sexualization";
+            return ", darker cinematic tone, intense mature atmosphere, gritty style, dramatic lighting, non-graphic";
         }
         return ", clean, friendly, safe, balanced, non-graphic";
     }
@@ -2180,6 +2184,8 @@
             avoidance += ", no humans, no people, no man, no woman";
         }
 
+        const alreadyHasSuffix = /,\s*no\s+(humans|watermark|extra limbs)/i.test(clean);
+        if (alreadyHasSuffix) return clean;
         return clean + avoidance + getContentModePromptSuffix(type);
     }
 
@@ -2252,10 +2258,9 @@
                 const dlBtn = el.querySelector('button');
                 if (dlBtn) dlBtn.style.display = '';
             } else {
-                // Runware başarısız → pollinations'a düş
+                // Runware başarısız → pollinations'a düş (direkt HTTPS)
                 const seed = Math.floor(Math.random() * 999999);
-                const rawUrl = `image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1024&nologo=true&seed=${seed}`;
-                img.src = `https://wsrv.nl/?url=${rawUrl}`;
+                img.src = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1024&nologo=true&seed=${seed}`;
                 if (spinner) spinner.remove();
             }
         }
@@ -2272,7 +2277,7 @@
     function buildVideoSceneCandidates(prompt, seed) {
         const primary512 = buildImageUrl(prompt, { width: 512, height: 512, seed });
         const primary384 = buildImageUrl(prompt, { width: 384, height: 384, seed: seed + 1 });
-        const proxyUrl = `https://wsrv.nl/?url=image.pollinations.ai/prompt/${encodeURIComponent(prompt.trim())}?width=384&height=384&nologo=true&seed=${seed+2}`;
+        const proxyUrl = `https://wsrv.nl/?url=https://image.pollinations.ai/prompt/${encodeURIComponent(prompt.trim())}?width=384&height=384&nologo=true&seed=${seed+2}`;
         return [ primary512, primary384, proxyUrl ];
     }
 
@@ -2645,6 +2650,27 @@
         return !hasStrongCreateRequest;
     }
 
+    function isTechnicalText(text) {
+        if (!text) return false;
+        const s = text.trim();
+        return /would you like to run/i.test(s)
+            || /environment:\s*local/i.test(s)
+            || /\bgit\s+(diff|status|log|push|pull|reset|clean)\b/i.test(s)
+            || /node\s+--check/i.test(s)
+            || /select-string/i.test(s)
+            || /get-content/i.test(s)
+            || /(1\.\s*yes|2\.\s*no|3\.\s*no)/i.test(s)
+            || /claude\s+code/i.test(s)
+            || /\bcodex\b/i.test(s)
+            || /\bpowershell\b/i.test(s)
+            || /localhost:\d{2,5}/i.test(s)
+            || /cors\s+(error|hatas)/i.test(s)
+            || /permission\s+(denied|required)/i.test(s)
+            || /stack\s+trace/i.test(s)
+            || /netlify\s+function/i.test(s)
+            || /\bhandler\b.{0,30}\bprovider\b/i.test(s);
+    }
+
     function isVideoFollowupOrCorrection(text) {
         const normalized = (text || "").toLocaleLowerCase("tr-TR").trim();
         if (!normalized) return false;
@@ -3011,6 +3037,7 @@
         document.getElementById('nvidiaApiKeyInput').value = localStorage.getItem('nvidia_api_key') || "";
         document.getElementById('openrouterApiKeyInput').value = localStorage.getItem('openrouter_api_key') || "";
         document.getElementById('runwareApiKeyInput').value = localStorage.getItem('runware_api_key') || "";
+        document.getElementById('xaiApiKeyInput').value = localStorage.getItem('xai_api_key') || "";
         document.getElementById('cloudflareAccountIdInput').value = localStorage.getItem('cloudflare_account_id') || "";
         document.getElementById('cloudflareApiTokenInput').value = localStorage.getItem('cloudflare_api_token') || "";
 
@@ -3101,10 +3128,8 @@
             { value: 'openai', label: 'Image', desc: 'Gorsel uretim' }
         ],
         xai: [
-            { value: 'grok', label: 'Grok 4.3', desc: 'Grok tarzi sohbet' },
-            { value: 'grok', label: 'Grok Build', desc: 'Kod / proje gelistirme' },
-            { value: 'grok', label: 'Grok Imagine', desc: 'Gorsel / video icin guvenli proxy gerekir' },
-            { value: 'grok', label: 'Grok Voice', desc: 'Ses icin backend gerekir' }
+            { value: 'grok-3-xai', label: 'Grok 3', desc: 'Grok en güçlü genel zeka' },
+            { value: 'grok-3-mini-xai', label: 'Grok 3 Mini', desc: 'Grok hızlı / ekonomik sohbet' }
         ],
         gemini: [
             { value: 'gemini', label: 'Gemini', desc: 'Uzun baglam / dosya / multimodal' }
@@ -3153,7 +3178,7 @@
         if (hint) {
             const desc = models[0] ? models[0].desc : '';
             hint.textContent = provider === 'xai'
-                ? 'Grok/xAI baglantisi icin guvenli backend/proxy gerekir.'
+                ? desc + ' — Ayarlar > xAI API Key gerekir.'
                 : desc;
         }
         syncProviderModelToLegacySelect();
@@ -3171,7 +3196,7 @@
         if (hint && selected && selected.dataset.desc) {
             const provider = document.getElementById('providerSelect')?.value;
             hint.textContent = provider === 'xai'
-                ? selected.dataset.desc + '. Guvenli backend/proxy gerekir.'
+                ? selected.dataset.desc + ' — Ayarlar > xAI API Key gerekir.'
                 : selected.dataset.desc;
         }
     }
@@ -3199,6 +3224,9 @@
 
         const runwareKey = document.getElementById('runwareApiKeyInput').value.trim();
         localStorage.setItem('runware_api_key', runwareKey);
+
+        const xaiKey = document.getElementById('xaiApiKeyInput').value.trim();
+        localStorage.setItem('xai_api_key', xaiKey);
 
         // Cloudflare sonraki faz — kaydetme devre dışı
 
@@ -3545,6 +3573,7 @@
 
         let html = marked.parse(safeText);
         html = html.replace(/\[GENERATE_IMAGE:\s*(.*?)\]/gi, (match, promptText) => {
+            if (isTechnicalText(promptText)) return '';
             let finalPrompt = buildCleanMediaPrompt(promptText, "image");
             lastMediaPrompt = finalPrompt;
             lastMediaType = "image";
@@ -3564,11 +3593,10 @@
                         </div>`;
             }
 
-            // Runware yoksa Pollinations
+            // Runware yoksa Pollinations (direkt HTTPS)
             const encodedPrompt = encodeURIComponent(finalPrompt);
             const randomSeed = Math.floor(Math.random() * 1000000);
-            const rawUrl = `image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&nologo=true&seed=${randomSeed}`;
-            const imgUrl = `https://wsrv.nl/?url=${rawUrl}`;
+            const imgUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&nologo=true&seed=${randomSeed}`;
 
             if (isFailedImageResult(imgUrl)) {
                 return renderMediaErrorMessage();
@@ -3580,6 +3608,7 @@
         });
         // VIDEO regex
         html = html.replace(/\[GENERATE_VIDEO:\s*(.*?)\]/gi, (match, promptText) => {
+            if (isTechnicalText(promptText)) return '';
             let finalPrompt = buildCleanMediaPrompt(promptText, "video");
             lastMediaPrompt = finalPrompt;
             lastMediaType = "video";
@@ -3953,7 +3982,7 @@
 
             if (images.length < 2) {
                 console.warn(`[VIDEO FALLBACK] Expected ${SCENE_COUNT} scenes, got ${images.length}. Showing storyboard fallback instead of fake success.`);
-                const safePrompt = String(prompt || '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+                const safePrompt = String(getCoreVideoPrompt(prompt || '')).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
                 const fileWarning = window.location.protocol === "file:"
                     ? `<div style="color:#f9e2af; font-size:12px; margin-top:10px;">CinoCode video motoru doğrudan dosya (file://) protokolüyle açıldığında CORS engeline takılabilir. Lütfen Netlify linkinden veya netlify dev üzerinden test edin.</div>`
                     : "";
@@ -6181,7 +6210,7 @@
                 if (PROXY_CLOUD_MODELS.includes(lower)) {
                     return { provider: lower, modelId: lower, displayLabel: normalized };
                 }
-                const providerMatch = normalized.match(/(?:[-:])(openai|cerebras|deepseek|mistral|openrouter|gemini|groq|fireworks|together|nvidia)(?:\b|$)/i);
+                const providerMatch = normalized.match(/(?:[-:])(openai|cerebras|deepseek|mistral|openrouter|gemini|groq|fireworks|together|nvidia|xai)(?:\b|$)/i);
                 const provider = providerMatch ? providerMatch[1].toLowerCase() : null;
                 const modelId = provider ? normalized.replace(new RegExp(`(?:[-:])${provider}(?:\b|$)`, 'i'), '').trim() : normalized;
                 return { provider, modelId, displayLabel: normalized };
@@ -6360,6 +6389,7 @@
                 isGemini = false;
                 isNvidia = currentTryInfo.provider === "nvidia";
                 isOpenRouter = currentTryInfo.provider === "openrouter" && !isProxyCloud;
+                isXai = currentTryInfo.provider === "xai" && !isProxyCloud;
                 actualModel = currentTryInfo.modelId;
                 const displayLabel = currentTryInfo.displayLabel;
                 const provider = currentTryInfo.provider;
@@ -6458,6 +6488,34 @@
                         body: JSON.stringify({
                             model: actualModel,
                             messages: orMessages,
+                            max_tokens: responseMaxTokens,
+                            stream: true
+                        })
+                    };
+                } else if (isXai) {
+                    // --- xAI / GROK (OpenAI-compatible, direct API) ---
+                    const userXaiKey = (localStorage.getItem('xai_api_key') || "").trim();
+                    if (!userXaiKey) {
+                        lastErrorMessage = "xAI API anahtarı eklenmemiş. Ayarlar > API Anahtarları bölümünden ekleyebilirsin.";
+                        lastErrorDetails = { provider: 'xai', model: actualModel, timeout: false, status: 0, errorBody: 'no key', endpoint: 'https://api.x.ai/v1/chat/completions', taskType };
+                        continue;
+                    }
+                    fetchUrl = "https://api.x.ai/v1/chat/completions";
+
+                    let xaiMessages = [];
+                    for (let msg of reqMessages) {
+                        xaiMessages.push({ role: msg.role === 'assistant' ? 'assistant' : (msg.role === 'system' ? 'system' : 'user'), content: msg.content || '' });
+                    }
+
+                    fetchOptions = {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${userXaiKey}`
+                        },
+                        body: JSON.stringify({
+                            model: actualModel,
+                            messages: xaiMessages,
                             max_tokens: responseMaxTokens,
                             stream: true
                         })
@@ -6572,7 +6630,7 @@
 
                         cleanupGenerationUi();
                         return;
-                    } else if (isNvidia || isOpenRouter || isGroq) {
+                    } else if (isNvidia || isOpenRouter || isGroq || isXai) {
                         const controller = new AbortController();
                         window.activeGenerationController = controller;
                         const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
@@ -6715,7 +6773,7 @@
                 if (line.trim() === "") return;
 
                 let word = null;
-                if (isGroq || isNvidia || isOpenRouter) {
+                if (isGroq || isNvidia || isOpenRouter || isXai) {
                     if (line.trim() === "data: [DONE]") {
                         streamEndedCleanly = true;
                         return;
