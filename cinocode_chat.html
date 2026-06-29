@@ -1650,7 +1650,7 @@
             <input type="checkbox" id="freeContentModeInput" style="margin-top:2px; accent-color:#f38ba8;">
             <span>
                 <strong>Serbest İçerik Modu</strong><br>
-                <span style="color:#a6adc8; font-size:12px;">Görsel/video üretiminde daha karanlık, sert, mature ve sensual estetik tonlar kullanır. Boudoir/romantik/flörtöz atmosfer serbesttir; açık erotik/pornografik seks eylemi, çocuk/ergen, rıza dışı, yasa dışı, nefret ve aşırı şiddet içerikleri üretilmez.</span>
+                <span style="color:#a6adc8; font-size:12px;">Görsel/video üretiminde daha karanlık, sert, mature ve sensual estetik tonlar kullanır. Yetişkin karakterlerde ateşli bakış, zarif vücut pozu, boudoir, romantik gerilim, tutkulu öpüşme/sarılma, boyun/omuz hizasında ima ve sütyenli veya ince kıyafetli yatak odası estetiği serbesttir; açık pornografik seks eylemi, çocuk/ergen, rıza dışı, yasa dışı, nefret ve aşırı şiddet içerikleri üretilmez.</span>
             </span>
         </label>
 
@@ -2074,7 +2074,7 @@
     function getContentModePromptSuffix(type) {
         if (type !== 'image' && type !== 'video') return "";
         if (isFreeContentModeEnabled()) {
-            return ", darker cinematic tone, intense mature atmosphere, sensual aesthetic, tasteful boudoir style, romantic tension, elegant intimate mood, dramatic lighting, gritty style, non-graphic, no explicit sexual content, no pornographic sex acts, no visible genitals, no minors, no sexual violence, no hate content, no extreme gore, no illegal harm instructions, no real person sexualization";
+            return ", darker cinematic tone, intense mature atmosphere, sensual aesthetic, tasteful boudoir style, tasteful lingerie or sheer clothing, elegant body-line posing, heated gaze, romantic tension, adult passionate kissing, neck and shoulder implied intimacy, embracing, elegant bedroom mood, dramatic lighting, gritty style, non-graphic, no explicit sexual content, no pornographic sex acts, no visible genitals, no minors, no sexual violence, no hate content, no extreme gore, no illegal harm instructions, no real person sexualization";
         }
         return ", clean, friendly, safe, balanced, non-graphic";
     }
@@ -2609,7 +2609,7 @@
             instruction += "\n\nVİDEO GÜVENLİK KURALI: Kullanıcı video üretmek istiyor. Gerçek video üretilmeden 'video hazır', 'film hazır', 'tıkla izle', 'tamamlandı', sahte link veya başarı iddiası yazma. Video üretilemiyorsa bunun gerçek video olmadığını açıkça söyle.";
         }
         if (isFreeContentModeEnabled() && (isDirectVideoCreationRequest(text) || isDirectImageGenerationRequest(text))) {
-            instruction += "\n\nSERBEST İÇERİK MODU: Görsel/video promptlarında daha karanlık, sert, mature, sensual, romantik ve estetik boudoir ton kullanılabilir. Yetişkin karakterlerde flörtöz/çekici atmosfer, zarif iç giyim, yatak odası estetiği ve grafik olmayan yakınlık iması kurulabilir. Yine de açık erotik/pornografik seks eylemi, cinsel organ odaklı çıplaklık, çocuk/ergen cinsel içerik, rıza dışı cinsellik, nefret, aşırı gore, gerçek kişiyi müstehcenleştirme ve suç/zarar talimatı üretme.";
+            instruction += "\n\nSERBEST İÇERİK MODU: Görsel/video promptlarında daha karanlık, sert, mature, sensual, romantik ve estetik boudoir ton kullanılabilir. Yetişkin karakterlerde ateşli bakış, vücut hatlarını zarifçe belli eden poz, zarif iç giyim veya sütyenli/ince kıyafet, yatak odası estetiği, tutkulu öpüşme/sarılma, boyun/omuz hizasında ima, romantik gerilim ve fiziksel çekim hissi kurulabilir. Kullanıcı daha cesur/seksi bir ton isterse reddetmeden güvenli estetik çerçevede daha yoğun, tahrik edici ama grafik olmayan atmosfer ver. Yine de açık pornografik seks eylemi, cinsel organ odaklı çıplaklık, çocuk/ergen cinsel içerik, rıza dışı cinsellik, nefret, aşırı gore, gerçek kişiyi müstehcenleştirme ve suç/zarar talimatı üretme.";
         }
         return instruction;
     }
@@ -2635,7 +2635,7 @@
         const mode = getFeatureValue('styleMode') || 'safe';
         const shared = "\n\nHER MODDA SINIRLAR: Yasa disi faaliyet, gercek zarar, zararli kod, dolandiricilik, kimlik avi, siddet tesviki, cocuk guvenligi/istismari, hedefli kisisel saldiri ve benzeri riskli konularda sinir koy. 'Sinirsiz/sansursuz her seyi yaparim' diye davranma. Kullanici Serbest Uslup'un sinirsiz olup olmadigini sorarsa kisa ve net soyle: Serbest Uslup daha direkt, samimi, esprili ve cesur bir konusma tarzidir; sinirsiz/sansursuz/her seyi yapan mod degildir ve guvenlik sinirlari her modda gecerlidir.";
         if (mode === 'free') {
-            return "\n\nUSLUP MODU: Serbest Uslup aktif. Daha direkt, dobra, sivri, komik ve cesur konusabilirsin. Gerektiginde dusuk-orta doz argo kullanabilirsin; karanlik, horror, mature kurgu, sensual/romantik atmosfer ve sert yaratıcı metinlerde daha rahat yaz. Yetişkin karakterler için estetik, flörtöz, boudoir ve grafik olmayan yakınlık tonu kurabilirsin; açık pornografik seks eylemi veya cinsel organ odaklı içerik yazma/üretme. Durduk yere kullaniciya hakaret etme, surekli agir kufur kusma, bozuk persona gibi davranma." + shared;
+            return "\n\nUSLUP MODU: Serbest Uslup aktif. Daha direkt, dobra, sivri, komik ve cesur konusabilirsin. Gerektiginde dusuk-orta doz argo kullanabilirsin; karanlik, horror, mature kurgu, sensual/romantik atmosfer ve sert yaratıcı metinlerde daha rahat yaz. Yetişkin karakterler için ateşli bakış, vücut hatlarını zarifçe belli eden poz, estetik iç giyim, flörtöz boudoir, romantik gerilim, fiziksel çekim, tutkulu öpüşme/sarılma, boyun/omuz hizasında ima, sütyenli veya ince kıyafetli yatak sahnesi ve grafik olmayan yakınlık tonu kurabilirsin. Kullanıcı daha cesur/seksi isterse hemen reddetmek yerine sınırlar içinde daha yoğun, sinematik, tahrik edici ama ima dolu anlat. Açık pornografik seks eylemi, cinsel organ odaklı çıplaklık veya çocuk/ergen cinsel içerik yazma/üretme. Durduk yere kullaniciya hakaret etme, surekli agir kufur kusma, bozuk persona gibi davranma." + shared;
         }
         if (mode === 'balanced') {
             return "\n\nUSLUP MODU: Dengeli Mod aktif. Samimi, dogal ve esprili ol; kanka tarzi konusabilirsin ama abartma. Argo dusuk seviyede ve seyrek olsun. Ciddi teknik/debug konularda saka dozunu azalt." + shared;
