@@ -2340,7 +2340,6 @@
                         </div>`;
             }
             
-            const safePromptValue = finalPrompt.replace(/'/g, "\\'").replace(/"/g, '&quot;');
             if (isLast) {
                 window.queuedVideoPrompts.add(finalPrompt);
                 setTimeout(() => queueVideoSlideshow(finalPrompt, videoId), 200);
