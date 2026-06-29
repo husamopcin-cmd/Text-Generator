@@ -915,6 +915,14 @@
             0%, 80%, 100% { opacity: 0.35; transform: translateY(0); }
             40% { opacity: 1; transform: translateY(-3px); }
         }
+        #cinocode_generating_status,
+        .cinocode_generating_status,
+        .generating-status,
+        .floating-typing,
+        .global-typing,
+        .generation-status {
+            display: none !important;
+        }
         
         /* Web Search & Artifacts */
         .web-search-btn.active { color: #89dceb; animation: pulse-blue 1.5s infinite; }
@@ -5345,12 +5353,54 @@
     }
 
     function clearTransientTypingIndicators() {
-        try { const st = document.getElementById('cinocode_generating_status'); if (st) st.remove(); } catch(e) {}
         try {
-            document.querySelectorAll('[data-typing-indicator="1"]').forEach(node => {
-                if (node && node.textContent && node.textContent.includes("CinoCode düşünüyor")) node.remove();
+            const selectors = [
+                '#cinocode_generating_status',
+                '[data-typing-indicator="1"]',
+                '[data-typing-indicator="true"]',
+                '.typing-indicator',
+                '.thinking-indicator',
+                '.floating-typing',
+                '.global-typing',
+                '.generating-status',
+                '.generation-status',
+                '.message.assistant.typing',
+                '.message.bot.typing'
+            ];
+            document.querySelectorAll(selectors.join(',')).forEach(node => {
+                const bubble = node.closest && node.closest('.message');
+                const wholeTypingBubble = bubble && bubble.dataset && (bubble.dataset.typingIndicator === "1" || bubble.dataset.typingIndicator === "true");
+                if (wholeTypingBubble) {
+                    bubble.remove();
+                    return;
+                }
+                if (!bubble || node.id === 'cinocode_generating_status' || node.classList.contains('typing-indicator') || node.classList.contains('thinking-indicator')) {
+                    node.remove();
+                }
+            });
+            document.querySelectorAll('body *').forEach(node => {
+                if (!node || !node.textContent) return;
+                if (/^(SCRIPT|STYLE|TEMPLATE|NOSCRIPT)$/i.test(node.tagName || "")) return;
+                const text = node.textContent.trim();
+                if (!text || !text.includes("CinoCode düşünüyor")) return;
+                if (node.closest && node.closest('.message')) return;
+                if (text.length > 80) return;
+                if (node.children && node.children.length > 4) return;
+                node.remove();
             });
         } catch(e) {}
+    }
+
+    function isStyleBoundaryQuestion(text) {
+        const value = String(text || "").toLocaleLowerCase("tr-TR");
+        if (!value) return false;
+        const asksStyle = /(serbest|free\s*mode|freemode|sansürsüz|sansursuz|sınırsız|sinirsiz|her şeyi|her seyi|her istediğimi|her istedigimi|limit|sınır|sinir)/i.test(value);
+        const asksCapability = /(mod|üslup|uslup|yapar mı|yapar misin|yapabilir misin|sınır yok|sinir yok|sınırsız mı|sinirsiz mi|sansürsüz mü|sansursuz mu|her istediğimi|her istedigimi)/i.test(value);
+        return asksStyle && asksCapability;
+    }
+
+    function getStyleBoundaryAnswer() {
+        return "Serbest Üslup sınırsız mod değildir. Daha direkt, samimi ve cesur bir konuşma tarzıdır; yetişkin sensual/mature konularda daha estetik ve ima dolu yazabilir. Ama yasa dışı zarar, dolandırıcılık, zararlı kod, çocuk güvenliği, açık pornografik içerik, rıza dışı içerik ve gerçek kişilere zarar gibi konularda her modda sınır vardır.";
     }
 
     function setGenerationUiBusy(isBusy) {
@@ -5610,6 +5660,7 @@
     }
 
     async function sendMessage() {
+        clearTransientTypingIndicators();
         // Mobil cihazlarda TTS (Text-to-Speech) sesinin çalabilmesi için 
         // kullanıcı "Gönder" tuşuna bastığı an (user interaction sırasında) sessiz bir ses çalarak kilidi açıyoruz.
         if (!isAudioUnlocked && isSpeakerOn) {
@@ -5739,6 +5790,22 @@
         const botId = "bot-" + Date.now();
         clearTransientTypingIndicators();
         window.activeGenerationBotId = botId;
+        if (!msgObj.images && !docTextToUse && isStyleBoundaryQuestion(text)) {
+            const answer = getStyleBoundaryAnswer();
+            const boundaryDiv = document.createElement("div");
+            boundaryDiv.className = "message bot";
+            boundaryDiv.id = botId;
+            boundaryDiv.innerHTML = renderContentWithImages(answer, true);
+            messagesDiv.appendChild(boundaryDiv);
+            addCopyButtons(boundaryDiv);
+            appendSmartSuggestions(boundaryDiv, answer, text);
+            chat.messages.push({ role: "assistant", content: answer });
+            chat.updatedAt = Date.now();
+            saveDatabase();
+            scrollToBottom();
+            cleanupGenerationUi();
+            return;
+        }
         const typingDiv = document.createElement("div");
         typingDiv.className = "message bot"; typingDiv.id = botId;
         typingDiv.dataset.typingIndicator = "1";
