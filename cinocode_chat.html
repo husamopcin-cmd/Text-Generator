@@ -1623,6 +1623,11 @@
         </div>
         <input type="text" id="openrouterApiKeyInput" placeholder="sk-or-v1-..." style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px; border-radius:8px; margin-bottom: 10px; box-sizing: border-box; outline: none; font-size: 13px;">
 
+        <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px; text-align: left;">
+            Runware API Key <span style="color: #a6e3a1; font-size: 11px;">(Görsel Üretim — runware.ai, filtresiz)</span>:
+        </div>
+        <input type="text" id="runwareApiKeyInput" placeholder="runware API key..." style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px; border-radius:8px; margin-bottom: 10px; box-sizing: border-box; outline: none; font-size: 13px;">
+
         <div style="display: flex; gap: 10px; margin-bottom: 10px; opacity:0.55;">
             <div style="flex: 1; text-align: left;">
                 <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px;">Cloudflare Account ID <span style="color:#6c7086;font-size:11px;">(sonraki faz)</span>:</div>
@@ -1847,6 +1852,35 @@
             .replace(/[^\p{L}\p{N}\s]/gu, ' ')
             .replace(/\s+/g, ' ')
             .trim();
+    }
+
+    // Tek bir transcript içindeki kelime/öbek tekrarlarını temizler.
+    // "kanka kanka artık sesin gelmiyor artık sesin gelmiyor" → "kanka artık sesin gelmiyor"
+    function dedupeSpeechTranscript(text) {
+        if (!text || text.length < 6) return text;
+        const words = text.trim().split(/\s+/);
+        if (words.length < 2) return text;
+
+        // Öbek tekrarı: 1-8 kelimelik pencereleri karşılaştır
+        const out = [...words];
+        let i = 0;
+        while (i < out.length) {
+            let removed = false;
+            for (let len = Math.min(8, Math.floor(out.length / 2)); len >= 1; len--) {
+                if (i + len * 2 > out.length) continue;
+                const a = out.slice(i, i + len).join(' ').toLocaleLowerCase('tr-TR');
+                const b = out.slice(i + len, i + len * 2).join(' ').toLocaleLowerCase('tr-TR');
+                if (a === b) {
+                    out.splice(i + len, len);
+                    removed = true;
+                    break;
+                }
+            }
+            if (!removed) i++;
+        }
+
+        // Orijinal büyük/küçük harflerini koru
+        return out.join(' ');
     }
 
     function isDuplicateSttFinal(text) {
@@ -2168,6 +2202,63 @@
             if (Number.isFinite(seconds)) return { seconds: Math.round(seconds), label: `${secondMatch[1]} saniye` };
         }
         return null;
+    }
+
+    async function generateRunwareImage(prompt, width = 1024, height = 1024) {
+        const apiKey = (localStorage.getItem('runware_api_key') || '').trim();
+        if (!apiKey) return null;
+        const taskUUID = (typeof crypto !== 'undefined' && crypto.randomUUID)
+            ? crypto.randomUUID()
+            : Date.now().toString(36) + Math.random().toString(36).slice(2);
+        try {
+            const resp = await fetch('https://api.runware.ai/v1', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
+                body: JSON.stringify([{
+                    taskType: 'imageInference',
+                    taskUUID,
+                    positivePrompt: prompt,
+                    model: 'runware:100@1',
+                    width,
+                    height,
+                    numberResults: 1,
+                    outputType: ['URL']
+                }])
+            });
+            if (!resp.ok) return null;
+            const data = await resp.json();
+            const result = data.data && data.data[0];
+            return (result && result.imageURL) ? result.imageURL : null;
+        } catch (e) {
+            console.warn('[Runware] Hata:', e);
+            return null;
+        }
+    }
+
+    async function triggerRunwareImages() {
+        const pending = document.querySelectorAll('[data-runware-prompt]:not([data-runware-done])');
+        for (const el of pending) {
+            el.setAttribute('data-runware-done', '1');
+            const prompt = el.getAttribute('data-runware-prompt');
+            const img = el.querySelector('img[data-runware-img]');
+            const spinner = el.querySelector('.runware-spinner');
+            if (!img || !prompt) continue;
+            const url = await generateRunwareImage(prompt);
+            if (url) {
+                img.src = url;
+                img.style.display = 'block';
+                img.style.minHeight = '';
+                if (spinner) spinner.remove();
+                const dlBtn = el.querySelector('button');
+                if (dlBtn) dlBtn.style.display = '';
+            } else {
+                // Runware başarısız → pollinations'a düş
+                const seed = Math.floor(Math.random() * 999999);
+                const rawUrl = `image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1024&nologo=true&seed=${seed}`;
+                img.src = `https://wsrv.nl/?url=${rawUrl}`;
+                if (spinner) spinner.remove();
+            }
+        }
     }
 
     function buildImageUrl(prompt, options = {}) {
@@ -2919,6 +3010,7 @@
 
         document.getElementById('nvidiaApiKeyInput').value = localStorage.getItem('nvidia_api_key') || "";
         document.getElementById('openrouterApiKeyInput').value = localStorage.getItem('openrouter_api_key') || "";
+        document.getElementById('runwareApiKeyInput').value = localStorage.getItem('runware_api_key') || "";
         document.getElementById('cloudflareAccountIdInput').value = localStorage.getItem('cloudflare_account_id') || "";
         document.getElementById('cloudflareApiTokenInput').value = localStorage.getItem('cloudflare_api_token') || "";
 
@@ -3104,6 +3196,9 @@
 
         const openrouterKey = document.getElementById('openrouterApiKeyInput').value.trim();
         localStorage.setItem('openrouter_api_key', openrouterKey);
+
+        const runwareKey = document.getElementById('runwareApiKeyInput').value.trim();
+        localStorage.setItem('runware_api_key', runwareKey);
 
         // Cloudflare sonraki faz — kaydetme devre dışı
 
@@ -3453,19 +3548,31 @@
             let finalPrompt = buildCleanMediaPrompt(promptText, "image");
             lastMediaPrompt = finalPrompt;
             lastMediaType = "image";
-            
+
+            const imageTitle = finalPrompt.substring(0, 15).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])) + '...';
+            const safePrompt = finalPrompt.replace(/"/g, '&quot;');
+
+            const hasRunware = !!(localStorage.getItem('runware_api_key') || '').trim();
+            if (hasRunware) {
+                // Runware async: önce spinner göster, sonra triggerRunwareImages() dolduracak
+                const cardId = 'rw-card-' + Date.now() + '-' + Math.floor(Math.random() * 100000);
+                setTimeout(() => triggerRunwareImages(), 50);
+                return `<div id="${cardId}" data-generated-image-card="true" data-runware-prompt="${safePrompt}" data-image-title="${imageTitle}" style="text-align:center; margin: 15px 0; background: #181825; padding: 10px; border-radius: 12px; border: 1px solid #45475a;">
+                            <div class="runware-spinner" style="color:#a6adc8; font-size:13px; padding:40px 0;">Görsel üretiliyor (Runware)...</div>
+                            <img data-runware-img="1" src="" style="max-width:100%; border-radius:8px; display:none; margin: 0 auto 10px auto;" onload="this.style.display='block'; handleGeneratedImageLoad(this)" onerror="handleGeneratedImageError(this)">
+                            <button class="run-code-btn" style="background:#89b4fa; color:#11111b; width:auto; padding:8px 15px; display:none;" onclick="downloadImage(this.previousElementSibling.src, 'CinoCode_Gorsel.jpg')">📥 Resmi İndir</button>
+                        </div>`;
+            }
+
+            // Runware yoksa Pollinations
             const encodedPrompt = encodeURIComponent(finalPrompt);
             const randomSeed = Math.floor(Math.random() * 1000000);
-            
-            // Orijinal URL
             const rawUrl = `image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&nologo=true&seed=${randomSeed}`;
-            // DNS engellerini aşmak için wsrv.nl (Cloudflare proxy) kullanıyoruz
             const imgUrl = `https://wsrv.nl/?url=${rawUrl}`;
-            
+
             if (isFailedImageResult(imgUrl)) {
                 return renderMediaErrorMessage();
             }
-            const imageTitle = finalPrompt.substring(0, 15).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])) + '...';
             return `<div data-generated-image-card="true" data-image-url="${imgUrl}" data-image-title="${imageTitle}" style="text-align:center; margin: 15px 0; background: #181825; padding: 10px; border-radius: 12px; border: 1px solid #45475a;">
                         <img src="${imgUrl}" style="max-width:100%; border-radius:8px; display:block; margin: 0 auto 10px auto; min-height: 200px; background: #1e1e2e center/cover no-repeat;" onload="handleGeneratedImageLoad(this)" onerror="handleGeneratedImageError(this)">
                         <button class="run-code-btn" style="background:#89b4fa; color:#11111b; width:auto; padding:8px 15px;" onclick="downloadImage('${imgUrl}', 'CinoCode_Gorsel.jpg')">📥 Resmi İndir</button>
@@ -4337,7 +4444,7 @@
             }
             
             if (finalStr !== '') {
-                const cleanFinal = finalStr.trim();
+                const cleanFinal = dedupeSpeechTranscript(finalStr.trim());
                 if (!isDuplicateSttFinal(cleanFinal)) {
                     userInput.value += (userInput.value ? " " : "") + cleanFinal;
                     autoResize(userInput);
@@ -4641,7 +4748,7 @@
     function splitTtsByLanguage(text) {
         const chunks = (text || "")
             .split(/\n+/)
-            .flatMap(part => part.match(/[^.!?;:]+[.!?;:]?/g) || [part])
+            .flatMap(part => part.match(/[^.!?]+[.!?]*/g) || [part])
             .map(part => part.trim())
             .filter(Boolean);
         const segments = [];
@@ -4673,7 +4780,11 @@
         }
         isPlayingTTS = true;
         let text = ttsQueue.shift();
-        
+        // Kısa cümleleri birleştir: az sayıda TTS isteğiyle akıcılık artar
+        while (ttsQueue.length > 0 && text.length < 60) {
+            text += ' ' + ttsQueue.shift();
+        }
+
         let cleanText = text.replace(/```[\s\S]*?```/g, " kod parçası ").replace(/`.*?`/g, "").replace(/[#*_-]/g, "");
         cleanText = cleanText.replace(/\[GENERATE_IMAGE:.*?\]/g, " Resmi hazırlıyorum. ");
         cleanText = cleanText.replace(/CinoCode/gi, "Cinokod").trim();
