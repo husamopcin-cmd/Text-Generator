@@ -3327,6 +3327,112 @@
         });
     }
 
+    function hasValidImageUrl(url) {
+        const value = String(url || "").trim();
+        if (!value) return false;
+        if (isPlaceholderErrorImage(value)) return false;
+        return /^(https?:|data:image\/|blob:)/i.test(value);
+    }
+
+    function isPlaceholderErrorImage(urlOrData) {
+        const raw = String(urlOrData || "");
+        let decoded = raw;
+        try { decoded = decodeURIComponent(raw); } catch(e) {}
+        const value = (raw + " " + decoded).toLocaleLowerCase("tr-TR").replace(/\+/g, " ");
+        if (!value) return true;
+        const isPlaceholder = value.includes("placehold.co");
+        const hasErrorColor = value.includes("f38ba8");
+        const hasErrorText = /(baglanti|bağlantı|hata|hatasi|hatası|error|connection error|network error)/i.test(value);
+        return (isPlaceholder && (hasErrorColor || hasErrorText))
+            || value.includes("baglanti hatasi")
+            || value.includes("bağlantı hatası");
+    }
+
+    function isFailedImageResult(result) {
+        if (!result) return true;
+        if (typeof result === "string") return !hasValidImageUrl(result);
+        if (result.success === false || result.error) return true;
+        return !hasValidImageUrl(result.url || result.imageUrl || result.data || result.src);
+    }
+
+    function renderMediaErrorMessage(message) {
+        const safeMessage = String(message || "Görsel üretilemedi. Sağlayıcıya bağlanılamadı veya API anahtarı eksik. Ayarlar > API Anahtarları bölümünü kontrol et.")
+            .replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+        return `<div class="media-error-message" style="text-align:left; margin: 12px 0; background:#181825; border:1px solid #f38ba8; border-radius:10px; padding:12px; color:#cdd6f4;">
+                    <div style="color:#f38ba8; font-weight:700; margin-bottom:6px;">Görsel üretilemedi</div>
+                    <div style="font-size:13px; line-height:1.5;">${safeMessage}</div>
+                </div>`;
+    }
+
+    function handleGeneratedImageError(img) {
+        const card = img && img.closest ? img.closest('[data-generated-image-card="true"]') : null;
+        if (card) {
+            card.outerHTML = renderMediaErrorMessage("Görsel üretilemedi. Sağlayıcıya bağlanılamadı veya API anahtarı eksik. Ayarlar > API Anahtarları bölümünü kontrol et.");
+        }
+        scrubPlaceholderErrorImages(messagesDiv || document);
+    }
+
+    function handleGeneratedImageLoad(img) {
+        const card = img && img.closest ? img.closest('[data-generated-image-card="true"]') : null;
+        const imgUrl = card ? card.dataset.imageUrl : (img ? img.src : "");
+        if (isPlaceholderErrorImage(imgUrl)) {
+            scrubPlaceholderErrorImages(card || (img && img.parentElement) || document);
+            return;
+        }
+        if (!hasValidImageUrl(imgUrl)) return;
+        if(!window.artifactRenderedSet) window.artifactRenderedSet = new Set();
+        if(!window.artifactRenderedSet.has(imgUrl)) {
+            window.artifactRenderedSet.add(imgUrl);
+            addArtifactToList('image', (card && card.dataset.imageTitle) || 'Görsel', imgUrl);
+        }
+    }
+
+    function getPlaceholderImageCard(img) {
+        if (!img || !img.closest) return null;
+        return img.closest('[data-generated-image-card="true"]')
+            || (img.parentElement && img.parentElement.tagName === 'DIV' ? img.parentElement : null)
+            || img.closest('.artifact-card')
+            || img.closest('.message');
+    }
+
+    function scrubPlaceholderErrorImages(root = document) {
+        try {
+            const scope = root || document;
+            const images = [];
+            if (scope.tagName === 'IMG') images.push(scope);
+            if (scope.querySelectorAll) images.push(...scope.querySelectorAll('img'));
+            images.forEach(img => {
+                const src = img.getAttribute('src') || img.src || "";
+                if (!isPlaceholderErrorImage(src)) return;
+                const card = getPlaceholderImageCard(img);
+                if (card) {
+                    card.outerHTML = renderMediaErrorMessage("Görsel üretilemedi. Sağlayıcıya bağlanılamadı veya API anahtarı eksik. Ayarlar > API Anahtarları bölümünü kontrol et.");
+                } else {
+                    img.remove();
+                }
+            });
+        } catch(e) {
+            console.warn("Placeholder görsel temizleme hatası:", e);
+        }
+    }
+
+    function setupPlaceholderImageObserver() {
+        if (window.placeholderImageObserver || !messagesDiv || typeof MutationObserver === 'undefined') return;
+        window.placeholderImageObserver = new MutationObserver((mutations) => {
+            let shouldScrub = false;
+            mutations.forEach(mutation => {
+                mutation.addedNodes && mutation.addedNodes.forEach(node => {
+                    if (!node || node.nodeType !== 1) return;
+                    if (node.tagName === 'IMG' || (node.querySelector && node.querySelector('img'))) shouldScrub = true;
+                });
+            });
+            if (shouldScrub) {
+                requestAnimationFrame(() => scrubPlaceholderErrorImages(messagesDiv));
+            }
+        });
+        window.placeholderImageObserver.observe(messagesDiv, { childList: true, subtree: true });
+    }
+
     function renderContentWithImages(text, isLast = false) {
         // Hafıza sistemini yakala (Kullanıcı arayüzünde BİLMEMESİ GEREKİYOR, TERTEMİZ GİZLİ KALMALI)
         text = text.replace(/\[REMEMBER:([\s\S]*?)\]/gi, (match, fact) => {
@@ -3356,13 +3462,12 @@
             // DNS engellerini aşmak için wsrv.nl (Cloudflare proxy) kullanıyoruz
             const imgUrl = `https://wsrv.nl/?url=${rawUrl}`;
             
-            if(!window.artifactRenderedSet) window.artifactRenderedSet = new Set();
-            if(!window.artifactRenderedSet.has(imgUrl)) {
-                window.artifactRenderedSet.add(imgUrl);
-                setTimeout(() => addArtifactToList('image', finalPrompt.substring(0, 15) + '...', imgUrl), 100);
+            if (isFailedImageResult(imgUrl)) {
+                return renderMediaErrorMessage();
             }
-            return `<div style="text-align:center; margin: 15px 0; background: #181825; padding: 10px; border-radius: 12px; border: 1px solid #45475a;">
-                        <img src="${imgUrl}" style="max-width:100%; border-radius:8px; display:block; margin: 0 auto 10px auto; min-height: 200px; background: #1e1e2e url('https://placehold.co/1024x1024/1e1e2e/cdd6f4?text=🎨+Ciziliyor...+Lutfen+Bekleyin') center/cover no-repeat;" onerror="this.src='https://placehold.co/1024x1024/f38ba8/11111b?text=Baglanti+Hatasi'">
+            const imageTitle = finalPrompt.substring(0, 15).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])) + '...';
+            return `<div data-generated-image-card="true" data-image-url="${imgUrl}" data-image-title="${imageTitle}" style="text-align:center; margin: 15px 0; background: #181825; padding: 10px; border-radius: 12px; border: 1px solid #45475a;">
+                        <img src="${imgUrl}" style="max-width:100%; border-radius:8px; display:block; margin: 0 auto 10px auto; min-height: 200px; background: #1e1e2e center/cover no-repeat;" onload="handleGeneratedImageLoad(this)" onerror="handleGeneratedImageError(this)">
                         <button class="run-code-btn" style="background:#89b4fa; color:#11111b; width:auto; padding:8px 15px;" onclick="downloadImage('${imgUrl}', 'CinoCode_Gorsel.jpg')">📥 Resmi İndir</button>
                     </div>`;
         });
@@ -3411,8 +3516,18 @@
 
     async function downloadImage(url, filename) {
         try {
+            if (isPlaceholderErrorImage(url)) {
+                alert("Bu görsel üretilemediği için indirilemez.");
+                return;
+            }
+            if (!hasValidImageUrl(url)) {
+                alert("Görsel indirilemedi. Geçerli bir görsel URL'si yok.");
+                return;
+            }
             const response = await fetch(url);
+            if (!response.ok) throw new Error("image download failed");
             const blob = await response.blob();
+            if (!blob || !String(blob.type || "").startsWith("image/")) throw new Error("downloaded content is not an image");
             const blobUrl = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.style.display = 'none';
@@ -4171,6 +4286,10 @@
             bottomAnchor.style.height = '1px';
         }
         messagesDiv.appendChild(bottomAnchor);
+        setupPlaceholderImageObserver();
+        scrubPlaceholderErrorImages(messagesDiv);
+        requestAnimationFrame(() => scrubPlaceholderErrorImages(messagesDiv));
+        setTimeout(() => scrubPlaceholderErrorImages(messagesDiv), 300);
         // Birden fazla gecikmeyle scroll yap (resimler/kodlar yüklenene kadar)
         scrollToBottom();
         setTimeout(scrollToBottom, 150);
@@ -5043,6 +5162,9 @@
             }
         }
         loadDatabase();
+        setupPlaceholderImageObserver();
+        scrubPlaceholderErrorImages(messagesDiv || document);
+        setTimeout(() => scrubPlaceholderErrorImages(messagesDiv || document), 300);
         bindComposerDraftPreservation();
         restoreComposerDraftIfNeeded();
         repairBadChatTitles();
@@ -5797,6 +5919,7 @@
             boundaryDiv.id = botId;
             boundaryDiv.innerHTML = renderContentWithImages(answer, true);
             messagesDiv.appendChild(boundaryDiv);
+            scrubPlaceholderErrorImages(boundaryDiv);
             addCopyButtons(boundaryDiv);
             appendSmartSuggestions(boundaryDiv, answer, text);
             chat.messages.push({ role: "assistant", content: answer });
@@ -5824,6 +5947,7 @@
             const cleanPrompt = buildCleanMediaPrompt(text, "image");
             delete typingDiv.dataset.typingIndicator;
             typingDiv.innerHTML = renderContentWithImages(`[GENERATE_IMAGE: ${cleanPrompt}]`, true);
+            scrubPlaceholderErrorImages(typingDiv);
             addCopyButtons(typingDiv);
             chat.messages.push({ role: "assistant", content: `[GENERATE_IMAGE: ${cleanPrompt}]` });
             chat.updatedAt = Date.now();
@@ -6319,6 +6443,7 @@
                         const botReply = sanitizeAssistantOutput(String(jsonData.content || '').trim());
                         document.getElementById(botId).removeAttribute('data-typing-indicator');
                         document.getElementById(botId).innerHTML = renderContentWithImages(botReply, true);
+                        scrubPlaceholderErrorImages(document.getElementById(botId));
                         addCopyButtons(document.getElementById(botId));
                         appendSmartSuggestions(botId, botReply, text);
                         chat.messages.push({ role: 'assistant', content: botReply });
@@ -6471,6 +6596,7 @@
                 }
 
                 document.getElementById(botId).innerHTML = renderContentWithImages(botReply, true);
+                scrubPlaceholderErrorImages(document.getElementById(botId));
                 scrollToBottom();
             }
 
@@ -6546,6 +6672,7 @@
             botReply = sanitizeAssistantOutput(botReply);
             document.getElementById(botId).removeAttribute('data-typing-indicator');
             document.getElementById(botId).innerHTML = renderContentWithImages(botReply, true);
+            scrubPlaceholderErrorImages(document.getElementById(botId));
             addCopyButtons(document.getElementById(botId));
             appendSmartSuggestions(botId, botReply, text);
 
