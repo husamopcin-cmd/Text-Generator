@@ -617,6 +617,7 @@
             background: transparent;
             position: relative;
             overflow: hidden;
+            transition: width 0.2s ease;
         }
         
         /* System Prompt Container */
@@ -754,6 +755,11 @@
             width: min(100%, 960px);
             margin-left: auto;
             margin-right: auto;
+        }
+        /* Sidebar collapsed olunca mesajlar ortada kalsın */
+        .sidebar.collapsed ~ .main-chat .messages,
+        .sidebar:not(.open) ~ .main-chat .messages {
+            align-items: center;
         }
         .message-content,
         .assistant-message,
@@ -2211,7 +2217,7 @@
     }
 
     async function generateRunwareImage(prompt, width = 1024, height = 1024) {
-        const apiKey = (localStorage.getItem('runware_api_key') || '').trim();
+        const apiKey = (localStorage.getItem('cinocode_runware_api_key') || localStorage.getItem('runware_api_key') || '').trim();
         if (!apiKey) return null;
         const taskUUID = (typeof crypto !== 'undefined' && crypto.randomUUID)
             ? crypto.randomUUID()
@@ -2612,15 +2618,34 @@
         renderSuggestions('image');
     }
 
+    function isImageTechnicalDiscussion(text) {
+        const normalized = (text || "").toLocaleLowerCase("tr-TR");
+        return /(patch|bug|fix|hata|sistemi|provider|code|kod|console|error|api|key|token|ayarlar|settings|log|debug|developer|geliştirici|gelistirici|select-string|get-content|node --check)/i.test(normalized);
+    }
+
     function isDirectImageGenerationRequest(text) {
         const normalized = (text || "").toLocaleLowerCase("tr-TR").trim();
-        if (!normalized) return false;
+        if (!normalized || isImageTechnicalDiscussion(normalized)) return false;
         if (/(analiz et|açıkla|acikla|bu nedir|ne var|yorumla|yükledim|yukledim)/i.test(normalized)) return false;
-        const imageWord = "(?:resim|görsel|gorsel|fotoğraf|fotograf|image|picture|illüstrasyon|illustrasyon)";
-        const createVerb = "(?:oluştur|olustur|çiz|ciz|yap|üret|uret|hazırla|hazirla|generate)";
-        return new RegExp(`${imageWord}.{0,80}${createVerb}|${createVerb}.{0,80}${imageWord}`, "i").test(normalized)
-            || /(kırmızı|kirmizi|araba|logo|poster|afiş|afis|kapak|manzara).{0,80}(resmi|görseli|gorseli|çiz|ciz|oluştur|olustur|üret|uret)/i.test(normalized)
-            || /resim\s+nerede\s+oluştur|resim\s+nerde\s+oluştur/i.test(normalized);
+        
+        const imageWords = ["resim", "görsel", "gorsel", "fotoğraf", "fotograf", "image", "picture", "illüstrasyon", "illustrasyon", "çizim", "cizim", "avatar", "logo", "poster", "afiş", "afis", "kapak", "manzara", "wallpaper"];
+        const createVerbs = ["oluştur", "olustur", "çiz", "ciz", "yap", "üret", "uret", "hazırla", "hazirla", "generate", "draw", "create", "paint", "tasarla"];
+        
+        const hasImageWord = imageWords.some(w => normalized.includes(w));
+        const hasCreateVerb = createVerbs.some(v => {
+            const reg = new RegExp(`\\b${v}`, "i");
+            return reg.test(normalized);
+        });
+        
+        if (hasImageWord && hasCreateVerb) return true;
+        
+        const endsWithDraw = /\b(?:çiz|ciz|çizsene|cizsene|çizer misin|cizer misin|çizermisin|cizermisin|oluştur|olustur|üret|uret|tasarla)\b/i.test(normalized);
+        if (endsWithDraw && normalized.length < 80) return true;
+        
+        const endsWithImage = /(?:resmi|görseli|gorseli|fotoğrafı|fotografi|çizimi|cizimi|tablosu)$/i.test(normalized);
+        if (endsWithImage && normalized.length < 80) return true;
+
+        return /resim\s+nerede\s+oluştur|resim\s+nerde\s+oluştur/i.test(normalized);
     }
 
     function triggerVideoGeneration() {
@@ -3369,7 +3394,8 @@
         if (!button) return;
 
         const action = button.getAttribute('data-video-action');
-        const prompt = button.getAttribute('data-video-prompt');
+        const rawPrompt = button.getAttribute('data-video-prompt') || '';
+        const prompt = (() => { try { return decodeURIComponent(rawPrompt); } catch(e) { return rawPrompt; } })();
         const containerId = button.getAttribute('data-video-container');
         const videoUrl = button.getAttribute('data-video-url');
 
@@ -3448,6 +3474,14 @@
 
             chatListDiv.appendChild(div);
         });
+
+        // Aktif sohbete scroll et
+        const activeItem = chatListDiv.querySelector('.chat-item.active');
+        if (activeItem) {
+            requestAnimationFrame(() => {
+                activeItem.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+            });
+        }
     }
 
     function hasValidImageUrl(url) {
@@ -4165,10 +4199,10 @@
                     <video controls autoplay style="max-width:100%; border-radius: 8px; border: 2px solid #89b4fa; box-shadow: 0 4px 12px rgba(0,0,0,0.5);" src="${videoUrl}"></video>
                     <div class="artifact-card-actions" style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 12px;">
                         <button class="artifact-dl-btn" data-video-action="download" data-video-url="${videoUrl}">⬇️ İndir</button>
-                        <button class="artifact-dl-btn" style="background:#cba6f7; color:#11111b;" data-video-action="regenerate" data-video-prompt="${prompt}" data-video-container="${containerId}">🔁 Yeniden Oluştur</button>
-                        <button class="artifact-dl-btn" style="background:#89b4fa; color:#11111b;" data-video-action="edit" data-video-prompt="${prompt}">✏️ Düzenle</button>
+                        <button class="artifact-dl-btn" style="background:#cba6f7; color:#11111b;" data-video-action="regenerate" data-video-prompt="${encodeURIComponent(prompt)}" data-video-container="${containerId}">🔁 Yeniden Oluştur</button>
+                        <button class="artifact-dl-btn" style="background:#89b4fa; color:#11111b;" data-video-action="edit" data-video-prompt="${encodeURIComponent(prompt)}">✏️ Düzenle</button>
                         <button class="artifact-dl-btn" style="background:#f38ba8; color:#11111b;" data-video-action="delete" data-video-container="${containerId}">🗑️ Sil</button>
-                        <button class="artifact-dl-btn" style="background:#a6e3a1; color:#11111b;" data-video-action="copy" data-video-prompt="${prompt}">📋 Promptu Kopyala</button>
+                        <button class="artifact-dl-btn" style="background:#a6e3a1; color:#11111b;" data-video-action="copy" data-video-prompt="${encodeURIComponent(prompt)}">📋 Promptu Kopyala</button>
                     </div>
                 </div>
             `;
