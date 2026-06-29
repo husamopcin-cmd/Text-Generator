@@ -31,8 +31,11 @@
         html {
             min-height: 100dvh;
             height: 100dvh;
+            height: 100%;
             width: 100%;
+            max-width: 100vw;
             overflow: hidden;
+            overflow-x: hidden;
         }
         body {
             font-family: 'Inter', sans-serif;
@@ -44,7 +47,9 @@
             max-width: 100vw;
             min-height: 100dvh;
             height: 100dvh;
+            height: 100%;
             overflow: hidden;
+            overflow-x: hidden;
         }
 
         
@@ -305,7 +310,15 @@
             transition: width 0.2s ease, padding 0.2s ease, transform 0.2s ease;
             z-index: 10;
             overflow: hidden;
+            overflow-y: auto;
+            overflow-x: hidden;
+            scrollbar-width: thin;
+            scrollbar-color: #45475a transparent;
         }
+        .sidebar::-webkit-scrollbar { width: 8px; }
+        .sidebar::-webkit-scrollbar-track { background: transparent; }
+        .sidebar::-webkit-scrollbar-thumb { background: #45475a; border-radius: 999px; }
+        .sidebar::-webkit-scrollbar-thumb:hover { background: #585b70; }
         .sidebar.collapsed {
             width: 72px;
             min-width: 72px;
@@ -484,7 +497,7 @@
 
         /* ----- MAIN CHAT AREA ----- */
         .main-chat {
-            flex: 1;
+            flex: 1 1 auto;
             min-width: 0;
             width: 100%;
             max-width: 100%;
@@ -552,6 +565,8 @@
             gap: 12px;
             min-width: 0;
             max-width: 100%;
+            width: 100%;
+            overflow-x: hidden;
             border-bottom: 1px solid rgba(255,255,255,0.05);
             z-index: 5;
         }
@@ -581,6 +596,7 @@
             flex: 1 1 auto;
             justify-content: flex-end;
             flex-wrap: wrap;
+            overflow: hidden;
         }
         
         select {
@@ -600,10 +616,11 @@
         /* Messages */
         .messages {
             flex: 1; padding: 25px; overflow-y: auto;
-            display: flex; flex-direction: column; gap: 20px; scroll-behavior: smooth;
+            display: flex; flex-direction: column; align-items: center; gap: 20px; scroll-behavior: smooth;
             min-height: 0;
             min-width: 0;
             max-width: 100%;
+            width: 100%;
             overflow-x: hidden;
         }
         
@@ -611,16 +628,43 @@
             max-width: 85%; padding: 15px 20px; border-radius: 12px;
             line-height: 1.6; font-size: 15px; word-wrap: break-word;
             overflow-wrap: anywhere;
+            word-break: break-word;
             min-width: 0;
         }
         
         .message.user {
             align-self: flex-end; background: #89b4fa; color: #11111b;
             border-bottom-right-radius: 2px;
+            max-width: min(760px, 100%);
+            margin-left: auto;
         }
         
         .message.bot {
             align-self: flex-start; background: transparent; color: #cdd6f4; width: 100%;
+            max-width: 100%;
+            width: min(100%, 960px);
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .message-content,
+        .assistant-message,
+        .user-message,
+        .chat-message {
+            max-width: 100%;
+            min-width: 0;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+        }
+        .message :where(p, li, ul, ol, blockquote, span, strong, em, a) {
+            max-width: 100%;
+            min-width: 0;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+        }
+        .message :where(ul, ol) {
+            padding-left: 1.25rem;
+        }
+        .message :where(img, video, canvas, iframe, table) {
             max-width: 100%;
         }
         
@@ -628,11 +672,17 @@
             background: #11111b; border-radius: 8px; margin: 15px 0;
             border: 1px solid #313244;
             max-width: 100%;
+            width: 100%;
             overflow-x: auto;
             white-space: pre;
         }
-        .code-wrapper { max-width: 100%; overflow-x: auto; }
+        .code-wrapper { max-width: 100%; min-width: 0; overflow-x: auto; }
         .message.bot code { font-family: 'Fira Code', monospace; font-size: 13px; }
+        .message.bot pre code {
+            white-space: pre;
+            word-break: normal;
+            overflow-wrap: normal;
+        }
         .message.bot :not(pre) > code {
             background: #313244; padding: 2px 6px; border-radius: 4px; font-size: 0.9em;
         }
@@ -664,13 +714,18 @@
             border-top: 1px solid rgba(255,255,255,0.05); padding: 20px 10%; z-index: 5;
             min-width: 0;
             max-width: 100%;
+            width: 100%;
+            overflow-x: hidden;
         }
         .input-box {
             display: flex; gap: 10px; align-items: center; position: relative;
             background: rgba(24, 24, 37, 0.7); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px;
             padding: 10px; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); box-shadow: 0 5px 20px rgba(0,0,0,0.2);
             min-width: 0;
+            width: min(100%, 900px);
             max-width: 100%;
+            margin-left: auto;
+            margin-right: auto;
         }
         .input-box:focus-within { border-color: rgba(137, 180, 250, 0.5); box-shadow: 0 0 15px rgba(137, 180, 250, 0.15), 0 5px 20px rgba(0,0,0,0.3); transform: translateY(-1px); }
         .input-box::before {
