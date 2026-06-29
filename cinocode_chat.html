@@ -31,6 +31,8 @@
         html {
             min-height: 100dvh;
             height: 100dvh;
+            width: 100%;
+            overflow: hidden;
         }
         body {
             font-family: 'Inter', sans-serif;
@@ -38,6 +40,8 @@
             color: #cdd6f4;
             margin: 0;
             display: flex;
+            width: 100%;
+            max-width: 100vw;
             min-height: 100dvh;
             height: 100dvh;
             overflow: hidden;
@@ -229,11 +233,13 @@
             background: transparent;
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
+            min-width: 0;
+            max-width: 100%;
         }
         .welcome-logo { font-size: 56px; margin-bottom: 10px; animation: float 3s ease-in-out infinite; }
         @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0px); } }
         .welcome-screen h2 { font-size: 26px; color: #cdd6f4; margin-bottom: 30px; font-weight: 600; text-shadow: 0 0 20px rgba(205,214,244,0.2); }
-        .welcome-actions { display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; max-width: 600px; }
+        .welcome-actions { display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; max-width: 600px; width: 100%; }
         .welcome-btn {
             background: rgba(49, 50, 68, 0.3); border: 1px solid rgba(255,255,255,0.05); color: #cdd6f4;
             padding: 12px 20px; border-radius: 20px; font-size: 14px; cursor: pointer;
@@ -284,18 +290,27 @@
         .sidebar {
             position: relative;
             width: 280px;
+            min-width: 280px;
+            max-width: 280px;
+            flex: 0 0 280px;
+            height: 100dvh;
+            max-height: 100dvh;
             background: rgba(24, 24, 37, 0.85);
             backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
             border-right: 1px solid rgba(255,255,255,0.08);
             display: flex;
             flex-direction: column;
+            min-height: 0;
             padding: 15px;
             transition: width 0.2s ease, padding 0.2s ease, transform 0.2s ease;
             z-index: 10;
-            overflow: visible;
+            overflow: hidden;
         }
         .sidebar.collapsed {
             width: 72px;
+            min-width: 72px;
+            max-width: 72px;
+            flex-basis: 72px;
             padding: 12px 10px;
         }
         .sidebar.collapsed .sidebar-text { display: none; }
@@ -380,18 +395,35 @@
             display: flex;
             align-items: center;
             gap: 10px;
+            min-width: 0;
+            max-width: 100%;
             transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
             margin-bottom: 20px;
+        }
+        .new-chat-btn .sidebar-text {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            min-width: 0;
         }
         .new-chat-btn:hover { background: rgba(49, 50, 68, 0.6); border-color: #89b4fa; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(137,180,250,0.15); }
         
         .chat-list {
             flex: 1;
+            min-height: 0;
+            max-width: 100%;
             overflow-y: auto;
+            overflow-x: hidden;
             display: flex;
             flex-direction: column;
             gap: 5px;
+            scrollbar-width: thin;
+            scrollbar-color: #45475a transparent;
         }
+        .chat-list::-webkit-scrollbar { width: 8px; }
+        .chat-list::-webkit-scrollbar-track { background: transparent; }
+        .chat-list::-webkit-scrollbar-thumb { background: #45475a; border-radius: 999px; }
+        .chat-list::-webkit-scrollbar-thumb:hover { background: #585b70; }
         
         .chat-item {
             padding: 12px;
@@ -403,6 +435,8 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            min-width: 0;
+            max-width: 100%;
         }
         .chat-item:hover { background: #313244; color: #cdd6f4; }
         .chat-item.active { background: #313244; color: #89b4fa; font-weight: 500; }
@@ -411,10 +445,18 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            max-width: 170px;
+            max-width: 100%;
+            min-width: 0;
+            flex: 1 1 auto;
             display: flex;
             align-items: center;
             gap: 5px;
+        }
+        .chat-item-title span {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            min-width: 0;
         }
         
         .chat-actions {
@@ -422,6 +464,7 @@
             gap: 2px;
             opacity: 0;
             transition: 0.2s;
+            flex: 0 0 auto;
         }
         .chat-item:hover .chat-actions { opacity: 1; }
         
@@ -442,10 +485,16 @@
         /* ----- MAIN CHAT AREA ----- */
         .main-chat {
             flex: 1;
+            min-width: 0;
+            width: 100%;
+            max-width: 100%;
+            height: 100dvh;
+            min-height: 0;
             display: flex;
             flex-direction: column;
             background: transparent;
             position: relative;
+            overflow: hidden;
         }
         
         /* System Prompt Container */
@@ -500,6 +549,9 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            gap: 12px;
+            min-width: 0;
+            max-width: 100%;
             border-bottom: 1px solid rgba(255,255,255,0.05);
             z-index: 5;
         }
@@ -511,6 +563,8 @@
             display: flex;
             align-items: center;
             gap: 10px;
+            min-width: 0;
+            flex: 0 1 auto;
         }
         
         .status-indicator {
@@ -522,11 +576,18 @@
         
         .header-controls {
             display: flex; gap: 10px; align-items: center;
+            min-width: 0;
+            max-width: 100%;
+            flex: 1 1 auto;
+            justify-content: flex-end;
+            flex-wrap: wrap;
         }
         
         select {
             background: #1e1e2e; color: #cdd6f4; border: 1px solid #45475a;
             padding: 6px 12px; border-radius: 6px; outline: none; font-size: 13px;
+            max-width: 100%;
+            min-width: 0;
         }
         
         .icon-btn {
@@ -540,11 +601,17 @@
         .messages {
             flex: 1; padding: 25px; overflow-y: auto;
             display: flex; flex-direction: column; gap: 20px; scroll-behavior: smooth;
+            min-height: 0;
+            min-width: 0;
+            max-width: 100%;
+            overflow-x: hidden;
         }
         
         .message {
             max-width: 85%; padding: 15px 20px; border-radius: 12px;
             line-height: 1.6; font-size: 15px; word-wrap: break-word;
+            overflow-wrap: anywhere;
+            min-width: 0;
         }
         
         .message.user {
@@ -554,12 +621,17 @@
         
         .message.bot {
             align-self: flex-start; background: transparent; color: #cdd6f4; width: 100%;
+            max-width: 100%;
         }
         
         .message.bot pre {
             background: #11111b; border-radius: 8px; margin: 15px 0;
             border: 1px solid #313244;
+            max-width: 100%;
+            overflow-x: auto;
+            white-space: pre;
         }
+        .code-wrapper { max-width: 100%; overflow-x: auto; }
         .message.bot code { font-family: 'Fira Code', monospace; font-size: 13px; }
         .message.bot :not(pre) > code {
             background: #313244; padding: 2px 6px; border-radius: 4px; font-size: 0.9em;
@@ -590,11 +662,15 @@
         .input-wrapper {
             position: relative; background: rgba(17, 17, 27, 0.6); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
             border-top: 1px solid rgba(255,255,255,0.05); padding: 20px 10%; z-index: 5;
+            min-width: 0;
+            max-width: 100%;
         }
         .input-box {
             display: flex; gap: 10px; align-items: center; position: relative;
             background: rgba(24, 24, 37, 0.7); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px;
             padding: 10px; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            min-width: 0;
+            max-width: 100%;
         }
         .input-box:focus-within { border-color: rgba(137, 180, 250, 0.5); box-shadow: 0 0 15px rgba(137, 180, 250, 0.15), 0 5px 20px rgba(0,0,0,0.3); transform: translateY(-1px); }
         .input-box::before {
@@ -722,7 +798,7 @@
         /* Mobil Tasarım (Telefonlar) */
         @media (max-width: 768px) {
             body { flex-direction: column; height: 100dvh; min-height: 100dvh; }
-            .sidebar { position: fixed; top: 0; left: 0; height: 100vh; width: min(82vw, 300px); max-width: 300px; transform: translateX(-100%); transition: transform 0.2s ease, width 0.2s ease; z-index: 1002; }
+            .sidebar { position: fixed; top: 0; left: 0; height: 100dvh; max-height: 100dvh; width: min(82vw, 300px); min-width: 0; max-width: 300px; flex: 0 0 auto; transform: translateX(-100%); transition: transform 0.2s ease, width 0.2s ease; z-index: 1002; }
             .sidebar.open { transform: translateX(0); }
             .sidebar-hamburger-btn {
                 display: inline-flex !important;
@@ -733,7 +809,7 @@
                 visibility: visible !important;
                 z-index: 1003;
             }
-            .main-chat { width: 100% !important; padding: 0 !important; min-height: calc(100dvh - 160px); }
+            .main-chat { width: 100% !important; max-width: 100% !important; height: 100dvh; padding: 0 !important; min-height: 0; }
             .messages { padding-bottom: calc(140px + env(safe-area-inset-bottom, 0px)); }
             .welcome-screen { padding-bottom: calc(180px + env(safe-area-inset-bottom, 0px)); overflow-y: auto; -webkit-overflow-scrolling: touch; justify-content: flex-start; padding-top: 24px; }
             .welcome-screen h2 { margin-bottom: 18px; font-size: 24px; }
@@ -1836,6 +1912,91 @@
         document.getElementById("userInput").value = "";
         document.getElementById("userInput").focus();
         renderSuggestions('video');
+    }
+
+    function isDirectVideoCreationRequest(text) {
+        const normalized = (text || "").toLocaleLowerCase("tr-TR");
+        const videoWord = "video(?:su|sunu|yu|yı|yi|yü|m|nu|nuz|muz)?";
+        const createVerb = "(?:oluştur|olustur|oluşturur|olusturur|yap|yapar|üret|uret|üretir|uretir|hazırla|hazirla|hazırlar|hazirlar|renderla|çıkar|cikar|göster|goster)";
+        const wantsScriptOnly = /(senaryo(?:su)?|sahne planı|sahne plani|metin|fikir|fikri|taslak|prompt(?:u)?)\s+(yaz|hazırla|hazirla|ver|oluştur|olustur)/i.test(normalized);
+        if (wantsScriptOnly && !/(video|film|animasyon|fragman).*(yap|üret|uret|göster|goster|render)/i.test(normalized)) {
+            return false;
+        }
+
+        const videoIntentPatterns = [
+            new RegExp(`${videoWord}\\s+(?:${createVerb})(?:\\s+musun|\\s+mısın|\\s+misin|\\s+müsün)?`, "i"),
+            new RegExp(`(?:${createVerb})\\s+(?:bu\\s+)?${videoWord}`, "i"),
+            new RegExp(`\\b\\d+\\s*(?:saniyelik|dakikalık|dakikalik)\\b.{0,80}${videoWord}.{0,80}(?:${createVerb})`, "i"),
+            new RegExp(`\\b\\d+\\s*(?:saniyelik|dakikalık|dakikalik)\\b.{0,80}${videoWord}`, "i"),
+            new RegExp(`(?:kısa|kisa|sinematik).{0,60}${videoWord}.{0,80}(?:${createVerb})`, "i"),
+            /(kısa|kisa)?\s*film\s+(oluştur|olustur|yap|üret|uret|hazırla|hazirla|göster|goster)/i,
+            /kısa\s+film\s+yap/i,
+            /animasyon\s+(oluştur|olustur|yap|üret|uret|hazırla|hazirla|göster|goster)/i,
+            /fragman\s+(oluştur|olustur|yap|üret|uret|hazırla|hazirla|göster|goster)/i,
+            /sinematik\s+video\s+(oluştur|olustur|yap|üret|uret|hazırla|hazirla)/i,
+            /zombi\s+filmi\s+(oluştur|olustur|yap|üret|uret|hazırla|hazirla|göster|goster)/i,
+            /sahneli\s+video\s+(oluştur|olustur|yap|üret|uret|hazırla|hazirla)/i,
+            /(video|film|animasyon|fragman|klip|sahne).{0,80}(görmek|gormek)\s+istiyorum/i,
+            /yap\s+artık.{0,80}(görmek|gormek)\s+istiyorum/i
+        ];
+
+        return videoIntentPatterns.some(pattern => pattern.test(normalized));
+    }
+
+    function isShortResponseRequest(text) {
+        return /(short|kısa|kisa|özet|ozet|tek paragraf|çok kısa|cok kisa)/i.test(text || "");
+    }
+
+    function isLongFormRequest(text) {
+        return /(uzun metraj|uzun\s+(film|senaryo|rapor|kitap)|roman|kitap|tam senaryo|detaylı rapor|detayli rapor)/i.test(text || "");
+    }
+
+    function getResponseControlInstruction(text) {
+        let instruction = "";
+        if (isShortResponseRequest(text)) {
+            instruction += "\n\nYANIT UZUNLUĞU: Kullanıcı kısa/short cevap istiyor. Kısa cevap ver, gereksiz detay yazma. Uzun içerik gerekiyorsa önce kısa özet ver ve devamını teklif et.";
+        }
+        if (isLongFormRequest(text)) {
+            instruction += "\n\nUZUN İÇERİK KURALI: Film, senaryo, uzun metraj, kitap veya rapor gibi çok uzun işleri tek mesajda bitirmeye çalışma. Önce kısa özet ve bölüm/sahne/başlık planı ver. En sonda 'İstersen devamını bölüm bölüm yazabilirim.' de.";
+        }
+        if (isDirectVideoCreationRequest(text)) {
+            instruction += "\n\nVİDEO GÜVENLİK KURALI: Kullanıcı video üretmek istiyor. Gerçek video üretilmeden 'video hazır', 'film hazır', 'tıkla izle', 'tamamlandı', sahte link veya başarı iddiası yazma. Video üretilemiyorsa bunun gerçek video olmadığını açıkça söyle.";
+        }
+        return instruction;
+    }
+
+    function isLimitFinishReason(reason) {
+        return /length|max[_-]?tokens|token_limit|content_filter_limit/i.test(String(reason || ""));
+    }
+
+    function isLikelyIncompleteAnswer(text) {
+        const clean = (text || "").trim();
+        if (clean.length < 120) return false;
+        if (/```[^`]*$/.test(clean)) return true;
+        if (/[.!?…)"'’\]>]$/.test(clean)) return false;
+        const lastWord = (clean.match(/[\p{L}\p{N}_-]+$/u) || [""])[0];
+        return lastWord.length > 0 && lastWord.length < 4;
+    }
+
+    function appendContinuationCard(botId, reasonText) {
+        const el = document.getElementById(botId);
+        if (!el || el.querySelector(".continue-response-card")) return;
+        const card = document.createElement("div");
+        card.className = "continue-response-card";
+        card.style.cssText = "margin-top:12px; padding:12px; border:1px solid #f9e2af; border-radius:8px; background:rgba(249,226,175,0.08); color:#f9e2af;";
+        card.innerHTML = `<div style="margin-bottom:8px;">${reasonText}</div><button class="run-code-btn" style="background:#f9e2af; color:#11111b;" onclick="continueLastAnswer()">Devam et</button>`;
+        el.appendChild(card);
+    }
+
+    function continueLastAnswer() {
+        const chat = sessions[currentChatId];
+        if (!chat || !chat.messages || chat.messages.length === 0) return;
+        const lastAssistant = [...chat.messages].reverse().find(m => m.role === "assistant" && m.content);
+        if (!lastAssistant) return;
+        const tail = String(lastAssistant.content).slice(-1800);
+        userInput.value = `Önceki cevabı kaldığı yerden devam ettir. Tekrar baştan yazma.\n\nSon kısım:\n${tail}`;
+        autoResize(userInput);
+        sendMessage();
     }
 
     function triggerGameGeneration() {
@@ -4508,6 +4669,24 @@
         messagesDiv.appendChild(typingDiv);
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
 
+        if (currentMode === "chat" && isDirectVideoCreationRequest(text) && !msgObj.images && !docTextToUse) {
+            setAppMode("video");
+            typingDiv.innerHTML = `<div style="color:#cdd6f4; margin-bottom:10px;">🎬 Video isteğin algılandı, Video Stüdyosu açılıyor...</div>
+                <div id="${botId}-video" style="text-align:center; margin: 15px 0; background: #181825; padding: 15px; border-radius: 12px; border: 1px solid #45475a;">
+                    <div style="color: #cdd6f4; font-size: 16px; margin-bottom: 10px;">🎬 AI Video Oluşturuluyor...</div>
+                    <div style="background: #313244; border-radius: 8px; height: 20px; overflow: hidden; margin-bottom: 8px;">
+                        <div id="${botId}-video-progress" style="background: linear-gradient(90deg, #89b4fa, #cba6f7); height: 100%; width: 0%; border-radius: 8px; transition: width 0.5s ease;"></div>
+                    </div>
+                    <div id="${botId}-video-status" style="color: #a6adc8; font-size: 13px;">Sahneler hazırlanıyor...</div>
+                    <button class="run-code-btn" style="background: #f38ba8; color: #11111b; font-size: 11px; padding: 4px 8px; margin-top: 8px; font-weight: bold;" onclick="cancelVideoGeneration('${botId}-video')">❌ İptal Et</button>
+                </div>`;
+            const cleanPrompt = buildCleanMediaPrompt(text, "video");
+            lastMediaPrompt = cleanPrompt;
+            lastMediaType = "video";
+            queueVideoSlideshow(cleanPrompt, botId + "-video");
+            return;
+        }
+
         if (currentMode === "video") {
             const cleanPrompt = buildCleanMediaPrompt(text, "video");
             lastMediaPrompt = cleanPrompt;
@@ -4539,6 +4718,7 @@
             }
             baseSystemPrompt += "\n\nKURAL: SADECE VE SADECE eğer kullanıcı kendisiyle, hayatıyla, zevkleriyle veya fiziksel özellikleriyle ilgili ÇOK ÖNEMLİ VE KALICI bir kişisel bilgi verirse (Örn: adım Ahmet, yaşım 25, kedim var, fıstığa alerjim var vb.), mesajının en sonuna BİREBİR şu formatta gizli bir not düşmelisin: [REMEMBER: Kullanıcı 25 yaşındaymış ve adı Ahmet'miş]. Sıradan sohbetlerde veya kullanıcının senden bir şey yapmanı/yazmanı istediği anlarda (Örn: hesap makinesi yaz, kod yaz) KESİNLİKLE [REMEMBER] KULLANMA! Sadece kişisel bilgileri kaydet.";
             baseSystemPrompt += "\n\nKURAL 2 (ÇOK ÖNEMLİ): Eğer kullanıcı senden bir oyun, arayüz, hesap makinesi veya web tabanlı herhangi bir uygulama yapmanı/kodlamanı isterse, KODU SADECE HTML BLOKLARI İÇİNDE YAZ. Başka metin ekleme.";
+            baseSystemPrompt += getResponseControlInstruction(text);
             
             // ===== KRİTİK FIX: reqMessages'a sistem + sınırlı sohbet geçmişini ekle =====
             // Determine task type early to avoid TDZ errors
@@ -4730,6 +4910,7 @@
                 throw new Error("Hiçbir uygun model denenemedi. Cloud sağlayıcılar Netlify Environment Variables ile yapılandırılmalıdır.");
             }
             fallbackQueue = availableModels;
+            const responseMaxTokens = isShortResponseRequest(text) ? 512 : (taskType === 'pdf' ? 4096 : 1024);
 
             let response = null;
             // Set generation lock and UI state
@@ -4788,7 +4969,7 @@
                             taskType,
                             selectedModel: currentTryInfo.provider,
                             temperature: 0.7,
-                            maxTokens: taskType === 'pdf' ? 4096 : 1024
+                            maxTokens: responseMaxTokens
                         })
                     };
                 } else if (isNvidia) {
@@ -4823,7 +5004,7 @@
                         body: JSON.stringify({
                             model: actualModel,
                             messages: nvidiaMessages,
-                            max_tokens: 4096,
+                            max_tokens: responseMaxTokens,
                             stream: true
                         })
                     };
@@ -4857,6 +5038,7 @@
                         body: JSON.stringify({
                             model: actualModel,
                             messages: orMessages,
+                            max_tokens: responseMaxTokens,
                             stream: true
                         })
                     };
@@ -4895,6 +5077,7 @@
                         body: JSON.stringify({
                             model: groqModel,
                             messages: tempReqMessages,
+                            max_tokens: responseMaxTokens,
                             stream: true
                         })
                     };
@@ -4908,7 +5091,8 @@
                             model: actualModel,
                             messages: reqMessages,
                             stream: true,
-                            keep_alive: "1h"
+                            keep_alive: "1h",
+                            options: { num_predict: responseMaxTokens }
                         })
                     };
                 }
@@ -4949,6 +5133,12 @@
                         chat.messages.push({ role: 'assistant', content: botReply });
                         chat.updatedAt = Date.now();
                         saveDatabase();
+                        const proxyFinishReason = jsonData.finish_reason || jsonData.finishReason || jsonData.stopReason || jsonData.stop_reason || jsonData.reason;
+                        if (isLimitFinishReason(proxyFinishReason)) {
+                            appendContinuationCard(botId, "Cevap sınırına ulaşıldı. Devamını ister misin?");
+                        } else if (isLikelyIncompleteAnswer(botReply)) {
+                            appendContinuationCard(botId, "Yanıt yarıda kesilmiş olabilir. Devam ettirmek ister misin?");
+                        }
                         scrollToBottom();
                         setTimeout(scrollToBottom, 300);
                         speakText(sanitizeAssistantOutput(botReply).substring(0, 500));
@@ -5062,10 +5252,76 @@
             let botReply = "";
             let sentenceBuffer = "";
             let streamBuffer = "";
+            let finishReason = "";
+            let streamEndedCleanly = false;
+            let streamReadFailed = false;
 
+            function handleStreamWord(word) {
+                if (!word) return;
+                botReply += word;
+                sentenceBuffer += word;
+
+                let match = sentenceBuffer.match(/([^.!?\n]+[.!?\n]+)(\s*)/);
+                if (match) {
+                    let completeSentence = match[1];
+                    sentenceBuffer = sentenceBuffer.substring(match[1].length);
+                    let textToSpeak = sanitizeAssistantOutput(completeSentence).trim();
+                    // Kodu seslendirmeyi engelle (TTS motorunu çökertmemesi için)
+                    if (textToSpeak.length > 1 && !textToSpeak.includes("```") && !textToSpeak.startsWith("<") && !textToSpeak.startsWith("}")) {
+                        speakText(textToSpeak);
+                    }
+                }
+
+                document.getElementById(botId).innerHTML = renderContentWithImages(botReply, true);
+                scrollToBottom();
+            }
+
+            function processStreamLine(line) {
+                if (line.trim() === "") return;
+
+                let word = null;
+                if (isGroq || isNvidia || isOpenRouter) {
+                    if (line.trim() === "data: [DONE]") {
+                        streamEndedCleanly = true;
+                        return;
+                    }
+                    if (line.startsWith("data: ")) {
+                        try {
+                            const data = JSON.parse(line.substring(6));
+                            const choice = data.choices && data.choices[0];
+                            if (choice && choice.finish_reason) {
+                                finishReason = choice.finish_reason;
+                                streamEndedCleanly = true;
+                            }
+                            if (choice && choice.delta && choice.delta.content) {
+                                word = choice.delta.content;
+                            }
+                        } catch (e) { console.error("OpenAI format parse error", e); }
+                    }
+                } else {
+                    try {
+                        const data = JSON.parse(line);
+                        if (data.done) {
+                            streamEndedCleanly = true;
+                            finishReason = data.done_reason || data.reason || finishReason;
+                        }
+                        if (data.message && data.message.content) {
+                            word = data.message.content;
+                        }
+                    } catch (e) { console.error("Ollama JSON parse error", e); }
+                }
+
+                handleStreamWord(word);
+            }
+
+            try {
             while (true) {
                 const { done, value } = await reader.read();
                 if (done) {
+                    if (streamBuffer.trim()) {
+                        processStreamLine(streamBuffer);
+                        streamBuffer = "";
+                    }
                     let textToSpeak = sanitizeAssistantOutput(sentenceBuffer).trim();
                     if (textToSpeak.length > 0) {
                         speakText(textToSpeak);
@@ -5078,47 +5334,12 @@
                 streamBuffer = lines.pop();
                 
                 for (const line of lines) {
-                    if (line.trim() === "") continue;
-                    
-                    let word = null;
-                    if (isGroq || isNvidia || isOpenRouter) {
-                        if (line.trim() === "data: [DONE]") continue;
-                        if (line.startsWith("data: ")) {
-                            try {
-                                const data = JSON.parse(line.substring(6));
-                                if (data.choices && data.choices[0].delta && data.choices[0].delta.content) {
-                                    word = data.choices[0].delta.content;
-                                }
-                            } catch (e) { console.error("OpenAI format parse error", e); }
-                        }
-                    } else {
-                        try {
-                            const data = JSON.parse(line);
-                            if (data.message && data.message.content) {
-                                word = data.message.content;
-                            }
-                        } catch (e) { console.error("Ollama JSON parse error", e); }
-                    }
-
-                    if (word) {
-                        botReply += word;
-                        sentenceBuffer += word;
-                        
-                        let match = sentenceBuffer.match(/([^.!?\n]+[.!?\n]+)(\s*)/);
-                        if (match) {
-                            let completeSentence = match[1];
-                            sentenceBuffer = sentenceBuffer.substring(match[1].length);
-                            let textToSpeak = sanitizeAssistantOutput(completeSentence).trim();
-                            // Kodu seslendirmeyi engelle (TTS motorunu çökertmemesi için)
-                            if (textToSpeak.length > 1 && !textToSpeak.includes("```") && !textToSpeak.startsWith("<") && !textToSpeak.startsWith("}")) {
-                                speakText(textToSpeak);
-                            }
-                        }
-                        
-                        document.getElementById(botId).innerHTML = renderContentWithImages(botReply, true);
-                        scrollToBottom();
-                    }
+                    processStreamLine(line);
                 }
+            }
+            } catch (streamErr) {
+                streamReadFailed = true;
+                console.warn("Stream yarıda kesilmiş olabilir:", streamErr);
             }
             
             document.getElementById(botId).innerHTML = renderContentWithImages(botReply, true);
@@ -5132,7 +5353,7 @@
             const isNegativeIntent = lowerText.includes("değil") || lowerText.includes("istemiyorum") || lowerText.includes("yapma");
 
             // Video intent her zaman image intent'ten önce kontrol edilsin.
-            let isVideoRequest = !isNegativeIntent && (lowerText.includes("video") || lowerText.includes("saniyelik") || lowerText.includes("dans") || lowerText.includes("hareket") || lowerText.includes("kuyruk") || lowerText.includes("adım") || lowerText.includes("miyav") || lowerText.includes("animasyon") || lowerText.includes("slayt"));
+            let isVideoRequest = !isNegativeIntent && isDirectVideoCreationRequest(text);
             let isImageRequest = !isNegativeIntent && !isVideoRequest && (lowerText.includes("çiz") || lowerText.includes("resim") || lowerText.includes("fotoğraf") || lowerText.includes("görsel") || lowerText.includes("image") || lowerText.includes("picture"));
 
             const botHasVideoCode = botReply.toLowerCase().includes("[generate_video");
@@ -5150,13 +5371,18 @@
                 // Bot yanıtına video placeholder'ını ekle
                 const fallbackContainer = document.createElement("div");
                 fallbackContainer.innerHTML = `<div id="${videoId}" style="text-align:center; margin: 15px 0; background: #181825; padding: 15px; border-radius: 12px; border: 1px solid #45475a;">
+                            <div style="color:#f9e2af; font-size: 13px; margin-bottom: 10px;">Bu gerçek video değil; normal sohbet cevabı başarı sayılmadı. Video motoru başlatılıyor.</div>
                             <div style="color: #cdd6f4; font-size: 16px; margin-bottom: 10px;">🎬 AI Video Hazırlanıyor (Otomatik Fallback)...</div>
                             <div style="background: #313244; border-radius: 8px; height: 20px; overflow: hidden; margin-bottom: 8px;">
                                 <div id="${videoId}-progress" style="background: linear-gradient(90deg, #89b4fa, #cba6f7); height: 100%; width: 0%; border-radius: 8px; transition: width 0.5s ease;"></div>
                             </div>
                             <div id="${videoId}-status" style="color: #a6adc8; font-size: 13px;">Sahneler paralel hazırlanıyor...</div>
                         </div>`;
-                document.getElementById(botId).appendChild(fallbackContainer);
+                const botNode = document.getElementById(botId);
+                if (botNode) {
+                    botNode.innerHTML = "";
+                    botNode.appendChild(fallbackContainer);
+                }
                 
                 // Video motorunu çalıştır (videoQueue ve isVideoGenerating durumunu yönetir)
                 setTimeout(() => queueVideoSlideshow(text, videoId), 300);
@@ -5165,15 +5391,22 @@
             let finalCleanText = sanitizeAssistantOutput(botReply);
             let hasVideoFallback = isVideoRequest && !botHasVideoCode;
             
-            if (finalCleanText.trim() === "" && !botHasVideoCode && !hasVideoFallback) {
+            if (finalCleanText.trim() === "" && !botHasVideoCode && !hasVideoFallback && !streamReadFailed) {
                 const botNode = document.getElementById(botId);
                 if (botNode) botNode.remove();
             } else {
-                chat.messages.push({ role: "assistant", content: botReply });
+                chat.messages.push({ role: "assistant", content: hasVideoFallback ? "Video isteği algılandı; gerçek video motoru başlatıldı." : botReply });
             }
             
             chat.updatedAt = Date.now();
             saveDatabase();
+            if (!hasVideoFallback) {
+                if (isLimitFinishReason(finishReason)) {
+                    appendContinuationCard(botId, "Cevap sınırına ulaşıldı. Devamını ister misin?");
+                } else if (streamReadFailed || !streamEndedCleanly || isLikelyIncompleteAnswer(botReply)) {
+                    appendContinuationCard(botId, "Yanıt yarıda kesilmiş olabilir. Devam ettirmek ister misin?");
+                }
+            }
             // Streaming bittikten sonra kesin en alta kay
             scrollToBottom();
             setTimeout(scrollToBottom, 300);
@@ -5861,4 +6094,3 @@ function buildExamCoachSuffix() {
 
 </body>
 </html>
-
