@@ -3384,6 +3384,58 @@
         return results.filter(s => s.text.trim().length > 0);
     }
 
+    function detectTtsLanguage(text) {
+        const normalized = (text || "").toLowerCase()
+            .replace(/https?:\/\/\S+/g, " ")
+            .replace(/[^a-zçğıöşü\s']/gi, " ");
+        const words = normalized.split(/\s+/).filter(Boolean);
+        const trWords = new Set(["ve","veya","ile","bir","bu","su","şu","o","ben","sen","biz","siz","ne","nasil","nasıl","neden","nerede","hangi","icin","için","cok","çok","daha","de","da","mi","mı","mu","mü","merhaba","selam","tesekkur","teşekkür","lutfen","lütfen","evet","hayir","hayır","var","yok","olarak","ama","fakat","cunku","çünkü","sonuc","sonuç","ozet","özet","cevap","soru","konu","bolum","bölüm","nedir"]);
+        const enWords = new Set(["the","and","or","with","a","an","this","that","i","you","we","they","what","how","why","where","which","for","very","more","is","are","am","do","does","did","hello","hi","thanks","please","yes","no","have","has","as","but"]);
+        const technicalEnWords = new Set(["capacitor","capacitance","dielectric","voltage","charge","electric","field","energy","circuit","current","resistance","equation","formula","chapter","summary"]);
+
+        let trScore = 0;
+        let enScore = 0;
+        if (/[çğıöşü]/i.test(normalized)) trScore += 2;
+
+        words.forEach(word => {
+            if (trWords.has(word)) trScore++;
+            if (enWords.has(word)) enScore++;
+            if (technicalEnWords.has(word)) enScore += 3;
+            if (/(tion|ment|ing|ity|ance|ence|ous|ive|al)$/.test(word)) enScore++;
+            if (/(lar|ler|dir|dır|tir|tır|mak|mek)$/.test(word)) trScore++;
+        });
+
+        return enScore > trScore ? "en-US" : "tr-TR";
+    }
+
+    function splitTtsByLanguage(text) {
+        const chunks = (text || "")
+            .split(/\n+/)
+            .flatMap(part => part.match(/[^.!?;:]+[.!?;:]?/g) || [part])
+            .map(part => part.trim())
+            .filter(Boolean);
+        const segments = [];
+
+        chunks.forEach(chunk => {
+            const lang = detectTtsLanguage(chunk);
+            const last = segments[segments.length - 1];
+            if (last && last.lang === lang) {
+                last.text += " " + chunk;
+            } else {
+                segments.push({ text: chunk, lang });
+            }
+        });
+
+        return segments;
+    }
+
+    function findVoiceByLanguage(voices, langCode) {
+        const requested = (langCode || "tr-TR").toLowerCase();
+        const prefix = requested.split("-")[0];
+        return voices.find(v => (v.lang || "").toLowerCase() === requested) ||
+               voices.find(v => (v.lang || "").toLowerCase().startsWith(prefix));
+    }
+
     function playNextTTS() {
         if (!isSpeakerOn || ttsQueue.length === 0) {
             isPlayingTTS = false;
@@ -3414,10 +3466,10 @@
             }
         }
 
-        if (currentSelectedVoiceId === "male_local" || currentSelectedVoiceId.startsWith("native_")) {
-            speakWithLocalVoice(cleanText, currentSpeechRunId, currentSelectedVoiceId, "tr-TR");
-        } else {
-            speakWithServer(cleanText, currentSpeechRunId, currentSelectedVoiceId);
+        const segments = splitTtsByLanguage(cleanText);
+        if (segments.length > 0) {
+            speakSegments(segments, 0, currentSpeechRunId, currentSelectedVoiceId);
+            return;
         }
     }
 
@@ -3432,39 +3484,23 @@
         const cleanSeg = seg.text.replace(/[#*_[\]()]/g, "").trim();
         if (!cleanSeg) { speakSegments(segments, idx + 1, expectedRunId, expectedVoiceId); return; }
 
-        const utterance = new SpeechSynthesisUtterance(cleanSeg);
-        const voices = synth.getVoices();
-
-        // Dil koduna göre en uygun sesi seç
-        const langVoices = voices.filter(v => v.lang.startsWith(seg.lang.split("-")[0]));
-        const exactVoices = voices.filter(v => v.lang === seg.lang);
-
-        if (exactVoices.length > 0) {
-            utterance.voice = exactVoices[0];
-        } else if (langVoices.length > 0) {
-            utterance.voice = langVoices[0];
-        }
-        utterance.lang = seg.lang;
-        utterance.rate = seg.lang === "tr-TR" ? 0.95 : 0.88; // Yabancı dilde biraz yavaş
-        utterance.pitch = 1.0;
-
-        utterance.onend = () => {
-            if (isSpeakerOn && speechRunId === expectedRunId) {
+        const onDone = () => {
+            if (isSpeakerOn && speechRunId === expectedRunId && voiceSelect.value === expectedVoiceId) {
                 speakSegments(segments, idx + 1, expectedRunId, expectedVoiceId);
             } else {
                 isPlayingTTS = false;
             }
         };
-        utterance.onerror = () => {
-            speakSegments(segments, idx + 1, expectedRunId, expectedVoiceId);
-        };
 
-        window.currentUtterance = utterance;
-        synth.speak(utterance);
+        if (expectedVoiceId === "male_local" || expectedVoiceId.startsWith("native_") || seg.lang !== "tr-TR") {
+            speakWithLocalVoice(cleanSeg, expectedRunId, expectedVoiceId, seg.lang, onDone);
+        } else {
+            speakWithServer(cleanSeg, expectedRunId, expectedVoiceId, seg.lang, onDone);
+        }
     }
 
 
-    function speakWithServer(cleanText, expectedRunId, expectedVoiceId) {
+    function speakWithServer(cleanText, expectedRunId, expectedVoiceId, langCode = "tr-TR", onDone = null) {
         if (!isSpeakerOn || speechRunId !== expectedRunId || voiceSelect.value !== expectedVoiceId) {
             isPlayingTTS = false;
             return;
@@ -3479,7 +3515,7 @@
         const azureKey = localStorage.getItem("azure_speech_key") || "";
         const azureRegion = localStorage.getItem("azure_speech_region") || "";
         
-        let url = getTtsUrl() + "?voice=" + vName + "&text=" + encodeURIComponent(cleanText);
+        let url = getTtsUrl() + "?voice=" + vName + "&lang=" + encodeURIComponent(langCode) + "&text=" + encodeURIComponent(cleanText);
         if (azureKey && azureRegion) {
             url += "&azure_key=" + encodeURIComponent(azureKey) + "&azure_region=" + encodeURIComponent(azureRegion);
         }
@@ -3507,23 +3543,24 @@
             audio.playbackRate = rate;
         };
         
-        audio.onended = () => { 
-            if(isSpeakerOn && speechRunId === expectedRunId && voiceSelect.value === expectedVoiceId) playNextTTS(); 
+        audio.onended = () => {
+            if (onDone) onDone();
+            else if(isSpeakerOn && speechRunId === expectedRunId && voiceSelect.value === expectedVoiceId) playNextTTS(); 
             else isPlayingTTS = false; 
         };
         
         audio.onerror = (err) => {
             console.warn("TTS sunucu hatası, yerel ses motoruna düşülüyor. Denenen URL:", url, "Hata:", err);
-            speakWithLocalVoice(cleanText, expectedRunId, expectedVoiceId);
+            speakWithLocalVoice(cleanText, expectedRunId, expectedVoiceId, langCode, onDone);
         };
         
         audio.play().catch(e => {
             console.warn("TTS oynatılamadı, yerel ses motoruna düşülüyor. Hata:", e, "Denenen URL:", url);
-            speakWithLocalVoice(cleanText, expectedRunId, expectedVoiceId);
+            speakWithLocalVoice(cleanText, expectedRunId, expectedVoiceId, langCode, onDone);
         });
     }
 
-    function speakWithLocalVoice(cleanText, expectedRunId, expectedVoiceId) {
+    function speakWithLocalVoice(cleanText, expectedRunId, expectedVoiceId, langCode = "tr-TR", onDone = null) {
         if (!isSpeakerOn || speechRunId !== expectedRunId || voiceSelect.value !== expectedVoiceId) {
             isPlayingTTS = false;
             return;
@@ -3531,11 +3568,14 @@
         const utterance = new SpeechSynthesisUtterance(cleanText);
         let voices = synth.getVoices();
         let trVoices = voices.filter(v => v.lang.includes("tr"));
+        const detectedVoice = findVoiceByLanguage(voices, langCode);
         
         if (expectedVoiceId.startsWith("native_")) {
             let idx = parseInt(expectedVoiceId.split("_")[1]);
-            if (voices[idx]) {
+            if (voices[idx] && voices[idx].lang && voices[idx].lang.toLowerCase().startsWith(langCode.split("-")[0].toLowerCase())) {
                 utterance.voice = voices[idx];
+            } else if (detectedVoice) {
+                utterance.voice = detectedVoice;
             }
         } else {
             let selectedVoice = null;
@@ -3550,6 +3590,8 @@
             } else {
                 selectedVoice = trVoices.length > 2 ? trVoices[2] : trVoices[0];
             }
+
+            if (langCode !== "tr-TR" && detectedVoice) selectedVoice = detectedVoice;
             
             if (selectedVoice) {
                 utterance.voice = selectedVoice;
@@ -3576,13 +3618,16 @@
                 utterance.rate = 1.0;
             }
         }
+        utterance.lang = langCode;
         
         utterance.onend = () => { 
-            if(isSpeakerOn && speechRunId === expectedRunId && voiceSelect.value === expectedVoiceId) playNextTTS(); 
+            if (onDone) onDone();
+            else if(isSpeakerOn && speechRunId === expectedRunId && voiceSelect.value === expectedVoiceId) playNextTTS(); 
             else isPlayingTTS = false; 
         };
         utterance.onerror = () => { 
-            if(isSpeakerOn && speechRunId === expectedRunId && voiceSelect.value === expectedVoiceId) playNextTTS(); 
+            if (onDone) onDone();
+            else if(isSpeakerOn && speechRunId === expectedRunId && voiceSelect.value === expectedVoiceId) playNextTTS(); 
             else isPlayingTTS = false; 
         };
         
@@ -5816,5 +5861,4 @@ function buildExamCoachSuffix() {
 
 </body>
 </html>
-
 
