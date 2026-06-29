@@ -767,6 +767,39 @@
             box-shadow: 0 0 10px rgba(137, 180, 250, 0.3);
         }
         .send-btn:hover { background: #b4befe; transform: scale(1.1) translateY(-2px); box-shadow: 0 0 20px rgba(180, 190, 254, 0.6); }
+        .send-btn.stop-mode {
+            background: #f38ba8;
+            box-shadow: 0 0 12px rgba(243, 139, 168, 0.45);
+        }
+        .send-btn.stop-mode:hover {
+            background: #eba0ac;
+            box-shadow: 0 0 20px rgba(235, 160, 172, 0.6);
+        }
+        .thinking-indicator {
+            display: inline-flex;
+            align-items: baseline;
+            gap: 6px;
+            color: #cdd6f4;
+            font-style: italic;
+        }
+        .thinking-dots {
+            display: inline-flex;
+            gap: 2px;
+        }
+        .thinking-dots span {
+            width: 4px;
+            height: 4px;
+            border-radius: 999px;
+            background: currentColor;
+            opacity: 0.35;
+            animation: thinkingDot 1.2s infinite ease-in-out;
+        }
+        .thinking-dots span:nth-child(2) { animation-delay: 0.16s; }
+        .thinking-dots span:nth-child(3) { animation-delay: 0.32s; }
+        @keyframes thinkingDot {
+            0%, 80%, 100% { opacity: 0.35; transform: translateY(0); }
+            40% { opacity: 1; transform: translateY(-3px); }
+        }
         
         /* Web Search & Artifacts */
         .web-search-btn.active { color: #89dceb; animation: pulse-blue 1.5s infinite; }
@@ -1301,7 +1334,7 @@
             <button class="icon-btn web-search-btn" id="webSearchBtn" onclick="toggleWebSearch()" title="İnternette Ara (Wikipedia)">🌐</button>
             <button class="icon-btn mic-btn" id="micBtn" onclick="toggleMic()" title="Sesle Yaz">🎙️</button>
             <textarea id="userInput" rows="1" placeholder="CinoCode'a bir şeyler sor..." oninput="autoResize(this)" onkeydown="handleKey(event)"></textarea>
-            <button class="send-btn" onclick="sendMessage()">
+            <button class="send-btn" id="sendBtn" onclick="handleSendButtonClick()" title="Gönder" aria-label="Gönder">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
             </button>
         </div>
@@ -4389,6 +4422,74 @@
     function handleKey(e) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }
     function setQuickStart(text) { userInput.value = text; autoResize(userInput); userInput.focus(); }
 
+    const SEND_BUTTON_IDLE_HTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>';
+    const SEND_BUTTON_STOP_HTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"></rect></svg>';
+    window.activeGenerationController = window.activeGenerationController || null;
+    window.generationStopRequested = false;
+    window.activeGenerationBotId = null;
+
+    function getMainSendButton() {
+        return document.getElementById('sendBtn');
+    }
+
+    function getThinkingIndicatorHtml(label = "CinoCode düşünüyor") {
+        return `<span class="thinking-indicator"><span>${label}</span><span class="thinking-dots" aria-hidden="true"><span></span><span></span><span></span></span></span>`;
+    }
+
+    function setGenerationUiBusy(isBusy) {
+        const sendBtn = getMainSendButton();
+        const input = document.getElementById('userInput');
+        if (sendBtn) {
+            sendBtn.disabled = false;
+            sendBtn.classList.toggle('stop-mode', !!isBusy);
+            sendBtn.innerHTML = isBusy ? SEND_BUTTON_STOP_HTML : SEND_BUTTON_IDLE_HTML;
+            sendBtn.title = isBusy ? "Durdur" : "Gönder";
+            sendBtn.setAttribute('aria-label', isBusy ? "Yanıtı durdur" : "Gönder");
+        }
+        if (input) {
+            if (isBusy) {
+                if (!input.dataset.idlePlaceholder) input.dataset.idlePlaceholder = input.placeholder || "CinoCode'a bir şeyler sor...";
+                input.placeholder = "CinoCode düşünüyor...";
+            } else {
+                input.placeholder = input.dataset.idlePlaceholder || "CinoCode'a bir şeyler sor...";
+                delete input.dataset.idlePlaceholder;
+            }
+        }
+    }
+
+    function cleanupGenerationUi() {
+        window.isGenerating = false;
+        window.activeGenerationController = null;
+        window.activeGenerationBotId = null;
+        setGenerationUiBusy(false);
+        try { const userInputEl = document.getElementById('userInput'); if (userInputEl) userInputEl.disabled = false; } catch(e) {}
+        try { const st = document.getElementById('cinocode_generating_status'); if (st) st.remove(); } catch(e) {}
+    }
+
+    function stopGeneration() {
+        window.generationStopRequested = true;
+        const controller = window.activeGenerationController;
+        if (controller && !controller.signal.aborted) {
+            try { controller.abort(); } catch(e) {}
+        }
+        const botNode = window.activeGenerationBotId ? document.getElementById(window.activeGenerationBotId) : null;
+        if (botNode && botNode.textContent && botNode.textContent.includes("CinoCode düşünüyor")) {
+            botNode.innerHTML = "<i>Yanıt durduruldu.</i>";
+        } else if (messagesDiv) {
+            messagesDiv.insertAdjacentHTML('beforeend', `<div class="message bot-message" style="background: rgba(64,64,64,0.12); border-left: 3px solid #f38ba8; padding: 8px; margin-bottom:10px; border-radius:6px; font-size:0.9em;">Yanıt durduruldu.</div>`);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+        cleanupGenerationUi();
+    }
+
+    function handleSendButtonClick() {
+        if (window.isGenerating) {
+            stopGeneration();
+            return;
+        }
+        sendMessage();
+    }
+
     function getOllamaUrl() {
         let saved = localStorage.getItem('ollama_ip');
         if (saved && saved.trim() !== '') {
@@ -4610,13 +4711,13 @@
         }
 
         const text = userInput.value.trim();
-        // Prevent concurrent generation: if already generating, show a short notice and refuse to queue
+        // If generation is active, the send button works as Stop.
         if (window.isGenerating) {
-            const infoHtml = `<div class="message bot-message" style="background: rgba(64,64,64,0.12); border-left: 3px solid #89b4fa; padding: 8px; margin-bottom:10px; border-radius:6px; font-size:0.9em;">⏳ Yanıt hazırlanıyor, lütfen bekle.</div>`;
-            messagesDiv.insertAdjacentHTML('beforeend', infoHtml);
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            stopGeneration();
             return;
         }
+
+        window.generationStopRequested = false;
 
         if (!text && !selectedImageBase64 && !window.selectedDocumentText) return;
         if (!text && (selectedImageBase64 || window.selectedDocumentText)) {
@@ -4712,13 +4813,14 @@
         }
 
         const botId = "bot-" + Date.now();
+        window.activeGenerationBotId = botId;
         const typingDiv = document.createElement("div");
         typingDiv.className = "message bot"; typingDiv.id = botId;
         
         if (selectedImageBase64) {
             typingDiv.innerHTML = "<i>📸 Görsel analiz ediliyor (Biraz uzun sürebilir, lütfen bekleyin)...</i>";
         } else {
-            typingDiv.innerHTML = "<i>...</i>";
+            typingDiv.innerHTML = getThinkingIndicatorHtml();
         }
         
         messagesDiv.appendChild(typingDiv);
@@ -4970,13 +5072,13 @@
             let response = null;
             // Set generation lock and UI state
             window.isGenerating = true;
-            try { document.querySelector('.send-btn').disabled = true; } catch(e) {}
+            setGenerationUiBusy(true);
             try { document.getElementById('userInput').disabled = true; } catch(e) {}
             // show a small status message
             const genStatusId = 'cinocode_generating_status';
             let existingStatus = document.getElementById(genStatusId);
             if (!existingStatus) {
-                const statusHtml = `<div id="${genStatusId}" class="message bot-message" style="background: rgba(24,24,37,0.6); border-left: 3px solid #89b4fa; padding: 8px; margin-bottom:10px; border-radius:6px; font-size:0.9em; color:var(--text-color);">⏳ Yanıt hazırlanıyor...</div>`;
+                const statusHtml = `<div id="${genStatusId}" class="message bot-message" style="background: rgba(24,24,37,0.6); border-left: 3px solid #89b4fa; padding: 8px; margin-bottom:10px; border-radius:6px; font-size:0.9em; color:var(--text-color);">${getThinkingIndicatorHtml()}</div>`;
                 messagesDiv.insertAdjacentHTML('beforeend', statusHtml);
                 messagesDiv.scrollTop = messagesDiv.scrollHeight;
             }
@@ -5155,6 +5257,7 @@
                 try {
                     if (isProxyCloud) {
                         const controller = new AbortController();
+                        window.activeGenerationController = controller;
                         const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
                         fetchOptions.signal = controller.signal;
                         let proxyResponse;
@@ -5198,13 +5301,11 @@
                         setTimeout(scrollToBottom, 300);
                         speakText(sanitizeAssistantOutput(botReply).substring(0, 500));
 
-                        window.isGenerating = false;
-                        try { document.querySelector('.send-btn').disabled = false; } catch(e) {}
-                        try { document.getElementById('userInput').disabled = false; } catch(e) {}
-                        const stElProxy = document.getElementById(genStatusId); if (stElProxy) stElProxy.remove();
+                        cleanupGenerationUi();
                         return;
                     } else if (isNvidia || isOpenRouter || isGroq) {
                         const controller = new AbortController();
+                        window.activeGenerationController = controller;
                         const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
                         fetchOptions.signal = controller.signal;
 
@@ -5238,6 +5339,7 @@
                         break;
                     } else {
                         const controller = new AbortController();
+                        window.activeGenerationController = controller;
                         const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
                         fetchOptions.signal = controller.signal;
 
@@ -5269,6 +5371,9 @@
                         break;
                     }
                 } catch (fetchErr) {
+                    if (fetchErr.name === 'AbortError' && window.generationStopRequested) {
+                        throw new Error("Yanıt durduruldu.");
+                    }
                     const timedOut = fetchErr.name === 'AbortError';
                     lastErrorMessage = timedOut ? "Model zaman aşımına uğradı." : "Network veya CORS hatası oluştu.";
                     lastErrorDetails = { provider: provider || 'unknown', model: actualModel, timeout: timedOut, status: timedOut ? 'timeout' : 'network', errorBody: fetchErr.message, endpoint: fetchUrl, taskType };
@@ -5297,8 +5402,7 @@
             if (!response.ok) {
                 const errorText = await response.text();
                 // release lock before throwing
-                window.isGenerating = false; try { document.querySelector('.send-btn').disabled = false; } catch(e) {} try { document.getElementById('userInput').disabled = false; } catch(e) {}
-                const stEl2 = document.getElementById(genStatusId); if (stEl2) stEl2.remove();
+                cleanupGenerationUi();
                 throw new Error(`API Hatası (${response.status}): ` + errorText);
             }
 
@@ -5393,6 +5497,9 @@
                 }
             }
             } catch (streamErr) {
+                if (window.generationStopRequested || streamErr.name === 'AbortError') {
+                    throw new Error("Yanıt durduruldu.");
+                }
                 streamReadFailed = true;
                 console.warn("Stream yarıda kesilmiş olabilir:", streamErr);
             }
@@ -5468,23 +5575,26 @@
             setTimeout(scrollToBottom, 800);
 
             // clear generation lock and process pending queue
-            window.isGenerating = false;
-            try { document.querySelector('.send-btn').disabled = false; } catch(e) {}
-            try { document.getElementById('userInput').disabled = false; } catch(e) {}
-            const stEl3 = document.getElementById('cinocode_generating_status'); if (stEl3) stEl3.remove();
+            cleanupGenerationUi();
             // Clear any pendingMessages queue (queueing disabled in this hotfix)
             try { window.pendingMessages = []; } catch(e) {}
 
         } catch (error) {
             console.error('sendMessage error:', error);
-            try { document.getElementById(botId).innerHTML = "<b>Hata:</b> " + error.message; } catch(e) {}
+            if (error && error.message === "Yanıt durduruldu.") {
+                try {
+                    const botNode = document.getElementById(botId);
+                    if (botNode && (!botNode.textContent || botNode.textContent.includes("CinoCode düşünüyor"))) {
+                        botNode.innerHTML = "<i>Yanıt durduruldu.</i>";
+                    }
+                } catch(e) {}
+            } else {
+                try { document.getElementById(botId).innerHTML = "<b>Hata:</b> " + error.message; } catch(e) {}
+            }
         } finally {
             // Ensure UI is always re-enabled to avoid permanent lock
-            try { window.isGenerating = false; } catch(e) {}
             try { window.pendingMessages = []; } catch(e) {}
-            try { const userInputEl = document.getElementById('userInput'); if (userInputEl) userInputEl.disabled = false; } catch(e) {}
-            try { const sendBtn = document.getElementById('sendBtn') || document.querySelector('.send-btn'); if (sendBtn) sendBtn.disabled = false; } catch(e) {}
-            try { const st = document.getElementById('cinocode_generating_status'); if (st) st.remove(); } catch(e) {}
+            cleanupGenerationUi();
         }
     }
 
