@@ -6304,6 +6304,13 @@
             .trim();
     }
 
+    const TITLE_LEADING_FILLERS = /^(knk|kanka|bana|bir|şu|su|bu|hey|selam|merhaba|dostum|reis|abi|abim|hocam|lütfen|lutfen)\s+/i;
+    const TITLE_TRAILING_FILLERS = /\s+(var|ya|yaa|mı|mi|mu|mü|musun|mısın|misin|müsün|lütfen|lutfen)$/i;
+    const TITLE_TRAILING_VERBS = /\s+(oluştur|olustur|yap|çiz|ciz|üret|uret|hazırla|hazirla|generate|draw|create)$/i;
+    // Tek başına başlık olarak anlamsız/jenerik kelimeler — bunlar çıkarsa
+    // generator "kötü başlık" sayıp bir sonraki mesajı bekleyecek.
+    const TITLE_GENERIC_WORDS = new Set(["normal", "soru", "devam", "tamam", "kanka", "yap", "oluştur", "olustur", "peki", "ok", "evet", "hayır", "hayir", "selam", "merhaba", "naber", "napıyorsun", "napiyorsun"]);
+
     function generateChatTitleFromMessage(message, attachmentInfo) {
         let clean = cleanTextForTitle(message);
 
@@ -6316,19 +6323,24 @@
 
         if (!clean) return "Yeni Sohbet";
 
-        clean = clean
-            .replace(/^knk\s+/i, "")
-            .replace(/^kanka\s+/i, "")
-            .replace(/^bana\s+/i, "")
-            .replace(/^bir\s+/i, "")
-            .trim();
+        // Baştaki hitap/dolgu kelimelerini üst üste temizle ("kanka bana bir video..." gibi).
+        let prevLen;
+        do {
+            prevLen = clean.length;
+            clean = clean.replace(TITLE_LEADING_FILLERS, "").trim();
+        } while (clean.length !== prevLen && clean.length > 0);
 
-        clean = clean
-            .replace(/\bçiz\s*ya$/i, "çiz")
-            .replace(/\byap\s*ya$/i, "yap")
-            .trim();
+        // Sondaki dolgu/soru ekleri ve tek başına kalan üretim fiilini temizle.
+        clean = clean.replace(TITLE_TRAILING_FILLERS, "").trim();
+        clean = clean.replace(/[?!.]+$/g, "").trim();
+        const withoutTrailingVerb = clean.replace(TITLE_TRAILING_VERBS, "").trim();
+        if (withoutTrailingVerb.split(/\s+/).filter(Boolean).length >= 2) {
+            clean = withoutTrailingVerb;
+        }
 
-        if (clean.length > 42) clean = clean.slice(0, 42).trim() + "...";
+        if (!clean || TITLE_GENERIC_WORDS.has(clean.toLocaleLowerCase("tr-TR"))) return "Yeni Sohbet";
+
+        if (clean.length > 48) clean = clean.slice(0, 48).trim() + "...";
 
         return clean.charAt(0).toUpperCase() + clean.slice(1);
     }
