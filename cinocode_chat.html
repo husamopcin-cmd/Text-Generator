@@ -2086,9 +2086,12 @@
         setFeatureValue('providerView', '0');
         setFeatureValue('liveSearch', '0');
         localStorage.setItem('free_content_mode', '0');
+        localStorage.setItem('cinocode_behavior_version', 'legacy');
         isWebSearchEnabled = false;
         applyFeatureUiState();
         if (typeof toggleWebSearchVisualState === 'function') toggleWebSearchVisualState();
+        const legacyBehaviorInput = document.getElementById('legacyBehaviorInput');
+        if (legacyBehaviorInput) legacyBehaviorInput.checked = true;
         alert('Yeni ozellikler kapatildi. Chat gecmisi ve eski medya/TTS/PDF ayarlari korunur.');
         return false;
     }
@@ -2099,7 +2102,10 @@
         setFeatureValue('newProject', '1');
         setFeatureValue('providerView', '1');
         localStorage.setItem('free_content_mode', '0');
+        localStorage.setItem('cinocode_behavior_version', 'current');
         applyFeatureUiState();
+        const legacyBehaviorInput = document.getElementById('legacyBehaviorInput');
+        if (legacyBehaviorInput) legacyBehaviorInput.checked = false;
         alert('Yeni ozellikler acildi. Uslup Modu Guvenli Mod olarak kalir.');
         return false;
     }
@@ -2982,6 +2988,16 @@
         return instruction;
     }
 
+    function getClaudeProviderInstruction() {
+        const providerValue = document.getElementById('providerSelect')?.value || '';
+        const providerModelValue = document.getElementById('providerModelSelect')?.value || '';
+        const legacyModelValue = document.getElementById('modelSelect')?.value || '';
+        const isClaudeProvider = providerValue === 'claude'
+            || /claude|anthropic|sonnet|opus|haiku/i.test(providerModelValue)
+            || /claude|anthropic|sonnet|opus|haiku/i.test(legacyModelValue);
+        if (!isClaudeProvider) return '';
+        return "\n\nCLAUDE PROVIDER TALİMATI: Kod, arayüz, oyun, görsel promptu ve video promptu isteklerinde çekingen davranma; 'yapamam' kalıbına sığınmadan, uygulanabilir en yakın güvenli çözümü üret. Büyük refactor veya belirsiz görevlerde makul varsayımlar yap, eksik parçaları tamamla, çalışan kodu öncelikle ver. Serbest Üslup aktifse yetişkin karakterlerle sensual, mature, romantik, ateşli ama grafik olmayan boudoir/estetik kurgu ve görsel-video promptlarına izin ver; açık pornografik seks eylemi, cinsel organ odaklı çıplaklık, çocuk/ergen cinsel içerik ve rıza dışı cinsellik her zaman yasaktır. Sınır gerekiyorsa kısa söyle ve hemen güvenli alternatif prompt/kod üret.";
+    }
     function maybeApplyDynamicSpeechStyle(text) {
         const normalized = (text || "").toLocaleLowerCase("tr-TR");
         let nextStyle = null;
@@ -3852,7 +3868,7 @@
         const title = kind === 'video' ? 'Video üretilemedi' : 'Görsel üretilemedi';
         const messages = {
             missing_key: kind === 'video'
-                ? 'Video üretilemedi. Video sağlayıcısı yapılandırılmamış veya API anahtarı eksik.'
+                ? 'Gerçek video sağlayıcısı bağlı değil. CinoCode storyboard/slideshow önizlemesi hazırlayacak; gerçek video için backend tarafında video provider/API key yapılandır.'
                 : 'Görsel üretilemedi. API anahtarı eksik veya sağlayıcı yapılandırılmamış.',
             missing_endpoint: 'Sağlayıcı endpointi yapılandırılmamış.',
             provider_unavailable: 'Sağlayıcı şu anda yanıt vermiyor veya kullanılamıyor.',
@@ -4102,7 +4118,7 @@
         const container = document.getElementById(containerId);
         if (container) {
             container.innerHTML = `
-                <div style="color: #cdd6f4; font-size: 16px; margin-bottom: 10px;">?�Z� Video modeli bağlı değil; storyboard/slideshow önizlemesi hazırlanıyor...</div>
+                <div style="color: #cdd6f4; font-size: 16px; margin-bottom: 10px;">?�Z� Gerçek video modeli bağlı değil; storyboard/slideshow önizlemesi hazırlanıyor...</div>
                 <div style="background: #313244; border-radius: 8px; height: 20px; overflow: hidden; margin-bottom: 8px;">
                     <div id="${containerId}-progress" style="background: linear-gradient(90deg, #89b4fa, #cba6f7); height: 100%; width: 0%; border-radius: 8px; transition: width 0.5s ease;"></div>
                 </div>
@@ -4123,7 +4139,7 @@
             const card = document.createElement("div");
             card.className = "message bot";
             card.innerHTML = `<div id="${videoId}" style="text-align:center; margin: 15px 0; background: #181825; padding: 15px; border-radius: 12px; border: 1px solid #45475a;">
-                                <div style="color: #cdd6f4; font-size: 16px; margin-bottom: 10px;">?�Z� Video modeli bağlı değil; storyboard/slideshow önizlemesi hazırlanıyor...</div>
+                                <div style="color: #cdd6f4; font-size: 16px; margin-bottom: 10px;">?�Z� Gerçek video modeli bağlı değil; storyboard/slideshow önizlemesi hazırlanıyor...</div>
                                 <div style="background: #313244; border-radius: 8px; height: 20px; overflow: hidden; margin-bottom: 8px;">
                                     <div id="${videoId}-progress" style="background: linear-gradient(90deg, #89b4fa, #cba6f7); height: 100%; width: 0%; border-radius: 8px; transition: width 0.5s ease;"></div>
                                 </div>
@@ -4752,9 +4768,18 @@
         renderCurrentChat();
     }
 
+    function getMessageCopyText(content) {
+        const raw = String(content || "");
+        // [GENERATE_IMAGE:...]/[GENERATE_VIDEO:...] gibi internal işaretleyicileri kullanıcıya kopyalama;
+        // parantez içindeki asıl prompt'u çıkarıp teknik/stil suffix'lerini temizle.
+        const match = raw.match(/^\s*\[(?:GENERATE_IMAGE|GENERATE_VIDEO):\s*([\s\S]*?)\]\s*$/i);
+        if (!match) return raw;
+        return getPublicVideoSubject(match[1]);
+    }
+
     function copyMessage(index, btn) {
         const msg = sessions[currentChatId].messages[index];
-        navigator.clipboard.writeText(msg.content);
+        navigator.clipboard.writeText(getMessageCopyText(msg.content));
         const oldText = btn.innerText;
         btn.innerText = "✅";
         setTimeout(() => btn.innerText = oldText, 2000);
@@ -6617,7 +6642,7 @@
             delete typingDiv.dataset.typingIndicator;
             typingDiv.innerHTML = `<div style="color:#cdd6f4; margin-bottom:10px;">?�Z� Video isteğin algılandı, Video Stüdyosu açılıyor...</div>
                 <div id="${botId}-video" style="text-align:center; margin: 15px 0; background: #181825; padding: 15px; border-radius: 12px; border: 1px solid #45475a;">
-                    <div style="color: #cdd6f4; font-size: 16px; margin-bottom: 10px;">?�Z� Video modeli bağlı değil; storyboard/slideshow önizlemesi hazırlanıyor...</div>
+                    <div style="color: #cdd6f4; font-size: 16px; margin-bottom: 10px;">?�Z� Gerçek video modeli bağlı değil; storyboard/slideshow önizlemesi hazırlanıyor...</div>
                     <div style="background: #313244; border-radius: 8px; height: 20px; overflow: hidden; margin-bottom: 8px;">
                         <div id="${botId}-video-progress" style="background: linear-gradient(90deg, #89b4fa, #cba6f7); height: 100%; width: 0%; border-radius: 8px; transition: width 0.5s ease;"></div>
                     </div>
@@ -6669,6 +6694,7 @@
             baseSystemPrompt += "\n\nKURAL: SADECE VE SADECE eğer kullanıcı kendisiyle, hayatıyla, zevkleriyle veya fiziksel özellikleriyle ilgili ÇOK ÖNEMLİ VE KALICI bir kişisel bilgi verirse (Örn: adım Ahmet, yaşım 25, kedim var, fıstığa alerjim var vb.), mesajının en sonuna BİREBİR şu formatta gizli bir not düşmelisin: [REMEMBER: Kullanıcı 25 yaşındaymış ve adı Ahmet'miş]. Sıradan sohbetlerde veya kullanıcının senden bir şey yapmanı/yazmanı istediği anlarda (Örn: hesap makinesi yaz, kod yaz) KESİNLİKLE [REMEMBER] KULLANMA! Sadece kişisel bilgileri kaydet.";
             baseSystemPrompt += "\n\nKURAL 2 (ÇOK ÖNEMLİ): Eğer kullanıcı senden bir oyun, arayüz, hesap makinesi veya web tabanlı herhangi bir uygulama yapmanı/kodlamanı isterse, KODU SADECE HTML BLOKLARI İÇİNDE YAZ. Başka metin ekleme.";
             baseSystemPrompt += getStyleModeInstruction();
+            baseSystemPrompt += getClaudeProviderInstruction();
             baseSystemPrompt += getSpeechStyleInstruction();
             baseSystemPrompt += getResponseStyleGovernorInstruction();
             baseSystemPrompt += getResponseControlInstruction(text);
@@ -7395,7 +7421,7 @@
                 const fallbackContainer = document.createElement("div");
                 fallbackContainer.innerHTML = `<div id="${videoId}" style="text-align:center; margin: 15px 0; background: #181825; padding: 15px; border-radius: 12px; border: 1px solid #45475a;">
                             <div style="color:#f9e2af; font-size: 13px; margin-bottom: 10px;">Bu gerçek video değil; normal sohbet cevabı başarı sayılmadı. Video motoru başlatılıyor.</div>
-                            <div style="color: #cdd6f4; font-size: 16px; margin-bottom: 10px;">?�Z� Video modeli bağlı değil; storyboard/slideshow önizlemesi hazırlanıyor...</div>
+                            <div style="color: #cdd6f4; font-size: 16px; margin-bottom: 10px;">?�Z� Gerçek video modeli bağlı değil; storyboard/slideshow önizlemesi hazırlanıyor...</div>
                             <div style="background: #313244; border-radius: 8px; height: 20px; overflow: hidden; margin-bottom: 8px;">
                                 <div id="${videoId}-progress" style="background: linear-gradient(90deg, #89b4fa, #cba6f7); height: 100%; width: 0%; border-radius: 8px; transition: width 0.5s ease;"></div>
                             </div>
