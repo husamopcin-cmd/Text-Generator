@@ -1286,6 +1286,7 @@
         <button class="new-chat-btn" id="sidebarImageStudioBtn" onclick="setAppMode('image'); triggerImageGeneration();" style="border-color:#fab387; color:#fab387; font-size:13px; padding: 8px;">?�Z� <span class="sidebar-text">Görsel Stüdyosu</span></button>
         <button class="new-chat-btn" id="sidebarVideoStudioBtn" onclick="setAppMode('video'); triggerVideoGeneration();" style="border-color:#cba6f7; color:#cba6f7; font-size:13px; padding: 8px;">?�Z� <span class="sidebar-text">Video Stüdyosu</span></button>
         <button class="new-chat-btn" id="sidebarGameStudioBtn" onclick="setAppMode('game'); triggerGameGeneration();" style="border-color:#a6e3a1; color:#a6e3a1; font-size:13px; padding: 8px;">?���️ <span class="sidebar-text">Oyun Stüdyosu</span></button>
+        <button class="new-chat-btn" id="sidebarProjectsBtn" onclick="openProjectsScreen()" style="border-color:#f9e2af; color:#f9e2af; font-size:13px; padding: 8px; margin-top:5px;">📁 <span class="sidebar-text">Projeler</span></button>
     </div>
 
     <div class="chat-list" id="chatList">
@@ -1568,6 +1569,20 @@
             <input type="text" id="librarySearch" placeholder="?��� Başlık veya tarihe göre ara..." oninput="renderLibrary(currentLibraryTab)" style="background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px 15px; border-radius:20px; font-size:13px; width:250px; outline:none;">
         </div>
         <div id="libraryContent" class="archive-grid">
+            <!-- İçerik buraya dinamik yüklenecek -->
+        </div>
+    </div>
+
+    <!-- PROJELER EKRANI -->
+    <div class="library-screen" id="projectsScreen" style="display:none; flex: 1; padding: 30px; overflow-y: auto; background: linear-gradient(135deg, #1e1e2e, #11111b);">
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid #313244; padding-bottom: 15px; margin-bottom: 20px;">
+            <div style="display:flex; align-items:center; gap:15px;">
+                <button onclick="closeProjectsScreen()" style="background:rgba(255,255,255,0.1); color:#cdd6f4; border:none; border-radius:8px; padding:8px 12px; cursor:pointer; font-weight:bold; font-size:14px; transition:0.2s;">⬅️ Geri</button>
+                <h2 id="projectsScreenTitle" style="color: #f9e2af; margin:0; font-size:24px;">📁 Projeler</h2>
+            </div>
+            <button id="newProjectScreenBtn" class="run-code-btn" onclick="promptCreateProject()" style="background:#f9e2af; color:#11111b; width:auto; padding:8px 16px;">+ Yeni Proje</button>
+        </div>
+        <div id="projectsScreenContent" class="archive-grid">
             <!-- İçerik buraya dinamik yüklenecek -->
         </div>
     </div>
@@ -3528,6 +3543,8 @@
 
     let sessions = {}; // Tüm sohbetleri tutan obje
     let currentChatId = null;
+    let projects = {}; // Projeler (sohbet gruplama) objesi
+    let activeProjectId = null; // Projeler ekranında açık olan proje (null = proje grid'i)
 
     // ----- HAFIZA (LOCALSTORAGE) YÖNETİMİ -----
     function escapeSidebarHtml(value) {
@@ -3565,6 +3582,15 @@
             chat.manualTitle = false;
             changed = true;
         }
+        if (chat.projectId !== null && typeof chat.projectId !== "string") {
+            chat.projectId = null;
+            changed = true;
+        }
+        if (chat.projectId && !projects[chat.projectId]) {
+            // Silinmiş bir projeye işaret ediyorsa sohbeti projesiz bırak.
+            chat.projectId = null;
+            changed = true;
+        }
         return changed;
     }
 
@@ -3587,7 +3613,7 @@
         }
         try {
             const dbKey = "cinocode_db_" + (loggedUser || "default");
-            localStorage.setItem(dbKey, JSON.stringify({ sessions: clonedSessions, currentChatId }));
+            localStorage.setItem(dbKey, JSON.stringify({ sessions: clonedSessions, currentChatId, projects }));
         } catch (e) {
             console.error("Localstorage save error", e);
         }
@@ -3604,6 +3630,7 @@
                 const db = JSON.parse(saved);
                 sessions = (db && db.sessions && typeof db.sessions === "object") ? db.sessions : {};
                 currentChatId = db ? db.currentChatId : null;
+                projects = (db && db.projects && typeof db.projects === "object") ? db.projects : {};
                 migrated = normalizeAllChatMetadata();
             } catch (e) {
                 console.warn("CinoCode database parse failed; starting with a safe empty session list.", e);
@@ -3614,6 +3641,7 @@
                 }
                 sessions = {};
                 currentChatId = null;
+                projects = {};
             }
         }
 
@@ -3640,7 +3668,8 @@
             createdAt: Date.now(),
             starred: false,
             manualTitle: false,
-            updatedAt: Date.now()
+            updatedAt: Date.now(),
+            projectId: (options.projectId && projects[options.projectId]) ? options.projectId : null
         };
         currentChatId = newId;
         saveDatabase();
@@ -3663,13 +3692,16 @@
     function deleteChat(id, event) {
         event.stopPropagation(); // Satıra tıklamayı engelle
         if(confirm("Sohbeti silmek istediğine emin misin?")) {
+            const deletedProjectId = sessions[id] ? (sessions[id].projectId || null) : null;
             delete sessions[id];
             if (currentChatId === id) {
-                const remaining = getSortedChatIds(Object.keys(sessions));
+                // Aynı proje kapsamındaki (veya projesiz) bir sohbete geç, farklı bir projenin sohbetine sıçrama.
+                const sameScope = Object.keys(sessions).filter(cid => (sessions[cid]?.projectId || null) === deletedProjectId);
+                const remaining = getSortedChatIds(sameScope);
                 currentChatId = remaining.length > 0 ? remaining[0] : null;
             }
             if(!currentChatId) {
-                createNewChat();
+                createNewChat({ projectId: deletedProjectId });
             } else {
                 saveDatabase();
                 renderCurrentChat();
@@ -3796,6 +3828,7 @@
             <div class="chat-action-menu" id="menu-${id}">
                 <button class="chat-menu-item" onclick="toggleStarChat('${id}', event)">${starLabel}</button>
                 <button class="chat-menu-item" onclick="renameChat('${id}', event)">Yeniden adlandır</button>
+                <button class="chat-menu-item" onclick="assignChatToProject('${id}', event)">Projeye ekle</button>
                 <button class="chat-menu-item danger" onclick="deleteChat('${id}', event)">Sil</button>
             </div>
         `;
@@ -3806,7 +3839,8 @@
         chatListDiv.innerHTML = "";
         normalizeAllChatMetadata();
 
-        const allIds = Object.keys(sessions);
+        // Ana sidebar sadece projesiz sohbetleri gösterir; projeli sohbetler kendi proje sayfasında listelenir.
+        const allIds = Object.keys(sessions).filter(id => !sessions[id]?.projectId);
         const starredIds = getSortedChatIds(allIds.filter(id => sessions[id]?.starred === true));
         const recentIds = getSortedChatIds(allIds.filter(id => sessions[id]?.starred !== true));
         const starredSection = renderChatSection("Yıldızlı", starredIds);
@@ -3820,6 +3854,212 @@
             requestAnimationFrame(() => {
                 activeItem.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
             });
+        }
+    }
+
+    // ----- PROJELER (sohbet gruplama) -----
+    function getSortedProjectIds() {
+        return Object.keys(projects).sort((a, b) => (Number(projects[b]?.updatedAt) || 0) - (Number(projects[a]?.updatedAt) || 0));
+    }
+
+    function createProjectRecord(name, description) {
+        const id = "proj_" + Date.now();
+        projects[id] = {
+            id,
+            name: name,
+            description: description || "",
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
+            starred: false,
+            archived: false
+        };
+        saveDatabase();
+        return id;
+    }
+
+    function promptCreateProject() {
+        const name = prompt("Proje adı:");
+        if (!name || !name.trim()) return;
+        const description = prompt("Proje açıklaması (opsiyonel):", "") || "";
+        const id = createProjectRecord(name.trim(), description.trim());
+        activeProjectId = id;
+        renderProjectsScreen();
+    }
+
+    function toggleProjectMenu(id, event) {
+        event.stopPropagation();
+        document.querySelectorAll('.chat-action-menu').forEach(menu => {
+            if (menu.id !== 'project-menu-' + id) menu.classList.remove('active');
+        });
+        const menu = document.getElementById('project-menu-' + id);
+        if (menu) menu.classList.toggle('active');
+    }
+
+    function toggleStarProject(id, event) {
+        event.stopPropagation();
+        if (!projects[id]) return;
+        projects[id].starred = !projects[id].starred;
+        projects[id].updatedAt = Date.now();
+        saveDatabase();
+        renderProjectsScreen();
+    }
+
+    function editProjectDetails(id, event) {
+        event.stopPropagation();
+        if (!projects[id]) return;
+        const newName = prompt("Proje adı:", projects[id].name);
+        if (newName === null || !newName.trim()) return;
+        const newDesc = prompt("Proje açıklaması:", projects[id].description || "");
+        projects[id].name = newName.trim();
+        projects[id].description = (newDesc || "").trim();
+        projects[id].updatedAt = Date.now();
+        saveDatabase();
+        renderProjectsScreen();
+    }
+
+    function archiveProject(id, event) {
+        event.stopPropagation();
+        if (!projects[id]) return;
+        projects[id].archived = !projects[id].archived;
+        projects[id].updatedAt = Date.now();
+        saveDatabase();
+        renderProjectsScreen();
+    }
+
+    function deleteProject(id, event) {
+        event.stopPropagation();
+        if (!projects[id]) return;
+        if (!confirm('Projeyi silmek istediğine emin misin? İçindeki sohbetler silinmez, sadece projesiz kalır.')) return;
+        Object.keys(sessions).forEach(cid => {
+            if (sessions[cid] && sessions[cid].projectId === id) {
+                sessions[cid].projectId = null;
+            }
+        });
+        delete projects[id];
+        if (activeProjectId === id) activeProjectId = null;
+        saveDatabase();
+        renderProjectsScreen();
+    }
+
+    function assignChatToProject(id, event) {
+        event.stopPropagation();
+        if (!sessions[id]) return;
+        const projectIds = getSortedProjectIds().filter(pid => !projects[pid].archived);
+        if (projectIds.length === 0) {
+            alert('Henüz bir proje yok. Önce "📁 Projeler" ekranından yeni proje oluştur.');
+            return;
+        }
+        const list = projectIds.map((pid, i) => `${i + 1}. ${projects[pid].name}`).join('\n');
+        const currentIndex = sessions[id].projectId ? projectIds.indexOf(sessions[id].projectId) + 1 : 0;
+        const choice = prompt(`Bu sohbeti hangi projeye eklemek istersin?\n\n0. Projesiz bırak\n${list}\n\nNumara gir:`, String(currentIndex));
+        if (choice === null) return;
+        const num = parseInt(choice.trim(), 10);
+        if (!Number.isFinite(num)) return;
+        if (num === 0) {
+            sessions[id].projectId = null;
+        } else if (num >= 1 && num <= projectIds.length) {
+            sessions[id].projectId = projectIds[num - 1];
+        } else {
+            return;
+        }
+        sessions[id].updatedAt = Date.now();
+        saveDatabase();
+    }
+
+    function openProjectsScreen() {
+        activeProjectId = null;
+        document.getElementById('messages').style.display = 'none';
+        document.getElementById('welcomeScreen').style.display = 'none';
+        const libScreen = document.getElementById('libraryScreen');
+        if (libScreen) libScreen.style.display = 'none';
+        const sc = document.getElementById("suggestionChipsContainer");
+        if (sc) sc.style.display = "none";
+        document.getElementById('projectsScreen').style.display = 'flex';
+        renderProjectsScreen();
+    }
+
+    function closeProjectsScreen() {
+        if (activeProjectId) {
+            activeProjectId = null;
+            renderProjectsScreen();
+            return;
+        }
+        document.getElementById('projectsScreen').style.display = 'none';
+        renderCurrentChat();
+    }
+
+    function openProject(projectId) {
+        activeProjectId = projectId;
+        renderProjectsScreen();
+    }
+
+    function openChatFromProject(id) {
+        document.getElementById('projectsScreen').style.display = 'none';
+        switchChat(id);
+    }
+
+    function startNewChatInProject(projectId) {
+        document.getElementById('projectsScreen').style.display = 'none';
+        createNewChat({ projectId: projectId });
+    }
+
+    function renderProjectsScreen() {
+        const titleEl = document.getElementById('projectsScreenTitle');
+        const content = document.getElementById('projectsScreenContent');
+        const newProjectBtn = document.getElementById('newProjectScreenBtn');
+        if (!titleEl || !content) return;
+
+        if (activeProjectId && projects[activeProjectId]) {
+            const project = projects[activeProjectId];
+            titleEl.textContent = "📁 " + project.name;
+            if (newProjectBtn) newProjectBtn.style.display = 'none';
+            const chatIds = getSortedChatIds(Object.keys(sessions).filter(id => sessions[id]?.projectId === activeProjectId));
+            let html = `<div style="grid-column:1/-1; margin-bottom:15px;">
+                ${project.description ? `<div style="color:#a6adc8; margin-bottom:12px;">${escapeSidebarHtml(project.description)}</div>` : ""}
+                <button class="run-code-btn" style="background:#a6e3a1; color:#11111b; width:auto; padding:8px 16px;" onclick="startNewChatInProject('${activeProjectId}')">+ Yeni Sohbet</button>
+            </div>`;
+            if (chatIds.length === 0) {
+                html += `<div style="grid-column:1/-1; text-align:center; padding:40px; color:#a6adc8;">Bu projede henüz sohbet yok.</div>`;
+            } else {
+                chatIds.forEach(id => {
+                    const chat = sessions[id];
+                    html += `<div class="archive-card" style="background:#181825; border:1px solid #45475a; border-radius:10px; padding:14px; cursor:pointer;" onclick="openChatFromProject('${id}')">
+                        <div style="color:#cdd6f4; font-weight:600; margin-bottom:6px;">${escapeSidebarHtml(chat.title || "Yeni Sohbet")}</div>
+                        <div style="color:#6c7086; font-size:12px;">${formatDateHeader(new Date(chat.updatedAt).toISOString())}</div>
+                    </div>`;
+                });
+            }
+            content.innerHTML = html;
+        } else {
+            titleEl.textContent = "📁 Projeler";
+            if (newProjectBtn) newProjectBtn.style.display = '';
+            const projectIds = getSortedProjectIds().filter(id => !projects[id].archived);
+            if (projectIds.length === 0) {
+                content.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:50px; color:#a6adc8;">Henüz proje yok. "+ Yeni Proje" ile başla.</div>`;
+                return;
+            }
+            let html = '';
+            projectIds.forEach(id => {
+                const project = projects[id];
+                const chatCount = Object.keys(sessions).filter(cid => sessions[cid]?.projectId === id).length;
+                const starIcon = project.starred ? "★" : "☆";
+                const safeName = escapeSidebarHtml(project.name);
+                html += `<div class="archive-card" style="background:#181825; border:1px solid #45475a; border-radius:10px; padding:14px; position:relative;">
+                    <div style="cursor:pointer;" onclick="openProject('${id}')">
+                        <div style="color:#cdd6f4; font-weight:600; margin-bottom:6px; display:flex; align-items:center; gap:6px;"><span>${starIcon}</span><span>${safeName}</span></div>
+                        ${project.description ? `<div style="color:#a6adc8; font-size:12px; margin-bottom:8px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeSidebarHtml(project.description)}</div>` : ""}
+                        <div style="color:#6c7086; font-size:11px;">${chatCount} sohbet · ${formatDateHeader(new Date(project.updatedAt).toISOString())}</div>
+                    </div>
+                    <button class="action-btn chat-menu-btn" onclick="toggleProjectMenu('${id}', event)" style="position:absolute; top:10px; right:10px;" title="Proje menüsü">...</button>
+                    <div class="chat-action-menu" id="project-menu-${id}">
+                        <button class="chat-menu-item" onclick="toggleStarProject('${id}', event)">${project.starred ? "Yıldızı kaldır" : "Yıldızla"}</button>
+                        <button class="chat-menu-item" onclick="editProjectDetails('${id}', event)">Düzenle</button>
+                        <button class="chat-menu-item" onclick="archiveProject('${id}', event)">${project.archived ? "Arşivden çıkar" : "Arşivle"}</button>
+                        <button class="chat-menu-item danger" onclick="deleteProject('${id}', event)">Sil</button>
+                    </div>
+                </div>`;
+            });
+            content.innerHTML = html;
         }
     }
 
