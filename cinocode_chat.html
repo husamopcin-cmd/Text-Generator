@@ -4152,31 +4152,53 @@
     }
 
     function getVideoProviderStatus() {
-        return { ok: false, reason: 'missing_key' };
+        return { ok: false, reason: 'missing_video_provider' };
     }
 
     function renderProviderErrorCard(kind, status) {
         const reason = status && status.reason ? status.reason : 'unknown_error';
         const title = kind === 'video' ? 'Video üretilemedi' : 'Görsel üretilemedi';
         const messages = {
-            missing_key: kind === 'video'
-                ? 'Gerçek video sağlayıcısı bağlı değil. CinoCode storyboard/slideshow önizlemesi hazırlayacak; gerçek video için backend tarafında video provider/API key yapılandır.'
-                : 'Görsel üretilemedi. API anahtarı eksik veya sağlayıcı yapılandırılmamış.',
+            missing_key: 'Görsel üretilemedi. API anahtarı eksik veya sağlayıcı yapılandırılmamış.',
+            missing_video_provider: 'Gerçek video sağlayıcısı bağlı değil. CinoCode şu an storyboard/slideshow önizlemesi hazırlıyor.',
             missing_endpoint: 'Sağlayıcı endpointi yapılandırılmamış.',
             provider_unavailable: 'Sağlayıcı şu anda yanıt vermiyor veya kullanılamıyor.',
             quota_or_limit: 'Sağlayıcı kota veya hız limitine takıldı.',
             network_error: 'Ağ bağlantısı veya zaman aşımı nedeniyle üretim tamamlanamadı.',
-            cors_or_browser_block: 'Tarayıcı/CORS engeli nedeniyle sağlayıcıya ulaşılamadı. Mobil tarayıcı/CORS/provider erişimi engellenmiş olabilir.',
+            cors_or_browser_block: 'Tarayıcı/CORS engeli nedeniyle sağlayıcıya ulaşılamadı. Mobil tarayıcı/CORS/içerik engeli olabilir.',
             runware_unauthorized: 'Runware anahtarı geçersiz, yetkisiz veya kota/bakiye sorunu olabilir.',
-            runware_missing_env: 'Runware API anahtarı bulunamadı. Ayarlar > API Anahtarları veya Netlify RUNWARE_API_KEY kontrol edilmeli.',
-            runware_not_found: 'Runware endpoint adresi bulunamadı (404).',
-            unknown_error: 'Bilinmeyen bir sağlayıcı hatası oluştu. Fallback görsel sağlayıcısı da yanıt vermedi.'
+            runware_missing_env: 'Netlify RUNWARE_API_KEY eksik. Netlify Environment Variables bölümüne eklenmeli.',
+            runware_not_found: 'Görsel endpoint bulunamadı. Netlify function veya provider endpoint kontrol edilmeli (404).',
+            fallback_failed: 'Yedek görsel sağlayıcısı da yanıt vermedi.',
+            unknown_error: 'Görsel üretiminde bilinmeyen bir hata oluştu.'
         };
         const safeMessage = String(messages[reason] || messages.unknown_error)
             .replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+
+        // Safe Diagnostics
+        const providerName = kind === 'video' ? 'Video provider not configured' : (reason.startsWith('runware_') ? 'Runware Proxy' : 'Pollinations Fallback');
+        const nextSteps = {
+            runware_missing_env: 'Netlify Dashboard > Site settings > Environment variables bölümüne RUNWARE_API_KEY ekle.',
+            runware_unauthorized: 'Ayarlardan girilen yerel API keyi kontrol edin veya Netlify environment variable değerinin doğruluğunu teyit edin.',
+            cors_or_browser_block: 'Mobil tarayıcıda içerik engelleyicileri (adblock) kapatıp tekrar deneyin.',
+            missing_video_provider: 'Gerçek video için backend video provider ve ilgili API/env yapılandırılmalıdır.',
+            default: 'Ağ bağlantınızı veya API durumlarını kontrol edin.'
+        };
+        const safeNextStep = nextSteps[reason] || nextSteps.default;
+        const timeString = new Date().toLocaleTimeString();
+
         return `<div class="media-error-message" data-provider-error="${reason}" style="text-align:left; margin: 12px 0; background:#181825; border:1px solid #f38ba8; border-radius:10px; padding:12px; color:#cdd6f4;">
                     <div style="color:#f38ba8; font-weight:700; margin-bottom:6px;">${title}</div>
-                    <div style="font-size:13px; line-height:1.5;">${safeMessage}</div>
+                    <div style="font-size:13px; line-height:1.5; margin-bottom: 8px;">${safeMessage}</div>
+                    <details style="font-size:11px; color:#a6adc8; border-top: 1px solid #313244; padding-top: 6px; cursor: pointer;">
+                        <summary style="outline:none; user-select:none; color:#f9e2af; font-weight:600;">Teknik detayları göster</summary>
+                        <div style="margin-top: 6px; font-family: monospace; background:#11111b; padding: 6px; border-radius: 4px; line-height:1.4; word-break: break-all;">
+                            • Provider: ${providerName}<br>
+                            • Reason: ${reason}<br>
+                            • Time: ${timeString}<br>
+                            • Next Step: ${safeNextStep}
+                        </div>
+                    </details>
                 </div>`;
     }
 
