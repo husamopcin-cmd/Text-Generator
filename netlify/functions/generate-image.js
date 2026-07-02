@@ -1,6 +1,16 @@
-const fetch = require('node-fetch');
-
 exports.handler = async function(event) {
+  if (typeof fetch === 'undefined') {
+    return {
+      statusCode: 500,
+      headers: { 'Access-Control-Allow-Origin': '*' },
+      body: JSON.stringify({
+        ok: false,
+        error: 'runtime_fetch_missing',
+        message: 'Netlify runtime fetch desteği bulunamadı.'
+      })
+    };
+  }
+
   if (event.httpMethod === 'OPTIONS') {
     return {
       statusCode: 200,
