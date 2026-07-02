@@ -4306,8 +4306,8 @@
             const imageTitle = finalPrompt.substring(0, 15).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])) + '...';
             const safePrompt = finalPrompt.replace(/"/g, '&quot;');
 
-            const hasRunware = !!(localStorage.getItem('runware_api_key') || '').trim();
-            if (hasRunware) {
+            // Her koşulda Runware (local key yoksa Netlify proxy üzerinden) tetiklenir
+            if (true) {
                 // Runware async: önce spinner göster, sonra triggerRunwareImages() dolduracak
                 const cardId = 'rw-card-' + Date.now() + '-' + Math.floor(Math.random() * 100000);
                 setTimeout(() => triggerRunwareImages(), 50);
