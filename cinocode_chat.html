@@ -1667,6 +1667,11 @@
             </span>
         </label>
 
+        <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 6px; text-align: left; font-weight:600;">
+            Ses İsimleri
+        </div>
+        <div id="voiceNameEditorList" style="margin-bottom: 12px;"></div>
+
         <div style="display: flex; gap: 10px; margin-bottom: 10px;">
             <div style="flex: 1; text-align: left;">
                 <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px;">Azure Key:</div>
@@ -3316,6 +3321,7 @@
         document.getElementById('azureRegionInput').value = currentAzureRegion;
         const ttsVoiceLockToggle = document.getElementById('ttsVoiceLockToggle');
         if (ttsVoiceLockToggle) ttsVoiceLockToggle.checked = isTtsVoiceLockEnabled();
+        renderVoiceNameEditor();
 
         const currentVideoMode = localStorage.getItem('video_mode') || "fast";
         document.getElementById('videoModeSelect').value = currentVideoMode;
@@ -5258,14 +5264,81 @@
     let isSpeakerOn = true;
     const synth = window.speechSynthesis;
 
+    const VOICE_DEFAULT_LABELS = {
+        male_local: { icon: "?���?���‍?���", name: "Deniz (Cihazın Kendi Sesi)" },
+        male_edge_tolga: { icon: "?���?���‍?���", name: "Tolga (Standart Erkek)" },
+        female_gtts: { icon: "?���?���‍?���", name: "Ayşe Abla (Standart Kadın Sesi)" },
+        male_gtts: { icon: "?���?���", name: "Cüneyt Abi (HD Erkek Ses)" },
+        female_edge: { icon: "?���?���‍?���", name: "Cino Abla (HD Kadın Ses)" }
+    };
+
+    function getVoiceCustomNames() {
+        try { return JSON.parse(localStorage.getItem('cinocode_voice_custom_names') || '{}'); } catch (e) { return {}; }
+    }
+
+    function getVoiceDisplayName(voiceId) {
+        const custom = getVoiceCustomNames();
+        if (custom[voiceId]) return custom[voiceId];
+        const def = VOICE_DEFAULT_LABELS[voiceId];
+        return def ? def.name : voiceId;
+    }
+
+    function setVoiceCustomName(voiceId, name) {
+        const custom = getVoiceCustomNames();
+        if (name && name.trim()) {
+            custom[voiceId] = name.trim();
+        } else {
+            delete custom[voiceId];
+        }
+        localStorage.setItem('cinocode_voice_custom_names', JSON.stringify(custom));
+    }
+
+    function resetVoiceCustomName(voiceId) {
+        const custom = getVoiceCustomNames();
+        delete custom[voiceId];
+        localStorage.setItem('cinocode_voice_custom_names', JSON.stringify(custom));
+    }
+
+    function promptRenameVoice(voiceId) {
+        const currentName = getVoiceDisplayName(voiceId);
+        const newName = prompt("Bu sesin görünen adını gir:", currentName);
+        if (newName === null) return;
+        setVoiceCustomName(voiceId, newName);
+        populateVoices();
+        renderVoiceNameEditor();
+    }
+
+    function resetVoiceName(voiceId) {
+        resetVoiceCustomName(voiceId);
+        populateVoices();
+        renderVoiceNameEditor();
+    }
+
+    function renderVoiceNameEditor() {
+        const container = document.getElementById('voiceNameEditorList');
+        if (!container) return;
+        const custom = getVoiceCustomNames();
+        let html = '';
+        Object.keys(VOICE_DEFAULT_LABELS).forEach(voiceId => {
+            const displayName = getVoiceDisplayName(voiceId);
+            const isCustom = !!custom[voiceId];
+            html += `<div style="display:flex; align-items:center; justify-content:space-between; gap:8px; padding:6px 0; border-bottom:1px solid #313244;">
+                <span style="color:#cdd6f4; font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeSidebarHtml(displayName)}</span>
+                <span style="display:flex; gap:2px; flex-shrink:0;">
+                    <button type="button" onclick="promptRenameVoice('${voiceId}')" title="İsmi değiştir" style="background:transparent; border:none; color:#89b4fa; cursor:pointer; font-size:14px; padding:2px 6px;">✏️</button>
+                    ${isCustom ? `<button type="button" onclick="resetVoiceName('${voiceId}')" title="Varsayılana dön" style="background:transparent; border:none; color:#f38ba8; cursor:pointer; font-size:14px; padding:2px 6px;">↺</button>` : ''}
+                </span>
+            </div>`;
+        });
+        container.innerHTML = html;
+    }
+
     function populateVoices() {
-        let defaultHtml = `
-            <option value="male_local">?���?���‍?��� Deniz (Cihazın Kendi Sesi)</option>
-            <option value="male_edge_tolga">?���?���‍?��� Tolga (Standart Erkek)</option>
-            <option value="female_gtts">?���?���‍?��� Ayşe Abla (Standart Kadın Sesi)</option>
-            <option value="male_gtts">?���?��� Cüneyt Abi (HD Erkek Ses)</option>
-            <option value="female_edge">?���?���‍?��� Cino Abla (HD Kadın Ses)</option>
-        `;
+        let defaultHtml = '';
+        Object.keys(VOICE_DEFAULT_LABELS).forEach(voiceId => {
+            const def = VOICE_DEFAULT_LABELS[voiceId];
+            defaultHtml += `<option value="${voiceId}">${def.icon} ${escapeSidebarHtml(getVoiceDisplayName(voiceId))}</option>\n`;
+        });
 
         let voices = synth.getVoices();
         if (voices.length > 0) {
@@ -5679,32 +5752,52 @@
         return stored == null ? true : stored === '1';
     }
 
+    // Mobil cihazlarda ses adları masaüstünden çok farklı olabiliyor (ör. "Tolga" yerine
+    // sadece "Turkish" gibi jenerik bir isim). Dar bir anahtar kelime listesi eşleşmeyi
+    // kaçırıp yanlışlıkla kadın sesli bir fallback seçtiriyordu — listeyi genişlettik.
+    const MALE_VOICE_KEYWORDS = ["cem", "erkek", "male", "tolga", "cüneyt", "cuneyt", "ahmet", "mehmet", "kerem", "burak", "mustafa", "david", "mark", "daniel", "fred", "george", "man"];
+    const FEMALE_VOICE_KEYWORDS = ["yelda", "siri", "female", "kadın", "kadin", "ayşe", "ayse", "cino", "zira", "samantha", "victoria", "karen", "sara", "elif", "susan", "woman", "kız", "kiz"];
+
     function resolveTtsVoiceForSegment(voices, expectedVoiceId, langCode) {
         const requestedLang = (langCode || "tr-TR").toLowerCase();
         const trVoices = voices.filter(v => (v.lang || "").toLowerCase().includes("tr"));
         const detectedVoice = findVoiceByLanguage(voices, langCode);
-        const findVoice = (keywords) => trVoices.find(v => keywords.some(k => (v.name || "").toLowerCase().includes(k)));
+        // Not: "female"/"woman" kelimeleri "male"/"man" alt string'ini içerir (fe+male, wo+man).
+        // Bu yüzden önce kadın eşleşmesini eleyip SONRA erkek anahtar kelimesi arıyoruz — aksi halde
+        // "Turkish Female" gibi bir ses yanlışlıkla erkek eşleşmesi sayılır.
+        const isFemaleNamed = (v) => FEMALE_VOICE_KEYWORDS.some(k => (v.name || "").toLowerCase().includes(k));
+        const isMaleNamed = (v) => !isFemaleNamed(v) && MALE_VOICE_KEYWORDS.some(k => (v.name || "").toLowerCase().includes(k));
+        const findFemaleVoice = () => trVoices.find(isFemaleNamed);
+        const findMaleVoice = () => trVoices.find(isMaleNamed);
         let selectedVoice = null;
+        // Seçilen sesin cinsiyetinden emin miyiz? Değilsek speakWithLocalVoice telafi edici
+        // (daha güçlü) bir pitch düzeltmesi uygulayacak.
+        let genderMatchConfident = false;
 
         if (expectedVoiceId && expectedVoiceId.startsWith("native_")) {
             const idx = parseInt(expectedVoiceId.split("_")[1], 10);
             if (voices[idx]) selectedVoice = voices[idx];
+            genderMatchConfident = true; // kullanıcı bu cihaz sesini bilinçli seçti
         } else if (expectedVoiceId === "female_gtts" || expectedVoiceId === "female_edge") {
-            selectedVoice = findVoice(["yelda", "siri", "female", "kadın"]);
+            selectedVoice = findFemaleVoice();
+            genderMatchConfident = !!selectedVoice;
+            if (!selectedVoice) selectedVoice = trVoices.find(v => !isMaleNamed(v)) || null;
         } else if (expectedVoiceId === "male_gtts" || expectedVoiceId === "male_edge_tolga") {
-            selectedVoice = findVoice(["cem", "erkek", "male"]);
+            selectedVoice = findMaleVoice();
+            genderMatchConfident = !!selectedVoice;
+            if (!selectedVoice) selectedVoice = trVoices.find(v => !isFemaleNamed(v)) || null;
         } else if (expectedVoiceId === "male_local") {
             selectedVoice = trVoices.length > 2 ? trVoices[2] : trVoices[0];
         }
 
         if (isTtsVoiceLockEnabled() && selectedVoice) {
-            return { voice: selectedVoice, fallbackReason: requestedLang !== (selectedVoice.lang || "").toLowerCase() ? "Ses sabit kalsın açık; seçili ses segment dili değişse de korundu." : "" };
+            return { voice: selectedVoice, genderMatchConfident, fallbackReason: requestedLang !== (selectedVoice.lang || "").toLowerCase() ? "Ses sabit kalsın açık; seçili ses segment dili değişse de korundu." : "" };
         }
-        if (requestedLang !== "tr-tr" && detectedVoice) return { voice: detectedVoice, fallbackReason: "Ses sabit kalsın kapalı veya seçili ses yok; segment diline uygun yerel ses kullanıldı." };
-        if (selectedVoice) return { voice: selectedVoice, fallbackReason: "" };
-        if (trVoices.length > 0) return { voice: trVoices[0], fallbackReason: "Seçili karakter sesi bulunamadı; Türkçe yerel fallback kullanıldı." };
-        if (voices.length > 0) return { voice: voices[0], fallbackReason: "Türkçe ses bulunamadı; cihazın varsayılan Web Speech sesi kullanıldı." };
-        return { voice: null, fallbackReason: "Yerel Web Speech voice listesi boş; tarayıcı varsayılanı kullanılacak." };
+        if (requestedLang !== "tr-tr" && detectedVoice) return { voice: detectedVoice, genderMatchConfident: false, fallbackReason: "Ses sabit kalsın kapalı veya seçili ses yok; segment diline uygun yerel ses kullanıldı." };
+        if (selectedVoice) return { voice: selectedVoice, genderMatchConfident, fallbackReason: "" };
+        if (trVoices.length > 0) return { voice: trVoices[0], genderMatchConfident: false, fallbackReason: "Seçili karakter sesi bulunamadı; Türkçe yerel fallback kullanıldı." };
+        if (voices.length > 0) return { voice: voices[0], genderMatchConfident: false, fallbackReason: "Türkçe ses bulunamadı; cihazın varsayılan Web Speech sesi kullanıldı." };
+        return { voice: null, genderMatchConfident: false, fallbackReason: "Yerel Web Speech voice listesi boş; tarayıcı varsayılanı kullanılacak." };
     }
 
     function setTtsRouteMeta(engine, expectedVoiceId, voice, fallbackReason = "") {
@@ -5718,16 +5811,26 @@
         };
     }
 
-    function speakWithLocalVoice(cleanText, expectedRunId, expectedVoiceId, langCode = "tr-TR", onDone = null) {
+    function speakWithLocalVoice(cleanText, expectedRunId, expectedVoiceId, langCode = "tr-TR", onDone = null, voiceRetriesLeft = 5) {
         if (!isSpeakerOn || speechRunId !== expectedRunId || voiceSelect.value !== expectedVoiceId) {
             isPlayingTTS = false;
             return;
         }
-        const utterance = new SpeechSynthesisUtterance(cleanText);
         let voices = synth.getVoices();
+        if (voices.length === 0 && voiceRetriesLeft > 0) {
+            // Mobil Chrome/Safari'de ses listesi async ve geç doluyor; kısa süre bekleyip tekrar dene
+            // (yoksa boş listeyle cihazın "varsayılan" sesine düşülüp pitch ayarı yanlış sese uygulanıyordu).
+            setTimeout(() => speakWithLocalVoice(cleanText, expectedRunId, expectedVoiceId, langCode, onDone, voiceRetriesLeft - 1), 150);
+            return;
+        }
+        const utterance = new SpeechSynthesisUtterance(cleanText);
         const resolvedVoice = resolveTtsVoiceForSegment(voices, expectedVoiceId, langCode);
         let fallbackReason = resolvedVoice.fallbackReason || "";
         if (resolvedVoice.voice) utterance.voice = resolvedVoice.voice;
+        // Seçilen ses cinsiyetinden emin değilsek (mobilde isim eşleşmesi başarısız olduysa),
+        // erkek sesler için pitch'i belirgin şekilde daha da düşürerek telafi et — aksi halde
+        // yanlışlıkla seçilen kadın sesli fallback üstünde hafif bir pitch düşüşü yetersiz kalıyor.
+        const genderConfident = resolvedVoice.genderMatchConfident;
 
         {
             if (expectedVoiceId === "female_gtts") {
@@ -5737,10 +5840,10 @@
                 utterance.pitch = 1.25;
                 utterance.rate = 1.05;
             } else if (expectedVoiceId === "male_gtts") {
-                utterance.pitch = 0.75;
+                utterance.pitch = genderConfident ? 0.75 : 0.55;
                 utterance.rate = 0.9;
             } else if (expectedVoiceId === "male_edge_tolga") {
-                utterance.pitch = 0.95;
+                utterance.pitch = genderConfident ? 0.95 : 0.7;
                 utterance.rate = 1.0;
             } else if (expectedVoiceId === "male_local") {
                 utterance.pitch = 1.0;
