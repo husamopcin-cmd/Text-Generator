@@ -1684,8 +1684,17 @@
         </div>
 
         <div style="background:#313244; border:1px solid #45475a; border-radius:8px; padding:10px; margin-bottom:12px; font-size:12px; color:#a6adc8; text-align:left; line-height:1.5;">
-            Cloud API anahtarları artık güvenlik için Netlify Environment Variables üzerinden yönetilir. Buraya API key yazmayın.
+            <strong>Bulut API Durumları (Netlify üzerinden otomatik bağlanır):</strong><br>
+            • Runware: Netlify env ile bağlı / eksik (Eksikse tarayıcı lokal keyine veya Pollinations fallback'ine düşer)<br>
+            • Gemini: Netlify env ile bağlı / eksik<br>
+            • Groq/xAI: Netlify env gerekli / eksik<br>
+            <span style="color:#f9e2af; display:block; margin-top:5px;">⚠️ Kendi bulut anahtarlarınız için: <i>Netlify Dashboard > Site settings > Environment variables</i> bölümüne RUNWARE_API_KEY ekleyin.</span>
         </div>
+
+        <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px; text-align: left;">
+            Runware API Key <span style="color: #6c7086; font-size: 11px;">(Lokal kullanacaksanız elle girin - boş bırakılırsa Netlify Env kullanılır)</span>:
+        </div>
+        <input type="password" id="runwareApiKeyInput" placeholder="runware API key..." style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px; border-radius:8px; margin-bottom: 10px; box-sizing: border-box; outline: none; font-size: 13px;">
 
         <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px; text-align: left;">
             Groq API Key <span style="color: #6c7086; font-size: 11px;">(sadece Groq Vision / Scout için — cloud Netlify env)</span>:
@@ -1706,11 +1715,6 @@
             OpenRouter API Key <span style="color: #6c7086; font-size: 11px;">(sadece OpenRouter Vision için — cloud Netlify env)</span>:
         </div>
         <input type="text" id="openrouterApiKeyInput" placeholder="sk-or-v1-..." style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px; border-radius:8px; margin-bottom: 10px; box-sizing: border-box; outline: none; font-size: 13px;">
-
-        <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px; text-align: left;">
-            Runware API Key <span style="color: #a6e3a1; font-size: 11px;">(Görsel Üretim — runware.ai, filtresiz)</span>:
-        </div>
-        <input type="text" id="runwareApiKeyInput" placeholder="runware API key..." style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px; border-radius:8px; margin-bottom: 10px; box-sizing: border-box; outline: none; font-size: 13px;">
 
         <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px; text-align: left;">
             xAI API Key <span style="color: #f38ba8; font-size: 11px;">(Grok 3 / Grok 3 Mini — console.x.ai)</span>:
@@ -1751,8 +1755,8 @@
         <label style="display:flex; align-items:flex-start; gap:10px; color:#cdd6f4; font-size:13px; line-height:1.35; text-align:left; margin-bottom: 15px;">
             <input type="checkbox" id="freeContentModeInput" style="margin-top:2px; accent-color:#f38ba8;">
             <span>
-                <strong>Yetişkin Estetik Yardımcısı</strong><br>
-                <span style="color:#a6adc8; font-size:12px;">Yalnızca uygun insan/romantik temalı üretimlerde devreye girer. Doğa, hayvan, ürün, mimari ve aksiyon promptlarını etkilemez.</span>
+                <strong>Serbest İçerik Modu</strong><br>
+                <span style="color:#a6adc8; font-size:12px;">Daha cesur ve sinematik görsel/video üslubu. Güvenlik sınırları korunur.</span>
             </span>
         </label>
 
@@ -2428,32 +2432,63 @@
 
     async function generateRunwareImage(prompt, width = 1024, height = 1024) {
         const apiKey = (localStorage.getItem('cinocode_runware_api_key') || localStorage.getItem('runware_api_key') || '').trim();
-        if (!apiKey) return null;
-        const taskUUID = (typeof crypto !== 'undefined' && crypto.randomUUID)
-            ? crypto.randomUUID()
-            : Date.now().toString(36) + Math.random().toString(36).slice(2);
+        const useProxy = !apiKey;
+
         try {
-            const resp = await fetch('https://api.runware.ai/v1', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
-                body: JSON.stringify([{
-                    taskType: 'imageInference',
-                    taskUUID,
-                    positivePrompt: prompt,
-                    model: 'runware:100@1',
-                    width,
-                    height,
-                    numberResults: 1,
-                    outputType: ['URL']
-                }])
-            });
-            if (!resp.ok) return null;
+            let resp;
+            if (useProxy) {
+                // Netlify Function proxy'si üzerinden çağrı
+                resp = await fetch('/.netlify/functions/generate-image', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt, width, height })
+                });
+            } else {
+                // Doğrudan tarayıcıdan çağrı (Local key tanımlıysa)
+                const taskUUID = (typeof crypto !== 'undefined' && crypto.randomUUID)
+                    ? crypto.randomUUID()
+                    : Date.now().toString(36) + Math.random().toString(36).slice(2);
+                resp = await fetch('https://api.runware.ai/v1', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
+                    body: JSON.stringify([{
+                        taskType: 'imageInference',
+                        taskUUID,
+                        positivePrompt: prompt,
+                        model: 'runware:100@1',
+                        width,
+                        height,
+                        numberResults: 1,
+                        outputType: ['URL']
+                    }])
+                });
+            }
+
+            if (!resp.ok) {
+                let errorMsg = 'provider_error';
+                if (resp.status === 401 || resp.status === 403) errorMsg = 'unauthorized';
+                else if (resp.status === 404) errorMsg = 'not_found';
+                else if (resp.status === 503) errorMsg = 'missing_env';
+                return { success: false, status: resp.status, error: errorMsg };
+            }
+
             const data = await resp.json();
-            const result = data.data && data.data[0];
-            return (result && result.imageURL) ? result.imageURL : null;
+            if (useProxy) {
+                if (data && data.ok && data.images && data.images[0]) {
+                    return { success: true, url: data.images[0] };
+                }
+                return { success: false, error: data.error || 'empty_response', message: data.message };
+            } else {
+                const result = data.data && data.data[0];
+                if (result && result.imageURL) {
+                    return { success: true, url: result.imageURL };
+                }
+                return { success: false, error: 'empty_response' };
+            }
         } catch (e) {
             console.warn('[Runware] Hata:', e);
-            return null;
+            const isCorsOrBlocked = e.message && (e.message.toLowerCase().includes('failed to fetch') || e.message.toLowerCase().includes('cors'));
+            return { success: false, error: isCorsOrBlocked ? 'cors_or_blocked' : 'network', message: e.message };
         }
     }
 
@@ -2465,16 +2500,19 @@
             const img = el.querySelector('img[data-runware-img]');
             const spinner = el.querySelector('.runware-spinner');
             if (!img || !prompt) continue;
-            const url = await generateRunwareImage(prompt);
-            if (url) {
-                img.src = url;
+
+            const result = await generateRunwareImage(prompt);
+            if (result && result.success && result.url) {
+                img.src = result.url;
                 img.style.display = 'block';
                 img.style.minHeight = '';
                 if (spinner) spinner.remove();
                 const dlBtn = el.querySelector('button');
                 if (dlBtn) dlBtn.style.display = '';
             } else {
-                // Runware başarısız → pollinations'a düş (direkt HTTPS)
+                // Runware başarısız → hata nedenini karta ata, sonra pollinations'a düş (direkt HTTPS)
+                const errType = result ? (result.error || 'unknown') : 'unknown';
+                el.setAttribute('data-runware-error', errType);
                 const seed = Math.floor(Math.random() * 999999);
                 img.src = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1024&nologo=true&seed=${seed}`;
                 if (spinner) spinner.remove();
@@ -4097,7 +4135,15 @@
         return !hasValidImageUrl(result.url || result.imageUrl || result.data || result.src);
     }
 
-    function getImageProviderStatus(error) {
+    function getImageProviderStatus(error, cardElement = null) {
+        if (cardElement && cardElement.getAttribute('data-runware-error')) {
+            const runwareErr = cardElement.getAttribute('data-runware-error');
+            if (runwareErr === 'unauthorized') return { ok: false, reason: 'runware_unauthorized' };
+            if (runwareErr === 'missing_env') return { ok: false, reason: 'runware_missing_env' };
+            if (runwareErr === 'not_found') return { ok: false, reason: 'runware_not_found' };
+            if (runwareErr === 'cors_or_blocked') return { ok: false, reason: 'cors_or_browser_block' };
+            if (runwareErr === 'network') return { ok: false, reason: 'network_error' };
+        }
         const message = String(error && (error.message || error.error || error.status || error) || "").toLocaleLowerCase("tr-TR");
         if (/429|quota|limit|rate/.test(message)) return { ok: false, reason: 'quota_or_limit' };
         if (/cors|blocked|file:/.test(message) || window.location.protocol === "file:") return { ok: false, reason: 'cors_or_browser_block' };
@@ -4120,8 +4166,11 @@
             provider_unavailable: 'Sağlayıcı şu anda yanıt vermiyor veya kullanılamıyor.',
             quota_or_limit: 'Sağlayıcı kota veya hız limitine takıldı.',
             network_error: 'Ağ bağlantısı veya zaman aşımı nedeniyle üretim tamamlanamadı.',
-            cors_or_browser_block: 'Tarayıcı/CORS engeli nedeniyle sağlayıcıya ulaşılamadı.',
-            unknown_error: 'Bilinmeyen bir sağlayıcı hatası oluştu.'
+            cors_or_browser_block: 'Tarayıcı/CORS engeli nedeniyle sağlayıcıya ulaşılamadı. Mobil tarayıcı/CORS/provider erişimi engellenmiş olabilir.',
+            runware_unauthorized: 'Runware anahtarı geçersiz, yetkisiz veya kota/bakiye sorunu olabilir.',
+            runware_missing_env: 'Runware API anahtarı bulunamadı. Ayarlar > API Anahtarları veya Netlify RUNWARE_API_KEY kontrol edilmeli.',
+            runware_not_found: 'Runware endpoint adresi bulunamadı (404).',
+            unknown_error: 'Bilinmeyen bir sağlayıcı hatası oluştu. Fallback görsel sağlayıcısı da yanıt vermedi.'
         };
         const safeMessage = String(messages[reason] || messages.unknown_error)
             .replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
@@ -4144,7 +4193,7 @@
     function handleGeneratedImageError(img) {
         const card = img && img.closest ? img.closest('[data-generated-image-card="true"]') : null;
         if (card) {
-            card.outerHTML = renderMediaErrorMessage("Görsel üretilemedi.", getImageProviderStatus("image load error"));
+            card.outerHTML = renderMediaErrorMessage("Görsel üretilemedi.", getImageProviderStatus("image load error", card));
         }
         scrubPlaceholderErrorImages(messagesDiv || document);
     }
