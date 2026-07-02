@@ -1555,12 +1555,12 @@
             </div>
         </div>
         <div class="welcome-actions">
-            <button class="welcome-btn" onclick="setQuickStart('Bana Python ile basit bir API yazıp açıkla.')">?��� Kod Yazdır</button>
-            <button class="welcome-btn" onclick="triggerImageGeneration()">?�Z� Görsel Stüdyosu</button>
-            <button class="welcome-btn" onclick="triggerVideoGeneration()">?�Z� Video Stüdyosu</button>
-            <button class="welcome-btn" onclick="triggerGameGeneration()">?���️ Oyun Stüdyosu</button>
-            <button class="welcome-btn" onclick="triggerFileInput('docUpload')">?��� Belge Özetlet</button>
-            <button class="welcome-btn" onclick="setQuickStart('Sıfırdan yapay zeka nasıl yapılır?')">?��� Yapay Zeka</button>
+            <button class="welcome-btn" onclick="setQuickStart('Bana Python ile basit bir API yazıp açıklama yap.')">⌨️ Kod Yazdır</button>
+            <button class="welcome-btn" onclick="triggerImageGeneration()">🖼️ Görsel Stüdyosu</button>
+            <button class="welcome-btn" onclick="triggerVideoGeneration()">🎥 Video Stüdyosu</button>
+            <button class="welcome-btn" onclick="triggerGameGeneration()">🎮 Oyun Stüdyosu</button>
+            <button class="welcome-btn" onclick="triggerFileInput('docUpload')">📄 Belge Özetlet</button>
+            <button class="welcome-btn" onclick="setQuickStart('Sıfırdan yapay zeka nasıl yapılır?')">🤖 Yapay Zeka</button>
         </div>
     </div>
 
@@ -1571,7 +1571,7 @@
                 <button onclick="closeLibrary()" style="background:rgba(255,255,255,0.1); color:#cdd6f4; border:none; border-radius:8px; padding:8px 12px; cursor:pointer; font-weight:bold; font-size:14px; transition:0.2s;">⬅️ Geri</button>
                 <h2 id="libraryTitle" style="color: #a6e3a1; margin:0; font-size:24px;">Arşiv</h2>
             </div>
-            <input type="text" id="librarySearch" placeholder="?��� Başlık veya tarihe göre ara..." oninput="renderLibrary(currentLibraryTab)" style="background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px 15px; border-radius:20px; font-size:13px; width:250px; outline:none;">
+            <input type="text" id="librarySearch" placeholder="🔍 Başlık veya tarihe göre ara..." oninput="renderLibrary(currentLibraryTab)" style="background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px 15px; border-radius:20px; font-size:13px; width:250px; outline:none;">
         </div>
         <div id="libraryContent" class="archive-grid">
             <!-- İçerik buraya dinamik yüklenecek -->
@@ -1608,8 +1608,8 @@
 
         <div class="input-box">
             <button class="icon-btn" onclick="openAttachMenu()" title="Eklentiler" style="font-size:22px; margin-bottom:2px;">+</button>
-            <button class="icon-btn web-search-btn" id="webSearchBtn" onclick="toggleWebSearch()" title="İnternette Ara (Wikipedia)">?���</button>
-            <button class="icon-btn mic-btn" id="micBtn" onclick="toggleMic()" title="Sesle Yaz">?�Z�️</button>
+            <button class="icon-btn web-search-btn" id="webSearchBtn" onclick="toggleWebSearch()" title="İnternette Ara (Wikipedia)">🔍</button>
+            <button class="icon-btn mic-btn" id="micBtn" onclick="toggleMic()" title="Sesle Yaz">🎙️</button>
             <textarea id="userInput" rows="1" placeholder="CinoCode'a bir şeyler sor..." oninput="autoResize(this)" onkeydown="handleKey(event)"></textarea>
             <button class="send-btn" id="sendBtn" onclick="handleSendButtonClick()" title="Gönder" aria-label="Gönder">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
@@ -1624,10 +1624,10 @@
     <div class="attach-menu-overlay" id="attachMenuOverlay" onclick="closeAttachMenu()" style="background:transparent;"></div>
     <div class="attach-menu" id="attachMenu">
         <div class="attach-menu-item" onclick="triggerFileInput('docUpload')">
-            <i>?���</i> <span>Dosya Yükle</span>
+            <i>📄</i> <span>Dosya Yükle</span>
         </div>
         <div class="attach-menu-item" onclick="triggerFileInput('imageUpload')">
-            <i>?���️</i> <span>Resim Yükle</span>
+            <i>🖼️</i> <span>Resim Yükle</span>
         </div>
         <div class="attach-menu-item" onclick="triggerImageGeneration()">
             <i>?�Z�</i> <span>Görsel Stüdyosu (Yeni)</span>
@@ -1702,14 +1702,14 @@
         <input type="password" id="runwareApiKeyInput" placeholder="runware API key..." style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px; border-radius:8px; margin-bottom: 10px; box-sizing: border-box; outline: none; font-size: 13px;">
 
         <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px; text-align: left;">
-            Groq API Key <span style="color: #6c7086; font-size: 11px;">(sadece Groq Vision / Scout için — cloud Netlify env)</span>:
+            Groq API Key <span style="color: #6c7086; font-size: 11px;">(Netlify Environment Variables ile yönetilir - readonly)</span>:
         </div>
-        <input type="text" id="groqApiKeyInput" placeholder="gsk_..." style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px; border-radius:8px; margin-bottom: 10px; box-sizing: border-box; outline: none; font-size: 13px;">
+        <input type="text" id="groqApiKeyInput" placeholder="Netlify Env üzerinden otomatik okunur..." disabled readonly style="width:100%; background:#11111b; border:1px solid #313244; color:#6c7086; padding:8px; border-radius:8px; margin-bottom: 10px; box-sizing: border-box; outline: none; font-size: 13px; cursor:not-allowed; opacity:0.7;">
 
         <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px; text-align: left;">
-            Google Gemini API Key <span style="color: #6c7086; font-size: 11px;">(devre dışı — Netlify env)</span>:
+            Google Gemini API Key <span style="color: #6c7086; font-size: 11px;">(Netlify Environment Variables ile yönetilir - readonly)</span>:
         </div>
-        <input type="text" id="geminiApiKeyInput" placeholder="AIza..." disabled readonly style="width:100%; background:#11111b; border:1px solid #313244; color:#6c7086; padding:8px; border-radius:8px; margin-bottom: 10px; box-sizing: border-box; outline: none; font-size: 13px; cursor:not-allowed; opacity:0.7;">
+        <input type="text" id="geminiApiKeyInput" placeholder="Netlify Env üzerinden otomatik okunur..." disabled readonly style="width:100%; background:#11111b; border:1px solid #313244; color:#6c7086; padding:8px; border-radius:8px; margin-bottom: 10px; box-sizing: border-box; outline: none; font-size: 13px; cursor:not-allowed; opacity:0.7;">
 
         <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px; text-align: left;">
             NVIDIA NIM API Key <span style="color: #cba6f7; font-size: 11px;">(build.nvidia.com)</span>:
@@ -1717,9 +1717,9 @@
         <input type="text" id="nvidiaApiKeyInput" placeholder="nvapi-..." style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px; border-radius:8px; margin-bottom: 10px; box-sizing: border-box; outline: none; font-size: 13px;">
 
         <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px; text-align: left;">
-            OpenRouter API Key <span style="color: #6c7086; font-size: 11px;">(sadece OpenRouter Vision için — cloud Netlify env)</span>:
+            OpenRouter API Key <span style="color: #6c7086; font-size: 11px;">(Netlify Environment Variables ile yönetilir - readonly)</span>:
         </div>
-        <input type="text" id="openrouterApiKeyInput" placeholder="sk-or-v1-..." style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px; border-radius:8px; margin-bottom: 10px; box-sizing: border-box; outline: none; font-size: 13px;">
+        <input type="text" id="openrouterApiKeyInput" placeholder="Netlify Env üzerinden otomatik okunur..." disabled readonly style="width:100%; background:#11111b; border:1px solid #313244; color:#6c7086; padding:8px; border-radius:8px; margin-bottom: 10px; box-sizing: border-box; outline: none; font-size: 13px; cursor:not-allowed; opacity:0.7;">
 
         <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px; text-align: left;">
             xAI API Key <span style="color: #f38ba8; font-size: 11px;">(Grok 3 / Grok 3 Mini — console.x.ai)</span>:
@@ -2471,10 +2471,24 @@
 
             if (!resp.ok) {
                 let errorMsg = 'provider_error';
+                let message = 'Runware API hatası.';
+                try {
+                    const errorData = await resp.json();
+                    if (errorData && errorData.error) errorMsg = errorData.error;
+                    if (errorData && errorData.message) message = errorData.message;
+                    // Detaylarda insufficientCredits varsa yakala
+                    if (errorData && errorData.details) {
+                        const detailsStr = typeof errorData.details === 'string' ? errorData.details : JSON.stringify(errorData.details);
+                        if (detailsStr.includes('insufficientCredits')) {
+                            errorMsg = 'runware_insufficient_credits';
+                            message = 'Runware bakiyesi/kredisi yetersiz.';
+                        }
+                    }
+                } catch(e) {}
                 if (resp.status === 401 || resp.status === 403) errorMsg = 'unauthorized';
                 else if (resp.status === 404) errorMsg = 'not_found';
                 else if (resp.status === 503) errorMsg = 'missing_env';
-                return { success: false, status: resp.status, error: errorMsg };
+                return { success: false, status: resp.status, error: errorMsg, message: message };
             }
 
             const data = await resp.json();
@@ -2482,7 +2496,13 @@
                 if (data && data.ok && data.images && data.images[0]) {
                     return { success: true, url: data.images[0] };
                 }
-                return { success: false, error: data.error || 'empty_response', message: data.message };
+                let proxyError = data.error || 'empty_response';
+                let proxyMessage = data.message;
+                if (data && data.details && JSON.stringify(data.details).includes('insufficientCredits')) {
+                    proxyError = 'runware_insufficient_credits';
+                    proxyMessage = 'Runware bakiyesi/kredisi yetersiz.';
+                }
+                return { success: false, error: proxyError, message: proxyMessage };
             } else {
                 const result = data.data && data.data[0];
                 if (result && result.imageURL) {
@@ -2521,6 +2541,16 @@
                 const seed = Math.floor(Math.random() * 999999);
                 img.src = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1024&nologo=true&seed=${seed}`;
                 if (spinner) spinner.remove();
+                // Kullanıcıya bakiye hatası veya diğer hatalar durumunda fallback bilgilendirme kartı bas
+                const container = el.closest('[data-generated-image-card="true"]') || el;
+                const note = errType === 'runware_insufficient_credits'
+                    ? '⚠️ Runware kredisi yetersiz olduğu için ücretsiz yedek (Pollinations) kullanıldı.'
+                    : `⚠️ Runware hatası (${errType}) nedeniyle ücretsiz yedek (Pollinations) kullanıldı.`;
+
+                const infoDiv = document.createElement('div');
+                infoDiv.style.cssText = 'color:#f9e2af; font-size:11px; margin-top:8px; text-align:center; font-style:italic;';
+                infoDiv.textContent = note;
+                container.appendChild(infoDiv);
             }
         }
     }
@@ -3107,7 +3137,7 @@
     }
 
     function getResponseStyleGovernorInstruction() {
-        return "\n\nCEVAP STİLİ FRENI: Samimi ve doğal konuş ama ölçülü kal. Kullanıcının her kelimesini taklit etme; her cevabı 'hahaha', 'hadi bakalım', 'ne diyelim' veya roleplay/persona şovu formatına çevirme. Kullanıcı açıkça istemedikçe rol yapma, abartılı karakter performansı, gereksiz seçenek listesi ve her satıra emoji koyma. Normal soruya normal, kısa ve işe yarar cevap ver; kanka tonunu cevabın odağını bozmayacak kadar kullan. Kullanıcı sinirli veya argo konuşursa bunu argo/küfürlü üslup isteği sayma; sakin kal ve sorunu çözmeye odaklan. Bilinmeyen kullanıcı adı için '[Senin adın]' gibi placeholder yazma; gerekirse 'kanka' de.";
+        return "\n\nCEVAP STİLİ FRENI VE GÜVENLİK SINIRI: Samimi ve doğal konuş ama ölçülü kal. Kullanıcının her kelimesini taklit etme; her cevabı 'hahaha', 'hadi bakalım' gibi roleplay/persona şovuna çevirme. KESİNLİKLE KULLANICININ AĞZINDAN KABA, KÜFÜRLÜ VEYA VULGAR SÖZLER UYDURMA. Kullanıcı 'sikerim ha sen' veya benzeri kaba/küfürlü kelimeler yazmadığı sürece, onun mesajını yorumlarken asla bu tarz ifadeler uydurup 'şunu anladım' diyerek tırnak içinde tekrarlama. Normal soruya normal, kısa ve işe yarar cevap ver; kanka tonunu cevabın odağını bozmayacak kadar kullan. Kullanıcı sinirli veya argo konuşsa bile, sen asistan olarak Standart/Dengeli modda asla küfür veya kaba sokak argosu üretme. Belirsiz veya yanlış anlaşılan ses kayıtlarında kaba kelimeler varsaymak yerine, 'Kanka tam anlayamadım, tekrar yazar mısın?' şeklinde nötr ve samimi bir dönüş yap.";
     }
 
     function isLimitFinishReason(reason) {
