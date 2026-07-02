@@ -2,6 +2,10 @@
   functions = "netlify/functions"
 
 [[redirects]]
+  from = "/.netlify/*"
+  status = 200
+
+[[redirects]]
   from = "/*"
   to = "/cinocode_chat.html"
   status = 200
