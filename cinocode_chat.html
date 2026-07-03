@@ -1045,7 +1045,7 @@
             display: flex; gap: 8px; margin-top: 8px; opacity: 0; transition: opacity 0.2s; justify-content: flex-end;
         }
         .message:hover .msg-actions { opacity: 1; }
-        .msg-action-btn {
+        .msg-action-btn { min-width: 32px; min-height: 32px; padding: 6px; font-size: 16px; display: inline-flex; justify-content: center; align-items: center; cursor: pointer;
             background: transparent; border: none; color: #a6adc8; cursor: pointer;
             padding: 4px; border-radius: 4px; font-size: 14px; transition: 0.2s; display: flex; align-items: center; gap: 4px;
         }
@@ -1338,6 +1338,15 @@
             }
         }
         /* --- END MOBILE DRAWER FIX --- */
+
+        #modelSelect, #providerSelect, .model-dropdown-class {
+            max-width: 150px;
+            text-overflow: ellipsis;
+            overflow: hidden;
+            white-space: nowrap;
+            min-width: 0;
+        }
+
 </style>
 
 </head>
@@ -1441,13 +1450,13 @@
             <!-- Model Seçici -->
             <select id="modelSelect">
                 <!-- Netlify Bulut Proxy -->
-                <option value="openai">OpenAI Cloud ☁️</option>
+                <option value="openai">OpenAI Cloud </option>
                 <option value="cerebras">Cerebras Cloud ☁️</option>
                 <option value="deepseek">DeepSeek Cloud ☁️</option>
                 <option value="mistral">Mistral Cloud ☁️</option>
-                <option value="openrouter">OpenRouter Cloud ☁️</option>
-                <option value="gemini">Gemini Cloud ☁️</option>
-                <option value="groq">Groq Cloud ☁️</option>
+                <option value="openrouter">OpenRouter Cloud </option>
+                <option value="gemini">Gemini Cloud </option>
+                <option value="groq">Groq Cloud </option>
                 <option value="fireworks">Fireworks Cloud ☁️</option>
                 <option value="together">Together Cloud ☁️</option>
                 <!-- xAI / Grok (doğrudan API) -->
@@ -2389,16 +2398,13 @@
     function hasMediaNegativeIntent(text) {
         const normalized = normalizeMediaIntentText(text);
         if (new RegExp(`${TR_WB_BEFORE}(üretme|uretme|oluşturma|olusturma|çizme|cizme|yapma|başlatma|baslatma)${TR_WB_AFTER}`, "iu").test(normalized)) return true;
+        if (new RegExp(`${TR_WB_BEFORE}(sadece|yalnızca|yalnizca)${TR_WB_AFTER}.{0,20}${TR_WB_BEFORE}(anlat|açıkla|acikla|konuş|konus|bahset|söyle|soyle|cevap ver)${TR_WB_AFTER}`, "iu").test(normalized)) return true;
+        if (new RegExp(`${TR_WB_BEFORE}(anlat|açıkla|acikla|cevap ver)${TR_WB_AFTER}.{0,20}${TR_WB_BEFORE}(yeter|yetişir|yetisir|kâfi|kafi)${TR_WB_AFTER}`, "iu").test(normalized)) return true;
 
-        if (new RegExp(`${TR_WB_BEFORE}(sadece|yalnızca|yalnizca)${TR_WB_AFTER}.{0,20}${TR_WB_BEFORE}(anlat|açıkla|acikla|konuş|konus|bahset|söyle|soyle)${TR_WB_AFTER}`, "iu").test(normalized)) return true;
-        if (new RegExp(`${TR_WB_BEFORE}(anlat|açıkla|acikla)${TR_WB_AFTER}.{0,20}${TR_WB_BEFORE}(yeter|yetişir|yetisir|kâfi|kafi)${TR_WB_AFTER}`, "iu").test(normalized)) return true;
-
-        // CinoCode — Emergency Media Intent & Chat Routing Stabilization
-        const debugWords = ["hata verdi", "niye hata", "çalışmıyor", "calismiyor", "bozuk", "düzelt", "duzelt", "ne yaptın", "ne yaptin", "neden böyle", "neden boyle", "ekranda", "şu çıktı", "su cikti", "rapor", "log", "provider:", "reason:", "endpoint:", "network_error", "üretilemedi", "uretilemedi", "çöktü", "coktu", "console", "error", "bug"];
+        const debugWords = ["hata verdi", "niye hata", "çalışmıyor", "calismiyor", "bozuk", "düzelt", "duzelt", "ne yaptın", "ne yaptin", "naptın", "naptin", "neden böyle", "neden boyle", "ekranda", "şu çıktı", "su cikti", "rapor", "log", "provider:", "reason:", "endpoint:", "network_error", "üretilemedi", "uretilemedi", "çöktü", "coktu", "console", "error", "bug", "deli misin", "yahu", "bu niye"];
         if (debugWords.some(w => normalized.includes(w))) return true;
 
-        if (normalized.length > 250 && (normalized.includes(":") || normalized.includes("{"))) return true;
-
+        if (normalized.length > 250 && (normalized.includes(":") || normalized.includes("{") || normalized.includes("fallback"))) return true;
         return false;
     }
 
@@ -4388,14 +4394,17 @@
 
     function renderMediaErrorMessage(message, status = null) {
         if (status) return renderProviderErrorCard('image', status);
-        const safeMessage = String(message || "Görsel üretilemedi. Ağ bağlantısı veya sağlayıcı zaman aşımına uğradı.")
+        const safeMessage = String(message || "Görsel üretilemedi. Sağlayıcıya ulaşılamadı veya zaman aşımı oldu.")
             .replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]))
-            .replace(/\?/g, ''); // Temizle
+            .replace(/\?/g, '');
 
         return `<div class="media-error-message" style="text-align:left; margin: 12px 0; background:#181825; border:1px solid #f38ba8; border-radius:10px; padding:12px; color:#cdd6f4;">
                     <div style="color:#f38ba8; font-weight:700; margin-bottom:6px;">Üretim Başarısız</div>
                     <div style="font-size:13px; line-height:1.5; margin-bottom: 8px;">${safeMessage}</div>
-                    <button class="icon-btn" onclick="navigator.clipboard.writeText(this.parentElement.innerText); showNonBlockingToast('Hata kopyalandı');" style="font-size:11px; padding:4px 8px; border:1px solid #45475a; background:#313244;">📋 Hatayı Kopyala</button>
+                    <div style="display:flex; flex-wrap:wrap; gap:8px;">
+                        <button class="icon-btn" onclick="navigator.clipboard.writeText(this.parentElement.parentElement.innerText); showNonBlockingToast('Kopyalandı.');" style="font-size:11px; padding:6px 12px; border:1px solid #45475a; background:#313244; min-height:32px;">📋 Hatayı Kopyala</button>
+                        <button class="icon-btn" onclick="retryMessage()" style="font-size:11px; padding:6px 12px; border:1px solid #45475a; background:#313244; min-height:32px;">🔄 Tekrar Dene</button>
+                    </div>
                 </div>`;
     }
 
@@ -5286,13 +5295,23 @@
     }
 
 
-    function editMessage(index) {
+    function editMessage(index, event) {
+        if (event) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
         const chat = sessions[currentChatId];
+        if (!chat || !chat.messages[index]) return;
+
         const msg = chat.messages[index];
         setComposerValue(msg.content);
-        chat.messages = chat.messages.slice(0, index);
-        saveDatabase();
-        renderCurrentChat();
+
+        if (typeof showNonBlockingToast === 'function') {
+            showNonBlockingToast("Düzenleme modu: Metin giriş alanına kopyalandı.");
+        }
+
+        const inputArea = document.getElementById("messageInput");
+        if (inputArea) inputArea.focus();
     }
 
     function getMessageCopyText(content) {
@@ -5370,7 +5389,7 @@
                         <span><b>${msg.documentName || 'Ekli Belge'}</b></span>
                     </div>`;
                 }
-                htmlContent += `<div class="msg-actions"><button class="msg-action-btn" onclick="editMessage(${index})" title="Düzenle">✏️</button></div>`;
+                htmlContent += `<div class="msg-actions"><button class="msg-action-btn" onclick="editMessage(${index}, event)" title="Düzenle">✏️</button></div>`;
                 div.innerHTML = htmlContent;
             } else {
                 div.innerHTML = renderContentWithImages(msg.content, index === history.length - 1);
@@ -6982,6 +7001,8 @@
     }
 
     function cleanupGenerationUi() {
+        const warnings = document.querySelectorAll('.auto-fallback-warning');
+        warnings.forEach(w => w.remove());
         window.isGenerating = false;
         window.activeGenerationController = null;
         window.activeGenerationBotId = null;
@@ -7087,35 +7108,24 @@
 
     function generateChatTitleFromMessage(message, attachmentInfo) {
         let clean = cleanTextForTitle(message);
+        if (clean.length > 48) clean = clean.substring(0, 48) + '...';
 
-        if (!clean && attachmentInfo) {
-            if (attachmentInfo.type && attachmentInfo.type.startsWith("image/")) return "Görsel analizi";
-            if (attachmentInfo.type && attachmentInfo.type.startsWith("video/")) return "Video dosyası";
-            if (attachmentInfo.name) return attachmentInfo.name.replace(/\.[^/.]+$/, "").slice(0, 42);
-            return "Dosya sohbeti";
+        const fillerWords = ["knk", "kanka", "ya", "yaaa", "yahu", "abi", "hocam", "deli", "misin", "ne", "yaptın", "naptın"];
+        let words = clean.split(" ");
+        words = words.filter(w => {
+            const lower = w.toLowerCase().replace(/[^a-z0-9ğüşıöç]/g, "");
+            return lower && !fillerWords.includes(lower);
+        });
+        clean = words.join(" ").trim();
+
+        const isDebug = /(provider|reason|network_error|üretilemedi|hata|çalışmıyor|log|console|bug)/i.test(message);
+        if (isDebug) {
+            if (message.toLowerCase().includes("video")) return "Video Üretim Hatası";
+            if (message.toLowerCase().includes("görsel") || message.toLowerCase().includes("resim")) return "Görsel Üretim Hatası";
+            return "Hata Raporu";
         }
 
-        if (!clean) return "Yeni Sohbet";
-
-        // Baştaki hitap/dolgu kelimelerini üst üste temizle ("kanka bana bir video..." gibi).
-        let prevLen;
-        do {
-            prevLen = clean.length;
-            clean = clean.replace(TITLE_LEADING_FILLERS, "").trim();
-        } while (clean.length !== prevLen && clean.length > 0);
-
-        // Sondaki dolgu/soru ekleri ve tek başına kalan üretim fiilini temizle.
-        clean = clean.replace(TITLE_TRAILING_FILLERS, "").trim();
-        clean = clean.replace(/[?!.]+$/g, "").trim();
-        const withoutTrailingVerb = clean.replace(TITLE_TRAILING_VERBS, "").trim();
-        if (withoutTrailingVerb.split(/\s+/).filter(Boolean).length >= 2) {
-            clean = withoutTrailingVerb;
-        }
-
-        if (!clean || TITLE_GENERIC_WORDS.has(clean.toLocaleLowerCase("tr-TR"))) return "Yeni Sohbet";
-
-        if (clean.length > 48) clean = clean.slice(0, 48).trim() + "...";
-
+        if (!clean || clean === "") return isDebug ? "Hata Raporu" : "CinoCode Düzeltme";
         return clean.charAt(0).toUpperCase() + clean.slice(1);
     }
 
@@ -8243,7 +8253,12 @@
                 const botNode = document.getElementById(botId);
                 if (botNode) botNode.remove();
             } else {
-                chat.messages.push({ role: "assistant", content: hasVideoFallback ? "Video isteği algılandı; gerçek video API bağlı değil, storyboard/slideshow önizlemesi başlatıldı." : botReply });
+                if (hasVideoFallback) {
+                    const failMsg = renderMediaErrorMessage("Gerçek video sağlayıcısı yok. Storyboard önizlemesi hazırlandı.");
+                    chat.messages.push({ role: "assistant", content: failMsg });
+                } else {
+                    chat.messages.push({ role: "assistant", content: botReply });
+                }
             }
 
             chat.updatedAt = Date.now();
@@ -9147,5 +9162,85 @@ function buildExamCoachSuffix() {
     </div>
 </div>
 
-</body>
+
+    <!-- PROJECT, PROFILE & VOICE SETTINGS HOTFIX -->
+    <style>
+
+        .profile-menu-section {
+            border-bottom: 1px solid #313244;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+        }
+        .profile-menu-section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        .profile-menu-item {
+            padding: 8px;
+            cursor: pointer;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+        .profile-menu-item:hover {
+            background: rgba(137, 180, 250, 0.1);
+            color: #89b4fa;
+        }
+        .profile-menu-item.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .project-title-display {
+            font-size: 14px;
+            font-weight: 700;
+            color: #89b4fa;
+            margin-bottom: 10px;
+            padding: 0 10px;
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            min-width: 0;
+            display: block;
+        }
+    </style>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            // Project Name
+            const pName = localStorage.getItem('projectName') || "CinoCode Projesi";
+            const sidebarH = document.querySelector('.sidebar-header');
+            if (sidebarH) {
+                const pd = document.createElement('div');
+                pd.className = 'project-title-display';
+                pd.textContent = pName;
+                sidebarH.insertBefore(pd, sidebarH.firstChild);
+            }
+
+            // Advanced Profile Menu
+            const pm = document.getElementById('profileMenu');
+            if (pm) {
+                pm.innerHTML = `
+                    <div class="profile-menu-section">
+                        <div style="font-weight:bold; padding:0 8px 8px; color:#89b4fa;">Profil</div>
+                        <div class="profile-menu-item">Kullanıcı: ${pName}</div>
+                        <div class="profile-menu-item disabled" onclick="showNonBlockingToast('Yerel plan aktif.')">Yerel Kullanım</div>
+                    </div>
+                    <div class="profile-menu-section">
+                        <div style="font-weight:bold; padding:0 8px 8px; color:#89b4fa;">Tercihler</div>
+                        <div class="profile-menu-item disabled" onclick="showNonBlockingToast('Tema desteği yakında.')">Tema Seçimi</div>
+                        <div class="profile-menu-item" onclick="const vPop = document.getElementById('voiceQuickSettingsPopover'); if(vPop) { if(vPop.style.display==='none'||!vPop.style.display){if(typeof updateVoiceQuickSettingsPopover==='function')updateVoiceQuickSettingsPopover();vPop.style.display='block';}else{vPop.style.display='none';} }">Ses Ayarları</div>
+                    </div>
+                    <div class="profile-menu-section">
+                        <div style="font-weight:bold; padding:0 8px 8px; color:#89b4fa;">Veri</div>
+                        <div class="profile-menu-item disabled" onclick="showNonBlockingToast('Dışa aktarma yakında.')">Sohbetleri Dışa Aktar</div>
+                        <div class="profile-menu-item" style="color:#f38ba8;" onclick="if(confirm('Tüm geçmiş silinsin mi?')) { localStorage.removeItem('cinocode_sessions'); location.reload(); }">Sohbetleri Temizle</div>
+                    </div>
+                    <div class="profile-menu-section">
+                        <div class="profile-menu-item" onclick="location.reload()">Çıkış Yap</div>
+                    </div>
+                `;
+            }
+        });
+    </script>
+    </body>
 </html>
