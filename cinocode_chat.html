@@ -2389,9 +2389,16 @@
     function hasMediaNegativeIntent(text) {
         const normalized = normalizeMediaIntentText(text);
         if (new RegExp(`${TR_WB_BEFORE}(üretme|uretme|oluşturma|olusturma|çizme|cizme|yapma|başlatma|baslatma)${TR_WB_AFTER}`, "iu").test(normalized)) return true;
-        // "sadece anlat", "açıkla yeter" gibi: üretme, sadece konuş/açıkla isteği
+
         if (new RegExp(`${TR_WB_BEFORE}(sadece|yalnızca|yalnizca)${TR_WB_AFTER}.{0,20}${TR_WB_BEFORE}(anlat|açıkla|acikla|konuş|konus|bahset|söyle|soyle)${TR_WB_AFTER}`, "iu").test(normalized)) return true;
         if (new RegExp(`${TR_WB_BEFORE}(anlat|açıkla|acikla)${TR_WB_AFTER}.{0,20}${TR_WB_BEFORE}(yeter|yetişir|yetisir|kâfi|kafi)${TR_WB_AFTER}`, "iu").test(normalized)) return true;
+
+        // CinoCode — Emergency Media Intent & Chat Routing Stabilization
+        const debugWords = ["hata verdi", "niye hata", "çalışmıyor", "calismiyor", "bozuk", "düzelt", "duzelt", "ne yaptın", "ne yaptin", "neden böyle", "neden boyle", "ekranda", "şu çıktı", "su cikti", "rapor", "log", "provider:", "reason:", "endpoint:", "network_error", "üretilemedi", "uretilemedi", "çöktü", "coktu", "console", "error", "bug"];
+        if (debugWords.some(w => normalized.includes(w))) return true;
+
+        if (normalized.length > 250 && (normalized.includes(":") || normalized.includes("{"))) return true;
+
         return false;
     }
 
@@ -4381,11 +4388,14 @@
 
     function renderMediaErrorMessage(message, status = null) {
         if (status) return renderProviderErrorCard('image', status);
-        const safeMessage = String(message || "Görsel üretilemedi. Sağlayıcıya bağlanılamadı veya API anahtarı eksik. Ayarlar > API Anahtarları bölümünü kontrol et.")
-            .replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+        const safeMessage = String(message || "Görsel üretilemedi. Ağ bağlantısı veya sağlayıcı zaman aşımına uğradı.")
+            .replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]))
+            .replace(/\?/g, ''); // Temizle
+
         return `<div class="media-error-message" style="text-align:left; margin: 12px 0; background:#181825; border:1px solid #f38ba8; border-radius:10px; padding:12px; color:#cdd6f4;">
-                    <div style="color:#f38ba8; font-weight:700; margin-bottom:6px;">Görsel üretilemedi</div>
-                    <div style="font-size:13px; line-height:1.5;">${safeMessage}</div>
+                    <div style="color:#f38ba8; font-weight:700; margin-bottom:6px;">Üretim Başarısız</div>
+                    <div style="font-size:13px; line-height:1.5; margin-bottom: 8px;">${safeMessage}</div>
+                    <button class="icon-btn" onclick="navigator.clipboard.writeText(this.parentElement.innerText); showNonBlockingToast('Hata kopyalandı');" style="font-size:11px; padding:4px 8px; border:1px solid #45475a; background:#313244;">📋 Hatayı Kopyala</button>
                 </div>`;
     }
 
@@ -7727,9 +7737,16 @@
                 const timeoutMs = getRequestTimeoutMs();
                 const cleanModelName = actualModel.split("/").pop();
                 if (i > 0) {
-                    const warningHtml = `<div class="message bot-message" style="background: rgba(255, 150, 0, 0.1); border-left: 3px solid orange; padding: 10px; margin-bottom: 10px; border-radius: 5px; font-size: 0.9em; color: var(--text-color);">✨ <b>Otomatik Yedekleme:</b> Bir sonraki model <b>${cleanModelName}</b> deneniyor...</div>`;
-                    messagesDiv.insertAdjacentHTML('beforeend', warningHtml);
-                    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+                    const existingWarning = messagesDiv.querySelector('.auto-fallback-warning');
+                    if (existingWarning) {
+                        existingWarning.innerHTML = `🚨 <b>Otomatik Yedekleme:</b> Bir sonraki model <b>${cleanModelName}</b> deneniyor...`;
+                    } else {
+                        const warningHtml = `<div class="message bot-message auto-fallback-warning" style="background: rgba(255, 150, 0, 0.1); border-left: 3px solid orange; padding: 10px; margin-bottom: 10px; border-radius: 5px; font-size: 0.9em; color: var(--text-color);">🚨 <b>Otomatik Yedekleme:</b> Bir sonraki model <b>${cleanModelName}</b> deneniyor...</div>`;
+                        messagesDiv.insertAdjacentHTML('beforeend', warningHtml);
+                        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                    }
+
                 }
 
                 let fetchUrl, fetchOptions;
@@ -8174,12 +8191,18 @@
             const lowerText = text.toLocaleLowerCase("tr-TR");
 
             // Video intent her zaman image intent'ten önce kontrol edilsin.
-            // Negative intent control
-            const isNegativeIntent = hasMediaNegativeIntent(text) || lowerText.includes("değil") || lowerText.includes("istemiyorum");
-
-            // Video intent her zaman image intent'ten önce kontrol edilsin.
             let isVideoRequest = !isNegativeIntent && isDirectVideoCreationRequest(text);
             let isImageRequest = !isNegativeIntent && !isVideoRequest && isDirectImageGenerationRequest(text);
+
+            // YAPILACAK B — Ambiguous Prompt Clarify
+            if ((isVideoRequest || isImageRequest) && text.trim().split(/\s+/).length <= 2 && /^(kanka çiz|kanka ciz|çiz|ciz|bunu yap|şunu yap|yap|üret|uret|oluştur|olustur)$/i.test(text.trim())) {
+                const clarifyMsg = { role: "assistant", content: "Görsel mi istiyorsun, yoksa nasıl yapılacağını anlatmamı mı? Lütfen biraz detay ver kanka." };
+                displayMessage(clarifyMsg);
+                addMessageToHistory(clarifyMsg);
+                enableInput();
+                removeTypingIndicators();
+                return;
+            }
 
             const botHasVideoCode = botReply.toLowerCase().includes("[generate_video");
             const botHasCodeBlock = botReply.includes("```") || botReply.toLowerCase().includes("[generate_code");
