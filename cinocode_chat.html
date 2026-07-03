@@ -4015,10 +4015,10 @@
         return id;
     }
 
-    function promptCreateProject() {
-        const name = prompt("Proje adı:");
+    async function promptCreateProject() {
+        const name = await cinocodeAsyncPrompt("Proje adı:", "", "Örn: Yeni Proje");
         if (!name || !name.trim()) return;
-        const description = prompt("Proje açıklaması (opsiyonel):", "") || "";
+        const description = await cinocodeAsyncPrompt("Proje açıklaması (opsiyonel):", "") || "";
         const id = createProjectRecord(name.trim(), description.trim());
         activeProjectId = id;
         renderProjectsScreen();
@@ -4042,7 +4042,7 @@
         renderProjectsScreen();
     }
 
-    function editProjectDetails(id, event) {
+    async function editProjectDetails(id, event) {
         event.stopPropagation();
         if (!projects[id]) return;
         const newName = prompt("Proje adı:", projects[id].name);
@@ -4309,7 +4309,30 @@
     function handleGeneratedImageError(img) {
         const card = img && img.closest ? img.closest('[data-generated-image-card="true"]') : null;
         if (card) {
-            card.outerHTML = renderMediaErrorMessage("Görsel üretilemedi.", getImageProviderStatus("image load error", card));
+            let promptText = "";
+            try {
+                if (card.dataset.imageUrl) {
+                    const encoded = card.dataset.imageUrl.split('/prompt/')[1].split('?')[0];
+                    promptText = decodeURIComponent(encoded);
+                }
+            } catch(e){}
+            
+            const title = card.dataset.imageTitle || "Görsel";
+            card.outerHTML = `
+                <div class="media-error-message" style="text-align:left; margin: 12px 0; background:#181825; border:1px solid #f38ba8; border-radius:10px; padding:12px; color:#cdd6f4;">
+                    <div style="color:#f38ba8; font-weight:700; margin-bottom:6px;">${title} Üretilemedi</div>
+                    <div style="font-size:13px; line-height:1.5; margin-bottom: 8px;">Ağ bağlantısı veya sağlayıcı zaman aşımına uğradı. (Provider: Pollinations Fallback)</div>
+                    <details style="font-size:11px; color:#a6adc8; border-top: 1px solid #313244; padding-top: 6px; margin-bottom:10px; cursor: pointer;">
+                        <summary style="outline:none; user-select:none; color:#f9e2af; font-weight:600;">Teknik detayları göster</summary>
+                        <div style="margin-top:6px; font-family:monospace; background:#11111b; padding:8px; border-radius:4px; border:1px solid #313244; word-wrap:break-word;">
+                            Reason: network_error<br>
+                            Endpoint: image.pollinations.ai
+                        </div>
+                    </details>
+                    <div style="display:flex; gap:8px;">
+                        <button type="button" onclick="const p = decodeURIComponent('${encodeURIComponent(promptText)}'); navigator.clipboard.writeText(p); const t=this.textContent; this.textContent='Kopyalandı!'; setTimeout(()=>this.textContent=t,2000)" style="background:#313244; color:#a6adc8; border:1px solid #45475a; border-radius:6px; padding:6px 12px; font-size:11px; cursor:pointer;">Promptu Kopyala</button>
+                    </div>
+                </div>`;
         }
         scrubPlaceholderErrorImages(messagesDiv || document);
     }
@@ -5480,9 +5503,30 @@
         }
     }
 
-    function updateVoiceQuickSettingsPopover() {
+            function updateVoiceQuickSettingsPopover() {
         const popover = document.getElementById('voiceQuickSettingsPopover');
         if (!popover) return;
+
+        // Her açılışta içeriği zorla oluştur, böylece eksik render imkansızlaşır.
+        popover.innerHTML = `
+            <div style="font-weight:bold; font-size:13px; margin-bottom:8px; border-bottom:1px solid #313244; padding-bottom:6px;">Ses Ayarları</div>
+            <div style="font-size:12px; margin-bottom:8px;"><strong>Seçili Ses:</strong> <span id="quickSelectedVoiceName" style="color:#89b4fa;">-</span></div>
+            <div style="display:flex; gap:4px; margin-bottom:10px;">
+                <button type="button" onclick="quickEditSelectedVoice(event)" style="background:#313244; border:none; color:#89b4fa; cursor:pointer; font-size:11px; padding:4px 8px; border-radius:4px;">Görünen adı değiştir</button>
+                <button type="button" onclick="quickResetSelectedVoice(event)" style="background:#313244; border:none; color:#f38ba8; cursor:pointer; font-size:11px; padding:4px 8px; border-radius:4px;">Varsayılana döndür</button>
+            </div>
+            <label style="display:flex; align-items:flex-start; gap:8px; cursor:pointer; margin-bottom:10px; padding-top:6px; border-top:1px solid #313244;">
+                <input type="checkbox" id="quickVoiceLockToggle" style="margin-top:2px; accent-color:#a6e3a1;" onchange="quickSyncVoiceLock(this.checked)">
+                <span style="font-size:11px; line-height:1.2;">
+                    <strong>Ses sabit kalsın</strong><br>
+                    <span style="color:#a6adc8; font-size:10px;">Açıkken seçili ses, Türkçe/İngilizce karışık metinlerde değişmez.</span>
+                </span>
+            </label>
+            <details style="border-top:1px solid #313244; padding-top:6px;" open>
+                <summary style="font-size:11px; cursor:pointer; color:#a6e3a1; font-weight:600;">Tüm ses adlarını düzenle</summary>
+                <div id="quickVoiceAllList" style="margin-top:6px; max-height:150px; overflow-y:auto; display:flex; flex-direction:column; gap:4px;"></div>
+            </details>
+        `;
 
         const voiceSelect = document.getElementById('voiceSelect');
         const voiceId = voiceSelect ? voiceSelect.value : '';
@@ -5506,7 +5550,6 @@
             lockToggle.checked = isTtsVoiceLockEnabled();
         }
 
-        // Render all voices list in details
         const listDiv = document.getElementById('quickVoiceAllList');
         if (listDiv) {
             const custom = getVoiceCustomNames();
@@ -6398,7 +6441,16 @@
             isWebSearchEnabled = false;
             const btn = document.getElementById("webSearchBtn");
             if (btn) btn.classList.remove("active");
-            alert("Canli arama saglayicisi bagli degil. Ayarlar > API Anahtarlari bolumunden saglayici ekle.");
+            
+            const toast = document.createElement("div");
+            toast.textContent = "Canlı arama sağlayıcısı bağlı değil. Ayarlar > API & Sunucu Yapılandırması bölümünden sağlayıcı ekleyebilirsin.";
+            toast.style.cssText = "position:fixed; bottom:20px; right:20px; background:#f38ba8; color:#11111b; padding:12px 20px; border-radius:8px; z-index:999999; font-size:13px; font-weight:bold; box-shadow:0 4px 15px rgba(0,0,0,0.5); font-family:sans-serif; animation: fadeIn 0.3s ease;";
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
             return;
         }
         isWebSearchEnabled = !isWebSearchEnabled;
@@ -8972,6 +9024,19 @@ function buildExamCoachSuffix() {
     });
 
 </script>
+
+
+<!-- CUSTOM PROMPT MODAL -->
+<div id="cinocodeCustomPromptModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); backdrop-filter:blur(4px); z-index:99999; align-items:center; justify-content:center;">
+    <div style="background:#181825; border:1px solid #45475a; border-radius:12px; padding:20px; width:320px; max-width:90%; box-shadow:0 10px 30px rgba(0,0,0,0.5); font-family:sans-serif;">
+        <div id="customPromptTitle" style="color:#cdd6f4; font-size:14px; font-weight:600; margin-bottom:12px;"></div>
+        <input type="text" id="customPromptInput" style="width:100%; background:#313244; border:1px solid #45475a; color:#cdd6f4; padding:10px; border-radius:6px; font-size:13px; margin-bottom:15px; outline:none;" />
+        <div style="display:flex; justify-content:flex-end; gap:8px;">
+            <button id="customPromptCancelBtn" style="background:transparent; border:1px solid #45475a; color:#a6adc8; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:12px;">İptal</button>
+            <button id="customPromptConfirmBtn" style="background:#89b4fa; border:none; color:#11111b; padding:6px 16px; border-radius:6px; cursor:pointer; font-weight:600; font-size:12px;">Oluştur</button>
+        </div>
+    </div>
+</div>
 
 </body>
 </html>
