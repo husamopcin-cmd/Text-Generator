@@ -5241,6 +5241,9 @@
                 appendSmartSuggestions(div, msg.content, prevUser ? prevUser.content : "");
             }
             messagesDiv.appendChild(div);
+            if (msg.role === 'assistant' && typeof applyShowMoreLogic === 'function') {
+                applyShowMoreLogic(div);
+            }
         });
         // En sona görünmez bir çapa (anchor) div ekle
         let bottomAnchor = document.getElementById('chat-bottom-anchor');
@@ -8057,6 +8060,7 @@
                     appendContinuationCard(botId, "Yanıt yarıda kesilmiş olabilir. Devam ettirmek ister misin?");
                 }
             }
+            if (typeof applyShowMoreLogic === 'function') applyShowMoreLogic(document.getElementById(botId));
             // Streaming bittikten sonra kesin en alta kay
             scrollToBottom();
             setTimeout(scrollToBottom, 300);
@@ -8743,6 +8747,85 @@ function buildExamCoachSuffix() {
 
     return '';
 }
+
+    function applyShowMoreLogic(container) {
+        if (!container) return;
+        if (container.querySelector('.cinocode-show-more-btn')) return;
+
+        // Eşik değeri: 700px
+        if (container.scrollHeight <= 750) return;
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'cinocode-message-clamped';
+        wrapper.style.maxHeight = '700px';
+        wrapper.style.overflow = 'hidden';
+        wrapper.style.position = 'relative';
+
+        const nodesToMove = [];
+        container.childNodes.forEach(n => {
+            if (n.nodeType !== 1) {
+                nodesToMove.push(n);
+            } else {
+                const cls = n.className || '';
+                if (!cls.includes('msg-actions') && !cls.includes('smart-suggestions') && !cls.includes('continuation-card') && !cls.includes('typing-indicator') && n.id !== 'chat-bottom-anchor') {
+                    nodesToMove.push(n);
+                }
+            }
+        });
+
+        nodesToMove.forEach(n => wrapper.appendChild(n));
+
+        const fade = document.createElement('div');
+        fade.className = 'cinocode-fade-bottom';
+        fade.style.position = 'absolute';
+        fade.style.bottom = '0';
+        fade.style.left = '0';
+        fade.style.width = '100%';
+        fade.style.height = '60px';
+        fade.style.background = 'linear-gradient(transparent, #11111b)';
+        fade.style.pointerEvents = 'none';
+        wrapper.appendChild(fade);
+
+        container.insertBefore(wrapper, container.firstChild);
+
+        const btn = document.createElement('button');
+        btn.className = 'cinocode-show-more-btn';
+        btn.innerHTML = 'Devamını göster ▼';
+        btn.style.display = 'block';
+        btn.style.width = 'fit-content';
+        btn.style.margin = '8px auto';
+        btn.style.background = 'rgba(137,180,250,0.1)';
+        btn.style.border = '1px solid rgba(137,180,250,0.3)';
+        btn.style.color = '#89b4fa';
+        btn.style.padding = '6px 16px';
+        btn.style.borderRadius = '20px';
+        btn.style.cursor = 'pointer';
+        btn.style.fontSize = '12px';
+        btn.style.fontWeight = 'bold';
+        btn.style.transition = '0.2s';
+
+        btn.onmouseover = () => btn.style.background = 'rgba(137,180,250,0.2)';
+        btn.onmouseout = () => btn.style.background = 'rgba(137,180,250,0.1)';
+
+        btn.onclick = () => {
+            if (wrapper.style.maxHeight === '700px') {
+                wrapper.style.maxHeight = 'none';
+                fade.style.display = 'none';
+                btn.innerHTML = 'Daha az göster ▲';
+            } else {
+                wrapper.style.maxHeight = '700px';
+                fade.style.display = 'block';
+                btn.innerHTML = 'Devamını göster ▼';
+                const rect = container.getBoundingClientRect();
+                if (rect.top < 0) {
+                    container.scrollIntoView({behavior: 'smooth', block: 'start'});
+                }
+            }
+        };
+
+        container.insertBefore(btn, wrapper.nextSibling);
+    }
+
 </script>
 
 </body>
