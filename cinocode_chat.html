@@ -1148,7 +1148,7 @@
             background: rgba(203,166,247,0.1) !important;
         }
         .input-box.drag-active::after {
-            content: "?��� Dosyayı Buraya Bırakın";
+            content: "📄 Dosyayı Buraya Bırakın";
             position: absolute; top: -35px; left: 50%; transform: translateX(-50%);
             background: #cba6f7; color: #11111b; font-weight: bold; font-size: 13px;
             padding: 6px 14px; border-radius: 12px; pointer-events: none;
@@ -1491,7 +1491,7 @@
 
             <button class="skp-btn" onclick="skpTriggerGo()">▶ Başlat</button>
 
-            <span id="skp-doc-status" class="skp-no-doc" style="display:none;">?��� PDF yüklü değil</span>
+            <span id="skp-doc-status" class="skp-no-doc" style="display:none;">📄 PDF yüklü değil</span>
         </div>
     </div>
     <!-- ===== SINAV KOÇU PANELİ BİTİŞ ===== -->
@@ -1518,9 +1518,9 @@
                 </label>
                 <label>Uslup modu
                     <select id="newProjectStyle">
-                        <option value="safe">Guvenli Mod</option>
+                        <option value="safe">Güvenli Mod</option>
                         <option value="balanced">Dengeli Mod</option>
-                        <option value="free">Serbest Uslup</option>
+                        <option value="free">Serbest Üslup</option>
                     </select>
                 </label>
                 <label>Konusma tarzi
@@ -1630,16 +1630,16 @@
             <i>🖼️</i> <span>Resim Yükle</span>
         </div>
         <div class="attach-menu-item" onclick="triggerImageGeneration()">
-            <i>?�Z�</i> <span>Görsel Stüdyosu (Yeni)</span>
+            <i>🎨</i> <span>Görsel Stüdyosu (Yeni)</span>
         </div>
         <div class="attach-menu-item" onclick="triggerVideoGeneration()">
-            <i>?�Z�</i> <span>Video Stüdyosu (Yeni)</span>
+            <i>🎬</i> <span>Video Stüdyosu (Yeni)</span>
         </div>
         <div class="attach-menu-item" onclick="triggerGameGeneration()">
-            <i>?���️</i> <span>Oyun Stüdyosu (Yeni)</span>
+            <i>🎮</i> <span>Oyun Stüdyosu (Yeni)</span>
         </div>
         <div class="attach-menu-item" onclick="toggleWebSearchInMenu()">
-            <i id="menuWebSearchIcon">?���</i> <span id="menuWebSearchText">Derin Araştırma (Kapalı)</span>
+            <i id="menuWebSearchIcon">🔍</i> <span id="menuWebSearchText">Derin Araştırma (Kapalı)</span>
         </div>
 
         <!-- Gizli Inputlar -->
@@ -1742,19 +1742,19 @@
         </div>
         <select id="videoModeSelect" style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px; border-radius:8px; margin-bottom: 15px; outline: none; font-size: 13px;">
             <option value="fast_clip" selected>⚡ Hızlı Klip (5-8 sn)</option>
-            <option value="standard_video">?�Z� Standart Video (10-15 sn)</option>
-            <option value="cinematic">?�Z� Sinematik (20 sn)</option>
-            <option value="scene_long">?��� Sahne Sahne Uzun Video (45-60 sn)</option>
-            <option value="experimental_long">?��� Deneysel Uzun (90-120 sn)</option>
+            <option value="standard_video">🎬 Standart Video (10-15 sn)</option>
+            <option value="cinematic">🎬 Sinematik (20 sn)</option>
+            <option value="scene_long">🎥 Sahne Sahne Uzun Video (45-60 sn)</option>
+            <option value="experimental_long">🎥 Deneysel Uzun (90-120 sn)</option>
         </select>
 
         <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px; text-align: left;">
             Video Kalitesi:
         </div>
         <select id="videoQualitySelect" style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px; border-radius:8px; margin-bottom: 15px; outline: none; font-size: 13px;">
-            <option value="standard">?��� Standart</option>
-            <option value="high">?��z️ Yüksek</option>
-            <option value="cinematic">?�Z� Sinematik</option>
+            <option value="standard">⚡ Standart</option>
+            <option value="high">💎 Yüksek</option>
+            <option value="cinematic">🎬 Sinematik</option>
         </select>
 
         <label style="display:flex; align-items:flex-start; gap:10px; color:#cdd6f4; font-size:13px; line-height:1.35; text-align:left; margin-bottom: 15px;">
@@ -4352,7 +4352,7 @@
                 return `<div id="${cardId}" data-generated-image-card="true" data-runware-prompt="${safePrompt}" data-image-title="${imageTitle}" style="text-align:center; margin: 15px 0; background: #181825; padding: 10px; border-radius: 12px; border: 1px solid #45475a;">
                             <div class="runware-spinner" style="color:#a6adc8; font-size:13px; padding:40px 0;">Görsel üretiliyor (Runware)...</div>
                             <img data-runware-img="1" src="" style="max-width:100%; border-radius:8px; display:none; margin: 0 auto 10px auto;" onload="this.style.display='block'; handleGeneratedImageLoad(this)" onerror="handleGeneratedImageError(this)">
-                            <button class="run-code-btn" style="background:#89b4fa; color:#11111b; width:auto; padding:8px 15px; display:none;" onclick="downloadImage(this.previousElementSibling.src, 'CinoCode_Gorsel.jpg')">?��� Resmi İndir</button>
+                            <button class="run-code-btn" style="background:#89b4fa; color:#11111b; width:auto; padding:8px 15px; display:none;" onclick="downloadImage(this.previousElementSibling.src, 'CinoCode_Gorsel.jpg')">💾 Resmi İndir</button>
                         </div>`;
             }
 
@@ -4366,7 +4366,7 @@
             }
             return `<div data-generated-image-card="true" data-image-url="${imgUrl}" data-image-title="${imageTitle}" style="text-align:center; margin: 15px 0; background: #181825; padding: 10px; border-radius: 12px; border: 1px solid #45475a;">
                         <img src="${imgUrl}" style="max-width:100%; border-radius:8px; display:block; margin: 0 auto 10px auto; min-height: 200px; background: #1e1e2e center/cover no-repeat;" onload="handleGeneratedImageLoad(this)" onerror="handleGeneratedImageError(this)">
-                        <button class="run-code-btn" style="background:#89b4fa; color:#11111b; width:auto; padding:8px 15px;" onclick="downloadImage('${imgUrl}', 'CinoCode_Gorsel.jpg')">?��� Resmi İndir</button>
+                        <button class="run-code-btn" style="background:#89b4fa; color:#11111b; width:auto; padding:8px 15px;" onclick="downloadImage('${imgUrl}', 'CinoCode_Gorsel.jpg')">💾 Resmi İndir</button>
                     </div>`;
         });
         // VIDEO regex
@@ -8452,7 +8452,7 @@ function skpUpdateDocStatus() {
     if (hasDoc) {
         el.style.display = 'none';
     } else {
-        el.textContent = '?��� PDF yüklü değil';
+        el.textContent = '📄 PDF yüklü değil';
         el.style.display = 'inline';
     }
 }
