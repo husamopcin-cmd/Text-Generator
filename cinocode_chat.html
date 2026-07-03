@@ -1316,29 +1316,29 @@
         </div>
         <div class="header-controls">
             <div class="style-mode-badge" id="styleModeBadge">Serbest Üslup Aktif</div>
-            <select id="styleModeSelect" title="Uslup Modu" onchange="onStyleModeHeaderChange()" aria-hidden="true" tabindex="-1" style="max-width:150px; background:#181825; color:#cdd6f4; border:1px solid #45475a; padding:5px; border-radius:5px;">
-                <option value="safe">Guvenli Mod</option>
+            <select id="styleModeSelect" title="Üslup Modu" onchange="onStyleModeHeaderChange()" aria-hidden="true" tabindex="-1" style="max-width:150px; background:#181825; color:#cdd6f4; border:1px solid #45475a; padding:5px; border-radius:5px;">
+                <option value="safe">Güvenli Mod</option>
                 <option value="balanced">Dengeli Mod</option>
-                <option value="free">Serbest Uslup</option>
+                <option value="free">Serbest Üslup</option>
             </select>
-            <select id="speechStyleSelect" title="Konusma Tarzi" onchange="onSpeechStyleHeaderChange()" aria-hidden="true" tabindex="-1" style="max-width:170px; background:#181825; color:#cdd6f4; border:1px solid #45475a; padding:5px; border-radius:5px;">
-                <option value="default">Varsayilan</option>
+            <select id="speechStyleSelect" title="Konuşma Tarzı" onchange="onSpeechStyleHeaderChange()" aria-hidden="true" tabindex="-1" style="max-width:170px; background:#181825; color:#cdd6f4; border:1px solid #45475a; padding:5px; border-radius:5px;">
+                <option value="default">Varsayılan</option>
                 <option value="kanka">Kanka</option>
-                <option value="teacher">Resmi / Ogretmen</option>
-                <option value="short">Kisa-net</option>
+                <option value="teacher">Resmi / Öğretmen</option>
+                <option value="short">Kısa-net</option>
                 <option value="grokish">Grokvari</option>
                 <option value="expert">Ciddi uzman</option>
-                <option value="izmir">Izmir rahat tonu</option>
-                <option value="diyarbakir">Diyarbakir agzi denemesi</option>
-                <option value="kurdish_zazaki">Kurtce / Zazaca denemesi</option>
+                <option value="izmir">İzmir rahat tonu</option>
+                <option value="diyarbakir">Diyarbakır ağzı denemesi</option>
+                <option value="kurdish_zazaki">Kürtçe / Zazaca denemesi</option>
             </select>
             <!-- Kişilik Seçici -->
             <select id="personaSelect" style="max-width:180px; font-weight:bold; background:#a6e3a1; color:#11111b; border:none; padding:5px; border-radius:5px;">
-                <option value="kanka">?��� Standart Zeka (Kanka)</option>
-                <option value="usta_yazilimci">?��� Usta Yazılımcı Modu</option>
-                <option value="akademik_koc">?�Z� Sınav Koçu Modu (Ders Hazırlık)</option>
-                <option value="dil_kocu">?��� Özel Dil Koçu Modu</option>
-                <option value="derin_arastirma">?��� Derin Araştırma Modu</option>
+                <option value="kanka">🧠 Standart Zeka (Kanka)</option>
+                <option value="usta_yazilimci">💻 Usta Yazılımcı Modu</option>
+                <option value="akademik_koc">🎓 Sınav Koçu Modu (Ders Hazırlık)</option>
+                <option value="dil_kocu">🗣️ Özel Dil Koçu Modu</option>
+                <option value="derin_arastirma">🔍 Derin Araştırma Modu</option>
             </select>
             <!-- Model Seçici -->
             <select id="modelSelect">
@@ -1358,8 +1358,8 @@
                 <option disabled>──────────</option>
                 <!-- Görsel Modeller -->
                 <option value="meta-llama/llama-4-scout-17b-16e-instruct-groq">Llama 4 Scout (Görsel) - Groq Bulut ⚡</option>
-                <option value="nvidia/nemotron-nano-12b-v2-vl-nvidia">?��� Nemotron Nano VL (Görsel) - NVIDIA NIM �z</option>
-                <option value="meta-llama/llama-3.2-11b-vision-instruct:free-openrouter">?��� Llama 3.2 Vision (11B) - OpenRouter Ücretsiz</option>
+                <option value="nvidia/nemotron-nano-12b-v2-vl-nvidia">👁️ Nemotron Nano VL (Görsel) - NVIDIA NIM ⚡</option>
+                <option value="meta-llama/llama-3.2-11b-vision-instruct:free-openrouter">👁️ Llama 3.2 Vision (11B) - OpenRouter Ücretsiz</option>
                 <option disabled>──────────</option>
                 <!-- Yerel Modeller -->
                 <option value="qwen2.5:14b">Qwen 2.5 (14B) - Yerel</option>
@@ -1785,37 +1785,37 @@
 
         <div style="border-top:1px solid #313244; padding-top:12px; margin-top:4px; text-align:left;">
             <div style="color:#cdd6f4; font-size:13px; font-weight:700; margin-bottom:8px;">Mod Sistemi v2</div>
-            <label style="display:block; color:#a6adc8; font-size:12px; margin-bottom:5px;">Uslup Modu</label>
+            <label style="display:block; color:#a6adc8; font-size:12px; margin-bottom:5px;">Üslup Modu</label>
             <select id="settingsStyleModeSelect" style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px; border-radius:8px; margin-bottom:10px; outline:none; font-size:13px;">
-                <option value="safe">Guvenli Mod</option>
+                <option value="safe">Güvenli Mod</option>
                 <option value="balanced">Dengeli Mod</option>
-                <option value="free">Serbest Uslup</option>
+                <option value="free">Serbest Üslup</option>
             </select>
 
-            <label style="display:block; color:#a6adc8; font-size:12px; margin-bottom:5px;">Konusma Tarzi</label>
+            <label style="display:block; color:#a6adc8; font-size:12px; margin-bottom:5px;">Konuşma Tarzı</label>
             <select id="settingsSpeechStyleSelect" style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px; border-radius:8px; margin-bottom:10px; outline:none; font-size:13px;">
-                <option value="default">Varsayilan</option>
+                <option value="default">Varsayılan</option>
                 <option value="kanka">Kanka</option>
-                <option value="teacher">Resmi / Ogretmen</option>
-                <option value="short">Kisa-net</option>
+                <option value="teacher">Resmi / Öğretmen</option>
+                <option value="short">Kısa-net</option>
                 <option value="grokish">Grokvari</option>
                 <option value="expert">Ciddi uzman</option>
-                <option value="izmir">Izmir rahat tonu</option>
-                <option value="diyarbakir">Diyarbakir agzi denemesi</option>
-                <option value="kurdish_zazaki">Kurtce / Zazaca denemesi</option>
+                <option value="izmir">İzmir rahat tonu</option>
+                <option value="diyarbakir">Diyarbakır ağzı denemesi</option>
+                <option value="kurdish_zazaki">Kürtçe / Zazaca denemesi</option>
             </select>
 
             <label style="display:flex; align-items:center; gap:8px; color:#cdd6f4; font-size:13px; margin-bottom:8px;">
-                <input type="checkbox" id="smartSuggestionsInput" style="accent-color:#89b4fa;"> Akilli Devam Onerileri
+                <input type="checkbox" id="smartSuggestionsInput" style="accent-color:#89b4fa;"> Akıllı Devam Önerileri
             </label>
             <label style="display:flex; align-items:center; gap:8px; color:#cdd6f4; font-size:13px; margin-bottom:8px;">
-                <input type="checkbox" id="newProjectInput" style="accent-color:#89b4fa;"> Yeni Proje ekrani
+                <input type="checkbox" id="newProjectInput" style="accent-color:#89b4fa;"> Yeni Proje ekranı
             </label>
             <label style="display:flex; align-items:center; gap:8px; color:#cdd6f4; font-size:13px; margin-bottom:8px;">
-                <input type="checkbox" id="providerViewInput" style="accent-color:#89b4fa;"> Provider deneysel gorunumu
+                <input type="checkbox" id="providerViewInput" style="accent-color:#89b4fa;"> Provider deneysel görünümü
             </label>
             <label style="display:flex; align-items:center; gap:8px; color:#cdd6f4; font-size:13px; margin-bottom:10px;">
-                <input type="checkbox" id="liveSearchInput" style="accent-color:#89b4fa;"> Canli Arama
+                <input type="checkbox" id="liveSearchInput" style="accent-color:#89b4fa;"> Canlı Arama
             </label>
             <div style="background:#181825; border:1px solid #45475a; border-radius:8px; padding:10px; margin-bottom:10px; font-size:12px; color:#a6adc8; line-height:1.45;">
                 Grok/xAI baglantisi icin guvenli backend/proxy gerekir. XAI_API_KEY frontend icinde tutulmaz; Netlify/backend environment uzerinden baglanmalidir.
@@ -6007,7 +6007,7 @@
         stopAllAudio();
     }
 
-    // ----- Dİ�zER FONKSİYONLAR -----
+    // ----- DİĞER FONKSİYONLAR -----
     const renderer = new marked.Renderer();
     renderer.code = function(codeOrToken, maybeLang) {
         let code = typeof codeOrToken === 'string' ? codeOrToken : codeOrToken.text;
@@ -6109,9 +6109,9 @@
         if(sc) sc.style.display = "none";
 
         const titleEl = document.getElementById('libraryTitle');
-        if(tab === 'image') titleEl.innerHTML = "?���️ Resim Arşivi";
-        else if(tab === 'video') titleEl.innerHTML = "?�Z� Video Arşivi";
-        else titleEl.innerHTML = "?��� Belgeler";
+        if(tab === 'image') titleEl.innerHTML = "🖼️ Resim Arşivi";
+        else if(tab === 'video') titleEl.innerHTML = "🎥 Video Arşivi";
+        else titleEl.innerHTML = "📄 Belgeler";
 
         document.querySelectorAll('.lib-sidebar-btn').forEach(b => b.classList.remove('active-lib'));
         if(tab === 'image') document.getElementById('libNavImage').classList.add('active-lib');
