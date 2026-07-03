@@ -16,6 +16,19 @@
 
     <!-- PWA Cache Busting -->
     <script>
+
+    function showNonBlockingToast(msg) {
+        const toast = document.createElement("div");
+        toast.textContent = msg;
+        toast.style.cssText = "position:fixed; bottom:20px; right:20px; background:#f38ba8; color:#11111b; padding:12px 20px; border-radius:8px; z-index:999999; font-size:13px; font-weight:bold; box-shadow:0 4px 15px rgba(0,0,0,0.5); font-family:sans-serif; animation: fadeIn 0.3s ease;";
+        document.body.appendChild(toast);
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transition = 'opacity 0.3s ease';
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
+
     console.log("CINOCODE_VERSION_0afe80e_voicefix");
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.getRegistrations().then(rs => {
@@ -1306,7 +1319,7 @@
             <div id="accountPopover" style="display:none; position:absolute; bottom:35px; left:0; width:100%; background:#181825; border:1px solid #45475a; padding:12px; border-radius:8px; z-index:10010; box-shadow:0 4px 15px rgba(0,0,0,0.5); text-align:center; color:#cdd6f4;">
                 <div style="font-size:11px; color:#a6adc8; margin-bottom:12px;" id="accountStats">Sohbet verileriniz güvende.</div>
                 <button onclick="logout()" style="width:100%; min-width:0; background:rgba(243,139,168,0.1); border:1px solid rgba(243,139,168,0.3); color:#f38ba8; cursor:pointer; font-size:12px; font-weight:600; padding:7px 8px; border-radius:8px; margin-bottom:8px;">Çıkış Yap</button>
-                <button onclick="alert('Demo modu: Hesap silme devre dışı.')" style="width:100%; min-width:0; background:transparent; border:none; color:#6c7086; cursor:pointer; font-size:11px; padding:4px; text-decoration:underline;">Hesabımı Sil</button>
+
             </div>
         </div>
     </div>
@@ -4316,7 +4329,7 @@
                     promptText = decodeURIComponent(encoded);
                 }
             } catch(e){}
-            
+
             const title = card.dataset.imageTitle || "Görsel";
             card.outerHTML = `
                 <div class="media-error-message" style="text-align:left; margin: 12px 0; background:#181825; border:1px solid #f38ba8; border-radius:10px; padding:12px; color:#cdd6f4;">
@@ -4507,11 +4520,11 @@
     async function downloadImage(url, filename) {
         try {
             if (isPlaceholderErrorImage(url)) {
-                alert("Bu görsel üretilemediği için indirilemez.");
+                showNonBlockingToast("Bu görsel üretilemediği için indirilemez.");
                 return;
             }
             if (!hasValidImageUrl(url)) {
-                alert("Görsel indirilemedi. Geçerli bir görsel URL'si yok.");
+                showNonBlockingToast("Görsel indirilemedi. Geçerli bir görsel URL'si yok.");
                 return;
             }
             const response = await fetch(url);
@@ -6441,7 +6454,7 @@
             isWebSearchEnabled = false;
             const btn = document.getElementById("webSearchBtn");
             if (btn) btn.classList.remove("active");
-            
+
             const toast = document.createElement("div");
             toast.textContent = "Canlı arama sağlayıcısı bağlı değil. Ayarlar > API & Sunucu Yapılandırması bölümünden sağlayıcı ekleyebilirsin.";
             toast.style.cssText = "position:fixed; bottom:20px; right:20px; background:#f38ba8; color:#11111b; padding:12px 20px; border-radius:8px; z-index:999999; font-size:13px; font-weight:bold; box-shadow:0 4px 15px rgba(0,0,0,0.5); font-family:sans-serif; animation: fadeIn 0.3s ease;";
