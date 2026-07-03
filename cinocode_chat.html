@@ -1266,7 +1266,49 @@
             .skp-label { font-size: 11px; }
             .skp-select, .skp-btn { font-size: 12px; padding: 5px 8px; }
         }
-    </style>
+    
+    /* Toast Notification CSS */
+    #toast-container {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        z-index: 10000;
+        pointer-events: none;
+    }
+    .cinocode-toast {
+        background: #181825;
+        color: #cdd6f4;
+        border-left: 4px solid #a6e3a1; /* default success color */
+        padding: 12px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        font-size: 14px;
+        font-family: sans-serif;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        opacity: 0;
+        transform: translateY(20px);
+        transition: opacity 0.3s ease, transform 0.3s ease;
+        pointer-events: auto;
+    }
+    .cinocode-toast.show {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    @media (max-width: 768px) {
+        #toast-container {
+            bottom: 20px;
+            right: 5%;
+            left: 5%;
+            align-items: stretch;
+        }
+    }
+</style>
+
 
 </head>
 <body>
@@ -1274,12 +1316,12 @@
 <!-- SIDEBAR -->
 <div class="sidebar" id="sidebar">
     <button class="icon-btn sidebar-toggle-btn" id="sidebarCollapseBtn" onclick="toggleSidebar()" title="Sidebar Aç/Kapat">☰</button>
-    <button class="new-chat-btn" onclick="createNewChat()">
+    <button class="new-chat-btn" onclick="createNewChat()" style="flex-shrink:0;">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
         <span class="sidebar-text">Yeni Sohbet</span>
     </button>
 
-    <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:15px; border-bottom:1px solid #313244; padding-bottom:15px;">
+    <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:15px; border-bottom:1px solid #313244; padding-bottom:15px; flex-shrink:0;">
         <div style="font-size: 11px; color:#a6adc8; font-weight:bold; letter-spacing: 1px; margin-bottom: 5px;">KÜTÜPHANE</div>
         <div style="display:flex; gap:5px;">
             <button class="new-chat-btn lib-sidebar-btn" id="libNavImage" onclick="openLibrary('image')" style="flex:1; border-color:#a6e3a1; background:rgba(166,227,161,0.1); justify-content:center; padding: 8px; font-size:18px; transition:0.2s;" title="Resimler">&#x1F3A8;</button>
@@ -1298,7 +1340,7 @@
         <!-- Geçmiş sohbetler buraya eklenecek -->
     </div>
 
-    <div class="user-profile" id="userProfile" style="margin-top:auto; padding-top:12px; border-top:1px solid #313244; display:flex; flex-direction:column; gap:8px; min-width:0;">
+    <div class="user-profile" id="userProfile" style="margin-top:auto; padding-top:12px; border-top:1px solid #313244; display:flex; flex-direction:column; gap:8px; min-width:0; flex-shrink:0;">
         <div style="font-size:13px; color:#cdd6f4; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" id="welcomeText">Hoşgeldin<span id="loggedInUserWrapper">, <b id="loggedInUser" style="color:#89b4fa;"></b></span></div>
         <div style="display:flex; gap:8px; align-items:center; min-width:0;">
             <button onclick="openSettings()" title="Ayarlar" style="flex:1; min-width:0; background:#181825; border:1px solid #45475a; color:#a6e3a1; cursor:pointer; font-size:12px; font-weight:600; padding:7px 8px; border-radius:8px;">⚙️ Ayarlar</button>
@@ -1369,7 +1411,23 @@
                 <option value="llava">LLaVA (Görsel Model) - Yerel</option>
             </select>
             <!-- Ses Seçici (Dinamik Yüklenecek) -->
+            
             <select id="voiceSelect" style="max-width:180px;" onchange="saveVoicePref()"></select>
+            <div style="position:relative;">
+                <button class="icon-btn" onclick="toggleVoiceMenu(event)" title="Ses ayarları">⚙️</button>
+                <div id="voiceQuickMenu" style="display:none; position:absolute; top:35px; right:0; background:#181825; border:1px solid #45475a; padding:10px; border-radius:8px; z-index:9999; box-shadow:0 4px 12px rgba(0,0,0,0.5); min-width:200px; text-align:left;">
+                    <div style="color:#cdd6f4; font-size:13px; font-weight:bold; margin-bottom:8px;">Hızlı Ses Ayarları</div>
+                    <div id="quickVoiceNameEditorList" style="margin-bottom:8px;"></div>
+                    <label style="display:flex; align-items:flex-start; gap:8px; color:#cdd6f4; font-size:12px; margin-top:8px; border-top:1px solid #313244; padding-top:8px; cursor:pointer;">
+                        <input type="checkbox" id="quickTtsVoiceLockToggle" style="margin-top:2px; accent-color:#a6e3a1;" onchange="syncVoiceLock(this.checked)">
+                        <span>
+                            <strong>Ses sabit kalsın</strong><br>
+                            <span style="color:#a6adc8; font-size:11px;">Açıkken seçili ses, Türkçe/İngilizce karışık metinlerde değişmez.</span>
+                        </span>
+                    </label>
+                </div>
+            </div>
+
 
             <button class="icon-btn sidebar-hamburger-btn" id="sidebarHamburgerBtn" onclick="toggleSidebar()" title="Sidebar">☰</button>
         <button class="icon-btn speaker-btn active" id="speakerBtn" onclick="toggleSpeaker()" title="Sesli Okuma">&#x1F50A;</button>
@@ -1657,7 +1715,7 @@
         <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px; text-align: left;">
             Ollama Sunucu IP'si (Mobilden bağlanmak için):
         </div>
-        <input type="text" id="ollamaIpInput" placeholder="http://192.168.1.X:11434" style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px; border-radius:8px; margin-bottom: 10px; box-sizing: border-box; outline: none; font-size: 13px;">
+        <input type="text" id="ollamaIpInput" placeholder="http://..." type="password" style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px; border-radius:8px; margin-bottom: 10px; box-sizing: border-box; outline: none; font-size: 13px;">
 
         <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px; text-align: left;">
             Bulut Ses Sunucusu URL'si (Opsiyonel):
@@ -1672,10 +1730,7 @@
             </span>
         </label>
 
-        <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 6px; text-align: left; font-weight:600;">
-            Gelişmiş Ses Ayarları
-        </div>
-        <div id="voiceNameEditorList" style="margin-bottom: 12px;"></div>
+        
 
         <div style="display: flex; gap: 10px; margin-bottom: 10px;">
             <div style="flex: 1; text-align: left;">
@@ -1704,22 +1759,22 @@
         <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px; text-align: left;">
             Groq API Key <span style="color: #6c7086; font-size: 11px;">(Netlify Environment Variables ile yönetilir - readonly)</span>:
         </div>
-        <input type="text" id="groqApiKeyInput" placeholder="Netlify Env üzerinden otomatik okunur..." disabled readonly style="width:100%; background:#11111b; border:1px solid #313244; color:#6c7086; padding:8px; border-radius:8px; margin-bottom: 10px; box-sizing: border-box; outline: none; font-size: 13px; cursor:not-allowed; opacity:0.7;">
+        <input type="text" id="groqApiKeyInput" placeholder="Netlify Environment Variables üzerinden yönetilir" type="password" disabled readonly style="width:100%; background:#11111b; border:1px solid #313244; color:#6c7086; padding:8px; border-radius:8px; margin-bottom: 10px; box-sizing: border-box; outline: none; font-size: 13px; cursor:not-allowed; opacity:0.7;">
 
         <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px; text-align: left;">
             Google Gemini API Key <span style="color: #6c7086; font-size: 11px;">(Netlify Environment Variables ile yönetilir - readonly)</span>:
         </div>
-        <input type="text" id="geminiApiKeyInput" placeholder="Netlify Env üzerinden otomatik okunur..." disabled readonly style="width:100%; background:#11111b; border:1px solid #313244; color:#6c7086; padding:8px; border-radius:8px; margin-bottom: 10px; box-sizing: border-box; outline: none; font-size: 13px; cursor:not-allowed; opacity:0.7;">
+        <input type="text" id="geminiApiKeyInput" placeholder="Netlify Environment Variables üzerinden yönetilir" type="password" disabled readonly style="width:100%; background:#11111b; border:1px solid #313244; color:#6c7086; padding:8px; border-radius:8px; margin-bottom: 10px; box-sizing: border-box; outline: none; font-size: 13px; cursor:not-allowed; opacity:0.7;">
 
         <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px; text-align: left;">
             NVIDIA NIM API Key <span style="color: #cba6f7; font-size: 11px;">(build.nvidia.com)</span>:
         </div>
-        <input type="text" id="nvidiaApiKeyInput" placeholder="nvapi-..." style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px; border-radius:8px; margin-bottom: 10px; box-sizing: border-box; outline: none; font-size: 13px;">
+        <input type="text" id="nvidiaApiKeyInput" placeholder="••••••••••••••••" type="password" style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px; border-radius:8px; margin-bottom: 10px; box-sizing: border-box; outline: none; font-size: 13px;">
 
         <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px; text-align: left;">
             OpenRouter API Key <span style="color: #6c7086; font-size: 11px;">(Netlify Environment Variables ile yönetilir - readonly)</span>:
         </div>
-        <input type="text" id="openrouterApiKeyInput" placeholder="Netlify Env üzerinden otomatik okunur..." disabled readonly style="width:100%; background:#11111b; border:1px solid #313244; color:#6c7086; padding:8px; border-radius:8px; margin-bottom: 10px; box-sizing: border-box; outline: none; font-size: 13px; cursor:not-allowed; opacity:0.7;">
+        <input type="text" id="openrouterApiKeyInput" placeholder="Netlify Environment Variables üzerinden yönetilir" type="password" disabled readonly style="width:100%; background:#11111b; border:1px solid #313244; color:#6c7086; padding:8px; border-radius:8px; margin-bottom: 10px; box-sizing: border-box; outline: none; font-size: 13px; cursor:not-allowed; opacity:0.7;">
 
         <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px; text-align: left;">
             xAI API Key <span style="color: #f38ba8; font-size: 11px;">(Grok 3 / Grok 3 Mini — console.x.ai)</span>:
@@ -1826,7 +1881,10 @@
             </div>
         </div>
 
-        <button class="send-btn" style="width: 100%; border-radius: 8px; padding: 10px;" onclick="saveSettings()">Kaydet</button>
+        </div>
+</details>
+
+<button class="send-btn" style="width: 100%; border-radius: 8px; padding: 10px;" onclick="saveSettings()">Kaydet</button>
     </div>
 
     <!-- Artifact Modal -->
@@ -3396,7 +3454,7 @@
         document.getElementById('azureRegionInput').value = currentAzureRegion;
         const ttsVoiceLockToggle = document.getElementById('ttsVoiceLockToggle');
         if (ttsVoiceLockToggle) ttsVoiceLockToggle.checked = isTtsVoiceLockEnabled();
-        renderVoiceNameEditor();
+        if(typeof renderQuickVoiceMenu === 'function') renderQuickVoiceMenu();
 
         const currentVideoMode = localStorage.getItem('video_mode') || "fast";
         document.getElementById('videoModeSelect').value = currentVideoMode;
@@ -3619,7 +3677,7 @@
         applyFeatureUiState();
 
         closeSettings();
-        alert("Ayarlar kaydedildi!");
+        showToast("Ayarlar kaydedildi!", "success");
     }
 
     let sessions = {}; // Tüm sohbetleri tutan obje
@@ -5407,19 +5465,70 @@
         localStorage.setItem('cinocode_voice_custom_names', JSON.stringify(custom));
     }
 
+    
+    function toggleVoiceMenu(e) {
+        if(e) e.stopPropagation();
+        const menu = document.getElementById('voiceQuickMenu');
+        if (menu.style.display === 'none') {
+            renderQuickVoiceMenu();
+            menu.style.display = 'block';
+        } else {
+            menu.style.display = 'none';
+        }
+    }
+    
+    document.addEventListener('click', (e) => {
+        const menu = document.getElementById('voiceQuickMenu');
+        if(menu && menu.style.display === 'block' && !menu.contains(e.target) && !e.target.closest('button[title="Ses ayarları"]')) {
+            menu.style.display = 'none';
+        }
+    });
+    
+    function renderQuickVoiceMenu() {
+        const container = document.getElementById('quickVoiceNameEditorList');
+        if(!container) return;
+        const voiceSelect = document.getElementById('voiceSelect');
+        const voiceId = voiceSelect.value;
+        if(!voiceId || voiceId.startsWith('native_')) {
+            container.innerHTML = `<div style="color:#a6adc8; font-size:12px;">Cihaz sesleri için isim değiştirilemez.</div>`;
+        } else {
+            const displayName = getVoiceDisplayName(voiceId);
+            const isCustom = !!getVoiceCustomNames()[voiceId];
+            container.innerHTML = `<div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+                <span style="color:#cdd6f4; font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:140px;">${escapeSidebarHtml(displayName)}</span>
+                <span style="display:flex; gap:2px; flex-shrink:0;">
+                    <button type="button" onclick="promptRenameVoice('${voiceId}')" title="İsmi değiştir" style="background:transparent; border:none; color:#89b4fa; cursor:pointer; font-size:14px; padding:2px 6px;">✏️</button>
+                    ${isCustom ? `<button type="button" onclick="resetVoiceName('${voiceId}')" title="Varsayılana dön" style="background:transparent; border:none; color:#f38ba8; cursor:pointer; font-size:14px; padding:2px 6px;">↺</button>` : ''}
+                </span>
+            </div>`;
+        }
+        
+        const toggle = document.getElementById('quickTtsVoiceLockToggle');
+        const mainToggle = document.getElementById('ttsVoiceLockToggle');
+        if(toggle && mainToggle) toggle.checked = mainToggle.checked;
+    }
+    
+    function syncVoiceLock(val) {
+        const mainToggle = document.getElementById('ttsVoiceLockToggle');
+        if(mainToggle) {
+            mainToggle.checked = val;
+            saveSettings(); // Ensure change is saved immediately
+        }
+    }
+
     function promptRenameVoice(voiceId) {
         const currentName = getVoiceDisplayName(voiceId);
         const newName = prompt("Bu sesin görünen adını gir:", currentName);
         if (newName === null) return;
         setVoiceCustomName(voiceId, newName);
         populateVoices();
-        renderVoiceNameEditor();
+        if(typeof renderQuickVoiceMenu === 'function') renderQuickVoiceMenu();
     }
 
     function resetVoiceName(voiceId) {
         resetVoiceCustomName(voiceId);
         populateVoices();
-        renderVoiceNameEditor();
+        if(typeof renderQuickVoiceMenu === 'function') renderQuickVoiceMenu();
     }
 
     function renderVoiceNameEditor() {
@@ -5477,6 +5586,8 @@
 
     function saveVoicePref() {
         localStorage.setItem("cinocode_voice_idx", voiceSelect.value);
+        const menu = document.getElementById("voiceQuickMenu");
+        if(menu && menu.style.display === "block") renderQuickVoiceMenu();
     }
 
     function toggleSpeaker() {
@@ -8605,6 +8716,47 @@ function buildExamCoachSuffix() {
 
     return '';
 }
+
+    // Toast Notification Helper
+    function showToast(message, type = "success") {
+        let container = document.getElementById('toast-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'toast-container';
+            document.body.appendChild(container);
+        }
+
+        const toast = document.createElement('div');
+        toast.className = 'cinocode-toast';
+        
+        let icon = "✅";
+        if (type === "error") {
+            toast.style.borderLeftColor = "#f38ba8";
+            icon = "❌";
+        } else if (type === "warning") {
+            toast.style.borderLeftColor = "#f9e2af";
+            icon = "⚠️";
+        }
+
+        toast.innerHTML = `<span style="font-size:16px;">${icon}</span> <span>${message}</span>`;
+        container.appendChild(toast);
+
+        // Animate in
+        requestAnimationFrame(() => {
+            toast.classList.add('show');
+        });
+
+        // Remove after 3 seconds
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.parentNode.removeChild(toast);
+                }
+            }, 300); // Wait for transition
+        }, 3000);
+    }
+
 </script>
 
 </body>
