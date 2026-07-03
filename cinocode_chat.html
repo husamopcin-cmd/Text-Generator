@@ -1369,31 +1369,33 @@
                 <option value="llava">LLaVA (Görsel Model) - Yerel</option>
             </select>
             <!-- Ses Seçici (Dinamik Yüklenecek) -->
-            <select id="voiceSelect" style="max-width:180px;" onchange="saveVoicePref()"></select>
-            <div style="position:relative; display:inline-block; vertical-align:middle; margin-left:4px;">
-                <button class="icon-btn" id="voiceQuickSettingsBtn" onclick="toggleVoiceQuickSettings(event)" title="Ses ayarları" aria-label="Ses ayarları" style="padding:6px 8px;">⚙️</button>
-                <div id="voiceQuickSettingsPopover" style="display:none; position:absolute; top:35px; right:0; background:#181825; border:1px solid #45475a; padding:12px; border-radius:8px; z-index:10005; box-shadow:0 4px 15px rgba(0,0,0,0.5); width:240px; text-align:left; color:#cdd6f4; font-family:sans-serif;">
-                    <div style="font-weight:bold; font-size:13px; margin-bottom:8px; border-bottom:1px solid #313244; padding-bottom:6px;">Ses Ayarları</div>
+            <div id="voiceControlsContainer" style="display:inline-flex; align-items:center;">
+                <select id="voiceSelect" style="max-width:180px;" onchange="saveVoicePref()"></select>
+                <div style="position:relative; display:inline-block; vertical-align:middle; margin-left:4px;">
+                    <button class="icon-btn" id="voiceQuickSettingsBtn" onclick="toggleVoiceQuickSettings(event)" title="Ses ayarları" aria-label="Ses ayarları" style="padding:6px 8px;">⚙️</button>
+                    <div id="voiceQuickSettingsPopover" style="display:none; position:absolute; top:35px; right:0; background:#181825; border:1px solid #45475a; padding:12px; border-radius:8px; z-index:10005; box-shadow:0 4px 15px rgba(0,0,0,0.5); width:240px; text-align:left; color:#cdd6f4; font-family:sans-serif;">
+                        <div style="font-weight:bold; font-size:13px; margin-bottom:8px; border-bottom:1px solid #313244; padding-bottom:6px;">Ses Ayarları</div>
 
-                    <div style="font-size:12px; margin-bottom:8px;"><strong>Seçili Ses:</strong> <span id="quickSelectedVoiceName" style="color:#89b4fa;">-</span></div>
+                        <div style="font-size:12px; margin-bottom:8px;"><strong>Seçili Ses:</strong> <span id="quickSelectedVoiceName" style="color:#89b4fa;">-</span></div>
 
-                    <div style="display:flex; gap:4px; margin-bottom:10px;">
-                        <button type="button" onclick="quickEditSelectedVoice(event)" style="background:#313244; border:none; color:#89b4fa; cursor:pointer; font-size:11px; padding:4px 8px; border-radius:4px;">Görünen adı değiştir</button>
-                        <button type="button" onclick="quickResetSelectedVoice(event)" style="background:#313244; border:none; color:#f38ba8; cursor:pointer; font-size:11px; padding:4px 8px; border-radius:4px;">Varsayılana döndür</button>
+                        <div style="display:flex; gap:4px; margin-bottom:10px;">
+                            <button type="button" onclick="quickEditSelectedVoice(event)" style="background:#313244; border:none; color:#89b4fa; cursor:pointer; font-size:11px; padding:4px 8px; border-radius:4px;">Görünen adı değiştir</button>
+                            <button type="button" onclick="quickResetSelectedVoice(event)" style="background:#313244; border:none; color:#f38ba8; cursor:pointer; font-size:11px; padding:4px 8px; border-radius:4px;">Varsayılana döndür</button>
+                        </div>
+
+                        <label style="display:flex; align-items:flex-start; gap:8px; cursor:pointer; margin-bottom:10px; padding-top:6px; border-top:1px solid #313244;">
+                            <input type="checkbox" id="quickVoiceLockToggle" style="margin-top:2px; accent-color:#a6e3a1;" onchange="quickSyncVoiceLock(this.checked)">
+                            <span style="font-size:11px; line-height:1.2;">
+                                <strong>Ses sabit kalsın</strong><br>
+                                <span style="color:#a6adc8; font-size:10px;">Açıkken seçili ses, Türkçe/İngilizce karışık metinlerde değişmez.</span>
+                            </span>
+                        </label>
+
+                        <details style="border-top:1px solid #313244; padding-top:6px;">
+                            <summary style="font-size:11px; cursor:pointer; color:#a6e3a1; font-weight:600;">Tüm ses adlarını düzenle</summary>
+                            <div id="quickVoiceAllList" style="margin-top:6px; max-height:150px; overflow-y:auto; display:flex; flex-direction:column; gap:4px;"></div>
+                        </details>
                     </div>
-
-                    <label style="display:flex; align-items:flex-start; gap:8px; cursor:pointer; margin-bottom:10px; padding-top:6px; border-top:1px solid #313244;">
-                        <input type="checkbox" id="quickVoiceLockToggle" style="margin-top:2px; accent-color:#a6e3a1;" onchange="quickSyncVoiceLock(this.checked)">
-                        <span style="font-size:11px; line-height:1.2;">
-                            <strong>Ses sabit kalsın</strong><br>
-                            <span style="color:#a6adc8; font-size:10px;">Açıkken seçili ses, Türkçe/İngilizce karışık metinlerde değişmez.</span>
-                        </span>
-                    </label>
-
-                    <details style="border-top:1px solid #313244; padding-top:6px;">
-                        <summary style="font-size:11px; cursor:pointer; color:#a6e3a1; font-weight:600;">Tüm ses adlarını düzenle</summary>
-                        <div id="quickVoiceAllList" style="margin-top:6px; max-height:150px; overflow-y:auto; display:flex; flex-direction:column; gap:4px;"></div>
-                    </details>
                 </div>
             </div>
 
@@ -5611,7 +5613,8 @@
             voiceSelect.value = savedVoice;
         }
 
-        voiceSelect.style.display = "block";
+        if (document.getElementById("voiceControlsContainer")) document.getElementById("voiceControlsContainer").style.display = "inline-flex";
+        else voiceSelect.style.display = "block";
     }
 
     if (speechSynthesis.onvoiceschanged !== undefined) {
@@ -5634,7 +5637,8 @@
                 sBtn.innerText = "\u{1F50A}";
                 sBtn.classList.add("active");
             }
-            voiceSelect.style.display = "block";
+            if (document.getElementById("voiceControlsContainer")) document.getElementById("voiceControlsContainer").style.display = "inline-flex";
+            else voiceSelect.style.display = "block";
             // Mobil audio unlock — konuşmacı açılınca hemen unlock
             if (!isAudioUnlocked) {
                 isAudioUnlocked = true;
@@ -5654,7 +5658,8 @@
                 sBtn.innerText = "\u{1F507}";
                 sBtn.classList.remove("active");
             }
-            voiceSelect.style.display = "none";
+            if (document.getElementById("voiceControlsContainer")) document.getElementById("voiceControlsContainer").style.display = "none";
+            else voiceSelect.style.display = "none";
             stopSpeaking();
         }
     }
