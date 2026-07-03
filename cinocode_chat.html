@@ -531,8 +531,9 @@
         .new-chat-btn:hover { background: rgba(49, 50, 68, 0.6); border-color: #89b4fa; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(137,180,250,0.15); }
 
         .chat-list {
-            flex: 1;
+            flex: 1 1 auto;
             min-height: 0;
+            justify-content: flex-start;
             max-width: 100%;
             overflow-y: auto;
             overflow-x: hidden;
@@ -1377,7 +1378,7 @@
                 <select id="voiceSelect" style="max-width:180px;" onchange="saveVoicePref()"></select>
                 <div style="position:relative; display:inline-block; vertical-align:middle; margin-left:4px;">
                     <button class="icon-btn" id="voiceQuickSettingsBtn" onclick="toggleVoiceQuickSettings(event)" title="Ses ayarları" aria-label="Ses ayarları" style="padding:6px 8px;">⚙️</button>
-                    <div id="voiceQuickSettingsPopover" style="display:none; position:absolute; top:35px; right:0; background:#181825; border:1px solid #45475a; padding:12px; border-radius:8px; z-index:10005; box-shadow:0 4px 15px rgba(0,0,0,0.5); width:240px; text-align:left; color:#cdd6f4; font-family:sans-serif;">
+                    <div id="voiceQuickSettingsPopover" style="display:none; position:absolute; top:35px; right:0; background:#181825; border:1px solid #45475a; padding:12px; border-radius:8px; z-index:10005; box-shadow:0 4px 15px rgba(0,0,0,0.5); width:240px; max-height:85vh; overflow-y:auto; text-align:left; color:#cdd6f4; font-family:sans-serif;">
                         <div style="font-weight:bold; font-size:13px; margin-bottom:8px; border-bottom:1px solid #313244; padding-bottom:6px;">Ses Ayarları</div>
 
                         <div style="font-size:12px; margin-bottom:8px;"><strong>Seçili Ses:</strong> <span id="quickSelectedVoiceName" style="color:#89b4fa;">-</span></div>
@@ -3979,12 +3980,18 @@
         const recentSection = renderChatSection("Son Sohbetler", recentIds);
         if (recentSection) chatListDiv.appendChild(recentSection);
 
-        // Aktif sohbete scroll et
+        // Sidebar scroll kontrolü
         const activeItem = chatListDiv.querySelector('.chat-item.active');
         if (activeItem) {
             requestAnimationFrame(() => {
-                activeItem.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+                // Sadece container'ın scroll'unu ayarla, parent scroll etmesin
+                const offset = activeItem.offsetTop - chatListDiv.offsetTop;
+                if (offset > 0) {
+                    chatListDiv.scrollTop = offset - 20;
+                }
             });
+        } else {
+            chatListDiv.scrollTop = 0; // Doğal olarak üstten başla
         }
     }
 
@@ -5475,7 +5482,7 @@
 
     function updateVoiceQuickSettingsPopover() {
         const popover = document.getElementById('voiceQuickSettingsPopover');
-        if (!popover || popover.style.display === 'none') return;
+        if (!popover) return;
 
         const voiceSelect = document.getElementById('voiceSelect');
         const voiceId = voiceSelect ? voiceSelect.value : '';
