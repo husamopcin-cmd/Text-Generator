@@ -1282,16 +1282,16 @@
     <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:15px; border-bottom:1px solid #313244; padding-bottom:15px;">
         <div style="font-size: 11px; color:#a6adc8; font-weight:bold; letter-spacing: 1px; margin-bottom: 5px;">KÜTÜPHANE</div>
         <div style="display:flex; gap:5px;">
-            <button class="new-chat-btn lib-sidebar-btn" id="libNavImage" onclick="openLibrary('image')" style="flex:1; border-color:#a6e3a1; background:rgba(166,227,161,0.1); justify-content:center; padding: 8px; font-size:18px; transition:0.2s;" title="Resimler">?���️</button>
-            <button class="new-chat-btn lib-sidebar-btn" id="libNavVideo" onclick="openLibrary('video')" style="flex:1; border-color:#cba6f7; background:rgba(203,166,247,0.1); justify-content:center; padding: 8px; font-size:18px; transition:0.2s;" title="Videolar">?�Z�</button>
-            <button class="new-chat-btn lib-sidebar-btn" id="libNavDoc" onclick="openLibrary('doc')" style="flex:1; border-color:#89b4fa; background:rgba(137,180,250,0.1); justify-content:center; padding: 8px; font-size:18px; transition:0.2s;" title="Belgeler">?���</button>
+            <button class="new-chat-btn lib-sidebar-btn" id="libNavImage" onclick="openLibrary('image')" style="flex:1; border-color:#a6e3a1; background:rgba(166,227,161,0.1); justify-content:center; padding: 8px; font-size:18px; transition:0.2s;" title="Resimler">&#x1F3A8;</button>
+            <button class="new-chat-btn lib-sidebar-btn" id="libNavVideo" onclick="openLibrary('video')" style="flex:1; border-color:#cba6f7; background:rgba(203,166,247,0.1); justify-content:center; padding: 8px; font-size:18px; transition:0.2s;" title="Videolar">&#x1F3AC;</button>
+            <button class="new-chat-btn lib-sidebar-btn" id="libNavDoc" onclick="openLibrary('doc')" style="flex:1; border-color:#89b4fa; background:rgba(137,180,250,0.1); justify-content:center; padding: 8px; font-size:18px; transition:0.2s;" title="Belgeler">&#x1F4C4;</button>
         </div>
         <div style="font-size: 11px; color:#a6adc8; font-weight:bold; letter-spacing: 1px; margin-bottom: 5px; margin-top:10px;">STÜDYOLAR</div>
-        <button class="new-chat-btn" onclick="setAppMode('chat'); createNewChat();" style="background:#89b4fa; color:#11111b; font-weight:600; justify-content:center; font-size:13px; padding: 8px;">?��� <span class="sidebar-text">Standart Sohbet</span></button>
-        <button class="new-chat-btn" id="sidebarImageStudioBtn" onclick="setAppMode('image'); triggerImageGeneration();" style="border-color:#fab387; color:#fab387; font-size:13px; padding: 8px;">?�Z� <span class="sidebar-text">Görsel Stüdyosu</span></button>
-        <button class="new-chat-btn" id="sidebarVideoStudioBtn" onclick="setAppMode('video'); triggerVideoGeneration();" style="border-color:#cba6f7; color:#cba6f7; font-size:13px; padding: 8px;">?�Z� <span class="sidebar-text">Video Stüdyosu</span></button>
-        <button class="new-chat-btn" id="sidebarGameStudioBtn" onclick="setAppMode('game'); triggerGameGeneration();" style="border-color:#a6e3a1; color:#a6e3a1; font-size:13px; padding: 8px;">?���️ <span class="sidebar-text">Oyun Stüdyosu</span></button>
-        <button class="new-chat-btn" id="sidebarProjectsBtn" onclick="openProjectsScreen()" style="border-color:#f9e2af; color:#f9e2af; font-size:13px; padding: 8px; margin-top:5px;">📁 <span class="sidebar-text">Projeler</span></button>
+        <button class="new-chat-btn" onclick="setAppMode('chat'); createNewChat();" style="background:#89b4fa; color:#11111b; font-weight:600; justify-content:center; font-size:13px; padding: 8px;">&#x1F4AC; <span class="sidebar-text">Standart Sohbet</span></button>
+        <button class="new-chat-btn" id="sidebarImageStudioBtn" onclick="setAppMode('image'); triggerImageGeneration();" style="border-color:#fab387; color:#fab387; font-size:13px; padding: 8px;">&#x1F3A8; <span class="sidebar-text">Görsel Stüdyosu</span></button>
+        <button class="new-chat-btn" id="sidebarVideoStudioBtn" onclick="setAppMode('video'); triggerVideoGeneration();" style="border-color:#cba6f7; color:#cba6f7; font-size:13px; padding: 8px;">&#x1F3AC; <span class="sidebar-text">Video Stüdyosu</span></button>
+        <button class="new-chat-btn" id="sidebarGameStudioBtn" onclick="setAppMode('game'); triggerGameGeneration();" style="border-color:#a6e3a1; color:#a6e3a1; font-size:13px; padding: 8px;">&#x1F3AE; <span class="sidebar-text">Oyun Stüdyosu</span></button>
+        <button class="new-chat-btn" id="sidebarProjectsBtn" onclick="openProjectsScreen()" style="border-color:#f9e2af; color:#f9e2af; font-size:13px; padding: 8px; margin-top:5px;">&#x1F4C1; <span class="sidebar-text">Projeler</span></button>
     </div>
 
     <div class="chat-list" id="chatList">
@@ -1372,10 +1372,10 @@
             <select id="voiceSelect" style="max-width:180px;" onchange="saveVoicePref()"></select>
 
             <button class="icon-btn sidebar-hamburger-btn" id="sidebarHamburgerBtn" onclick="toggleSidebar()" title="Sidebar">☰</button>
-        <button class="icon-btn speaker-btn active" id="speakerBtn" onclick="toggleSpeaker()" title="Sesli Okuma">?���</button>
-            <button class="icon-btn" onclick="printChat()" title="Sohbeti PDF Yap (Yazdır)">?��� PDF</button>
-            <button class="icon-btn" onclick="exportChat()" title="Sohbeti .txt Kaydet">?���</button>
-            <button class="icon-btn" onclick="openSettings()" title="Ayarlar">⚙️</button>
+        <button class="icon-btn speaker-btn active" id="speakerBtn" onclick="toggleSpeaker()" title="Sesli Okuma">&#x1F50A;</button>
+            <button class="icon-btn" onclick="printChat()" title="Sohbeti PDF Yap (Yazdır)">&#x1F4C4; PDF</button>
+            <button class="icon-btn" onclick="exportChat()" title="Sohbeti .txt Kaydet">&#x1F4BE;</button>
+            <button class="icon-btn" onclick="openSettings()" title="Ayarlar">&#x2699;&#xFE0F;</button>
         </div>
     </div>
 
@@ -1383,31 +1383,31 @@
     <div id="dilKocuPanel">
         <!-- Satır 1: Dil + Seviye + Model bilgisi -->
         <div class="dk-row">
-            <span class="dk-label">?��� Dil:</span>
+            <span class="dk-label">&#x1F4AC; Dil:</span>
             <select id="dk-lang" class="dk-select" onchange="updateDilKocuPrompt()">
-                <option value="İngilizce">?���?��� İngilizce</option>
-                <option value="İspanyolca">?���?��� İspanyolca</option>
-                <option value="Almanca">?���?��� Almanca</option>
-                <option value="Rusça">?���?��� Rusça</option>
-                <option value="Çince (Mandarin)">?���?��� Çince (Mandarin)</option>
-                <option value="Fransızca">?���?��� Fransızca</option>
-                <option value="Japonca">?���?��� Japonca</option>
-                <option value="Korece">?���?��� Korece</option>
-                <option value="Arapça">?���?��� Arapça</option>
-                <option value="İtalyanca">?���?��� İtalyanca</option>
-                <option value="Portekizce">?���?��� Portekizce</option>
-                <option value="Hollandaca">?���?��� Hollandaca</option>
-                <option value="İsveççe">?���?��� İsveççe</option>
-                <option value="Yunanca">?���?��� Yunanca</option>
-                <option value="Hintçe">?���?��� Hintçe</option>
+                <option value="İngilizce">&#x1F1FA;&#x1F1F8; İngilizce</option>
+                <option value="İspanyolca">&#x1F1EA;&#x1F1F8; İspanyolca</option>
+                <option value="Almanca">&#x1F1E9;&#x1F1EA; Almanca</option>
+                <option value="Rusça">&#x1F1F7;&#x1F1FA; Rusça</option>
+                <option value="Çince (Mandarin)">&#x1F1E8;&#x1F1F3; Çince (Mandarin)</option>
+                <option value="Fransızca">&#x1F1EB;&#x1F1F7; Fransızca</option>
+                <option value="Japonca">&#x1F1EF;&#x1F1F5; Japonca</option>
+                <option value="Korece">&#x1F1F0;&#x1F1F7; Korece</option>
+                <option value="Arapça">&#x1F1F8;&#x1F1E6; Arapça</option>
+                <option value="İtalyanca">&#x1F1EE;&#x1F1F9; İtalyanca</option>
+                <option value="Portekizce">&#x1F1F5;&#x1F1F9; Portekizce</option>
+                <option value="Hollandaca">&#x1F1F3;&#x1F1F1; Hollandaca</option>
+                <option value="İsveççe">&#x1F1F8;&#x1F1EA; İsveççe</option>
+                <option value="Yunanca">&#x1F1EC;&#x1F1F7; Yunanca</option>
+                <option value="Hintçe">&#x1F1EE;&#x1F1F3; Hintçe</option>
             </select>
 
-            <span class="dk-label">?��� Seviye:</span>
+            <span class="dk-label">&#x1F4DA; Seviye:</span>
             <select id="dk-level" class="dk-select" onchange="updateDilKocuPrompt()">
                 <optgroup label="── Genel ──">
-                    <option value="Başlangıç (A1-A2)">?��� Başlangıç</option>
-                    <option value="Orta (B1-B2)">?��� Orta</option>
-                    <option value="İleri (C1-C2)">?��� İleri</option>
+                    <option value="Başlangıç (A1-A2)">&#x1F331; Başlangıç</option>
+                    <option value="Orta (B1-B2)">&#x1F4C8; Orta</option>
+                    <option value="İleri (C1-C2)">&#x1F3AF; İleri</option>
                 </optgroup>
                 <optgroup label="── CEFR Seviyeleri ──">
                     <option value="A0 (Sıfırdan Başlayan)">A0 — Hiç bilmiyorum</option>
@@ -1420,7 +1420,7 @@
                 </optgroup>
             </select>
 
-            <span class="dk-label">?�Z� Hedef:</span>
+            <span class="dk-label">&#x1F4C5; Hedef:</span>
             <select id="dk-goal" class="dk-select" onchange="updateDilKocuGoal()">
                 <option value="5">5 kelime/gün</option>
                 <option value="10" selected>10 kelime/gün</option>
@@ -1429,20 +1429,20 @@
                 <option value="30">30 kelime/gün</option>
                 <option value="40">40 kelime/gün</option>
                 <option value="50">50 kelime/gün</option>
-                <option value="custom">✏️ Özel...</option>
+                <option value="custom">&#x270F;&#xFE0F; Özel...</option>
             </select>
             <input type="number" id="dk-goal-custom" min="1" max="500" placeholder="Sayı gir" class="dk-select" style="width:90px; display:none;" oninput="updateDilKocuGoalCustom()" title="Kendi kelime hedefini gir">
 
-            <button class="dk-btn quiz-btn" id="dk-quiz-btn" onclick="startDilKocuQuiz()" title="Öğrendiklerini test et!">?��� Quiz Başlat</button>
-            <button class="dk-btn" onclick="startDilKocuLesson()" title="Bugünün dersini başlat">?��� Derse Başla</button>
-            <button class="dk-btn" onclick="startDilKocuConversation()" title="O dilde sohbet et">?��� Sohbet Modu</button>
+            <button class="dk-btn quiz-btn" id="dk-quiz-btn" onclick="startDilKocuQuiz()" title="Öğrendiklerini test et!">&#x1F4DD; Quiz Başlat</button>
+            <button class="dk-btn" onclick="startDilKocuLesson()" title="Bugünün dersini başlat">&#x1F4DA; Derse Başla</button>
+            <button class="dk-btn" onclick="startDilKocuConversation()" title="O dilde sohbet et">&#x1F4AC; Sohbet Modu</button>
         </div>
         <!-- Satır 2: İlerleme çubuğu -->
         <div class="dk-row" style="gap:8px; align-items:center;">
-            <span class="dk-label" style="color:#f9e2af;">?��� Günlük İlerleme:</span>
+            <span class="dk-label" style="color:#f9e2af;">&#x1F525; Günlük İlerleme:</span>
             <div id="dk-progress-bar-wrap"><div id="dk-progress-bar"></div></div>
             <span class="dk-word-count" id="dk-word-count-text">0 / 10 kelime</span>
-            <span class="dk-goal-badge" id="dk-streak-badge">?��� Gün Serisi: 0</span>
+            <span class="dk-goal-badge" id="dk-streak-badge">&#x1F525; Gün Serisi: 0</span>
         </div>
     </div>
     <!-- ===== DİL KOÇU PANELİ BİTİŞ ===== -->
@@ -1450,38 +1450,38 @@
     <!-- ===== SINAV KOÇU PANELİ ===== -->
     <div id="sinavKocuPanel">
         <div class="skp-row">
-            <span class="skp-label">?��� Kaynak:</span>
+            <span class="skp-label">&#x1F4C4; Kaynak:</span>
             <select id="skp-source" class="skp-select">
                 <option value="pdf" selected>Bu PDF</option>
                 <option value="chat">Sohbet Geçmişi</option>
                 <option value="both">PDF + Sohbet</option>
             </select>
 
-            <span class="skp-label">?�Z� Mod:</span>
+            <span class="skp-label">&#x1F393; Mod:</span>
             <select id="skp-mode" class="skp-select" onchange="skpOnModeChange()">
-                <optgroup label="── ?��� Öğren ──">
-                    <option value="ozet">⚡ Hızlı Özet</option>
-                    <option value="profesor_anlatim">?���‍?��� Profesör Anlatımı</option>
-                    <option value="sifirdan">?��� Sıfırdan Anlat</option>
-                    <option value="eli5">?��� Çocuk Anlatımı (ELI5)</option>
-                    <option value="hikaye">?��� Hikâyeleştir</option>
+                <optgroup label="── 📖 Öğren ──">
+                    <option value="ozet">&#x26A1; Hızlı Özet</option>
+                    <option value="profesor_anlatim">&#x1F468;&#x200D;&#x1F3EB; Profesör Anlatımı</option>
+                    <option value="sifirdan">&#x1F331; Sıfırdan Anlat</option>
+                    <option value="eli5">&#x1F476; Çocuk Anlatımı (ELI5)</option>
+                    <option value="hikaye">&#x1F4D6; Hikâyeleştir</option>
                 </optgroup>
-                <optgroup label="── ?��� Ezberle ──">
-                    <option value="flashcard">?��� Flashcard</option>
+                <optgroup label="── 🧠 Ezberle ──">
+                    <option value="flashcard">&#x1F4CA; Flashcard</option>
                 </optgroup>
-                <optgroup label="── ?��� Test Et ──">
-                    <option value="quiz">?��� Çoktan Seçmeli Quiz</option>
-                    <option value="sonsuz_quiz">?��� Sonsuz Quiz</option>
+                <optgroup label="── 📝 Test Et ──">
+                    <option value="quiz">&#x2753; Çoktan Seçmeli Quiz</option>
+                    <option value="sonsuz_quiz">&#x267E; Sonsuz Quiz</option>
                 </optgroup>
-                <optgroup label="── ?�Z� Pratik Yap ──">
-                    <option value="sozlu_sinav">?�Z� Sözlü Sınav</option>
-                    <option value="sokratik">?��� Sokratik Mod</option>
-                    <option value="eksik_analizi">?���️ Eksik Analizi</option>
-                    <option value="challenge">?��� Challenge</option>
-                    <option value="munazara">?���️ Münazara Modu</option>
+                <optgroup label="── 🎬 Pratik Yap ──">
+                    <option value="sozlu_sinav">&#x1F3A4; Sözlü Sınav</option>
+                    <option value="sokratik">&#x1F9D0; Sokratik Mod</option>
+                    <option value="eksik_analizi">&#x1F4CA; Eksik Analizi</option>
+                    <option value="challenge">&#x1F3AF; Challenge</option>
+                    <option value="munazara">&#x2694;&#xFE0F; Münazara Modu</option>
                 </optgroup>
-                <optgroup label="── ?�Z� Tahmin ──">
-                    <option value="hoca_tahmin">?�Z� Hoca Ne Sorar?</option>
+                <optgroup label="── 🔮 Tahmin ──">
+                    <option value="hoca_tahmin">&#x1F52E; Hoca Ne Sorar?</option>
                 </optgroup>
             </select>
 
@@ -1673,7 +1673,7 @@
         </label>
 
         <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 6px; text-align: left; font-weight:600;">
-            Ses İsimleri
+            Gelişmiş Ses Ayarları
         </div>
         <div id="voiceNameEditorList" style="margin-bottom: 12px;"></div>
 
@@ -1818,11 +1818,11 @@
                 <input type="checkbox" id="liveSearchInput" style="accent-color:#89b4fa;"> Canlı Arama
             </label>
             <div style="background:#181825; border:1px solid #45475a; border-radius:8px; padding:10px; margin-bottom:10px; font-size:12px; color:#a6adc8; line-height:1.45;">
-                Grok/xAI baglantisi icin guvenli backend/proxy gerekir. XAI_API_KEY frontend icinde tutulmaz; Netlify/backend environment uzerinden baglanmalidir.
+                Grok/xAI bağlantısı için güvenli backend/proxy gerekir. XAI_API_KEY frontend içinde tutulmaz; Netlify/backend environment üzerinden bağlanmalıdır.
             </div>
             <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;">
-                <button class="run-code-btn" style="flex:1; min-width:150px; background:#f38ba8; color:#11111b;" onclick="returnLegacyMode()">Eski Moda Don / Yeni Ozellikleri Kapat</button>
-                <button class="run-code-btn" style="flex:1; min-width:150px; background:#a6e3a1; color:#11111b;" onclick="enableNewFeatures()">Yeni Ozellikleri Tekrar Ac</button>
+                <button class="run-code-btn" style="flex:1; min-width:150px; background:#f38ba8; color:#11111b;" onclick="returnLegacyMode()">Eski Moda Dön / Yeni Özellikleri Kapat</button>
+                <button class="run-code-btn" style="flex:1; min-width:150px; background:#a6e3a1; color:#11111b;" onclick="enableNewFeatures()">Yeni Özellikleri Tekrar Aç</button>
             </div>
         </div>
 
@@ -1833,7 +1833,7 @@
     <div class="artifact-overlay" id="artifactOverlay">
         <div class="artifact-modal">
             <div class="artifact-header">
-                <div class="artifact-title">?���️ CinoCode Önizleme</div>
+                <div class="artifact-title">&#x1F5BC;&#xFE0F; CinoCode Önizleme</div>
                 <button class="attach-menu-close" style="position:static; font-size:28px;" onclick="closeArtifactOverlay()">×</button>
             </div>
             <iframe id="artifactIframe" class="artifact-iframe" sandbox="allow-scripts allow-modals allow-forms allow-same-origin"></iframe>
@@ -2204,11 +2204,11 @@
         const welcomeTitle = document.querySelector(".welcome-screen h2");
         if (welcomeTitle) {
             if (mode === "video") {
-                welcomeTitle.innerHTML = "?�Z� Video Stüdyosu<br><span style='font-size: 15px; color: #a6adc8;'>Ne tür bir video oluşturmak istersin?</span>";
+                welcomeTitle.innerHTML = "\u{1F3AC} Video St\u00fcdyosu<br><span style='font-size: 15px; color: #a6adc8;'>Ne t\u00fcr bir video olu\u015fturmak istersin?</span>";
             } else if (mode === "image") {
-                welcomeTitle.innerHTML = "?�Z� Görsel Stüdyosu<br><span style='font-size: 15px; color: #a6adc8;'>Ne çizmek istersin?</span>";
+                welcomeTitle.innerHTML = "\u{1F3A8} G\u00f6rsel St\u00fcdyosu<br><span style='font-size: 15px; color: #a6adc8;'>Ne \u00e7izmek istersin?</span>";
             } else if (mode === "game") {
-                welcomeTitle.innerHTML = "?���️ Oyun Stüdyosu<br><span style='font-size: 15px; color: #a6adc8;'>Nasıl bir oyun geliştirmek istersin?</span>";
+                welcomeTitle.innerHTML = "\u{1F3AE} Oyun St\u00fcdyosu<br><span style='font-size: 15px; color: #a6adc8;'>Nas\u0131l bir oyun geli\u015ftirmek istersin?</span>";
             } else {
                 welcomeTitle.innerHTML = "Bugün ne üretmek istersin?";
             }
@@ -2872,21 +2872,20 @@
 
         let html = '';
         suggestions.forEach(s => {
-            let icon = '?�Z�';
-            let prefix = 'Bana şu resmi çiz: ';
+            let icon = '\u{1F3A8}';
+            let prefix = 'Bana \u015fu resmi \u00e7iz: ';
             if (type === 'video') {
-                icon = '?�Z�';
-                prefix = 'Bana şu videoyu oluştur: ';
+                icon = '\u{1F3AC}';
+                prefix = 'Bana \u015fu videoyu olu\u015ftur: ';
             } else if (type === 'game') {
-                icon = '?���️';
-                prefix = 'Bana şu oyunu kodla: ';
+                icon = '\u{1F3AE}';
+                prefix = 'Bana \u015fu oyunu kodla: ';
             }
             const escaped = s.replace(/'/g, "\\'");
             html += `<button class="suggestion-chip" onclick="applySuggestion('${prefix}', '${escaped}')">${icon} ${s}</button>`;
         });
 
-        html += `<button class="suggestion-refresh-btn" onclick="renderSuggestions('${type}')">?�Z� Yenile</button>`;
-
+        html += `<button class="suggestion-refresh-btn" onclick="renderSuggestions('${type}')">\u{1F504} Yenile</button>`;
         container.innerHTML = html;
         container.style.display = "flex";
     }
@@ -5374,11 +5373,11 @@
     const synth = window.speechSynthesis;
 
     const VOICE_DEFAULT_LABELS = {
-        male_local: { icon: "?���?���‍?���", name: "Deniz (Cihazın Kendi Sesi)" },
-        male_edge_tolga: { icon: "?���?���‍?���", name: "Tolga (Standart Erkek)" },
-        female_gtts: { icon: "?���?���‍?���", name: "Ayşe Abla (Standart Kadın Sesi)" },
-        male_gtts: { icon: "?���?���", name: "Cüneyt Abi (HD Erkek Ses)" },
-        female_edge: { icon: "?���?���‍?���", name: "Cino Abla (HD Kadın Ses)" }
+        male_local: { icon: "👨🏻", name: "Deniz (Cihazın Kendi Sesi)" },
+        male_edge_tolga: { icon: "👨🏽", name: "Tolga (Standart Erkek)" },
+        female_gtts: { icon: "👩🏽", name: "Ayşe Abla (Standart Kadın Sesi)" },
+        male_gtts: { icon: "👨🏿", name: "Cüneyt Abi (HD Erkek Ses)" },
+        female_edge: { icon: "👩🏾", name: "Cino Abla (HD Kadın Ses)" }
     };
 
     function getVoiceCustomNames() {
@@ -5453,7 +5452,7 @@
         if (voices.length > 0) {
             defaultHtml += `<optgroup label="Cihaz Sesleri (Tüm Sesler)">`;
             voices.forEach((v, idx) => {
-                let isTr = v.lang.includes("tr") ? "?���?��� " : "?��� ";
+                let isTr = v.lang.includes("tr") ? "\u{1F1F9}\u{1F1F7} " : "\u{1F50A} ";
                 defaultHtml += `<option value="native_${idx}">${isTr}${v.name}</option>`;
             });
             defaultHtml += `</optgroup>`;
@@ -5485,7 +5484,7 @@
         const sBtn = document.getElementById("speakerBtn");
         if (isSpeakerOn) {
             if (sBtn) {
-                sBtn.innerText = "?���";
+                sBtn.innerText = "\u{1F50A}";
                 sBtn.classList.add("active");
             }
             voiceSelect.style.display = "block";
@@ -5505,7 +5504,7 @@
             try { if (window.speechSynthesis.paused) window.speechSynthesis.resume(); } catch(e) {}
         } else {
             if (sBtn) {
-                sBtn.innerText = "?���";
+                sBtn.innerText = "\u{1F507}";
                 sBtn.classList.remove("active");
             }
             voiceSelect.style.display = "none";
@@ -6234,14 +6233,14 @@
 
         if(isWebSearchEnabled) {
             if (btn) btn.classList.add("active");
-            userInput.placeholder = "?��� Web destekli sorun...";
+            userInput.placeholder = "\u{1F50D} Web destekli sorun...";
             if (menuText) menuText.textContent = "Derin Araştırma (Açık)";
-            if (menuIcon) menuIcon.textContent = "?���";
+            if (menuIcon) menuIcon.textContent = "\u{1F50D}";
         } else {
             if (btn) btn.classList.remove("active");
             userInput.placeholder = "CinoCode'a bir şeyler sor...";
             if (menuText) menuText.textContent = "Derin Araştırma (Kapalı)";
-            if (menuIcon) menuIcon.textContent = "?���";
+            if (menuIcon) menuIcon.textContent = "\u{1F50D}";
         }
     }
 
@@ -6470,7 +6469,7 @@
         localStorage.setItem(streakKey, streak);
         localStorage.setItem(lastKey, today);
         const badge = document.getElementById('dk-streak-badge');
-        if (badge) badge.textContent = '?��� Gün Serisi: ' + streak;
+        if (badge) badge.textContent = '\u{1F525} Gün Serisi: ' + streak;
     }
 
     // "Derse Başla" butonu — bugünün dersini otomatik başlatır
@@ -6510,14 +6509,14 @@
         if (btn) {
             if (dilKocuQuizActive) {
                 btn.classList.add('active-quiz');
-                btn.textContent = '?��� Quiz Aktif ✓';
+                btn.textContent = '\u{2705} Quiz Aktif \u2713';
                 const lang = getDilKocuLang();
                 const text = `Quiz zamanı! Bana bugüne kadar öğrettiğin ${lang} kelimelerden 5 soru sor. Ben cevaplayacağım.`;
                 setComposerValue(text, { focus: false });
                 sendMessage();
             } else {
                 btn.classList.remove('active-quiz');
-                btn.textContent = '?��� Quiz Başlat';
+                btn.textContent = '\u{1F4DD} Quiz Başlat';
             }
         }
     }
@@ -7012,7 +7011,7 @@
                 if (typeof buildExamCoachSuffix === "function") {
                     msgObj.promptSuffix = (msgObj.promptSuffix || "") + "\n\n" + buildExamCoachSuffix();
                 } else {
-                    msgObj.promptSuffix = (msgObj.promptSuffix || "") + "\n\n[?�Z� SINAV KOÇU MODU]\nBu belgeyi analiz et, özet çıkar, önemli kavramları listele ve 10 soruluk test oluştur.";
+                    msgObj.promptSuffix = (msgObj.promptSuffix || "") + "\n\n[\u{1F393} SINAV KO\u015eU MODU]\nBu belgeyi analiz et, \u00f6zet \u00e7\u0131kar, \u00f6nemli kavramlar\u0131 listele ve 10 soruluk test olu\u015ftur.";
                 }
                 window.isExamMode = false;
             } else if (isAkademikKocNow && !window.selectedDocumentText) {
@@ -7065,7 +7064,7 @@
         typingDiv.dataset.typingIndicator = "1";
 
         if (msgObj.images && msgObj.images.length > 0) {
-            typingDiv.innerHTML = "<i>?��� Görsel analiz ediliyor (Biraz uzun sürebilir, lütfen bekleyin)...</i>";
+            typingDiv.innerHTML = "<i>\u{1F5BC}\uFE0F G\u00f6rsel analiz ediliyor (Biraz uzun s\u00fcrebilir, l\u00fctfen bekleyin)...</i>";
         } else {
             typingDiv.innerHTML = getThinkingIndicatorHtml();
         }
@@ -7104,9 +7103,9 @@
         if (wantsVideoGeneration) {
             setAppMode("video");
             delete typingDiv.dataset.typingIndicator;
-            typingDiv.innerHTML = `<div style="color:#cdd6f4; margin-bottom:10px;">?�Z� Video isteğin algılandı, Video Stüdyosu açılıyor...</div>
+            typingDiv.innerHTML = `<div style="color:#cdd6f4; margin-bottom:10px;">\u{1F3AC} Video iste\u011fin alg\u0131land\u0131, Video St\u00fcdyosu a\u00e7\u0131l\u0131yor...</div>
                 <div id="${botId}-video" style="text-align:center; margin: 15px 0; background: #181825; padding: 15px; border-radius: 12px; border: 1px solid #45475a;">
-                    <div style="color: #cdd6f4; font-size: 16px; margin-bottom: 10px;">?�Z� Gerçek video modeli bağlı değil; storyboard/slideshow önizlemesi hazırlanıyor...</div>
+                    <div style="color: #cdd6f4; font-size: 16px; margin-bottom: 10px;">\u{1F3AC} Ger\u00e7ek video modeli ba\u011fl\u0131 de\u011fil; storyboard/slideshow \u00f6nizlemesi haz\u0131rlan\u0131yor...</div>
                     <div style="background: #313244; border-radius: 8px; height: 20px; overflow: hidden; margin-bottom: 8px;">
                         <div id="${botId}-video-progress" style="background: linear-gradient(90deg, #89b4fa, #cba6f7); height: 100%; width: 0%; border-radius: 8px; transition: width 0.5s ease;"></div>
                     </div>
@@ -7885,7 +7884,7 @@
                 const fallbackContainer = document.createElement("div");
                 fallbackContainer.innerHTML = `<div id="${videoId}" style="text-align:center; margin: 15px 0; background: #181825; padding: 15px; border-radius: 12px; border: 1px solid #45475a;">
                             <div style="color:#f9e2af; font-size: 13px; margin-bottom: 10px;">Bu gerçek video değil; normal sohbet cevabı başarı sayılmadı. Video motoru başlatılıyor.</div>
-                            <div style="color: #cdd6f4; font-size: 16px; margin-bottom: 10px;">?�Z� Gerçek video modeli bağlı değil; storyboard/slideshow önizlemesi hazırlanıyor...</div>
+                            <div style="color: #cdd6f4; font-size: 16px; margin-bottom: 10px;">\u{1F3AC} Ger\u00e7ek video modeli ba\u011fl\u0131 de\u011fil; storyboard/slideshow \u00f6nizlemesi haz\u0131rlan\u0131yor...</div>
                             <div style="background: #313244; border-radius: 8px; height: 20px; overflow: hidden; margin-bottom: 8px;">
                                 <div id="${videoId}-progress" style="background: linear-gradient(90deg, #89b4fa, #cba6f7); height: 100%; width: 0%; border-radius: 8px; transition: width 0.5s ease;"></div>
                             </div>
@@ -8020,21 +8019,21 @@
 <div class="sk-overlay" id="sinavKocuOverlay" onclick="skOverlayClick(event)">
   <div class="sk-modal" id="sinavKocuModal">
     <div class="sk-modal-header">
-      <span class="sk-icon">?�Z�</span>
+      <span class="sk-icon">&#x1F393;</span>
       <h2>CinoCode Akademi</h2>
       <p>Öğrenciyi sınava hazırlayan akıllı koç paneli</p>
     </div>
     <div style="text-align:center;">
-      <span class="sk-file-badge" id="skFileBadge">?��� —</span>
+      <span class="sk-file-badge" id="skFileBadge">&#x1F4C4; —</span>
     </div>
 
     <!-- Kategori Sekmeleri -->
     <div class="sk-tabs">
-      <button class="sk-tab-btn active" onclick="skSwitchTab(event, 'tab-ogren')">?��� Öğren</button>
-      <button class="sk-tab-btn" onclick="skSwitchTab(event, 'tab-ezberle')">?��� Ezberle</button>
-      <button class="sk-tab-btn" onclick="skSwitchTab(event, 'tab-test')">?��� Test Et</button>
-      <button class="sk-tab-btn" onclick="skSwitchTab(event, 'tab-pratik')">?�Z� Pratik Yap</button>
-      <button class="sk-tab-btn" onclick="skSwitchTab(event, 'tab-tahmin')">?�Z� Tahmin</button>
+      <button class="sk-tab-btn active" onclick="skSwitchTab(event, 'tab-ogren')">&#x1F4DA; Öğren</button>
+      <button class="sk-tab-btn" onclick="skSwitchTab(event, 'tab-ezberle')">&#x1F9E0; Ezberle</button>
+      <button class="sk-tab-btn" onclick="skSwitchTab(event, 'tab-test')">&#x1F4DD; Test Et</button>
+      <button class="sk-tab-btn" onclick="skSwitchTab(event, 'tab-pratik')">&#x1F3AC; Pratik Yap</button>
+      <button class="sk-tab-btn" onclick="skSwitchTab(event, 'tab-tahmin')">&#x1F52E; Tahmin</button>
     </div>
 
     <!-- 1. ÖĞREN SEKME İÇERİĞİ -->
@@ -8042,41 +8041,41 @@
       <div class="sk-grid">
         <!-- Hızlı Özetler -->
         <div class="sk-card" onclick="event.stopPropagation();">
-          <div class="sk-card-icon">⚡</div>
+          <div class="sk-card-icon">&#x1F3AF;</div>
           <div class="sk-card-title">Hızlı Özetler</div>
           <div class="sk-card-desc">Süreye göre özelleştirilmiş pratik özet oluşturur. Süre seçin:</div>
           <div class="sk-pills">
             <span class="sk-pill" onclick="skDirectConfirm('ozet', '30s')">⚡ 30 sn</span>
-            <span class="sk-pill" onclick="skDirectConfirm('ozet', '1dk')">?��� 1 dk</span>
-            <span class="sk-pill" onclick="skDirectConfirm('ozet', '2dk')">?��� 2 dk</span>
-            <span class="sk-pill" onclick="skDirectConfirm('ozet', '5dk')">?�Z� 5 dk</span>
-            <span class="sk-pill" onclick="skDirectConfirm('ozet', '10dk')">?��� 10 dk</span>
+            <span class="sk-pill" onclick="skDirectConfirm('ozet', '1dk')">&#x23F1; 1 dk</span>
+            <span class="sk-pill" onclick="skDirectConfirm('ozet', '2dk')">&#x23F1; 2 dk</span>
+            <span class="sk-pill" onclick="skDirectConfirm('ozet', '5dk')">&#x23F1; 5 dk</span>
+            <span class="sk-pill" onclick="skDirectConfirm('ozet', '10dk')">&#x23F1; 10 dk</span>
           </div>
         </div>
         <!-- Profesör Anlatımı -->
         <div class="sk-card" onclick="skDirectConfirm('profesor_anlatim')">
-          <div class="sk-card-icon">?���‍?���</div>
+          <div class="sk-card-icon">&#x1F468;&#x200D;&#x1F3EB;</div>
           <div class="sk-card-title">Profesör Anlatımı</div>
           <div class="sk-card-desc">Akademik, derin ama son derece anlaşılır dille konunun püf noktalarını açıklar.</div>
           <div class="sk-card-tag">Akademik Mod</div>
         </div>
         <!-- Sıfırdan Anlat -->
         <div class="sk-card" onclick="skDirectConfirm('sifirdan')">
-          <div class="sk-card-icon">?���</div>
+          <div class="sk-card-icon">&#x1F331;</div>
           <div class="sk-card-title">Sıfırdan Anlat</div>
           <div class="sk-card-desc">Konuyu ilk defa görüyormuşsun gibi basit dille anlatır, sonuna mini alıştırma ekler.</div>
           <div class="sk-card-tag">Temel Seviye</div>
         </div>
         <!-- ELI5 -->
         <div class="sk-card" onclick="skDirectConfirm('eli5')">
-          <div class="sk-card-icon">?���</div>
+          <div class="sk-card-icon">&#x1F476;</div>
           <div class="sk-card-title">Çocuk Anlatımı (ELI5)</div>
           <div class="sk-card-desc">Karmaşık teknik terimleri 5 yaşındaki bir çocuğa anlatır gibi analojilerle açıklar.</div>
           <div class="sk-card-tag">Basit Dil</div>
         </div>
         <!-- Hikâyeleştir -->
         <div class="sk-card" onclick="skDirectConfirm('hikaye')">
-          <div class="sk-card-icon">?���</div>
+          <div class="sk-card-icon">&#x1F4D6;</div>
           <div class="sk-card-title">Hikâyeleştir</div>
           <div class="sk-card-desc">Ezber bilgiler yerine konuyu akılda kalıcı, eğlenceli bir hikaye kurgusuyla anlatır.</div>
           <div class="sk-card-tag">Hafıza Modu</div>
@@ -8120,7 +8119,7 @@
         </div>
         <!-- Sonsuz Quiz -->
         <div class="sk-card" onclick="skDirectConfirm('sonsuz_quiz')">
-          <div class="sk-card-icon">?���</div>
+          <div class="sk-card-icon">&#x267E;</div>
           <div class="sk-card-title">Sonsuz Quiz</div>
           <div class="sk-card-desc">Kullanıcı "durdur" diyene kadar sürekli yeni soru soran ve yanlışlarını tekrar soran mod.</div>
           <div class="sk-card-tag">Dinamik Soru</div>
@@ -8133,21 +8132,21 @@
       <div class="sk-grid">
         <!-- Sözlü/Sesli Sınav -->
         <div class="sk-card" onclick="skDirectConfirm('sozlu_sinav')">
-          <div class="sk-card-icon">?�Z�</div>
+          <div class="sk-card-icon">&#x1F3A4;</div>
           <div class="sk-card-title">Sözlü / Sesli Sınav</div>
           <div class="sk-card-desc">CinoCode sana tek tek soru sorar. Cevap verirsin, değerlendirip yeni soruya geçer.</div>
           <div class="sk-card-tag">Sesli Uyumluluk</div>
         </div>
         <!-- Sokratik Mod -->
         <div class="sk-card" onclick="skDirectConfirm('sokratik')">
-          <div class="sk-card-icon">?���</div>
+          <div class="sk-card-icon">&#x1F9D0;</div>
           <div class="sk-card-title">Sokratik Mod</div>
           <div class="sk-card-desc">Cevabı direkt vermez, seni düşündürerek konuyu derinlemesine keşfetmeni sağlar.</div>
           <div class="sk-card-tag">Felsefi Derinlik</div>
         </div>
         <!-- Eksik Analizi -->
         <div class="sk-card" onclick="skDirectConfirm('eksik_analizi')">
-          <div class="sk-card-icon">?���️</div>
+          <div class="sk-card-icon">&#x1F4CA;&#xFE0F;</div>
           <div class="sk-card-title">Eksik Analizi (Tanı Testi)</div>
           <div class="sk-card-desc">10 kısa soruluk test ile eksiklerini yüzdesel raporlar, sadece zayıf konulara çalıştırır.</div>
           <div class="sk-card-tag">Tanı Modu</div>
@@ -8158,16 +8157,16 @@
           <div class="sk-card-title">Challenge Modu</div>
           <div class="sk-card-desc">Kademeli olarak zorlaşan soru-cevap düellosu. Zorluk seviyesi seçin:</div>
           <div class="sk-pills">
-            <span class="sk-pill" onclick="skDirectConfirm('challenge', 'easy')">?��� Kolay</span>
-            <span class="sk-pill" onclick="skDirectConfirm('challenge', 'medium')">?��� Orta</span>
-            <span class="sk-pill" onclick="skDirectConfirm('challenge', 'hard')">?��� Zor</span>
-            <span class="sk-pill" onclick="skDirectConfirm('challenge', 'professor')">?�Z� Hoca</span>
-            <span class="sk-pill" onclick="skDirectConfirm('challenge', 'interview')">?��� Mülakat</span>
+            <span class="sk-pill" onclick="skDirectConfirm('challenge', 'easy')">&#x1F7E2; Kolay</span>
+            <span class="sk-pill" onclick="skDirectConfirm('challenge', 'medium')">&#x1F7E1; Orta</span>
+            <span class="sk-pill" onclick="skDirectConfirm('challenge', 'hard')">&#x1F534; Zor</span>
+            <span class="sk-pill" onclick="skDirectConfirm('challenge', 'professor')">&#x1F3EB; Hoca</span>
+            <span class="sk-pill" onclick="skDirectConfirm('challenge', 'interview')">&#x1F454; Mülakat</span>
           </div>
         </div>
         <!-- Münazara Modu -->
         <div class="sk-card" onclick="skDirectConfirm('munazara')">
-          <div class="sk-card-icon">?���️</div>
+          <div class="sk-card-icon">&#x2694;&#xFE0F;</div>
           <div class="sk-card-title">Münazara Modu</div>
           <div class="sk-card-desc">Model sana karşı tezleri savunur, seni kendi argümanlarını kurmaya ve savunmaya zorlar.</div>
           <div class="sk-card-tag">Tartışma Modu</div>
@@ -8180,7 +8179,7 @@
       <div class="sk-grid">
         <!-- Hoca Ne Sorar? -->
         <div class="sk-card" onclick="skDirectConfirm('hoca_tahmin')">
-          <div class="sk-card-icon">?�Z�</div>
+          <div class="sk-card-icon">&#x1F52E;</div>
           <div class="sk-card-title">Hoca Ne Sorar? (Tahmin)</div>
           <div class="sk-card-desc">Bu belgeden sınavda çıkabilecek klasik ve test sorularını, kritik ezber kelimelerini tahmin eder.</div>
           <div class="sk-card-tag">Hoca Modu</div>
@@ -8201,7 +8200,7 @@ if (!window.skQuizHistory) window.skQuizHistory = [];
 
 function openSinavKocuModal(fileName) {
     window.skState = { mode: null, ozet: null, flashcardCount: 10, quizCount: 10, challengeDiff: 'medium', resolve: null };
-    document.getElementById('skFileBadge').textContent = '?��� ' + fileName;
+    document.getElementById('skFileBadge').textContent = '\u{1F4C4} ' + fileName;
 
     // UI Sıfırlama
     document.querySelectorAll('.sk-card').forEach(c => c.classList.remove('sk-selected'));
