@@ -1374,9 +1374,9 @@
                 <button class="icon-btn" id="voiceQuickSettingsBtn" onclick="toggleVoiceQuickSettings(event)" title="Ses ayarları" aria-label="Ses ayarları" style="padding:6px 8px;">⚙️</button>
                 <div id="voiceQuickSettingsPopover" style="display:none; position:absolute; top:35px; right:0; background:#181825; border:1px solid #45475a; padding:12px; border-radius:8px; z-index:10005; box-shadow:0 4px 15px rgba(0,0,0,0.5); width:240px; text-align:left; color:#cdd6f4; font-family:sans-serif;">
                     <div style="font-weight:bold; font-size:13px; margin-bottom:8px; border-bottom:1px solid #313244; padding-bottom:6px;">Ses Ayarları</div>
-                    
+
                     <div style="font-size:12px; margin-bottom:8px;"><strong>Seçili Ses:</strong> <span id="quickSelectedVoiceName" style="color:#89b4fa;">-</span></div>
-                    
+
                     <div style="display:flex; gap:4px; margin-bottom:10px;">
                         <button type="button" onclick="quickEditSelectedVoice(event)" style="background:#313244; border:none; color:#89b4fa; cursor:pointer; font-size:11px; padding:4px 8px; border-radius:4px;">Görünen adı değiştir</button>
                         <button type="button" onclick="quickResetSelectedVoice(event)" style="background:#313244; border:none; color:#f38ba8; cursor:pointer; font-size:11px; padding:4px 8px; border-radius:4px;">Varsayılana döndür</button>
@@ -3948,6 +3948,12 @@
 
         // Ana sidebar sadece projesiz sohbetleri gösterir; projeli sohbetler kendi proje sayfasında listelenir.
         const allIds = Object.keys(sessions).filter(id => !sessions[id]?.projectId);
+
+        if (typeof renderProjectSection === 'function') {
+            const pSec = renderProjectSection();
+            if (pSec) chatListDiv.appendChild(pSec);
+        }
+
         const starredIds = getSortedChatIds(allIds.filter(id => sessions[id]?.starred === true));
         const recentIds = getSortedChatIds(allIds.filter(id => sessions[id]?.starred !== true));
         const starredSection = renderChatSection("Yıldızlı", starredIds);
@@ -5436,7 +5442,7 @@
         localStorage.setItem('cinocode_voice_custom_names', JSON.stringify(custom));
     }
 
-    
+
     function toggleVoiceQuickSettings(e) {
         if(e) e.stopPropagation();
         const popover = document.getElementById('voiceQuickSettingsPopover');
@@ -8824,6 +8830,85 @@ function buildExamCoachSuffix() {
         };
 
         container.insertBefore(btn, wrapper.nextSibling);
+    }
+
+
+    function renderProjectSection() {
+        const pIds = getSortedProjectIds();
+
+        const section = document.createElement("div");
+        section.className = "chat-section";
+        section.style.marginBottom = "15px";
+
+        const header = document.createElement("div");
+        header.className = "chat-section-header";
+        header.innerHTML = 'Çalışma Alanları <span style="font-size:9px; background:rgba(249,226,175,0.1); color:#f9e2af; padding:2px 6px; border-radius:4px; margin-left:8px; vertical-align:middle;">Not Defterleri</span>';
+        section.appendChild(header);
+
+        if (pIds.length === 0) {
+            const emptyDiv = document.createElement("div");
+            emptyDiv.style.fontSize = "12px";
+            emptyDiv.style.color = "#6c7086";
+            emptyDiv.style.padding = "5px 10px";
+            emptyDiv.style.fontStyle = "italic";
+            emptyDiv.innerText = "Henüz not defteri yok.";
+
+            const btn = document.createElement("button");
+            btn.innerText = "Projeleri Aç";
+            btn.style.display = "block";
+            btn.style.marginTop = "8px";
+            btn.style.background = "rgba(137,180,250,0.1)";
+            btn.style.border = "1px solid rgba(137,180,250,0.3)";
+            btn.style.color = "#89b4fa";
+            btn.style.padding = "4px 8px";
+            btn.style.borderRadius = "4px";
+            btn.style.fontSize = "11px";
+            btn.style.cursor = "pointer";
+            btn.onclick = (e) => { e.stopPropagation(); if(typeof openProjectsScreen === 'function') openProjectsScreen(); };
+
+            emptyDiv.appendChild(btn);
+            section.appendChild(emptyDiv);
+            return section;
+        }
+
+        const listDiv = document.createElement("div");
+        if (pIds.length > 6) {
+            listDiv.style.maxHeight = "220px";
+            listDiv.style.overflowY = "auto";
+            listDiv.style.paddingRight = "4px";
+        }
+
+        pIds.forEach(pid => {
+            const proj = projects[pid];
+            if (!proj) return;
+            const pDiv = document.createElement("div");
+            pDiv.className = "chat-item";
+            if (typeof activeProjectId !== 'undefined' && activeProjectId === pid) pDiv.classList.add("active");
+
+            pDiv.onclick = () => {
+                if (typeof openProject === 'function') {
+                    openProject(pid);
+                } else if (typeof openProjectsScreen === 'function') {
+                    if (typeof activeProjectId !== 'undefined') activeProjectId = pid;
+                    openProjectsScreen();
+                }
+            };
+
+            let chatCount = 0;
+            try { chatCount = Object.values(sessions).filter(c => c && c.projectId === pid).length; } catch(e) {}
+
+            pDiv.innerHTML = `
+                <div class="chat-icon">📁</div>
+                <div class="chat-title-container">
+                    <span>${proj.name ? proj.name.replace(/</g,"&lt;").replace(/>/g,"&gt;") : "İsimsiz"}</span>
+                    ${chatCount > 0 ? `<div style="font-size:10px; color:#a6adc8; margin-top:2px;">${chatCount} sohbet</div>` : ''}
+                </div>
+            `;
+            listDiv.appendChild(pDiv);
+        });
+
+        section.appendChild(listDiv);
+        return section;
     }
 
 </script>
