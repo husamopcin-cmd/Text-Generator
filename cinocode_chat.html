@@ -1706,7 +1706,7 @@
         <div style="display: flex; gap: 10px; margin-bottom: 10px;">
             <div style="flex: 1; text-align: left;">
                 <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px;">Azure Key:</div>
-                <input type="password" id="azureKeyInput" placeholder="Azure Key" style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px; border-radius:8px; box-sizing: border-box; outline: none; font-size: 13px;">
+                <input type="password" id="azureKeyInput" placeholder="API key girilirse yerel tarayıcıda saklanır" type="password" style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px; border-radius:8px; box-sizing: border-box; outline: none; font-size: 13px;">
             </div>
             <div style="flex: 1; text-align: left;">
                 <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px;">Azure Region:</div>
@@ -1725,41 +1725,41 @@
         <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px; text-align: left;">
             Runware API Key <span style="color: #6c7086; font-size: 11px;">(Lokal kullanacaksanız elle girin - boş bırakılırsa Netlify Env kullanılır)</span>:
         </div>
-        <input type="password" id="runwareApiKeyInput" placeholder="runware API key..." style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px; border-radius:8px; margin-bottom: 10px; box-sizing: border-box; outline: none; font-size: 13px;">
+        <input type="password" id="runwareApiKeyInput" placeholder="API key girilirse yerel tarayıcıda saklanır" type="password" style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px; border-radius:8px; margin-bottom: 10px; box-sizing: border-box; outline: none; font-size: 13px;">
 
         <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px; text-align: left;">
             Groq API Key <span style="color: #6c7086; font-size: 11px;">(Netlify Environment Variables ile yönetilir - readonly)</span>:
         </div>
-        <input type="text" id="groqApiKeyInput" placeholder="Netlify Env üzerinden otomatik okunur..." disabled readonly style="width:100%; background:#11111b; border:1px solid #313244; color:#6c7086; padding:8px; border-radius:8px; margin-bottom: 10px; box-sizing: border-box; outline: none; font-size: 13px; cursor:not-allowed; opacity:0.7;">
+        <input type="text" id="groqApiKeyInput" placeholder="Netlify Environment Variables üzerinden yönetilir" type="password" disabled readonly style="width:100%; background:#11111b; border:1px solid #313244; color:#6c7086; padding:8px; border-radius:8px; margin-bottom: 10px; box-sizing: border-box; outline: none; font-size: 13px; cursor:not-allowed; opacity:0.7;">
 
         <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px; text-align: left;">
             Google Gemini API Key <span style="color: #6c7086; font-size: 11px;">(Netlify Environment Variables ile yönetilir - readonly)</span>:
         </div>
-        <input type="text" id="geminiApiKeyInput" placeholder="Netlify Env üzerinden otomatik okunur..." disabled readonly style="width:100%; background:#11111b; border:1px solid #313244; color:#6c7086; padding:8px; border-radius:8px; margin-bottom: 10px; box-sizing: border-box; outline: none; font-size: 13px; cursor:not-allowed; opacity:0.7;">
+        <input type="text" id="geminiApiKeyInput" placeholder="Netlify Environment Variables üzerinden yönetilir" type="password" disabled readonly style="width:100%; background:#11111b; border:1px solid #313244; color:#6c7086; padding:8px; border-radius:8px; margin-bottom: 10px; box-sizing: border-box; outline: none; font-size: 13px; cursor:not-allowed; opacity:0.7;">
 
         <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px; text-align: left;">
             NVIDIA NIM API Key <span style="color: #cba6f7; font-size: 11px;">(build.nvidia.com)</span>:
         </div>
-        <input type="text" id="nvidiaApiKeyInput" placeholder="nvapi-..." style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px; border-radius:8px; margin-bottom: 10px; box-sizing: border-box; outline: none; font-size: 13px;">
+        <input type="text" id="nvidiaApiKeyInput" placeholder="API key girilirse yerel tarayıcıda saklanır" type="password" style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px; border-radius:8px; margin-bottom: 10px; box-sizing: border-box; outline: none; font-size: 13px;">
 
         <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px; text-align: left;">
             OpenRouter API Key <span style="color: #6c7086; font-size: 11px;">(Netlify Environment Variables ile yönetilir - readonly)</span>:
         </div>
-        <input type="text" id="openrouterApiKeyInput" placeholder="Netlify Env üzerinden otomatik okunur..." disabled readonly style="width:100%; background:#11111b; border:1px solid #313244; color:#6c7086; padding:8px; border-radius:8px; margin-bottom: 10px; box-sizing: border-box; outline: none; font-size: 13px; cursor:not-allowed; opacity:0.7;">
+        <input type="text" id="openrouterApiKeyInput" placeholder="Netlify Environment Variables üzerinden yönetilir" type="password" disabled readonly style="width:100%; background:#11111b; border:1px solid #313244; color:#6c7086; padding:8px; border-radius:8px; margin-bottom: 10px; box-sizing: border-box; outline: none; font-size: 13px; cursor:not-allowed; opacity:0.7;">
 
         <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px; text-align: left;">
             xAI API Key <span style="color: #f38ba8; font-size: 11px;">(Grok 3 / Grok 3 Mini — console.x.ai)</span>:
         </div>
-        <input type="password" id="xaiApiKeyInput" placeholder="xai-..." style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px; border-radius:8px; margin-bottom: 10px; box-sizing: border-box; outline: none; font-size: 13px;">
+        <input type="password" id="xaiApiKeyInput" placeholder="API key girilirse yerel tarayıcıda saklanır" type="password" style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px; border-radius:8px; margin-bottom: 10px; box-sizing: border-box; outline: none; font-size: 13px;">
 
         <div style="display: flex; gap: 10px; margin-bottom: 10px; opacity:0.55;">
             <div style="flex: 1; text-align: left;">
                 <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px;">Cloudflare Account ID <span style="color:#6c7086;font-size:11px;">(sonraki faz)</span>:</div>
-                <input type="text" id="cloudflareAccountIdInput" placeholder="Account ID" disabled readonly style="width:100%; background:#11111b; border:1px solid #313244; color:#6c7086; padding:8px; border-radius:8px; box-sizing: border-box; outline: none; font-size: 13px; cursor:not-allowed;">
+                <input type="text" id="cloudflareAccountIdInput" placeholder="Netlify Environment Variables üzerinden yönetilir" type="password" disabled readonly style="width:100%; background:#11111b; border:1px solid #313244; color:#6c7086; padding:8px; border-radius:8px; box-sizing: border-box; outline: none; font-size: 13px; cursor:not-allowed;">
             </div>
             <div style="flex: 1; text-align: left;">
                 <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px;">CF API Token <span style="color:#6c7086;font-size:11px;">(sonraki faz)</span>:</div>
-                <input type="password" id="cloudflareApiTokenInput" placeholder="Token" disabled readonly style="width:100%; background:#11111b; border:1px solid #313244; color:#6c7086; padding:8px; border-radius:8px; box-sizing: border-box; outline: none; font-size: 13px; cursor:not-allowed;">
+                <input type="password" id="cloudflareApiTokenInput" placeholder="Netlify Environment Variables üzerinden yönetilir" type="password" disabled readonly style="width:100%; background:#11111b; border:1px solid #313244; color:#6c7086; padding:8px; border-radius:8px; box-sizing: border-box; outline: none; font-size: 13px; cursor:not-allowed;">
             </div>
         </div>
 
