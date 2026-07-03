@@ -1686,7 +1686,10 @@
         <button class="attach-menu-close" onclick="closeSettings()">×</button>
         <div class="attach-menu-title">Ayarlar & API</div>
 
-        <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px; text-align: left;">
+                <details style="background:#181825; border:1px solid #313244; border-radius:8px; padding:10px; margin-bottom:10px;">
+            <summary style="cursor:pointer; color:#a6e3a1; font-weight:600; font-size:13px; outline:none; user-select:none;">API & Sunucu Yapılandırması</summary>
+            <div style="margin-top:12px; display:flex; flex-direction:column;">
+<div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px; text-align: left;">
             Ollama Sunucu IP'si (Mobilden bağlanmak için):
         </div>
         <input type="text" id="ollamaIpInput" placeholder="http://192.168.1.X:11434" style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px; border-radius:8px; margin-bottom: 10px; box-sizing: border-box; outline: none; font-size: 13px;">
@@ -1769,7 +1772,12 @@
             </div>
         </div>
 
-        <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px; text-align: left;">
+                    </div>
+        </details>
+        <details style="background:#181825; border:1px solid #313244; border-radius:8px; padding:10px; margin-bottom:10px;">
+            <summary style="cursor:pointer; color:#a6e3a1; font-weight:600; font-size:13px; outline:none; user-select:none;">Medya ve Çıktı Ayarları</summary>
+            <div style="margin-top:12px; display:flex; flex-direction:column;">
+<div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px; text-align: left;">
             Video Oluşturma Modu:
         </div>
         <select id="videoModeSelect" style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px; border-radius:8px; margin-bottom: 15px; outline: none; font-size: 13px;">
@@ -1815,8 +1823,11 @@
             </span>
         </label>
 
-        <div style="border-top:1px solid #313244; padding-top:12px; margin-top:4px; text-align:left;">
-            <div style="color:#cdd6f4; font-size:13px; font-weight:700; margin-bottom:8px;">Mod Sistemi v2</div>
+                    </div>
+        </details>
+        <details style="background:#181825; border:1px solid #313244; border-radius:8px; padding:10px; margin-bottom:10px;">
+            <summary style="cursor:pointer; color:#a6e3a1; font-weight:600; font-size:13px; outline:none; user-select:none;">Mod Sistemi v2 & Deneysel Özellikler</summary>
+            <div style="margin-top:12px; display:flex; flex-direction:column;">
             <label style="display:block; color:#a6adc8; font-size:12px; margin-bottom:5px;">Üslup Modu</label>
             <select id="settingsStyleModeSelect" style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px; border-radius:8px; margin-bottom:10px; outline:none; font-size:13px;">
                 <option value="safe">Güvenli Mod</option>
@@ -1857,6 +1868,8 @@
                 <button class="run-code-btn" style="flex:1; min-width:150px; background:#a6e3a1; color:#11111b;" onclick="enableNewFeatures()">Yeni Özellikleri Tekrar Aç</button>
             </div>
         </div>
+            </div>
+        </details>
 
         <button class="send-btn" style="width: 100%; border-radius: 8px; padding: 10px;" onclick="saveSettings()">Kaydet</button>
     </div>
