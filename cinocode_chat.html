@@ -1300,16 +1300,20 @@
 
     <div class="user-profile" id="userProfile" style="margin-top:auto; padding-top:12px; border-top:1px solid #313244; display:flex; flex-direction:column; gap:8px; min-width:0;">
         <div style="font-size:13px; color:#cdd6f4; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" id="welcomeText">Hoşgeldin<span id="loggedInUserWrapper">, <b id="loggedInUser" style="color:#89b4fa;"></b></span></div>
-        <div style="display:flex; gap:8px; align-items:center; min-width:0;">
-            <button onclick="openSettings()" title="Ayarlar" style="flex:1; min-width:0; background:#181825; border:1px solid #45475a; color:#a6e3a1; cursor:pointer; font-size:12px; font-weight:600; padding:7px 8px; border-radius:8px;">⚙️ Ayarlar</button>
-            <button onclick="logout()" style="flex:1; min-width:0; background:#181825; border:1px solid #45475a; color:#f38ba8; cursor:pointer; font-size:12px; font-weight:600; padding:7px 8px; border-radius:8px;">Çıkış</button>
+                <div style="position:relative; min-width:0; margin-top:8px;">
+            <button onclick="toggleAccountPopover(event)" title="Hesap" style="width:100%; min-width:0; background:#181825; border:1px solid #45475a; color:#a6e3a1; cursor:pointer; font-size:12px; font-weight:600; padding:7px 8px; border-radius:8px; display:flex; align-items:center; justify-content:center; gap:6px;">👤 Profil</button>
+            <div id="accountPopover" style="display:none; position:absolute; bottom:35px; left:0; width:100%; background:#181825; border:1px solid #45475a; padding:12px; border-radius:8px; z-index:10010; box-shadow:0 4px 15px rgba(0,0,0,0.5); text-align:center; color:#cdd6f4;">
+                <div style="font-size:11px; color:#a6adc8; margin-bottom:12px;" id="accountStats">Sohbet verileriniz güvende.</div>
+                <button onclick="logout()" style="width:100%; min-width:0; background:rgba(243,139,168,0.1); border:1px solid rgba(243,139,168,0.3); color:#f38ba8; cursor:pointer; font-size:12px; font-weight:600; padding:7px 8px; border-radius:8px; margin-bottom:8px;">Çıkış Yap</button>
+                <button onclick="alert('Demo modu: Hesap silme devre dışı.')" style="width:100%; min-width:0; background:transparent; border:none; color:#6c7086; cursor:pointer; font-size:11px; padding:4px; text-decoration:underline;">Hesabımı Sil</button>
+            </div>
         </div>
     </div>
 </div>
 
 <!-- MAIN CHAT -->
 <div class="main-chat">
-    <div class="header">
+    <div class="header" style="z-index: 100; position: relative;">
         <div class="header-title">
             <div class="status-indicator" id="statusIndicator" title="Ollama Bağlantısı"></div>
             CinoCode
@@ -8915,6 +8919,38 @@ function buildExamCoachSuffix() {
         section.appendChild(listDiv);
         return section;
     }
+
+
+    function toggleAccountPopover(e) {
+        if(e) e.stopPropagation();
+        const popover = document.getElementById('accountPopover');
+        if (!popover) return;
+        popover.style.display = popover.style.display === 'none' ? 'block' : 'none';
+        if (popover.style.display === 'block') {
+            document.getElementById('voiceQuickSettingsPopover').style.display = 'none';
+        }
+    }
+
+    document.addEventListener('click', (e) => {
+        const vPop = document.getElementById('voiceQuickSettingsPopover');
+        if (vPop && vPop.style.display === 'block' && !e.target.closest('#voiceControlsContainer')) {
+            vPop.style.display = 'none';
+        }
+
+        const aPop = document.getElementById('accountPopover');
+        if (aPop && aPop.style.display === 'block' && !e.target.closest('.user-profile')) {
+            aPop.style.display = 'none';
+        }
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            const vPop = document.getElementById('voiceQuickSettingsPopover');
+            if (vPop) vPop.style.display = 'none';
+            const aPop = document.getElementById('accountPopover');
+            if (aPop) aPop.style.display = 'none';
+        }
+    });
 
 </script>
 
