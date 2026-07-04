@@ -2038,12 +2038,21 @@
     function saveComposerDraft() {
         const text = getComposerText();
         try {
-            if (text && text.trim().length > 0) {
-                localStorage.setItem(COMPOSER_DRAFT_KEY, text);
+            const hasImage = selectedImageBase64 && selectedImageBase64.length < 2500000;
+            if ((text && text.trim().length > 0) || hasImage) {
+                const draftObj = {
+                    version: 1,
+                    text: text || "",
+                    imageBase64: hasImage ? selectedImageBase64 : null,
+                    savedAt: Date.now()
+                };
+                localStorage.setItem(COMPOSER_DRAFT_KEY, JSON.stringify(draftObj));
             } else {
                 localStorage.removeItem(COMPOSER_DRAFT_KEY);
             }
-        } catch(e) {}
+        } catch(e) {
+            console.warn("Draft save failed (possibly quota exceeded)", e);
+        }
     }
 
     function clearComposerDraft() {
@@ -2077,11 +2086,34 @@
     function restoreComposerDraftIfNeeded() {
         const input = document.getElementById('userInput');
         if (!input || input.value.trim()) return;
-        let draft = '';
-        try { draft = localStorage.getItem(COMPOSER_DRAFT_KEY) || ''; } catch(e) {}
-        if (!draft) return;
-        input.value = draft;
-        autoResize(input);
+        let draftStr = '';
+        try { draftStr = localStorage.getItem(COMPOSER_DRAFT_KEY) || ''; } catch(e) {}
+        if (!draftStr) return;
+
+        try {
+            if (draftStr.startsWith('{')) {
+                const draftObj = JSON.parse(draftStr);
+                if (draftObj.text) {
+                    input.value = draftObj.text;
+                    autoResize(input);
+                }
+                if (draftObj.imageBase64) {
+                    selectedImageBase64 = draftObj.imageBase64;
+                    const previewImg = document.getElementById('imagePreview');
+                    const previewContainer = document.getElementById('imagePreviewContainer');
+                    if (previewImg && previewContainer) {
+                        previewImg.src = selectedImageBase64;
+                        previewContainer.style.display = 'block';
+                    }
+                }
+            } else {
+                input.value = draftStr;
+                autoResize(input);
+            }
+        } catch (e) {
+            console.error("Draft load failed", e);
+            clearComposerDraft();
+        }
     }
 
     function setComposerValue(text, options = {}) {
