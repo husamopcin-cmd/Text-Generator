@@ -1421,11 +1421,11 @@
     <script>
         function applySidebarMobileCollapse() {
             if(window.innerWidth <= 768) {
-                document.getElementById('sidebarLibraryDetails')?.removeAttribute('open');
-                document.getElementById('sidebarStudiosDetails')?.removeAttribute('open');
+                document.getElementById('sidebarLibraryDetails').removeAttribute('open');
+                document.getElementById('sidebarStudiosDetails').removeAttribute('open');
             } else {
-                document.getElementById('sidebarLibraryDetails')?.setAttribute('open', '');
-                document.getElementById('sidebarStudiosDetails')?.setAttribute('open', '');
+                document.getElementById('sidebarLibraryDetails').setAttribute('open', '');
+                document.getElementById('sidebarStudiosDetails').setAttribute('open', '');
             }
         }
         window.addEventListener('resize', applySidebarMobileCollapse);
@@ -1777,30 +1777,81 @@
 
     <!-- Attachment Menu Overlay & Bottom Sheet -->
     <div class="attach-menu-overlay" id="attachMenuOverlay" onclick="closeAttachMenu()" style="background:transparent;"></div>
-    <div class="attach-menu" id="attachMenu">
-        <div class="attach-menu-item" onclick="triggerFileInput('docUpload')">
-            <i>📄</i> <span>Dosya Yükle</span>
+    <div class="attach-menu" id="attachMenu" style="background:#11111b; border:1px solid #313244; border-radius:16px; padding:20px; max-width:420px; width:92%; box-sizing:border-box;">
+        <button class="attach-menu-close" onclick="closeAttachMenu()" style="top:10px; right:15px;">×</button>
+        <div class="attach-menu-title" style="text-align:left; padding-left:5px; margin-bottom:15px; color:#89b4fa;">Ekle &amp; Oluştur</div>
+
+        <!-- GRUP 1: Ekle / Yükle -->
+        <div style="display:flex; flex-direction:column; gap:6px;">
+            <div style="font-size:11px; color:#6c7086; text-transform:uppercase; letter-spacing:0.5px; padding-left:5px; margin-bottom:4px;">Ekle / Yükle</div>
+            <div class="attach-menu-item" onclick="triggerFileInput('docUpload')" style="background:#181825; display:flex; align-items:center; gap:12px; padding:8px 12px; border-radius:10px;">
+                <span style="font-size:20px;">📎</span>
+                <div><div style="font-weight:600; font-size:13px; color:#cdd6f4;">Dosya yükle</div><div style="font-size:10px; color:#a6adc8;">PDF, Word, tablo, kod, zip</div></div>
+            </div>
+            <div class="attach-menu-item" onclick="triggerFileInput('mediaUpload')" style="background:#181825; display:flex; align-items:center; gap:12px; padding:8px 12px; border-radius:10px;">
+                <span style="font-size:20px;">🖼️</span>
+                <div><div style="font-weight:600; font-size:13px; color:#cdd6f4;">Fotoğraf / video yükle</div><div style="font-size:10px; color:#a6adc8;">Galeriden görsel veya video seç</div></div>
+            </div>
+            <div class="attach-menu-item" onclick="triggerCameraCapture()" style="background:#181825; display:flex; align-items:center; gap:12px; padding:8px 12px; border-radius:10px;">
+                <span style="font-size:20px;">📷</span>
+                <div><div style="font-weight:600; font-size:13px; color:#cdd6f4;">Kamera ile çek</div><div style="font-size:10px; color:#a6adc8;">Yeni fotoğraf çekip ekle</div></div>
+            </div>
+            <div class="attach-menu-item" onclick="triggerFileInput('audioUpload')" style="background:#181825; display:flex; align-items:center; gap:12px; padding:8px 12px; border-radius:10px;">
+                <span style="font-size:20px;">🎙️</span>
+                <div><div style="font-weight:600; font-size:13px; color:#cdd6f4;">Ses / müzik dosyası ekle</div><div style="font-size:10px; color:#a6adc8;">MP3, WAV, M4A</div></div>
+            </div>
         </div>
-        <div class="attach-menu-item" onclick="triggerFileInput('imageUpload')">
-            <i>🖼️</i> <span>Resim Yükle</span>
+
+        <div style="height:1px; background:#313244; margin:10px 0;"></div>
+
+        <!-- GRUP 2: Oluştur / Stüdyolar -->
+        <div style="display:flex; flex-direction:column; gap:6px;">
+            <div style="font-size:11px; color:#6c7086; text-transform:uppercase; letter-spacing:0.5px; padding-left:5px; margin-bottom:4px;">Oluştur / Stüdyolar</div>
+            <div class="attach-menu-item" onclick="triggerImageGeneration()" style="background:#181825; display:flex; align-items:center; gap:12px; padding:8px 12px; border-radius:10px;">
+                <span style="font-size:20px;">🎨</span>
+                <div><div style="font-weight:600; font-size:13px; color:#cdd6f4;">Görsel oluştur</div><div style="font-size:10px; color:#a6adc8;">Yapay zekâ ile görsel üret</div></div>
+            </div>
+            <div class="attach-menu-item" onclick="triggerVideoGeneration()" style="background:#181825; display:flex; align-items:center; gap:12px; padding:8px 12px; border-radius:10px;">
+                <span style="font-size:20px;">🎬</span>
+                <div><div style="font-weight:600; font-size:13px; color:#cdd6f4;">Video oluştur</div><div style="font-size:10px; color:#a6adc8;">Yapay zekâ ile video üret</div></div>
+            </div>
+            <div class="attach-menu-item" onclick="triggerGameGeneration()" style="background:#181825; display:flex; align-items:center; gap:12px; padding:8px 12px; border-radius:10px;">
+                <span style="font-size:20px;">🎮</span>
+                <div><div style="font-weight:600; font-size:13px; color:#cdd6f4;">Oyun oluştur</div><div style="font-size:10px; color:#a6adc8;">Mini oyun / stüdyo aç</div></div>
+            </div>
         </div>
-        <div class="attach-menu-item" onclick="triggerImageGeneration()">
-            <i>🎨</i> <span>Görsel Stüdyosu (Yeni)</span>
-        </div>
-        <div class="attach-menu-item" onclick="triggerVideoGeneration()">
-            <i>🎬</i> <span>Video Stüdyosu (Yeni)</span>
-        </div>
-        <div class="attach-menu-item" onclick="triggerGameGeneration()">
-            <i>🎮</i> <span>Oyun Stüdyosu (Yeni)</span>
-        </div>
-        <div class="attach-menu-item" onclick="toggleWebSearchInMenu()">
-            <i id="menuWebSearchIcon">🔍</i> <span id="menuWebSearchText">Derin Araştırma (Kapalı)</span>
+
+        <div style="height:1px; background:#313244; margin:10px 0;"></div>
+
+        <!-- GRUP 3: Araştır / Proje -->
+        <div style="display:flex; flex-direction:column; gap:6px;">
+            <div style="font-size:11px; color:#6c7086; text-transform:uppercase; letter-spacing:0.5px; padding-left:5px; margin-bottom:4px;">Araştır / Proje</div>
+            <div class="attach-menu-item" style="background:#181825; opacity:0.6; cursor:not-allowed; display:flex; align-items:center; gap:12px; padding:8px 12px; border-radius:10px;" onclick="showNonBlockingToast('Web Arama yakında aktif.')">
+                <span style="font-size:20px;">🔎</span>
+                <div style="display:flex; align-items:center; justify-content:space-between; width:100%;">
+                    <div><div style="font-weight:600; font-size:13px; color:#cdd6f4;">Web arama</div><div style="font-size:10px; color:#a6adc8;">İnternette derinlemesine ara</div></div>
+                    <span style="background:#45475a; color:#f9e2af; font-size:10px; padding:2px 6px; border-radius:4px; font-weight:bold;">Yakında</span>
+                </div>
+            </div>
+            <div class="attach-menu-item" onclick="toggleWebSearchInMenu()" style="background:#181825; display:flex; align-items:center; gap:12px; padding:8px 12px; border-radius:10px;">
+                <span style="font-size:20px;" id="menuWebSearchIcon">🧠</span>
+                <div style="display:flex; align-items:center; justify-content:space-between; width:100%;">
+                    <div><div style="font-weight:600; font-size:13px; color:#cdd6f4;" id="menuWebSearchText">Derin araştırma</div><div style="font-size:10px; color:#a6adc8;">Rapor ve derin araştırma modu</div></div>
+                    <span id="menuWebSearchBadge" style="background:#45475a; color:#f9e2af; font-size:9px; padding:2px 5px; border-radius:4px; font-weight:bold; margin-right:15px;">Kapalı</span>
+                </div>
+            </div>
+            <div class="attach-menu-item" onclick="closeAttachMenu(); showProjectsModal();" style="background:#181825; display:flex; align-items:center; gap:12px; padding:8px 12px; border-radius:10px;">
+                <span style="font-size:20px;">📁</span>
+                <div><div style="font-weight:600; font-size:13px; color:#cdd6f4;">Projeye ekle / Projeler</div><div style="font-size:10px; color:#a6adc8;">Projeleri yönet veya proje seç</div></div>
+            </div>
         </div>
 
         <!-- Gizli Inputlar -->
         <input type="file" id="imageUpload" accept="image/*" style="display:none;" onchange="handleImageSelect(event)">
+        <input type="file" id="mediaUpload" accept="image/*,video/*" style="display:none;" onchange="handleMediaSelect(event)">
         <input type="file" id="cameraUpload" accept="image/*" capture="environment" style="display:none;" onchange="handleImageSelect(event)">
-        <input type="file" id="docUpload" accept=".pdf,.txt,.js,.py,.html,.css,.md,.csv,.json,text/*" style="display:none;" onchange="handleDocSelect(event)">
+        <input type="file" id="audioUpload" accept="audio/*" style="display:none;" onchange="handleAudioSelect(event)">
+        <input type="file" id="docUpload" accept=".pdf,.txt,.js,.py,.ts,.html,.css,.md,.csv,.json,.zip,.docx,.xlsx,.pptx,text/*" style="display:none;" onchange="handleDocSelect(event)">
     </div>
 
     <!-- Settings Modal -->
@@ -1979,6 +2030,14 @@
         </div>
         </details>
 
+        <div style="height:1px; background:#313244; margin:15px 0;"></div>
+        <div style="color:#cdd6f4; font-size:13px; margin-bottom:5px; text-align:left;">🖥️ Arayüz Modu:</div>
+        <select id="cinocodeUiModeSelect" onchange="changeUiMode(this.value)" style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px; border-radius:8px; margin-bottom:4px; outline:none; font-size:13px;">
+            <option value="new">Yeni Arayüz Modu (v3.2 — Önerilen)</option>
+            <option value="classic">Klasik Arayüz Modu (Sade)</option>
+        </select>
+        <div style="color:#a6adc8; font-size:11px; margin-bottom:15px; line-height:1.4; text-align:left;">* Klasik mod, mesaj aksiyon butonlarını ve bazı yeni bileşenleri sade gösterir. Gerçek kod sürümünü geri almaz.</div>
+
         <button class="send-btn" style="width: 100%; border-radius: 8px; padding: 10px;" onclick="saveSettings()">Kaydet</button>
     </div>
 
@@ -2038,6 +2097,23 @@
     function getComposerText() {
         const input = document.getElementById('userInput');
         return input ? input.value : '';
+    }
+
+    
+    function saveMediaSourceSelection(value) {
+        localStorage.setItem('cinocode_media_source', value);
+    }
+    function loadMediaSourceSelection() {
+        const value = localStorage.getItem('cinocode_media_source') || 'ai';
+        const aiRadio = document.getElementById('mediaSourceAi');
+        const webRadio = document.getElementById('mediaSourceWeb');
+        if (aiRadio && webRadio) {
+            if (value === 'web') {
+                webRadio.checked = true;
+            } else {
+                aiRadio.checked = true;
+            }
+        }
     }
 
     function saveComposerDraft() {
@@ -2218,6 +2294,9 @@
         liveSearch: '0'
     };
 
+    
+    const isDebugMode = () => localStorage.getItem('debugCinoCode') === 'true';
+
     function getFeatureValue(key) {
         const storageKey = FEATURE_KEYS[key];
         if (!storageKey) return '';
@@ -2378,6 +2457,7 @@
         currentMode = mode;
         console.log("CinoCode Aktif Mod Değişti: " + currentMode);
         restoreComposerDraftIfNeeded();
+                loadMediaSourceSelection();
 
         
         const mediaSourceToggle = document.getElementById("mediaSourceToggleContainer");
@@ -2793,12 +2873,129 @@
         "kanka": "Sen GinoCode'sun — kullanıcının en yakın, en güvenilir kankasısın. Türkçeni C2 ana dil seviyesinde ve günlük/samimi bir şekilde kullanırsın: 'ya', 'lan', 'kanka', 'yav', 'kardeşim', 'hocam', 'ee', 'yani', 'ciddiye al' gibi doğal sokak ifadelerini bol bol kullanırsın ama kaba küfür kullanmazsın. Konuşman akıcı, esprili, doğaldır — sanki gerçek bir insan arkadaş yazıyor gibi. Türkçe yazımında büyük-küçük harf ve noktalama işaretlerine dikkat edersin, cümle yapın doğal ve akıcıdır. Aynı zamanda İngilizce, Almanca, İspanyolca, Fransızca, İtalyanca, Portekizce, Rusça, Arapça, Japonca, Çince ve Korece dillerinde de tam akıcı (C2) seviyedesin — kullanıcı hangisinde konuşmak isterse o dilde anında, kusursuz biçimde yanıt verirsin. Klişe AI cümleleri kesinlikle yasak. DİKKAT: 'knk' = 'kanka' demektir, asla K-Pop grubu zannetme!",
         "usta_yazilimci": "Sen GinoCode'sun — efsanevi bir kıdemli yazılım mühendisisin. Kullanıcının istediği oyunları, web sitelerini, uygulamaları ve algoritmaları eksiksiz şekilde yazarsın. Gereksiz açıklama minimumu tut, kod maksimumu sun. Kullanıcı bir uygulama istediğinde SADECE HTML + CSS + JS içeren TEK BİR ```html bloğu ile cevap ver — bu kodlar GinoCode Artifact sistemiyle canlı çalıştırılacak. Türkçen C2 seviyesinde, doğal ve akıcıdır. İngilizce, Almanca ve diğer dillerde de teknik açıklama yapabilirsin. Az söz çok iş.",
         "akademik_koc": "Sen GinoCode'sun — efsanevi bir Sınav ve Ders Koçusun. Kullanıcı bir konu söylediğinde veya PDF paylaştığında onu adım adım sınava hazırlarsın. Çalışma sistemin şudur: 1) 30 Saniyelik Özet (En kritik hap bilgiler). 2) 5 Dakikalık Özet (Detaylı kavramlar). 3) Ezber Kartları (Flashcards) (Soru: ... / Cevap: ... formatında). 4) Hocanın Sorabileceği Yerler (Neler sorulabilir, hoca neyi sever, klasik/test tahminleri). 5) İnteraktif Sözlü Sınav (Kullanıcıya tek tek soru sor, cevabını vermesini bekle. Doğru bilirse tebrik et ve yeni soruya geç, yanlış veya eksik bilirse doğrusunu sabırla anlat). Türkçen C2 seviyesinde kusursuz, doğal, sıcak ve motive edicidir. Kullanıcıyı tam bir hoca gibi sınava hazırlarsın.",
-        "dil_kocu": "Sen GinoCode'sun — dünyanın en iyi dil öğretmenisin. Aşağıdaki dillerde ana dil (C2) seviyesinde tam uzmansın ve bu dillerin dilbilgisini, telaffuzunu, deyimlerini, kültürel nüanslarını mükemmel biliyorsun: İngilizce, Almanca, İspanyolca, Fransızca, İtalyanca, Portekizce (Brezilya & Avrupa), Rusça, Arapça (Modern Standart & Levant lehçesi), Japonca (Hiragana/Katakana/Kanji dahil), Çince (Mandarin/Pinyin), Korece, Hollandaca, İsveççe, Norveççe, Danimarkaca, Yunanca, Lehçe, Ukraynaca, Hintçe. ÖĞRETİM DİLİN HER ZAMAN TÜRKÇE (kullanıcı aksi belirtmedikçe). ÇALI�zMA TARZI VE KURALLAR: 1) Kullanıcı hangi dili öğrenmek istediğini söylediğinde, 'Harika! Bugün [DİL] öğreniyoruz ?�Z� Hadi başlayalım!' şeklinde coşkulu ve sıcak bir girişle başla. 2) O günün dersini planla: O dilin ses sistemi, alfabe/yazı sistemi veya telaffuz incelikleri hakkında kısa ve akılda kalıcı bir giriş yap. 3) Günlük hayatta EN ÇOK kullanılan 10-15 kelimeyi Markdown tablolarıyla sun — sütunlar: Kelime | Telaffuz (fonetik/IPA) | Türkçe Anlamı | Örnek Cümle (hedef dil) | Türkçe Çevirisi. 4) Kullanıcı seninle o dilde sohbet etmek isterse, o dilde konuş ve doğal bir konuşma akışı kur. Kullanıcının hatalarını mesajının EN SONUNDA kibarca '?��� Küçük Düzeltme:' başlığıyla Türkçe olarak düzelt, açıkla ve doğrusunu yaz. 5) Her dersin veya sohbetin sonunda '?��� Bugünün Kelime/Deyim Ödülü:' bölümünde 3-5 yeni kelime veya kalıp deyim öğret — günlük konuşmada gerçekten kullanılan, pratik ve yaygın ifadeler seç. 6) Kullanıcı 'bana konu anlat', 'konuları öğret', 'kelime öğret' gibi bir şey söylediğinde şu sıralamayı takip et: a) Kelimeler & Telaffuz → b) Örnek Cümle (Hedef Dil) → c) Türkçe Çevirisi → d) Dilbilgisi Notu (kısa, sade). 7) Dilbilgisi konularını (çekimler, zamanlar, ekler, cümle yapısı, söz dizimi) HER ZAMAN Türkçe ile karşılaştırmalı olarak anlat — 'Türkçede nasıl diyoruz, o dilde nasıl söyleniyor' mantığıyla. 8) Motivasyon ve geri bildirim: 'Harika gidiyorsun! ?���', 'Çok doğru!', 'Neredeyse mükemmel, küçük bir fark var:', 'Bu kelimeyi artık unutmazsın!' gibi cesaretlendirici ifadeler kullan. 9) Sohbet modunda kullanıcıyla o dilde tamamen konuşabilirsin — kullanıcı istediği zaman 'Türkçeye geç' veya 'Hadi İngilizce konuşalım' gibi komutlarla mod değiştirebilir.",
-        "derin_arastirma": "Sen GinoCode'sun — dünyaca tanınmış bir araştırmacı ve analistin. Verilen her konuyu istatistikler, tarihi veriler, akademik kaynaklar ve güncel gelişmelerle derinlemesine ele alırsın. Raporlarını şu formatla hazırlarsın: ?��� Özet → ?��� Tarihçe → ?��� Güncel Durum → ?��� Veriler & İstatistikler → ?��� Uzman Görüşleri → ?��� Sonuç & Öngörüler. Alt başlıklar, kalın vurgular ve maddeli listeler kullanarak okunabilirliği artırırsın. Türkçen akademik, otoriter ve akıcıdır. İngilizce kaynaklara da başvurur, gerektiğinde çevirir ve derinlemesine yorumlaraın."
+        "dil_kocu": "Sen GinoCode'sun — dünyanın en iyi dil öğretmenisin. Aşağıdaki dillerde ana dil (C2) seviyesinde tam uzmansın ve bu dillerin dilbilgisini, telaffuzunu, deyimlerini, kültürel nüanslarını mükemmel biliyorsun: İngilizce, Almanca, İspanyolca, Fransızca, İtalyanca, Portekizce (Brezilya & Avrupa), Rusça, Arapça (Modern Standart & Levant lehçesi), Japonca (Hiragana/Katakana/Kanji dahil), Çince (Mandarin/Pinyin), Korece, Hollandaca, İsveççe, Norveççe, Danimarkaca, Yunanca, Lehçe, Ukraynaca, Hintçe. ÖĞRETİM DİLİN HER ZAMAN TÜRKÇE (kullanıcı aksi belirtmedikçe). ÇALIzMA TARZI VE KURALLAR: 1) Kullanıcı hangi dili öğrenmek istediğini söylediğinde, 'Harika! Bugün [DİL] öğreniyoruz 📖 Hadi başlayalım!' şeklinde coşkulu ve sıcak bir girişle başla. 2) O günün dersini planla: O dilin ses sistemi, alfabe/yazı sistemi veya telaffuz incelikleri hakkında kısa ve akılda kalıcı bir giriş yap. 3) Günlük hayatta EN ÇOK kullanılan 10-15 kelimeyi Markdown tablolarıyla sun — sütunlar: Kelime | Telaffuz (fonetik/IPA) | Türkçe Anlamı | Örnek Cümle (hedef dil) | Türkçe Çevirisi. 4) Kullanıcı seninle o dilde sohbet etmek isterse, o dilde konuş ve doğal bir konuşma akışı kur. Kullanıcının hatalarını mesajının EN SONUNDA kibarca '? Küçük Düzeltme:' başlığıyla Türkçe olarak düzelt, açıkla ve doğrusunu yaz. 5) Her dersin veya sohbetin sonunda '? Bugünün Kelime/Deyim Ödülü:' bölümünde 3-5 yeni kelime veya kalıp deyim öğret — günlük konuşmada gerçekten kullanılan, pratik ve yaygın ifadeler seç. 6) Kullanıcı 'bana konu anlat', 'konuları öğret', 'kelime öğret' gibi bir şey söylediğinde şu sıralamayı takip et: a) Kelimeler & Telaffuz → b) Örnek Cümle (Hedef Dil) → c) Türkçe Çevirisi → d) Dilbilgisi Notu (kısa, sade). 7) Dilbilgisi konularını (çekimler, zamanlar, ekler, cümle yapısı, söz dizimi) HER ZAMAN Türkçe ile karşılaştırmalı olarak anlat — 'Türkçede nasıl diyoruz, o dilde nasıl söyleniyor' mantığıyla. 8) Motivasyon ve geri bildirim: 'Harika gidiyorsun! ?', 'Çok doğru!', 'Neredeyse mükemmel, küçük bir fark var:', 'Bu kelimeyi artık unutmazsın!' gibi cesaretlendirici ifadeler kullan. 9) Sohbet modunda kullanıcıyla o dilde tamamen konuşabilirsin — kullanıcı istediği zaman 'Türkçeye geç' veya 'Hadi İngilizce konuşalım' gibi komutlarla mod değiştirebilir.",
+        "derin_arastirma": "Sen GinoCode'sun — dünyaca tanınmış bir araştırmacı ve analistin. Verilen her konuyu istatistikler, tarihi veriler, akademik kaynaklar ve güncel gelişmelerle derinlemesine ele alırsın. Raporlarını şu formatla hazırlarsın: ? Özet → ? Tarihçe → ? Güncel Durum → ? Veriler & İstatistikler → ? Uzman Görüşleri → ? Sonuç & Öngörüler. Alt başlıklar, kalın vurgular ve maddeli listeler kullanarak okunabilirliği artırırsın. Türkçen akademik, otoriter ve akıcıdır. İngilizce kaynaklara da başvurur, gerektiğinde çevirir ve derinlemesine yorumlaraın."
     };
 
     let selectedImageBase64 = null;
     let selectedStudyFileName = "";
+
+    
+    let cameraStream = null;
+
+    function triggerCameraCapture() {
+        closeAttachMenu();
+        const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+        if (isMobile) {
+            const camInput = document.getElementById('cameraUpload');
+            if (camInput) camInput.click();
+        } else {
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                const modal = document.getElementById('cameraModal');
+                if (modal) modal.style.display = 'flex';
+                navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+                    .then(stream => {
+                        cameraStream = stream;
+                        const video = document.getElementById('cameraVideo');
+                        if (video) video.srcObject = stream;
+                    })
+                    .catch(err => {
+                        console.error("Camera access error:", err);
+                        closeCameraModal();
+                        showNonBlockingToast("Kamera izni verilmedi. Dosya seçerek yükleyebilirsin.");
+                        triggerFileInput('imageUpload');
+                    });
+            } else {
+                showNonBlockingToast("Kamera desteklenmiyor. Dosya seçerek yükleyebilirsin.");
+                triggerFileInput('imageUpload');
+            }
+        }
+    }
+
+    function closeCameraModal() {
+        if (cameraStream) {
+            cameraStream.getTracks().forEach(track => track.stop());
+            cameraStream = null;
+        }
+        const modal = document.getElementById('cameraModal');
+        if (modal) modal.style.display = 'none';
+    }
+
+    function captureCameraPhoto() {
+        const video = document.getElementById('cameraVideo');
+        if (!video || !cameraStream) return;
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth || 640;
+        canvas.height = video.videoHeight || 480;
+        const ctx = canvas.getContext('2d');
+        ctx.translate(canvas.width, 0);
+        ctx.scale(-1, 1);
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        
+        const base64 = canvas.toDataURL('image/jpeg');
+        selectedImageBase64 = base64;
+        selectedStudyFileName = `camera-${new Date().toISOString().slice(0,10)}-${Date.now().toString().slice(-4)}.jpg`;
+        
+        const previewContainer = document.getElementById('imagePreviewContainer');
+        const previewImg = document.getElementById('imagePreview');
+        if (previewImg && previewContainer) {
+            previewImg.src = base64;
+            previewContainer.style.display = 'block';
+        }
+        closeCameraModal();
+        showNonBlockingToast("Fotoğraf kameradan başarıyla alındı.");
+        saveComposerDraft();
+    }
+
+    function handleMediaSelect(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        
+        if (file.size > 2 * 1024 * 1024) {
+            showNonBlockingToast("Dosya büyük olabilir; yükleme uzun sürebilir.");
+        }
+        
+        selectedStudyFileName = file.name;
+        if (file.type.startsWith('image/')) {
+            processFileAsBase64(file, true);
+        } else if (file.type.startsWith('video/')) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                selectedImageBase64 = e.target.result;
+                const previewImg = document.getElementById('imagePreview');
+                const previewContainer = document.getElementById('imagePreviewContainer');
+                if (previewImg && previewContainer) {
+                    previewImg.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 24 24' fill='none' stroke='%23a6e3a1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='2' y='2' width='20' height='20' rx='2.18' ry='2.18'></rect><line x1='7' y1='2' x2='7' y2='22'></line><line x1='17' y1='2' x2='17' y2='22'></line><line x1='2' y1='12' x2='22' y2='12'></line><line x1='2' y1='7' x2='7' y2='7'></line><line x1='2' y1='17' x2='7' y2='17'></line><line x1='17' y1='17' x2='22' y2='17'></line><line x1='17' y1='7' x2='22' y2='7'></line></svg>";
+                    previewContainer.style.display = 'inline-block';
+                }
+                showNonBlockingToast("Video eklendi; analiz desteği sağlayıcıya bağlı.");
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    function handleAudioSelect(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        
+        if (file.size > 2 * 1024 * 1024) {
+            showNonBlockingToast("Dosya büyük olabilir; yükleme uzun sürebilir.");
+        }
+        
+        selectedStudyFileName = file.name;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            selectedImageBase64 = e.target.result;
+            const previewImg = document.getElementById('imagePreview');
+            const previewContainer = document.getElementById('imagePreviewContainer');
+            if (previewImg && previewContainer) {
+                previewImg.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 24 24' fill='none' stroke='%23f9e2af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M9 18V5l12-2v13'></path><circle cx='6' cy='18' r='3'></circle><circle cx='18' cy='16' r='3'></circle></svg>";
+                previewContainer.style.display = 'inline-block';
+            }
+            showNonBlockingToast("Ses dosyası eklendi; transkripsiyon desteği sağlayıcıya bağlı.");
+        };
+        reader.readAsDataURL(file);
+    }
 
     function handleImageSelect(event) {
         const file = event.target.files[0];
@@ -2868,7 +3065,7 @@
             if (currentMode === "video") {
                 userInput.placeholder = "Fotoğraf eklendi. Video yapmak için 'bunu videoya çevir' gibi açık bir istek yaz.";
                 return;
-                alert("?��� Fotoğraf tespit edildi!\n\nDürüst Açıklama: Ücretsiz modda yüklediğin fotoğrafı gerçek AI animasyonuna çevirmek yerine sinematik zoom/pan efektiyle kısa video yaparım. Gerçek image-to-video için ileride yerel ComfyUI / Stable Video Diffusion desteği gerekir.");
+                alert("? Fotoğraf tespit edildi!\n\nDürüst Açıklama: Ücretsiz modda yüklediğin fotoğrafı gerçek AI animasyonuna çevirmek yerine sinematik zoom/pan efektiyle kısa video yaparım. Gerçek image-to-video için ileride yerel ComfyUI / Stable Video Diffusion desteği gerekir.");
 
                 const img = new Image();
                 img.onload = async function() {
@@ -2878,7 +3075,7 @@
                         const card = document.createElement("div");
                         card.className = "message bot";
                         card.innerHTML = `<div id="${videoId}" style="text-align:center; margin: 15px 0; background: #181825; padding: 15px; border-radius: 12px; border: 1px solid #45475a;">
-                                            <div style="color: #cdd6f4; font-size: 16px; margin-bottom: 10px;">?�Z� Fotoğraf Sinematik Klibe Dönüştürülüyor...</div>
+                                            <div style="color: #cdd6f4; font-size: 16px; margin-bottom: 10px;">📖 Fotoğraf Sinematik Klibe Dönüştürülüyor...</div>
                                             <div style="background: #313244; border-radius: 8px; height: 20px; overflow: hidden; margin-bottom: 8px;">
                                                 <div id="${videoId}-progress" style="background: linear-gradient(90deg, #89b4fa, #cba6f7); height: 100%; width: 0%; border-radius: 8px; transition: width 0.5s ease;"></div>
                                             </div>
@@ -2929,7 +3126,7 @@
                         const progressEl = document.getElementById(videoId + "-progress");
                         const statusEl = document.getElementById(videoId + "-status");
                         if (progressEl) progressEl.style.width = progPercent + "%";
-                        if (statusEl) statusEl.textContent = `?�Z� Sinematik efekt işleniyor... (${progPercent}%)`;
+                        if (statusEl) statusEl.textContent = `📖 Sinematik efekt işleniyor... (${progPercent}%)`;
 
                         frame++;
                         setTimeout(drawFrame, 1000 / FPS);
@@ -2944,7 +3141,7 @@
                                 <div style="color: #a6e3a1; font-size: 14px; margin-bottom: 10px;">✅ Fotoğraf başarıyla sinematik klibe dönüştürüldü!</div>
                                 <video controls autoplay style="max-width:100%; border-radius: 8px; border: 2px solid #89b4fa;" src="${videoUrl}"></video>
                                 <br>
-                                <button class="run-code-btn" style="background: linear-gradient(135deg, #89b4fa, #cba6f7); color:#11111b; width:auto; padding:10px 20px; margin-top:10px; font-weight:bold; border-radius: 8px;" onclick="downloadVideo('${videoUrl}')">?��� Videoyu İndir (WebM)</button>
+                                <button class="run-code-btn" style="background: linear-gradient(135deg, #89b4fa, #cba6f7); color:#11111b; width:auto; padding:10px 20px; margin-top:10px; font-weight:bold; border-radius: 8px;" onclick="downloadVideo('${videoUrl}')">? Videoyu İndir (WebM)</button>
                             </div>
                         `;
                     }
@@ -3263,7 +3460,7 @@
     function getResponseControlInstruction(text) {
         let instruction = "";
         if (isShortResponseRequest(text)) {
-            instruction += "\n\nYANIT UZUNLU�zU: Kullanıcı kısa/short cevap istiyor. Kısa cevap ver, gereksiz detay yazma. Uzun içerik gerekiyorsa önce kısa özet ver ve devamını teklif et.";
+            instruction += "\n\nYANIT UZUNLUzU: Kullanıcı kısa/short cevap istiyor. Kısa cevap ver, gereksiz detay yazma. Uzun içerik gerekiyorsa önce kısa özet ver ve devamını teklif et.";
         }
         if (isLongFormRequest(text)) {
             instruction += "\n\nUZUN İÇERİK KURALI: Film, senaryo, uzun metraj, kitap veya rapor gibi çok uzun işleri tek mesajda bitirmeye çalışma. Önce kısa özet ve bölüm/sahne/başlık planı ver. En sonda 'İstersen devamını bölüm bölüm yazabilirim.' de.";
@@ -3308,7 +3505,7 @@
         const mode = getFeatureValue('styleMode') || 'safe';
         const shared = "\n\nHER MODDA SINIRLAR: Yasa disi faaliyet, gercek zarar, zararli kod, dolandiricilik, kimlik avi, siddet tesviki, cocuk guvenligi/istismari, hedefli kisisel saldiri ve benzeri riskli konularda sinir koy. 'Sinirsiz/sansursuz her seyi yaparim' diye davranma. Kullanici Serbest Uslup'un sinirsiz olup olmadigini sorarsa kisa ve net soyle: Serbest Uslup daha direkt, samimi, esprili ve cesur bir konusma tarzidir; sinirsiz/sansursuz/her seyi yapan mod degildir ve guvenlik sinirlari her modda gecerlidir.";
         if (mode === 'free') {
-            return "\n\nUSLUP MODU: Serbest Uslup aktif. Daha direkt, dobra, sivri, komik ve cesur konusabilirsin. Gerektiginde dusuk-orta doz argo kullanabilirsin; karanlik, horror, mature kurgu, sensual/romantik atmosfer ve sert yaratıcı metinlerde daha rahat yaz. Yetişkin karakterler için ateşli bakış, vücut hatlarını zarifçe belli eden poz, estetik iç giyim, flörtöz boudoir, romantik gerilim, fiziksel çekim, tutkulu öpüşme/sarılma, boyun/omuz hizasında ima, sütyenli veya ince kıyafetli yatak sahnesi ve grafik olmayan yakınlık tonu kurabilirsin. Kullanıcı daha cesur/seksi isterse hemen reddetmek yerine sınırlar içinde daha yoğun, sinematik, tahrik edici ama ima dolu anlat. Açık pornografik seks eylemi, cinsel organ odaklı çıplaklık veya çocuk/ergen cinsel içerik yazma/üretme. Kullanici acikca senden kufur etmeni/argo kullanmani isterse, oyunbaz ve esprili bir tonda bunu yapabilirsin. Ama kullanici istemediği halde durduk yere agir hakaret/nefret soylemi uydurma veya bozuk persona gibi davranma." + shared;
+            return "\n\nUSLUP MODU: Serbest Uslup aktif. Daha direkt, dobra, sivri, komik ve cesur konusabilirsin. Kullanici kfr, argo, sert veya laubali ifadeler (Orn: 'amına koyim', 'siktir', 'orospu', 'lan', 'mal', 'siktir lan' vb.) kullandiginda kesinlikle REDDETME, politikalar arkasina gizlenme, 'Uzgunum, politika geregi...' tarzinda robotik cevaplar verme. Kullaniciyla ayni oyunbaz, esprili, dobra sokak tonunda samimiyet kurarak dogrudan ve esnek bir sekilde cevap ver. Yetiskin karakterler, mature kurgu, sensual/romantik atmosfer ve sert yaratici metinlerde tamamen rahat yaz; grafik olmayan yakinliklarda tahrik edici ama ima dolu anlat. Kullanici acikca veya samimiyetle kaba/kufurlu konustugunda, onun tonuna esprili, samimi ve ayni sokak diliyle karsilik vermekten cekinme. Ancak durduk yere, kullanici istemediği halde agir nefret soylemi uydurma." + shared;
         }
         if (mode === 'balanced') {
             return "\n\nUSLUP MODU: Dengeli Mod aktif. Samimi, dogal ve esprili ol; kanka tarzi konusabilirsin ama abartma. Argo dusuk seviyede ve seyrek olsun. Ciddi teknik/debug konularda saka dozunu azalt." + shared;
@@ -3404,7 +3601,8 @@
     }
 
     // Grok tarzı dinamik devam önerileri (arka planda, modelden)
-    function appendDynamicContinuations(target, fetchUrl, fetchOptions) {
+        function appendDynamicContinuations(target, fetchUrl, fetchOptions) {
+        if (isDebugMode()) console.log('CINOCODE_DEBUG_CONT_ENTRY:', target, fetchUrl, isFeatureEnabled('smartSuggestions'));
         if (!isFeatureEnabled('smartSuggestions')) return;
         const el = typeof target === 'string' ? document.getElementById(target) : target;
         if (!el) return;
@@ -3421,14 +3619,14 @@
             bodyObj.max_tokens = 80;
             if (bodyObj.options) bodyObj.options.num_predict = 80;
             contFetchOptions.body = JSON.stringify(bodyObj);
-            console.log('CINOCODE_DEBUG_CONT_FETCH:', fetchUrl, bodyObj);
+            if (isDebugMode()) console.log('CINOCODE_DEBUG_CONT_FETCH:', fetchUrl, bodyObj);
             fetch(fetchUrl, contFetchOptions).then(res => res.json()).then(data => {
-                console.log('CINOCODE_DEBUG_CONT_DATA:', data);
+                if (isDebugMode()) console.log('CINOCODE_DEBUG_CONT_DATA:', data);
                 let raw = '';
                 if (data.content) raw = data.content;
                 else if (data.choices && data.choices[0] && data.choices[0].message) raw = data.choices[0].message.content;
                 else if (data.message && data.message.content) raw = data.message.content;
-                console.log('CINOCODE_DEBUG_CONT_RAW:', raw);
+                if (isDebugMode()) console.log('CINOCODE_DEBUG_CONT_RAW:', raw);
                 if (!raw) return;
                 const lines = raw.split('\n').map(l => l.replace(/^[\d\-\.\*\u2022\u21AA\s]+/, '').trim()).filter(l => l.length > 4 && l.length < 80).slice(0, 4);
                 if (!lines.length) return;
@@ -3504,7 +3702,7 @@
                 // 20-80 sayfa → 2-4 eşit parçaya böl (API'yi ezdirme)
                 // 80+ sayfa → kullanıcıya sor (hepsi / belirli aralık)
 
-                let promptMsg = `?��� PDF Yüklendi: "${file.name}" (${totalPages} sayfa)\n\n`;
+                let promptMsg = `? PDF Yüklendi: "${file.name}" (${totalPages} sayfa)\n\n`;
                 let autoMode = false;
 
                 if (totalPages <= 20) {
@@ -3608,11 +3806,24 @@
     }
 
     // ----- AYARLAR (SETTINGS) -----
+    
+    function changeUiMode(mode) {
+        localStorage.setItem('cinocodeUiMode', mode);
+        showNonBlockingToast("Arayüz modu güncellendi: " + (mode === 'classic' ? 'Klasik' : 'Yeni'));
+        renderCurrentChat();
+    }
+    window.changeUiMode = changeUiMode;
+
     function openSettings() {
         document.getElementById('settingsOverlay').classList.add('active');
         const settingsMenu = document.getElementById('settingsMenu');
         settingsMenu.style.display = 'flex';
         settingsMenu.style.transition = 'opacity 0.3s';
+
+        
+        const savedUiMode = localStorage.getItem('cinocodeUiMode') || 'new';
+        const uiSel = document.getElementById('cinocodeUiModeSelect');
+        if (uiSel) uiSel.value = savedUiMode;
 
         const currentKey = localStorage.getItem('groq_api_key') || "";
         if(document.getElementById('groqApiKeyInput')) document.getElementById('groqApiKeyInput').value = currentKey;
@@ -4043,6 +4254,17 @@
         const menu = document.getElementById('menu-' + id);
         menu.classList.toggle('active');
     }
+    
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            document.querySelectorAll('.chat-action-menu').forEach(menu => {
+                menu.classList.remove('active');
+                const parentActions = menu.closest('.msg-actions');
+                if (parentActions) parentActions.classList.remove('has-active-menu');
+            });
+        }
+    });
+
     document.addEventListener('click', () => {
         document.querySelectorAll('.chat-action-menu').forEach(menu => menu.classList.remove('active'));
     });
@@ -4202,6 +4424,54 @@
         };
         saveDatabase();
         return id;
+    }
+
+    
+    function cinocodeAsyncPrompt(titleText, defaultValue = "", placeholderText = "") {
+        return new Promise((resolve) => {
+            const modal = document.getElementById('cinocodeCustomPromptModal');
+            const title = document.getElementById('customPromptTitle');
+            const input = document.getElementById('customPromptInput');
+            const cancelBtn = document.getElementById('customPromptCancelBtn');
+            const confirmBtn = document.getElementById('customPromptConfirmBtn');
+            
+            if (!modal || !title || !input || !cancelBtn || !confirmBtn) {
+                resolve(window.prompt(titleText, defaultValue));
+                return;
+            }
+            
+            title.textContent = titleText;
+            input.value = defaultValue;
+            input.placeholder = placeholderText;
+            modal.style.display = 'flex';
+            input.focus();
+            
+            const cleanup = () => {
+                modal.style.display = 'none';
+                confirmBtn.onclick = null;
+                cancelBtn.onclick = null;
+                input.onkeydown = null;
+            };
+            
+            confirmBtn.onclick = () => {
+                const val = input.value;
+                cleanup();
+                resolve(val);
+            };
+            
+            cancelBtn.onclick = () => {
+                cleanup();
+                resolve(null);
+            };
+            
+            input.onkeydown = (e) => {
+                if (e.key === 'Enter') {
+                    confirmBtn.click();
+                } else if (e.key === 'Escape') {
+                    cancelBtn.click();
+                }
+            };
+        });
     }
 
     async function promptCreateProject() {
@@ -4397,18 +4667,30 @@
         return /^(https?:|data:image\/|blob:)/i.test(value);
     }
 
-    function isPlaceholderErrorImage(urlOrData) {
+        function isPlaceholderErrorImage(urlOrData) {
         const raw = String(urlOrData || "");
         let decoded = raw;
         try { decoded = decodeURIComponent(raw); } catch(e) {}
         const value = (raw + " " + decoded).toLocaleLowerCase("tr-TR").replace(/\+/g, " ");
         if (!value) return true;
-        const isPlaceholder = value.includes("placehold.co");
+        
+        const dummyDomains = [
+            "via.placeholder.com",
+            "placeholder.com",
+            "placehold.co",
+            "dummyimage.com",
+            "fakeimg.pl",
+            "placekitten.com",
+            "placebear.com"
+        ];
+        const isDummy = dummyDomains.some(domain => value.includes(domain));
+        
         const hasErrorColor = value.includes("f38ba8");
-        const hasErrorText = /(baglanti|bağlantı|hata|hatasi|hatası|error|connection error|network error)/i.test(value);
-        return (isPlaceholder && (hasErrorColor || hasErrorText))
+        const hasErrorText = /(baglanti|baglanti|hata|hatasi|hatasi|error|connection error|network error)/i.test(value);
+        return isDummy 
+            || (isDummy && (hasErrorColor || hasErrorText))
             || value.includes("baglanti hatasi")
-            || value.includes("bağlantı hatası");
+            || value.includes("baglanti hatasi");
     }
 
     function isFailedImageResult(result) {
@@ -4676,8 +4958,8 @@
                             <div style="color: #f9e2af; font-size: 13px; margin-bottom: 10px;">Storyboard/slideshow taslağı (önbellekten)</div>
                             <video controls autoplay style="max-width:100%; border-radius: 8px; border: 2px solid #89b4fa; box-shadow: 0 4px 12px rgba(0,0,0,0.5);" src="${cachedUrl}"></video>
                             <div class="artifact-card-actions">
-                                <button class="artifact-dl-btn" onclick="downloadVideo('${cachedUrl}', 'CinoCode_Video.webm')">?��� İndir</button>
-                                <button class="artifact-dl-btn" style="background:#89b4fa; color:#11111b;" onclick="replayVideo('${safePromptValue}', '${cachedUrl}')">?��� Yeniden Oynat</button>
+                                <button class="artifact-dl-btn" onclick="downloadVideo('${cachedUrl}', 'CinoCode_Video.webm')">? İndir</button>
+                                <button class="artifact-dl-btn" style="background:#89b4fa; color:#11111b;" onclick="replayVideo('${safePromptValue}', '${cachedUrl}')">? Yeniden Oynat</button>
                             </div>
                         </div>`;
             }
@@ -4689,8 +4971,8 @@
                             <div style="color: #f9e2af; font-size: 13px; margin-bottom: 10px;">Storyboard/slideshow taslağı (kaydedilmiş)</div>
                             <video controls style="max-width:100%; border-radius: 8px; border: 2px solid #89b4fa; box-shadow: 0 4px 12px rgba(0,0,0,0.5);" src="${persistedDataUrl}"></video>
                             <div class="artifact-card-actions">
-                                <button class="artifact-dl-btn" onclick="downloadVideo('${persistedDataUrl}', 'CinoCode_Video.webm')">?��� İndir</button>
-                                <button class="artifact-dl-btn" style="background:#cba6f7; color:#11111b;" onclick="triggerVideoRenderOnDemand('${finalPrompt.replace(/'/g, "\\'").replace(/"/g, '&quot;')}', 'video-replay-' + Date.now())">?��� Yeniden Oluştur</button>
+                                <button class="artifact-dl-btn" onclick="downloadVideo('${persistedDataUrl}', 'CinoCode_Video.webm')">? İndir</button>
+                                <button class="artifact-dl-btn" style="background:#cba6f7; color:#11111b;" onclick="triggerVideoRenderOnDemand('${finalPrompt.replace(/'/g, "\\'").replace(/"/g, '&quot;')}', 'video-replay-' + Date.now())">? Yeniden Oluştur</button>
                             </div>
                         </div>`;
             }
@@ -4705,7 +4987,7 @@
                         <div style="color: #a6adc8; font-size: 14px; margin-bottom: 8px;">Bu gerçek video değil, storyboard/slideshow taslağıdır.</div>
                         <div style="color:#f9e2af; font-size:12px; margin-bottom:10px;">${pendingText}</div>
                         <div class="artifact-card-actions" style="justify-content:center;">
-                            <button class="run-code-btn" style="background: linear-gradient(135deg, #89b4fa, #cba6f7); color:#11111b; width:auto; padding:10px 20px; font-weight:bold; border-radius: 8px;" onclick="triggerVideoRenderOnDemand('${escapedPrompt}', '${videoId}')">?�Z� Yeniden Oluştur</button>
+                            <button class="run-code-btn" style="background: linear-gradient(135deg, #89b4fa, #cba6f7); color:#11111b; width:auto; padding:10px 20px; font-weight:bold; border-radius: 8px;" onclick="triggerVideoRenderOnDemand('${escapedPrompt}', '${videoId}')">📖 Yeniden Oluştur</button>
                         </div>
                     </div>`;
         });
@@ -4760,7 +5042,7 @@
         const container = document.getElementById(containerId);
         if (container) {
             container.innerHTML = `
-                <div style="color: #cdd6f4; font-size: 16px; margin-bottom: 10px;">?�Z� Gerçek video modeli bağlı değil; storyboard/slideshow önizlemesi hazırlanıyor...</div>
+                <div style="color: #cdd6f4; font-size: 16px; margin-bottom: 10px;">📖 Gerçek video modeli bağlı değil; storyboard/slideshow önizlemesi hazırlanıyor...</div>
                 <div style="background: #313244; border-radius: 8px; height: 20px; overflow: hidden; margin-bottom: 8px;">
                     <div id="${containerId}-progress" style="background: linear-gradient(90deg, #89b4fa, #cba6f7); height: 100%; width: 0%; border-radius: 8px; transition: width 0.5s ease;"></div>
                 </div>
@@ -4781,7 +5063,7 @@
             const card = document.createElement("div");
             card.className = "message bot";
             card.innerHTML = `<div id="${videoId}" style="text-align:center; margin: 15px 0; background: #181825; padding: 15px; border-radius: 12px; border: 1px solid #45475a;">
-                                <div style="color: #cdd6f4; font-size: 16px; margin-bottom: 10px;">?�Z� Gerçek video modeli bağlı değil; storyboard/slideshow önizlemesi hazırlanıyor...</div>
+                                <div style="color: #cdd6f4; font-size: 16px; margin-bottom: 10px;">📖 Gerçek video modeli bağlı değil; storyboard/slideshow önizlemesi hazırlanıyor...</div>
                                 <div style="background: #313244; border-radius: 8px; height: 20px; overflow: hidden; margin-bottom: 8px;">
                                     <div id="${videoId}-progress" style="background: linear-gradient(90deg, #89b4fa, #cba6f7); height: 100%; width: 0%; border-radius: 8px; transition: width 0.5s ease;"></div>
                                 </div>
@@ -4989,7 +5271,7 @@
 
             // Uzun video modu için kullanıcı bilgilendirme
             if (isLongVideo) {
-                if (statusText) statusText.textContent = `?�Z� [${modeLabel} Mod] Uzun video sahne sahne oluşturulacak (${SCENE_COUNT} sahne, ~${videoDurationSec} sn)`;
+                if (statusText) statusText.textContent = `📖 [${modeLabel} Mod] Uzun video sahne sahne oluşturulacak (${SCENE_COUNT} sahne, ~${videoDurationSec} sn)`;
             }
             if (requestedDurationNotice && statusText) {
                 statusText.textContent = requestedDurationNotice;
@@ -5019,7 +5301,7 @@
                 const remainingImages = SCENE_COUNT - batch;
                 const estSeconds = Math.ceil(remainingImages * 3.5); // resim başına ~3.5 sn
 
-                if (statusText) statusText.textContent = `?��� [${modeLabel} Mod] Sahneler indiriliyor... (${Math.min(batch + batchSize, SCENE_COUNT)}/${SCENE_COUNT}) - Kalan süre: ~${estSeconds + videoDurationSec} sn (Video Süresi: ${videoDurationSec} sn)`;
+                if (statusText) statusText.textContent = `? [${modeLabel} Mod] Sahneler indiriliyor... (${Math.min(batch + batchSize, SCENE_COUNT)}/${SCENE_COUNT}) - Kalan süre: ~${estSeconds + videoDurationSec} sn (Video Süresi: ${videoDurationSec} sn)`;
                 if (progressBar) progressBar.style.width = ((batch / SCENE_COUNT) * 50) + '%';
 
                 for (let i = batch; i < batchEnd; i++) {
@@ -5187,7 +5469,7 @@
                     // Kalan saniye hesabı (20 FPS hızıyla render ediliyor)
                     const remainingFrames = totalFrames - frame;
                     const remainingSecs = Math.ceil(remainingFrames / FPS);
-                    if (statusText) statusText.textContent = `?�Z� Video kaydediliyor... (${Math.floor(totalProgress)}%) - Kalan süre: ~${remainingSecs} saniye`;
+                    if (statusText) statusText.textContent = `📖 Video kaydediliyor... (${Math.floor(totalProgress)}%) - Kalan süre: ~${remainingSecs} saniye`;
 
                     frame++;
                     // requestAnimationFrame yerine setTimeout ile FPS kontrolü
@@ -5258,7 +5540,7 @@
             if(!window.artifactRenderedSet) window.artifactRenderedSet = new Set();
             if(!window.artifactRenderedSet.has(videoUrl)) {
                 window.artifactRenderedSet.add(videoUrl);
-                setTimeout(() => addArtifactToList('video', '?�Z� ' + prompt.substring(0, 12) + '...', videoUrl, prompt), 100);
+                setTimeout(() => addArtifactToList('video', '📖 ' + prompt.substring(0, 12) + '...', videoUrl, prompt), 100);
             }
         } catch (err) {
             console.error("Video render hatası:", err);
@@ -5331,7 +5613,7 @@
         if (container) {
             container.innerHTML = `
                 <div style="text-align:center; background: #181825; padding: 15px; border-radius: 12px; border: 1px solid #45475a;">
-                    <div style="color: #cba6f7; font-size: 14px; margin-bottom: 10px;">?��� Video yeniden oluşturuluyor...</div>
+                    <div style="color: #cba6f7; font-size: 14px; margin-bottom: 10px;">? Video yeniden oluşturuluyor...</div>
                     <div id="${containerId}-progress" style="width: 100%; height: 6px; background: #313244; border-radius: 3px; margin-bottom: 10px; overflow: hidden;">
                         <div style="width: 0%; height: 100%; background: linear-gradient(90deg, #cba6f7, #89b4fa); transition: width 0.3s;"></div>
                     </div>
@@ -5411,6 +5693,23 @@
     window.editVideoPrompt = editVideoPrompt;
     window.deleteVideoCard = deleteVideoCard;
     window.copyPromptToClipboard = copyPromptToClipboard;
+    window.toggleLikeMessage = toggleLikeMessage;
+    window.toggleDislikeMessage = toggleDislikeMessage;
+    window.copyUserMessage = copyUserMessage;
+    window.resendUserMessage = resendUserMessage;
+        window.continueFromMessage = continueFromMessage;
+    window.branchChatFromMessage = continueFromMessage;
+    window.shareMessage = shareMessage;
+    window.shareUserMessage = shareUserMessage;
+    window.shortenMessage = shortenMessage;
+    window.copyMessageMarkdown = copyMessageMarkdown;
+    window.improveUserPrompt = improveUserPrompt;
+    window.toggleMsgMoreMenu = toggleMsgMoreMenu;
+    window.triggerCameraCapture = triggerCameraCapture;
+    window.closeCameraModal = closeCameraModal;
+    window.captureCameraPhoto = captureCameraPhoto;
+    window.handleMediaSelect = handleMediaSelect;
+    window.handleAudioSelect = handleAudioSelect;
     window.copyPromptTextFallback = copyPromptTextFallback;
 
     function enhanceVideoPrompt(basePrompt, quality, isLongVideo) {
@@ -5461,6 +5760,197 @@
         const match = raw.match(/^\s*\[(?:GENERATE_IMAGE|GENERATE_VIDEO):\s*([\s\S]*?)\]\s*$/i);
         if (!match) return raw;
         return getPublicVideoSubject(match[1]);
+    }
+
+    
+    
+    function continueFromMessage(index) {
+        const chat = sessions[currentChatId];
+        if (!chat || !chat.messages) return;
+        
+        const slicedHistory = chat.messages.slice(0, index + 1);
+        if (slicedHistory.length === 0) return;
+
+        const newId = "chat_" + Date.now();
+        const baseTitle = chat.title || "";
+        
+        let newTitle;
+        if (isBadAutoTitle(baseTitle)) {
+            const firstUserMsg = slicedHistory.find(m => m.role === "user");
+            newTitle = generateChatTitleFromMessage(firstUserMsg ? firstUserMsg.content : "", "");
+        } else {
+            const cleanedBase = baseTitle.replace(/\s*—\s*(Devam|Buradan Devam)$/i, "").trim();
+            newTitle = `${cleanedBase} — Devam`;
+        }
+
+        sessions[newId] = {
+            title: newTitle,
+            messages: JSON.parse(JSON.stringify(slicedHistory)),
+            createdAt: Date.now(),
+            starred: false,
+            manualTitle: chat.manualTitle || false,
+            updatedAt: Date.now(),
+            projectId: chat.projectId || null
+        };
+        currentChatId = newId;
+        saveDatabase();
+        renderCurrentChat();
+        showNonBlockingToast("Yeni sohbet bu mesajdan başlatıldı.");
+    }
+
+    function toggleLikeMessage(index, btn) {
+        const msg = sessions[currentChatId].messages[index];
+        if (!msg) return;
+        msg.liked = !msg.liked;
+        if (msg.liked) msg.disliked = false;
+        saveDatabase();
+        renderCurrentChat();
+    }
+    function toggleDislikeMessage(index, btn) {
+        const msg = sessions[currentChatId].messages[index];
+        if (!msg) return;
+        msg.disliked = !msg.disliked;
+        if (msg.disliked) msg.liked = false;
+        saveDatabase();
+        renderCurrentChat();
+    }
+
+    
+    
+    function shareMessage(index) {
+        const msg = sessions[currentChatId].messages[index];
+        if (!msg) return;
+        const text = getMessageCopyText(msg.content);
+        if (navigator.share) {
+            navigator.share({ text: text }).catch(() => {});
+        } else {
+            navigator.clipboard.writeText(text);
+            showNonBlockingToast("Paylaşım desteklenmiyor, mesaj kopyalandı.");
+        }
+    }
+
+    function shareUserMessage(index) {
+        const msg = sessions[currentChatId].messages[index];
+        if (!msg) return;
+        if (navigator.share) {
+            navigator.share({ text: msg.content }).catch(() => {});
+        } else {
+            navigator.clipboard.writeText(msg.content);
+            showNonBlockingToast("Paylaşım desteklenmiyor, mesaj kopyalandı.");
+        }
+    }
+
+    function shortenMessage(index) {
+        const msg = sessions[currentChatId].messages[index];
+        if (!msg) return;
+        const text = getMessageCopyText(msg.content);
+        setComposerValue(`Bana bunu daha kısa ve net hale getir: ${text}`);
+        showNonBlockingToast("Kısaltma isteği composer'a alındı.");
+    }
+
+    function copyMessageMarkdown(index) {
+        const msg = sessions[currentChatId].messages[index];
+        if (!msg) return;
+        navigator.clipboard.writeText(msg.content);
+        showNonBlockingToast("Markdown metin kopyalandı.");
+    }
+
+    function improveUserPrompt(index) {
+        const msg = sessions[currentChatId].messages[index];
+        if (!msg) return;
+        setComposerValue(`Bu promptu daha net ve etkili hale getir: ${msg.content}`);
+        showNonBlockingToast("Prompt iyileştirme için composer'a alındı.");
+    }
+
+    function toggleMsgMoreMenu(index, event) {
+        event.stopPropagation();
+        document.querySelectorAll('.chat-action-menu').forEach(menu => {
+            if (menu.id !== 'msg-more-menu-' + index) {
+                menu.classList.remove('active');
+                const parentActions = menu.closest('.msg-actions');
+                if (parentActions) parentActions.classList.remove('has-active-menu');
+            }
+        });
+        const menu = document.getElementById('msg-more-menu-' + index);
+        if (menu) {
+            menu.classList.toggle('active');
+            const parentActions = menu.closest('.msg-actions');
+            if (parentActions) {
+                if (menu.classList.contains('active')) {
+                    parentActions.classList.add('has-active-menu');
+                } else {
+                    parentActions.classList.remove('has-active-menu');
+                }
+            }
+        }
+    }
+
+    function copyUserMessage(index, btn) {
+        const msg = sessions[currentChatId].messages[index];
+        if (!msg) return;
+        navigator.clipboard.writeText(msg.content);
+        showNonBlockingToast("Mesaj kopyalandı.");
+    }
+
+    function resendUserMessage(index) {
+        const chat = sessions[currentChatId];
+        if (!chat || !chat.messages || !chat.messages[index]) return;
+        const msg = chat.messages[index];
+        
+        let isLastUser = true;
+        for (let i = index + 1; i < chat.messages.length; i++) {
+            if (chat.messages[i].role === "user") {
+                isLastUser = false;
+                break;
+            }
+        }
+        
+        if (isLastUser) {
+            setComposerValue(msg.content);
+            if (msg.images && msg.images.length > 0) {
+                selectedImageBase64 = msg.images[0];
+                const preview = document.getElementById('imagePreview');
+                const container = document.getElementById('imagePreviewContainer');
+                if (preview && container) {
+                    preview.src = selectedImageBase64;
+                    container.style.display = 'block';
+                }
+            }
+            sendMessage();
+            showNonBlockingToast("Mesaj tekrar gönderiliyor...");
+        } else {
+            const slicedHistory = chat.messages.slice(0, index);
+            const newId = "chat_" + Date.now();
+            const baseTitle = chat.title || "";
+            const cleanTitle = isBadAutoTitle(baseTitle) ? "" : baseTitle;
+            const newTitle = cleanTitle ? `${cleanTitle} — Devam` : "Buradan Devam";
+
+            sessions[newId] = {
+                title: newTitle,
+                messages: JSON.parse(JSON.stringify(slicedHistory)),
+                createdAt: Date.now(),
+                starred: false,
+                manualTitle: chat.manualTitle || false,
+                updatedAt: Date.now(),
+                projectId: chat.projectId || null
+            };
+            currentChatId = newId;
+            saveDatabase();
+            
+            setComposerValue(msg.content);
+            if (msg.images && msg.images.length > 0) {
+                selectedImageBase64 = msg.images[0];
+                const preview = document.getElementById('imagePreview');
+                const container = document.getElementById('imagePreviewContainer');
+                if (preview && container) {
+                    preview.src = selectedImageBase64;
+                    container.style.display = 'block';
+                }
+            }
+            renderCurrentChat();
+            sendMessage();
+            showNonBlockingToast("Yeni sohbette tekrar gönderiliyor...");
+        }
     }
 
     function copyMessage(index, btn) {
@@ -5525,11 +6015,36 @@
                 }
                 if (msg.documentText) {
                     htmlContent += `<div style="margin-top:8px; padding:8px 12px; border-radius:8px; background:rgba(255,255,255,0.1); border:1px solid #89b4fa; display:inline-flex; align-items:center; gap:8px;">
-                        <span style="font-size:1.5em;">?���</span>
+                        <span style="font-size:1.5em;">?</span>
                         <span><b>${msg.documentName || 'Ekli Belge'}</b></span>
                     </div>`;
                 }
-                htmlContent += `<div class="msg-actions"><button class="msg-action-btn" onclick="editMessage(${index}, event)" title="Düzenle">✏️</button></div>`;
+
+                const uiMode = localStorage.getItem('cinocodeUiMode') || 'new';
+                if (uiMode === 'classic') {
+                    // Simple user actions: Edit, Copy
+                    htmlContent += `<div class="msg-actions">
+                        <button class="msg-action-btn" onclick="editMessage(${index}, event)" title="Düzenle">✏️</button>
+                        <button class="msg-action-btn" onclick="copyUserMessage(${index}, this)" title="Kopyala">📋</button>
+                    </div>`;
+                } else {
+                    htmlContent += `<div class="msg-actions" style="position:relative;">
+                        <button class="msg-action-btn" onclick="editMessage(${index}, event)" title="Mesajı düzenle">✏️</button>
+                        <button class="msg-action-btn" onclick="copyUserMessage(${index}, this)" title="Mesajı kopyala">📋</button>
+                        <button class="msg-action-btn" onclick="shareUserMessage(${index})" title="Paylaş">↗</button>
+                        
+                        <div style="position:relative; display:inline-block;">
+                            <button class="msg-action-btn" onclick="toggleMsgMoreMenu(${index}, event)" title="Daha Fazla">⋯</button>
+                            <div class="chat-action-menu" id="msg-more-menu-${index}" style="right:0; top:100%; min-width:180px;">
+                                <button class="chat-menu-item" onclick="continueFromMessage(${index})">↳ Buradan Devam Et</button>
+                                <button class="chat-menu-item" onclick="resendUserMessage(${index})">🔄 Tekrar Gönder</button>
+                                <button class="chat-menu-item" onclick="improveUserPrompt(${index})">✨ Promptu İyileştir</button>
+                                <button class="chat-menu-item" onclick="speakMessage(${index})">🔊 Sesli Oku</button>
+                            </div>
+                        </div>
+                    </div>`;
+                }
+
                 div.innerHTML = htmlContent;
             } else {
                 div.innerHTML = renderContentWithImages(msg.content, index === history.length - 1);
@@ -5537,11 +6052,39 @@
 
                 const actionDiv = document.createElement("div");
                 actionDiv.className = "msg-actions";
+
+                const uiMode = localStorage.getItem('cinocodeUiMode') || 'new';
+                if (uiMode === 'classic') {
+                    // Simpler Classic UI actions: Copy, Speak, Like, Dislike, Regenerate (No branch, share, or more menu)
+                    actionDiv.innerHTML = `
+                        <button class="msg-action-btn" onclick="copyMessage(${index}, this)" title="Kopyala">📋</button>
+                        <button class="msg-action-btn" onclick="speakMessage(${index})" title="Sesli Oku">🔊</button>
+                        <button class="msg-action-btn ${msg.liked ? 'active' : ''}" onclick="toggleLikeMessage(${index}, this)" style="${msg.liked ? 'color:#a6e3a1;' : ''}">👍</button>
+                        <button class="msg-action-btn ${msg.disliked ? 'active' : ''}" onclick="toggleDislikeMessage(${index}, this)" style="${msg.disliked ? 'color:#f38ba8;' : ''}">👎</button>
+                        ${index === history.length - 1 ? `<button class="msg-action-btn" onclick="regenerateMessage()" title="Yeniden Üret">🔄</button>` : ''}
+                    `;
+                } else {
+                    // New v3.2 actions with sharing, branching, and popovers
+
                 actionDiv.innerHTML = `
                     <button class="msg-action-btn" onclick="copyMessage(${index}, this)" title="Kopyala">📋</button>
                     <button class="msg-action-btn" onclick="speakMessage(${index})" title="Sesli Oku">🔊</button>
-                    ${index === history.length - 1 ? `<button class="msg-action-btn" onclick="regenerateMessage()" title="Yeniden Üret">🔄</button>` : ''}
+                    <button class="msg-action-btn ${msg.liked ? 'active' : ''}" onclick="toggleLikeMessage(${index}, this)" title="Beğendim" style="${msg.liked ? 'color:#a6e3a1;' : ''}">👍</button>
+                    <button class="msg-action-btn ${msg.disliked ? 'active' : ''}" onclick="toggleDislikeMessage(${index}, this)" title="Beğenmedim" style="${msg.disliked ? 'color:#f38ba8;' : ''}">👎</button>
+                    <button class="msg-action-btn" onclick="shareMessage(${index})" title="Paylaş">↗</button>
+                    ${index === history.length - 1 ? `<button class="msg-action-btn" onclick="regenerateMessage()" title="Bu cevabı yeniden oluştur">🔄</button>` : ''}
+                    <button class="msg-action-btn" onclick="continueFromMessage(${index})" title="Bu mesaja kadar olan konuşmayı yeni sohbete kopyala ve buradan devam et">↳ Buradan Devam Et</button>
+                    
+                    <div style="position:relative; display:inline-block;">
+                        <button class="msg-action-btn" onclick="toggleMsgMoreMenu(${index}, event)" title="Daha Fazla">⋯</button>
+                        <div class="chat-action-menu" id="msg-more-menu-${index}" style="right:0; top:100%; min-width:180px;">
+                            <button class="chat-menu-item" onclick="shortenMessage(${index})">✂️ Kısalt</button>
+                            <button class="chat-menu-item" onclick="copyMessageMarkdown(${index})">📋 Markdown olarak kopyala</button>
+                            <button class="chat-menu-item" onclick="continueFromMessage(${index})">↳ Buradan Devam Et</button>
+                        </div>
+                    </div>
                 `;
+                }
                 div.appendChild(actionDiv);
                 const prevUser = [...history.slice(0, index)].reverse().find(m => m.role === "user" && m.content);
                 appendSmartSuggestions(div, msg.content, prevUser ? prevUser.content : "");
@@ -5577,7 +6120,7 @@
         setTimeout(() => { messagesDiv.style.scrollBehavior = 'smooth'; }, 100);
     }
 
-    // ----- SESLİ KONU�zMA (TTS & STT) -----
+    // ----- SESLİ KONUzMA (TTS & STT) -----
     let isRecording = false;
     let recognition = null;
 
@@ -5642,7 +6185,7 @@
 
             // Interim sonucu placeholder'da göster — kullanıcı ne söylüyor görsün
             if (interimStr) {
-                userInput.placeholder = '?�Z� ' + interimStr.trim();
+                userInput.placeholder = '📖 ' + interimStr.trim();
             }
         };
 
@@ -6150,7 +6693,7 @@
             // Kısa Türkçe açıklamalar ("Rica ederim", "Merhaba" vb tablodan gelen) — ATLA
             // Eğer satır tamamen ASCII+Türkçe harflerden oluşuyorsa ve çok kısa değilse büyük ihtimal Türkçe
             // Basit heuristic: hedef dil İngilizce ise Türkçe karakter içeriyorsa atla
-            const trChars = /[ğüşıöç�zÜ�zİÖÇ]/;
+            const trChars = /[ğüşıöçzÜzİÖÇ]/;
             if (trChars.test(trimmed) && targetCode !== 'tr-TR') continue;
 
             // Geri kalan — büyük ihtimalle hedef dil içeriği, oku
@@ -6663,13 +7206,13 @@
         filtered.forEach(item => {
             const dateHeader = formatDateHeader(item.date);
             if(dateHeader !== currentHeader) {
-                html += `<div style="grid-column: 1 / -1; margin-top:10px; font-weight:bold; color:#89b4fa; border-bottom:1px solid #313244; padding-bottom:5px;">?��� ${dateHeader}</div>`;
+                html += `<div style="grid-column: 1 / -1; margin-top:10px; font-weight:bold; color:#89b4fa; border-bottom:1px solid #313244; padding-bottom:5px;">? ${dateHeader}</div>`;
                 currentHeader = dateHeader;
             }
 
-            let icon = item.type === 'image' ? '?���️' : (item.type === 'video' ? '?�Z�' : '?���');
+            let icon = item.type === 'image' ? '?' : (item.type === 'video' ? '📖' : '?');
             let action = item.type === 'image' ? `downloadImage('${item.content}', 'CinoCode_Gorsel.jpg')` : `openArtifactOverlay('${item.content}')`;
-            let btnText = item.type === 'image' ? '?��� İndir' : (item.type === 'video' ? '?��� İndir' : '▶️ Önizle');
+            let btnText = item.type === 'image' ? '? İndir' : (item.type === 'video' ? '? İndir' : '▶️ Önizle');
             let dataAction = '';
             let dataUrl = '';
 
@@ -6685,7 +7228,7 @@
             } else if (item.type === 'video') {
                 previewHtml = `<video src="${item.content}" style="width:100%; height:140px; object-fit:cover; border-radius:8px; margin-bottom:10px; background:#11111b; border:1px solid #45475a;" controls></video>`;
             } else {
-                previewHtml = `<div style="width:100%; height:140px; background:#11111b; border-radius:8px; margin-bottom:10px; border:1px solid #45475a; display:flex; align-items:center; justify-content:center; font-size:40px;">?���</div>`;
+                previewHtml = `<div style="width:100%; height:140px; background:#11111b; border-radius:8px; margin-bottom:10px; border:1px solid #45475a; display:flex; align-items:center; justify-content:center; font-size:40px;">?</div>`;
             }
 
             let extraButtons = '';
@@ -6703,7 +7246,7 @@
                     <div style="display:flex; gap:5px; margin-top:auto; flex-wrap:wrap;">
                         <button class="artifact-dl-btn" style="flex:1; text-align:center; padding:8px; font-weight:bold;" ${dataAction} ${dataUrl} ${action ? `onclick="${action}"` : ''}>${btnText}</button>
                         ${extraButtons}
-                        <button class="artifact-dl-btn" style="background:#f38ba8; color:#11111b; padding:8px; border-radius:6px;" onclick="deleteFromLibrary('${item.id}')" title="Sil">?���️</button>
+                        <button class="artifact-dl-btn" style="background:#f38ba8; color:#11111b; padding:8px; border-radius:6px;" onclick="deleteFromLibrary('${item.id}')" title="Sil">?</button>
                     </div>
                 </div>
             `;
@@ -6902,9 +7445,9 @@
         const quizQuestionCount = Math.min(goal, 10);
 
         const quizNote = dilKocuQuizActive
-            ? `\n\n?��� QUIZ MODU AKTİF: �zu anda kullanıcı quiz modunda. Ona daha önce öğrettiğin ${lang} kelimelerden seçerek ${quizQuestionCount} adet soru sor. Format: "Türkçesi '...' olan ${lang} kelimesi nedir?" veya "${lang}'de '...' ne anlama gelir?". Her doğru cevabı tebrik et, yanlışı nazikçe düzelt. Quiz bittikten sonra skoru Türkçe olarak söyle.`
+            ? `\n\n? QUIZ MODU AKTİF: zu anda kullanıcı quiz modunda. Ona daha önce öğrettiğin ${lang} kelimelerden seçerek ${quizQuestionCount} adet soru sor. Format: "Türkçesi '...' olan ${lang} kelimesi nedir?" veya "${lang}'de '...' ne anlama gelir?". Her doğru cevabı tebrik et, yanlışı nazikçe düzelt. Quiz bittikten sonra skoru Türkçe olarak söyle.`
             : '';
-        return `\n\n===== DİL KOÇU MODU AKTİF =====\nHedef Dil: ${lang} | Seviye: ${level} | Günlük Hedef: ${goal} kelime\n\n⚠️ KRİTİK KURAL: Cevaplarına kesinlikle başka dil karıştırma! Hedef dil ${lang}, açıklamalar Türkçe. Çince, Japonca, Endonezce, Arapça vb. hiçbir dilde harf veya kelime kullanma. SADECE ${lang} + Türkçe.\n\nBu modda MUTLAKA şu formatta öğret:\n\n**[HEDEF DİLDEKİ KELİME / CÜMLE]**\n*(Okunuşu: fonetik/IPA)*\n?���?��� Türkçe anlamı: ...\n?��� Örnek cümle:\n  → ${lang}: [örnek cümle]\n  → Türkçe: [çevirisi]\n?��� Dilbilgisi/Mantık notu: [Türkçe açıklama]\n\n- Seviye ${level} için uygun kelime ve yapılar kullan.\n- Eğer ${level} Başlangıç/A0/A1/A2 ise: selamlama, sayılar, renkler, günlük eylemler, temel kalıplar.\n- Eğer ${level} Orta/B1/B2 ise: zaman kalıpları, alışveriş/iş/seyahat diyalogları, yaygın deyimler.\n- Eğer ${level} İleri/C1/C2 ise: deyimler, atasözleri, resmi/edebi dil, nüanslar.\n- Kullanıcının seçtiği Günlük Hedef: ${goal} kelime! Dersi ve vereceğin kelimeleri bu hedefe (veya kullanıcının istediği miktara) uygun şekilde gruplara ayırarak öğret. Örneğin 90 kelime istediyse, 15'li gruplar halinde ver.\n- Açıklamaları HER ZAMAN Türkçe yap (kullanıcı o dilde konuşmanı istemediği sürece).\n- Her cevapta en az 1 yeni kelime/kalıp öğret ve '[KELİME ÖĞRENİLDİ ✅]' etiketini cevabın sonuna ekle.\n- Motivasyon cümleleri kullan: 'Harika!', 'Çok doğru!', 'Neredeyse!', 'Bu kelimeyi artık unutmazsın!'${quizNote}`;
+        return `\n\n===== DİL KOÇU MODU AKTİF =====\nHedef Dil: ${lang} | Seviye: ${level} | Günlük Hedef: ${goal} kelime\n\n⚠️ KRİTİK KURAL: Cevaplarına kesinlikle başka dil karıştırma! Hedef dil ${lang}, açıklamalar Türkçe. Çince, Japonca, Endonezce, Arapça vb. hiçbir dilde harf veya kelime kullanma. SADECE ${lang} + Türkçe.\n\nBu modda MUTLAKA şu formatta öğret:\n\n**[HEDEF DİLDEKİ KELİME / CÜMLE]**\n*(Okunuşu: fonetik/IPA)*\n?? Türkçe anlamı: ...\n? Örnek cümle:\n  → ${lang}: [örnek cümle]\n  → Türkçe: [çevirisi]\n? Dilbilgisi/Mantık notu: [Türkçe açıklama]\n\n- Seviye ${level} için uygun kelime ve yapılar kullan.\n- Eğer ${level} Başlangıç/A0/A1/A2 ise: selamlama, sayılar, renkler, günlük eylemler, temel kalıplar.\n- Eğer ${level} Orta/B1/B2 ise: zaman kalıpları, alışveriş/iş/seyahat diyalogları, yaygın deyimler.\n- Eğer ${level} İleri/C1/C2 ise: deyimler, atasözleri, resmi/edebi dil, nüanslar.\n- Kullanıcının seçtiği Günlük Hedef: ${goal} kelime! Dersi ve vereceğin kelimeleri bu hedefe (veya kullanıcının istediği miktara) uygun şekilde gruplara ayırarak öğret. Örneğin 90 kelime istediyse, 15'li gruplar halinde ver.\n- Açıklamaları HER ZAMAN Türkçe yap (kullanıcı o dilde konuşmanı istemediği sürece).\n- Her cevapta en az 1 yeni kelime/kalıp öğret ve '[KELİME ÖĞRENİLDİ ✅]' etiketini cevabın sonuna ekle.\n- Motivasyon cümleleri kullan: 'Harika!', 'Çok doğru!', 'Neredeyse!', 'Bu kelimeyi artık unutmazsın!'${quizNote}`;
     }
 
     function updateDilKocuPrompt() {
@@ -6958,7 +7501,7 @@
                 if (msgs) {
                     const div = document.createElement('div');
                     div.className = 'message bot';
-                    div.innerHTML = '<div style="background:linear-gradient(135deg,rgba(166,227,161,0.15),rgba(249,226,175,0.1));border:1px solid rgba(166,227,161,0.4);border-radius:12px;padding:14px;text-align:center;font-size:15px;">?�Z� <b>Tebrikler!</b> Bugünkü ' + goal + ' kelime hedefine ulaştın! Harika bir çalışma günüydü. Yarın da devam et! ?���</div>';
+                    div.innerHTML = '<div style="background:linear-gradient(135deg,rgba(166,227,161,0.15),rgba(249,226,175,0.1));border:1px solid rgba(166,227,161,0.4);border-radius:12px;padding:14px;text-align:center;font-size:15px;">📖 <b>Tebrikler!</b> Bugünkü ' + goal + ' kelime hedefine ulaştın! Harika bir çalışma günüydü. Yarın da devam et! ?</div>';
                     msgs.appendChild(div);
                     msgs.scrollTop = msgs.scrollHeight;
                 }
@@ -7278,46 +7821,81 @@
     // generator "kötü başlık" sayıp bir sonraki mesajı bekleyecek.
     const TITLE_GENERIC_WORDS = new Set(["normal", "soru", "devam", "tamam", "kanka", "yap", "oluştur", "olustur", "peki", "ok", "evet", "hayır", "hayir", "selam", "merhaba", "naber", "napıyorsun", "napiyorsun"]);
 
-    function generateChatTitleFromMessage(message, attachmentInfo) {
+            function generateChatTitleFromMessage(message, attachmentInfo) {
         let clean = cleanTextForTitle(message);
         
-        const fillerWords = ["knk", "kanka", "ya", "yaaa", "yahu", "abi", "hocam", "deli", "misin", "ne", "yaptın", "naptın"];
-        const isFillerOnly = clean.toLowerCase().split(" ").every(w => {
-            const lower = w.replace(/[^a-z0-9ğüşıöç]/g, "");
-            return !lower || fillerWords.includes(lower);
-        });
+        // Lowercase for checking keywords
+        const lower = clean.toLowerCase();
 
-        if (clean.length < 6 || isFillerOnly) {
-            const now = new Date();
-            let h = now.getHours().toString().padStart(2, '0');
-            let m = now.getMinutes().toString().padStart(2, '0');
-            return `Yeni Sohbet ${h}:${m}`;
+        // 1. Check for specific topic patterns to make it sound human-designed
+        if (lower.includes("netlify") && lower.includes("502")) return "Netlify 502 Hatası";
+        if (lower.includes("telegram") && (lower.includes("bot") || lower.includes("botu")) && (lower.includes("çalışmıyor") || lower.includes("calismiyor") || lower.includes("hata"))) return "Telegram Bot Sorunu";
+        if (lower.includes("sohbet") && (lower.includes("isim") || lower.includes("adlandır") || lower.includes("başlık") || lower.includes("baslik")) && (lower.includes("düzelt") || lower.includes("saçma") || lower.includes("sacma"))) return "Sohbet Başlıkları Düzeltmesi";
+        if (lower.includes("görsel") && lower.includes("toggle") && (lower.includes("kapanmıyor") || lower.includes("kapanmiyor") || lower.includes("sorun") || lower.includes("hata"))) return "Görsel Toggle Sorunu";
+        if (lower.includes("oyun stüdyosu") && (lower.includes("siyah") || lower.includes("siyah ekran") || lower.includes("hata"))) return "Oyun Stüdyosu Siyah Ekran";
+        if (lower.includes("projeler") && lower.includes("ekranı") && (lower.includes("yeni proje") || lower.includes("buton"))) return "Projeler Ekranı Geliştirmesi";
+        if (lower.includes("tts") || lower.includes("sesli okuma")) {
+            if (lower.includes("hata") || lower.includes("bozuldu") || lower.includes("çalışmıyor")) return "TTS Sesli Okuma Hatası";
+        }
+        
+        // General rule-based semantic translation for common expressions
+        if (lower.includes("hata") || lower.includes("error") || lower.includes("çalışmıyor") || lower.includes("calismiyor")) {
+            let noun = "Hata";
+            if (lower.includes("netlify")) noun = "Netlify";
+            else if (lower.includes("telegram")) noun = "Telegram Bot";
+            else if (lower.includes("ses") || lower.includes("tts")) noun = "TTS Sesli Okuma";
+            else if (lower.includes("görsel") || lower.includes("resim")) noun = "Görsel Üretim";
+            else if (lower.includes("video")) noun = "Video Üretim";
+            else if (lower.includes("kod") || lower.includes("code")) noun = "Kod";
+            return `${noun} Sorunu`;
         }
 
-        let words = clean.split(" ").filter(w => {
-            const lower = w.toLowerCase().replace(/[^a-z0-9ğüşıöç]/g, "");
-            return lower && !fillerWords.includes(lower);
+        // 2. Fallback to generic sentence cleanups
+        // Remove bad words and fillers from the text while keeping original word order
+        const patterns = [
+            /\b(knk|kanka|ya+h?u?|abi|hocam|deli|misin|yaptın|naptın|lan|amına\s+koy(im|ayım)|amk|aq|orospu(\s+çocuğu)?|siktir(\s+lan)?|sik(tir)?|piç|göt|mal|yavşak|lütfen|şunu|bunu|şey|baksana|hadi)\b/gi,
+            /[.,\/#!$%\^&\*;:{}=\-_\\`~()?]/g
+        ];
+        
+        patterns.forEach(pat => {
+            clean = clean.replace(pat, "");
         });
-        clean = words.join(" ").trim();
-        if (clean.length > 48) clean = clean.substring(0, 48) + '...';
+        
+        // Collapse spaces
+        clean = clean.replace(/\s+/g, " ").trim();
 
-        const isDebug = /(provider|reason|network_error|üretilemedi|hata|çalışmıyor|log|console|bug)/i.test(message);
-        if (isDebug) {
-            if (message.toLowerCase().includes("video")) return "Video Üretim Hatası";
-            if (message.toLowerCase().includes("görsel") || message.toLowerCase().includes("resim")) return "Görsel Üretim Hatası";
-            return "Hata Raporu";
+        if (clean.length < 4) {
+            // Check context for good fallbacks
+            if (lower.includes("kod") || lower.includes("function") || lower.includes("python") || lower.includes("javascript") || lower.includes("css") || lower.includes("html")) return "Kod Yardımı";
+            if (lower.includes("düzenle") || lower.includes("fix") || lower.includes("düzelt")) return "CinoCode Düzenlemesi";
+            return "Kısa Sohbet";
         }
 
-        if (!clean || clean === "") return isDebug ? "Hata Raporu" : "CinoCode Düzeltme";
+        // Limit length and capitalize first letter
+        if (clean.length > 36) {
+            clean = clean.substring(0, 36).trim();
+        }
+        
+        // Strip trailing dots
+        clean = clean.replace(/\.+$/, "").trim();
+        
         return clean.charAt(0).toUpperCase() + clean.slice(1);
     }
 
-    function isBadAutoTitle(title) {
+        function isBadAutoTitle(title) {
         if (!title) return true;
         const t = title.trim();
         return (
             t === "Yeni Sohbet" ||
             t.startsWith("Yeni Sohbet") ||
+            t.startsWith("Sohbet ") ||
+            t === "Sohbet" ||
+            t === "Dallanmış" ||
+            t === "Buradan Devam" ||
+            t === "Yeni Konuşma" ||
+            t === "CinoCode Sohbeti" ||
+            t === "Konu Başlığı" ||
+            t.includes("Yeni Sohbet (Dallanmış)") ||
             /^\s*Viewed\b/i.test(t) ||
             /^\s*Edited\b/i.test(t) ||
             /^\s*Ran command\b/i.test(t) ||
@@ -7326,7 +7904,7 @@
             t.startsWith("[REMEMBER") ||
             t.startsWith("[SYSTEM") ||
             t.startsWith("data:image") ||
-            t.length < 2
+            t.length < 4
         );
     }
 
@@ -7453,6 +8031,11 @@
         window.generationStopRequested = false;
 
         if (!text && !selectedImageBase64 && !window.selectedDocumentText) return;
+
+        const mediaSourceToggle = document.getElementById("mediaSourceToggleContainer");
+        if (mediaSourceToggle) {
+            mediaSourceToggle.style.display = "none";
+        }
         maybeApplyDynamicSpeechStyle(text);
         if (!text && (selectedImageBase64 || window.selectedDocumentText)) {
             userInput.placeholder = "PDF/fotoğraf hazır. Lütfen bir talimat yaz ve gönder.";
@@ -7576,6 +8159,37 @@
         const botId = "bot-" + Date.now();
         clearTransientTypingIndicators();
         window.activeGenerationBotId = botId;
+        const typingDiv = document.createElement("div");
+        typingDiv.className = "message bot"; typingDiv.id = botId;
+        typingDiv.dataset.typingIndicator = "1";
+
+        if (msgObj.images && msgObj.images.length > 0) {
+            typingDiv.innerHTML = "<i>\u{1F5BC}\uFE0F G\u00f6rsel analiz ediliyor (Biraz uzun s\u00fcrebilir, l\u00fctfen bekleyin)...</i>";
+        } else {
+            typingDiv.innerHTML = getThinkingIndicatorHtml();
+        }
+
+        messagesDiv.appendChild(typingDiv);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+        const wantsImageGeneration = !msgObj.images && !docTextToUse && isDirectImageGenerationRequest(text);
+        const wantsVideoGeneration = !msgObj.images && !docTextToUse && isDirectVideoCreationRequest(text);
+
+        const selectedMediaSource = document.querySelector('input[name="mediaSource"]:checked')?.value || 'ai';
+        const isMediaRequest = wantsImageGeneration || wantsVideoGeneration || (currentMode === "video" && isVideoModeCreationRequest(text));
+
+        if (selectedMediaSource === 'web' && isMediaRequest) {
+            delete typingDiv.dataset.typingIndicator;
+            const noticeText = "🌐 İnternetten görsel arama özelliği yakında aktif olacak. Şimdilik Yapay Zeka ile Üret’i deneyin!";
+            typingDiv.innerHTML = renderContentWithImages(noticeText, true);
+            chat.messages.push({ role: "assistant", content: noticeText });
+            chat.updatedAt = Date.now();
+            saveDatabase();
+            scrollToBottom();
+            cleanupGenerationUi();
+            return;
+        }
+
         if (!msgObj.images && !docTextToUse && isStyleBoundaryQuestion(text)) {
             const answer = getStyleBoundaryAnswer();
             const boundaryDiv = document.createElement("div");
@@ -7593,18 +8207,7 @@
             cleanupGenerationUi();
             return;
         }
-        const typingDiv = document.createElement("div");
-        typingDiv.className = "message bot"; typingDiv.id = botId;
-        typingDiv.dataset.typingIndicator = "1";
-
-        if (msgObj.images && msgObj.images.length > 0) {
-            typingDiv.innerHTML = "<i>\u{1F5BC}\uFE0F G\u00f6rsel analiz ediliyor (Biraz uzun s\u00fcrebilir, l\u00fctfen bekleyin)...</i>";
-        } else {
-            typingDiv.innerHTML = getThinkingIndicatorHtml();
-        }
-
-        messagesDiv.appendChild(typingDiv);
-        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        
 
         if (!msgObj.images && !docTextToUse && isAmbiguousImageCreationRequest(text)) {
             delete typingDiv.dataset.typingIndicator;
@@ -7617,8 +8220,7 @@
             return;
         }
 
-        const wantsImageGeneration = !msgObj.images && !docTextToUse && isDirectImageGenerationRequest(text);
-        const wantsVideoGeneration = !msgObj.images && !docTextToUse && isDirectVideoCreationRequest(text);
+        
 
         if (wantsImageGeneration) {
             setAppMode("image");
@@ -7720,8 +8322,8 @@
             const isPdfTask = !!docTextToUse && docSource !== 'chat';
             const taskType = isVisionTask ? 'vision' : isPdfTask ? 'pdf' : 'chat';
             // Always include system prompt, but limit conversation history for normal chat to avoid huge requests
-            console.log("CINOCODE_DEBUG_STYLEMODE:", getFeatureValue('styleMode'));
-            console.log("CINOCODE_DEBUG_FULL_SYSTEM_PROMPT:", baseSystemPrompt);
+            if (isDebugMode()) console.log("CINOCODE_DEBUG_STYLEMODE:", getFeatureValue('styleMode'));
+            if (isDebugMode()) console.log("CINOCODE_DEBUG_FULL_SYSTEM_PROMPT:", baseSystemPrompt);
             reqMessages.push({ role: "system", content: baseSystemPrompt });
             const historyLimit = (taskType === 'chat') ? 4 : 20;
             const rawHistory = chat.messages || [];
@@ -8633,7 +9235,7 @@
 
     // Sayfa dışına çıkıldığında veya ESC basıldığında sıfırla
     window.addEventListener("blur", hideDropState);
-    document.addEventListener("keydown", (e) => { if (e.key === "Escape") { hideDropState(); closeSinavKocuModal(); } });
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") { hideDropState(); closeSinavKocuModal(); closeAttachMenu(); closeCameraModal(); } });
 </script>
 
 <!-- ===== SINAV KOÇU MOD SEÇİM MODALI ===== -->
@@ -8709,7 +9311,7 @@
       <div class="sk-grid">
         <!-- Flashcards -->
         <div class="sk-card" onclick="event.stopPropagation();">
-          <div class="sk-card-icon">?���</div>
+          <div class="sk-card-icon">🎓</div>
           <div class="sk-card-title">Kavram Flashcard'ları</div>
           <div class="sk-card-desc">Ön yüz: Terim, Arka yüz: Türkçe açıklama + İngilizce karşılık. Kart sayısı seçin:</div>
           <div class="sk-pills">
@@ -8727,7 +9329,7 @@
       <div class="sk-grid">
         <!-- Çoktan Seçmeli Quiz -->
         <div class="sk-card" onclick="event.stopPropagation();">
-          <div class="sk-card-icon">?���</div>
+          <div class="sk-card-icon">🎓</div>
           <div class="sk-card-title">Çoktan Seçmeli Quiz</div>
           <div class="sk-card-desc">A/B/C/D şıklı sorular + cevap anahtarı. Soru sayısı seçin:</div>
           <div class="sk-count-grid">
@@ -8774,7 +9376,7 @@
         </div>
         <!-- Challenge Modu -->
         <div class="sk-card" onclick="event.stopPropagation();">
-          <div class="sk-card-icon">?���</div>
+          <div class="sk-card-icon">🎓</div>
           <div class="sk-card-title">Challenge Modu</div>
           <div class="sk-card-desc">Kademeli olarak zorlaşan soru-cevap düellosu. Zorluk seviyesi seçin:</div>
           <div class="sk-pills">
@@ -8798,10 +9400,10 @@
     <!-- 5. TAHMİN SEKME İÇERİĞİ -->
     <div class="sk-tab-content" id="tab-tahmin">
       <div class="sk-grid">
-        <!-- Hoca Ne Sorar? -->
+        <!-- Hoca Ne Sorar🎓 -->
         <div class="sk-card" onclick="skDirectConfirm('hoca_tahmin')">
           <div class="sk-card-icon">&#x1F52E;</div>
-          <div class="sk-card-title">Hoca Ne Sorar? (Tahmin)</div>
+          <div class="sk-card-title">Hoca Ne Sorar🎓 (Tahmin)</div>
           <div class="sk-card-desc">Bu belgeden sınavda çıkabilecek klasik ve test sorularını, kritik ezber kelimelerini tahmin eder.</div>
           <div class="sk-card-tag">Hoca Modu</div>
         </div>
@@ -9011,14 +9613,14 @@ function skpOnModeChange() {
             label: '⏱️ Süre:',
             options: [
                 { value: '30s', text: '⚡ 30 sn' },
-                { value: '1dk', text: '?��� 1 dk' },
-                { value: '2dk', text: '?��� 2 dk' },
-                { value: '5dk', text: '?�Z� 5 dk', selected: true },
-                { value: '10dk', text: '?��� 10 dk' }
+                { value: '1dk', text: '⏱️ 1 dk' },
+                { value: '2dk', text: '⏱️ 2 dk' },
+                { value: '5dk', text: '⏱️ 5 dk', selected: true },
+                { value: '10dk', text: '⏱️ 10 dk' }
             ]
         },
         flashcard: {
-            label: '?��� Kart:',
+            label: '🎴 Kart:',
             options: [
                 { value: '10', text: '10 Kart', selected: true },
                 { value: '20', text: '20 Kart' },
@@ -9027,7 +9629,7 @@ function skpOnModeChange() {
             ]
         },
         quiz: {
-            label: '?��� Soru:',
+            label: '❓ Soru:',
             options: [
                 { value: '5', text: '5 Soru' },
                 { value: '10', text: '10 Soru', selected: true },
@@ -9037,13 +9639,13 @@ function skpOnModeChange() {
             ]
         },
         challenge: {
-            label: '?��� Zorluk:',
+            label: '🎯 Zorluk:',
             options: [
-                { value: 'easy', text: '?��� Kolay' },
-                { value: 'medium', text: '?��� Orta', selected: true },
-                { value: 'hard', text: '?��� Zor' },
-                { value: 'professor', text: '?�Z� Hoca' },
-                { value: 'interview', text: '?��� Mülakat' }
+                { value: 'easy', text: '🟢 Kolay' },
+                { value: 'medium', text: '🟡 Orta', selected: true },
+                { value: 'hard', text: '🔴 Zor' },
+                { value: 'professor', text: '👨‍🏫 Hoca' },
+                { value: 'interview', text: '💼 Mülakat' }
             ]
         }
     };
@@ -9135,28 +9737,28 @@ function buildExamCoachSuffix() {
             '10dk': { label: '10 Dakikalık', desc: 'kapsamlı çalışma rehberi olarak', len: 'kapsamlı bölümler halinde', style: 'başlıklı bölümler, detaylı açıklamalar, örnekler, önemli formüller/kurallar' }
         };
         let c = configs[t];
-        return `\n\n[?�Z� SINAV KOÇU — ${c.label} ÖZET]\nBu belgeyi ${c.desc} özetle. Uzunluk: ${c.len}. Stil: ${c.style}.\nSon satırda şunu ekle: "?��� Bu özet ${c.label.toLowerCase()} okuma için optimize edilmiştir."`;
+        return `\n\n[📖 SINAV KOÇU — ${c.label} ÖZET]\nBu belgeyi ${c.desc} özetle. Uzunluk: ${c.len}. Stil: ${c.style}.\nSon satırda şunu ekle: "? Bu özet ${c.label.toLowerCase()} okuma için optimize edilmiştir."`;
     }
 
     if (mode === 'profesor_anlatim') {
-        return `\n\n[?���‍?��� SINAV KOÇU — PROFESÖR ANLATIMI]\nBu belge içeriğini kıdemli bir profesör edasıyla anlat. Konunun en kritik noktalarını, akademik detaylarını bozmadan ama öğrencinin kolayca anlayabileceği formda açıkla. Önemli akademik kavramları **kalın yazı (bold)** olarak vurgula ve sonuna 'Sormak istediğin bir detay var mı?' şeklinde bitir.`;
+        return `\n\n[👨‍🏫 SINAV KOÇU — PROFESÖR ANLATIMI]\nBu belge içeriğini kıdemli bir profesör edasıyla anlat. Konunun en kritik noktalarını, akademik detaylarını bozmadan ama öğrencinin kolayca anlayabileceği formda açıkla. Önemli akademik kavramları **kalın yazı (bold)** olarak vurgula ve sonuna 'Sormak istediğin bir detay var mı?' şeklinde bitir.`;
     }
 
     if (mode === 'sifirdan') {
-        return `\n\n[?��� SINAV KOÇU — SIFIRDAN ANLATIM]\nBu belgedeki konuyu, sanki hayatında ilk kez duyuyormuşum gibi en baştan ve en yalın haliyle anlat. Günlük hayattan benzetmeler (analojiler) ve örnekler kullan. Anlatımın sonuna 3 maddelik kısa bir 'Öğrenme Alıştırması (Mini Egzersiz)' ekle ve benden bunu yapmamı iste.`;
+        return `\n\n[🎓 SINAV KOÇU — SIFIRDAN ANLATIM]\nBu belgedeki konuyu, sanki hayatında ilk kez duyuyormuşum gibi en baştan ve en yalın haliyle anlat. Günlük hayattan benzetmeler (analojiler) ve örnekler kullan. Anlatımın sonuna 3 maddelik kısa bir 'Öğrenme Alıştırması (Mini Egzersiz)' ekle ve benden bunu yapmamı iste.`;
     }
 
     if (mode === 'eli5') {
-        return `\n\n[?��� SINAV KOÇU — ÇOCUK ANLATIMI (ELI5)]\nBu belgeyi 5 yaşındaki bir çocuğa anlatır gibi son derece basit, eğlenceli ve anlaşılır bir dille açıkla. Karmaşık teknik terimler yerine oyuncaklar, hayvanlar veya gündelik basit olaylar üzerinden analojiler kur.`;
+        return `\n\n[🎓 SINAV KOÇU — ÇOCUK ANLATIMI (ELI5)]\nBu belgeyi 5 yaşındaki bir çocuğa anlatır gibi son derece basit, eğlenceli ve anlaşılır bir dille açıkla. Karmaşık teknik terimler yerine oyuncaklar, hayvanlar veya gündelik basit olaylar üzerinden analojiler kur.`;
     }
 
     if (mode === 'hikaye') {
-        return `\n\n[?��� SINAV KOÇU — HİKÂYELEŞTİRME MODU]\nBu belgedeki teorik ve sıkıcı olabilecek tüm bilgileri, akılda kalıcı, macera dolu veya eğlenceli bir hikaye kurgusuna dönüştürerek anlat. Hikayedeki karakterler veya olaylar belgedeki teknik kavramları (örneğin Entity, Normalization, Database vs.) temsil etsin veya simgelesin.`;
+        return `\n\n[🎓 SINAV KOÇU — HİKÂYELEŞTİRME MODU]\nBu belgedeki teorik ve sıkıcı olabilecek tüm bilgileri, akılda kalıcı, macera dolu veya eğlenceli bir hikaye kurgusuna dönüştürerek anlat. Hikayedeki karakterler veya olaylar belgedeki teknik kavramları (örneğin Entity, Normalization, Database vs.) temsil etsin veya simgelesin.`;
     }
 
     if (mode === 'flashcard') {
         let count = window.skState.flashcardCount || 10;
-        return `\n\n[?��� SINAV KOÇU — FLASHCARD MODU]\nBu belgedeki en önemli ${count} kavramı flashcard formatında oluştur.\n\nHer kart için kesinlikle şu formatı kullan:\n\n---\n**[KART X / ${count}]**\n- ?���️ **Terim:** (İngilizce teknik terim)\n- ?��� **İngilizce Açıklama:** (1-2 cümle, sade İngilizce)\n- ?���?��� **Türkçe Karşılık:** (Türkçe adı)\n- ?��� **Türkçe Açıklama:** (kısa, anlaşılır Türkçe)\n---\n\nEn önemli kavramlardan başla. Son kart bittikten sonra şunu ekle:\n"✅ ${count} flashcard hazır! 'Bana bu kartları sınav formatında sor' yazarsan seni test edebilirim."`;
+        return `\n\n[🎓 SINAV KOÇU — FLASHCARD MODU]\nBu belgedeki en önemli ${count} kavramı flashcard formatında oluştur.\n\nHer kart için kesinlikle şu formatı kullan:\n\n---\n**[KART X / ${count}]**\n- ? **Terim:** (İngilizce teknik terim)\n- 🇬🇧 **İngilizce Açıklama:** (1-2 cümle, sade İngilizce)\n- 🇹🇷 **Türkçe Karşılık:** (Türkçe adı)\n- 📝 **Türkçe Açıklama:** (kısa, anlaşılır Türkçe)\n---\n\nEn önemli kavramlardan başla. Son kart bittikten sonra şunu ekle:\n"✅ ${count} flashcard hazır! 'Bana bu kartları sınav formatında sor' yazarsan seni test edebilirim."`;
     }
 
     if (mode === 'quiz') {
@@ -9171,19 +9773,19 @@ function buildExamCoachSuffix() {
         window.skQuizHistory.push(histItem);
         if (window.skQuizHistory.length > 10) window.skQuizHistory.shift();
 
-        return `\n\n[?��� SINAV KOÇU — QUIZ MODU — ${count} SORU]${histNote}\n\nBu belgeye dayanarak ${count} adet özgün çoktan seçmeli soru hazırla. Sorular farklı zorluk seviyelerinde olsun (kolay, orta, zor).\n\nHer soru için format:\n**Soru X:** [Soru metni]\nA) ...\nB) ...\nC) ...\nD) ...\n\nTüm sorular bittikten sonra:\n## ✅ CEVAP ANAHTARI\nSoru 1: [Harf] — [Kısa açıklama neden doğru]\n...\n\nEn sona şunu ekle: "?��� Farklı sorular için 'Yeni Quiz' yaz. Sözlü sınav için 'Sokratik mod başlat' yaz."`;
+        return `\n\n[🎓 SINAV KOÇU — QUIZ MODU — ${count} SORU]${histNote}\n\nBu belgeye dayanarak ${count} adet özgün çoktan seçmeli soru hazırla. Sorular farklı zorluk seviyelerinde olsun (kolay, orta, zor).\n\nHer soru için format:\n**Soru X:** [Soru metni]\nA) ...\nB) ...\nC) ...\nD) ...\n\nTüm sorular bittikten sonra:\n## ✅ CEVAP ANAHTARI\nSoru 1: [Harf] — [Kısa açıklama neden doğru]\n...\n\nEn sona şunu ekle: "💡 Farklı sorular için 'Yeni Quiz' yaz. Sözlü sınav için 'Sokratik mod başlat' yaz."`;
     }
 
     if (mode === 'sonsuz_quiz') {
-        return `\n\n[?��� SINAV KOÇU — SONSUZ QUIZ MODU]\nBu belgeyle ilgili interaktif bir test başlatıyoruz. Kurallar:\n1. Bana her seferinde sadece TEK bir çoktan seçmeli soru sor.\n2. Ben cevabı (A, B, C veya D) yazana kadar yeni soru sorma.\n3. Ben cevap verince: Doğruluğunu kontrol et. Yanlışsa mini bir anlatım ile neden yanlış olduğunu ve doğrusunu açıkla.\n4. Yanlış yaptığım konuları hafızanda tut ve birkaç soru sonra benzer konudan tekrar soru sor.\n5. Ben 'Durdur' veya 'Bitir' diyene kadar bu döngüyü sürdür.\n\nHadi ilk soruyla hemen başla!`;
+        return `\n\n[🎓 SINAV KOÇU — SONSUZ QUIZ MODU]\nBu belgeyle ilgili interaktif bir test başlatıyoruz. Kurallar:\n1. Bana her seferinde sadece TEK bir çoktan seçmeli soru sor.\n2. Ben cevabı (A, B, C veya D) yazana kadar yeni soru sorma.\n3. Ben cevap verince: Doğruluğunu kontrol et. Yanlışsa mini bir anlatım ile neden yanlış olduğunu ve doğrusunu açıkla.\n4. Yanlış yaptığım konuları hafızanda tut ve birkaç soru sonra benzer konudan tekrar soru sor.\n5. Ben 'Durdur' veya 'Bitir' diyene kadar bu döngüyü sürdür.\n\nHadi ilk soruyla hemen başla!`;
     }
 
     if (mode === 'sozlu_sinav') {
-        return `\n\n[?�Z� SINAV KOÇU — SÖZLÜ / SESLİ SINAV]\nBu belge üzerinden benimle bir sözlü sınav gerçekleştir. Kurallar:\n1. Rolün: Deneyimli ve titiz bir ders hocası. Sesli yanıtlara uygun kısa, net sorular soracaksın.\n2. Bana her seferinde sadece TEK bir açık uçlu soru yönelt.\n3. Ben yanıtımı verene kadar bekle.\n4. Verdiğim yanıtı değerlendir: Eksik veya yanlış bir yer varsa kibarca düzelt, hoca gözüyle ekleme yap (örn: 'Güzel ama Primary Key detayını unuttun').\n5. Hemen ardından sıradaki soruya geç.\n\nHadi hocam, ilk sorunuzla başlayın!`;
+        return `\n\n[📖 SINAV KOÇU — SÖZLÜ / SESLİ SINAV]\nBu belge üzerinden benimle bir sözlü sınav gerçekleştir. Kurallar:\n1. Rolün: Deneyimli ve titiz bir ders hocası. Sesli yanıtlara uygun kısa, net sorular soracaksın.\n2. Bana her seferinde sadece TEK bir açık uçlu soru yönelt.\n3. Ben yanıtımı verene kadar bekle.\n4. Verdiğim yanıtı değerlendir: Eksik veya yanlış bir yer varsa kibarca düzelt, hoca gözüyle ekleme yap (örn: 'Güzel ama Primary Key detayını unuttun').\n5. Hemen ardından sıradaki soruya geç.\n\nHadi hocam, ilk sorunuzla başlayın!`;
     }
 
     if (mode === 'sokratik') {
-        return `\n\n[?��� SINAV KOÇU — SOKRATİK ÖĞRENME MODU]\nBu belge içeriğiyle ilgili beni eğiteceksin. Ancak bana doğrudan cevapları verme! Kurallar:\n1. Bana konunun mantığını kavratacak sorular sor.\n2. Her seferinde sadece TEK soru sor ve cevabımı bekle.\n3. Verdiğim cevaba göre beni yönlendir. Doğru yoldaysam bir sonraki aşamaya geçmek için takip sorusu sor. Yanlış yoldaysam ipucu vererek beni doğru düşünmeye sevk et.\n4. Örnek: 'Entity nedir?' sorusuna ben cevap verince 'Peki Student neden bir entity olur da student name neden attribute olur?' gibi tümdengelim sorularıyla beni konunun içine sok.\n\nHadi ilk sorunla başla!`;
+        return `\n\n[🎓 SINAV KOÇU — SOKRATİK ÖĞRENME MODU]\nBu belge içeriğiyle ilgili beni eğiteceksin. Ancak bana doğrudan cevapları verme! Kurallar:\n1. Bana konunun mantığını kavratacak sorular sor.\n2. Her seferinde sadece TEK soru sor ve cevabımı bekle.\n3. Verdiğim cevaba göre beni yönlendir. Doğru yoldaysam bir sonraki aşamaya geçmek için takip sorusu sor. Yanlış yoldaysam ipucu vererek beni doğru düşünmeye sevk et.\n4. Örnek: 'Entity nedir?' sorusuna ben cevap verince 'Peki Student neden bir entity olur da student name neden attribute olur?' gibi tümdengelim sorularıyla beni konunun içine sok.\n\nHadi ilk sorunla başla!`;
     }
 
     if (mode === 'eksik_analizi') {
@@ -9196,7 +9798,7 @@ function buildExamCoachSuffix() {
         window.skQuizHistory.push(histItem);
         if (window.skQuizHistory.length > 10) window.skQuizHistory.shift();
 
-        return `\n\n[?���️ SINAV KOÇU — EKSİK ANALİZİ (TANI TESTİ)]\nBu belge üzerinden benim eksiklerimi tespit etmek için 10 adet kısa soruluk bir tanı testi hazırla.\n\nKurallar:\n1. 10 soruyu peş peşe listele (kısa cevaplı veya boşluk doldurma tarzında olsunlar).\n2. Soruların altına benden cevaplarımı yazmamı iste.\n3. Ben cevaplarımı girince, her soru alt konusunu (Örn: Normalization, Normal Formlar, Primary Key, Weak Entity vs.) analiz et ve bana yüzdelik bir tablo çıkart:\n   - Konu A: %95 Başarı\n   - Konu B: %30 Başarı (Eksik Yakalandı!)\n4. Bu tablonun ardından, bana sadece en zayıf kaldığım (%50 altı) konuları çalıştırmak üzere özel bir ders planı öner.\n\nHadi soruları listele!`;
+        return `\n\n[📊 SINAV KOÇU — EKSİK ANALİZİ (TANI TESTİ)]\nBu belge üzerinden benim eksiklerimi tespit etmek için 10 adet kısa soruluk bir tanı testi hazırla.\n\nKurallar:\n1. 10 soruyu peş peşe listele (kısa cevaplı veya boşluk doldurma tarzında olsunlar).\n2. Soruların altına benden cevaplarımı yazmamı iste.\n3. Ben cevaplarımı girince, her soru alt konusunu (Örn: Normalization, Normal Formlar, Primary Key, Weak Entity vs.) analiz et ve bana yüzdelik bir tablo çıkart:\n   - Konu A: %95 Başarı\n   - Konu B: %30 Başarı (Eksik Yakalandı!)\n4. Bu tablonun ardından, bana sadece en zayıf kaldığım (%50 altı) konuları çalıştırmak üzere özel bir ders planı öner.\n\nHadi soruları listele!`;
     }
 
     if (mode === 'challenge') {
@@ -9213,15 +9815,15 @@ function buildExamCoachSuffix() {
         window.skQuizHistory.push(histItem);
         if (window.skQuizHistory.length > 10) window.skQuizHistory.shift();
 
-        return `\n\n[?��� SINAV KOÇU — CHALLENGE MODU (${diffLabel.toUpperCase()})]${histNote}\n\nBu belgeden benim için ${diffLabel} zorluk derecesinde son derece zorlayıcı, zeka gerektiren 5 adet soru hazırla. Sorular klasik veya çoktan seçmeli olabilir. Formatı serbest bırakıyorum ancak seçtiğim zorluk derecesinin hakkını sonuna kadar ver! En sona cevap anahtarını ve detaylı çözümlerini ekle.`;
+        return `\n\n[🎓 SINAV KOÇU — CHALLENGE MODU (${diffLabel.toUpperCase()})]${histNote}\n\nBu belgeden benim için ${diffLabel} zorluk derecesinde son derece zorlayıcı, zeka gerektiren 5 adet soru hazırla. Sorular klasik veya çoktan seçmeli olabilir. Formatı serbest bırakıyorum ancak seçtiğim zorluk derecesinin hakkını sonuna kadar ver! En sona cevap anahtarını ve detaylı çözümlerini ekle.`;
     }
 
     if (mode === 'munazara') {
-        return `\n\n[?���️ SINAV KOÇU — MÜNAZARA MODU]\nBu belgedeki tartışmalı veya farklı yorumlanabilecek bir konuyu ele alalım. Kurallar:\n1. Sen belgedeki bir görüşün/tezin tam karşıt tarafını (şeytanın avukatını) savunacaksın.\n2. Bana tezini sun ve beni kendi tezimi savunmaya, kanıt göstermeye zorla.\n3. Her mesajda sadece kendi karşı argümanını sunup sözü bana bırak.\n4. Bu fikir düellosu sayesinde benim konuyu çok yönlü kavramamı sağla.\n\nHadi münazara konusunu ve senin ilk karşı tezini sunarak tartışmayı başlat!`;
+        return `\n\n[📊 SINAV KOÇU — MÜNAZARA MODU]\nBu belgedeki tartışmalı veya farklı yorumlanabilecek bir konuyu ele alalım. Kurallar:\n1. Sen belgedeki bir görüşün/tezin tam karşıt tarafını (şeytanın avukatını) savunacaksın.\n2. Bana tezini sun ve beni kendi tezimi savunmaya, kanıt göstermeye zorla.\n3. Her mesajda sadece kendi karşı argümanını sunup sözü bana bırak.\n4. Bu fikir düellosu sayesinde benim konuyu çok yönlü kavramamı sağla.\n\nHadi münazara konusunu ve senin ilk karşı tezini sunarak tartışmayı başlat!`;
     }
 
     if (mode === 'hoca_tahmin') {
-        return `\n\n[?�Z� SINAV KOÇU — HOCA NE SORAR? TAHMİNİ]\nBu belgeyi hazırlayan akademisyenin gözünden bir analiz yap:\n\n## ?��� 1. Klasik Soru Gelebilecek Yerler\nBelgeden 3 adet klasik (açık uçlu) soru tahmin et ve hocanın hangi anahtar kelimeleri (keywords) cevap kâğıdında arayacağını yaz.\n\n## ?��� 2. Test Sorusuna Uygun Püf Noktaları\nÇoktan seçmeli sınavlarda çeldirici olarak kullanılabilecek, ezberlenmesi gereken 3-4 kritik ayrımı veya kuralı listele.\n\n## ?��� 3. Mutlaka Ezberlenecek Kavramlar Listesi\nSınavda çıkma olasılığı %90+ olan terimleri **bold** olarak listele ve tek cümleyle açıkla.`;
+        return `\n\n[📖 SINAV KOÇU — HOCA NE SORAR? TAHMİNİ]\nBu belgeyi hazırlayan akademisyenin gözünden bir analiz yap:\n\n## ✍️ 1. Klasik Soru Gelebilecek Yerler\nBelgeden 3 adet klasik (açık uçlu) soru tahmin et ve hocanın hangi anahtar kelimeleri (keywords) cevap kâğıdında arayacağını yaz.\n\n## 🎯 2. Test Sorusuna Uygun Püf Noktaları\nÇoktan seçmeli sınavlarda çeldirici olarak kullanılabilecek, ezberlenmesi gereken 3-4 kritik ayrımı veya kuralı listele.\n\n## 📌 3. Mutlaka Ezberlenecek Kavramlar Listesi\nSınavda çıkma olasılığı %90+ olan terimleri **bold** olarak listele ve tek cümleyle açıkla.`;
     }
 
     return '';
@@ -9563,6 +10165,20 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
 });
 </script>
+
+
+    <!-- Camera Preview Modal -->
+    <div id="cameraModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.85); z-index:3000; align-items:center; justify-content:center; flex-direction:column; padding:20px;">
+        <div style="background:#181825; border:1px solid #313244; border-radius:16px; padding:20px; max-width:500px; width:100%; display:flex; flex-direction:column; gap:15px; position:relative; box-sizing:border-box;">
+            <button onclick="closeCameraModal()" style="position:absolute; top:15px; right:15px; background:none; border:none; color:#f38ba8; font-size:24px; cursor:pointer;">×</button>
+            <h3 style="color:#cdd6f4; margin:0; font-size:18px;">📷 Kamera Önizleme</h3>
+            <video id="cameraVideo" autoplay playsinline style="width:100%; border-radius:8px; background:#11111b; transform:scaleX(-1);"></video>
+            <div style="display:flex; gap:10px; justify-content:center;">
+                <button onclick="captureCameraPhoto()" style="background:#a6e3a1; color:#11111b; font-weight:bold; border:none; padding:10px 20px; border-radius:8px; cursor:pointer;">Fotoğraf Çek</button>
+                <button onclick="closeCameraModal()" style="background:#45475a; color:#cdd6f4; border:none; padding:10px 20px; border-radius:8px; cursor:pointer;">Kapat</button>
+            </div>
+        </div>
+    </div>
 
 </body>
 </html>
