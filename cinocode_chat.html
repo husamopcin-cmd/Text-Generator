@@ -1740,6 +1740,17 @@
 
     <div class="input-wrapper">
 
+        <!-- MEDIA SOURCE TOGGLE CONTAINER -->
+        <div id="mediaSourceToggleContainer" style="display:none; gap:12px; justify-content:center; margin-bottom:10px; background: rgba(30, 30, 46, 0.6); padding: 8px; border-radius: 12px; border: 1px solid #313244;">
+            <label style="cursor:pointer; display:flex; align-items:center; gap:6px; font-size:13px; color:#cdd6f4;">
+                <input type="radio" name="mediaSource" value="ai" checked style="accent-color:#cba6f7;"> 🎨 Yapay Zeka ile Üret
+            </label>
+            <label style="cursor:pointer; display:flex; align-items:center; gap:6px; font-size:13px; color:#a6adc8;">
+                <input type="radio" name="mediaSource" value="web" style="accent-color:#cba6f7;"> 🔍 İnternetten Bul
+            </label>
+        </div>
+
+
 
         <!-- IMAGE PREVIEW CONTAINER -->
         <div id="imagePreviewContainer" style="display:none; position:relative; margin-bottom:10px;">
@@ -2367,6 +2378,12 @@
         currentMode = mode;
         console.log("CinoCode Aktif Mod Değişti: " + currentMode);
         restoreComposerDraftIfNeeded();
+
+        
+        const mediaSourceToggle = document.getElementById("mediaSourceToggleContainer");
+        if (mediaSourceToggle) {
+            mediaSourceToggle.style.display = (mode === "image" || mode === "video") ? "flex" : "none";
+        }
 
         const suggestionContainer = document.getElementById("suggestionChipsContainer");
         if (suggestionContainer && mode !== "image" && mode !== "video" && mode !== "game") {
@@ -4518,7 +4535,7 @@
                         </div>
                     </details>
                     <div style="display:flex; gap:8px;">
-                        <button type="button" onclick="const p = decodeURIComponent('${encodeURIComponent(promptText)}'); navigator.clipboard.writeText(p); const t=this.textContent; this.textContent='Kopyalandı!'; setTimeout(()=>this.textContent=t,2000)" style="background:#313244; color:#a6adc8; border:1px solid #45475a; border-radius:6px; padding:6px 12px; font-size:11px; cursor:pointer;">Promptu Kopyala</button>
+                        <button type="button" onclick="copyPromptTextFallback(decodeURIComponent('${encodeURIComponent(promptText)}'), this)" style="background:#313244; color:#a6adc8; border:1px solid #45475a; border-radius:6px; padding:6px 12px; font-size:11px; cursor:pointer;">Promptu Kopyala</button>
                     </div>
                 </div>`;
         }
@@ -5346,6 +5363,39 @@
         }
     }
 
+
+    function copyPromptTextFallback(text, btnElement) {
+        function fallbackCopyToClipboard(txt) {
+            const textarea = document.createElement('textarea');
+            textarea.value = txt;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.focus();
+            textarea.select();
+            try { document.execCommand('copy'); } catch (e) {}
+            document.body.removeChild(textarea);
+        }
+
+        const handleSuccess = () => {
+            if (btnElement) {
+                const t = btnElement.textContent;
+                btnElement.textContent = 'Kopyalandı!';
+                setTimeout(() => btnElement.textContent = t, 2000);
+            }
+        };
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(handleSuccess).catch(() => {
+                fallbackCopyToClipboard(text);
+                handleSuccess();
+            });
+        } else {
+            fallbackCopyToClipboard(text);
+            handleSuccess();
+        }
+    }
+
     function copyPromptToClipboard(prompt) {
         navigator.clipboard.writeText(prompt).then(() => {
             alert("✅ Prompt kopyalandı!");
@@ -5361,6 +5411,7 @@
     window.editVideoPrompt = editVideoPrompt;
     window.deleteVideoCard = deleteVideoCard;
     window.copyPromptToClipboard = copyPromptToClipboard;
+    window.copyPromptTextFallback = copyPromptTextFallback;
 
     function enhanceVideoPrompt(basePrompt, quality, isLongVideo) {
         let enhanced = basePrompt;
@@ -5733,6 +5784,13 @@
                     <span style="color:#a6adc8; font-size:10px;">Açıkken seçili ses, Türkçe/İngilizce karışık metinlerde değişmez.</span>
                 </span>
             </label>
+            <label style="display:flex; align-items:flex-start; gap:8px; cursor:pointer; margin-bottom:10px; padding-top:6px; border-top:1px solid #313244;">
+                <input type="checkbox" id="quickVoiceReadEmojisToggle" style="margin-top:2px; accent-color:#89b4fa;" onchange="quickSyncVoiceReadEmojis(this.checked)">
+                <span style="font-size:11px; line-height:1.2;">
+                    <strong>Emojileri de oku</strong><br>
+                    <span style="color:#a6adc8; font-size:10px;">Açıkken TTS, metindeki emoji sembollerini okumaya çalışır.</span>
+                </span>
+            </label>
             <details style="border-top:1px solid #313244; padding-top:6px;" open>
                 <summary style="font-size:11px; cursor:pointer; color:#a6e3a1; font-weight:600;">Tüm ses adlarını düzenle</summary>
                 <div id="quickVoiceAllList" style="margin-top:6px; max-height:40vh; overflow-y:auto; display:flex; flex-direction:column; gap:4px; padding-right:4px;"></div>
@@ -5760,6 +5818,11 @@
         if (lockToggle) {
             lockToggle.checked = isTtsVoiceLockEnabled();
         }
+        const emojisToggle = document.getElementById('quickVoiceReadEmojisToggle');
+        if (emojisToggle) {
+            emojisToggle.checked = isTtsReadEmojisEnabled();
+        }
+
 
         const listDiv = document.getElementById('quickVoiceAllList');
         if (listDiv) {
@@ -6284,6 +6347,15 @@
         });
     }
 
+    
+    function quickSyncVoiceReadEmojis(checked) {
+        localStorage.setItem('cinocode_tts_read_emojis', checked ? '1' : '0');
+    }
+    function isTtsReadEmojisEnabled() {
+        const stored = localStorage.getItem('cinocode_tts_read_emojis');
+        return stored == null ? true : stored === '1';
+    }
+
     function isTtsVoiceLockEnabled() {
         const stored = localStorage.getItem('cinocode_tts_voice_lock_enabled');
         return stored == null ? true : stored === '1';
@@ -6407,6 +6479,10 @@
 
     function speakText(text) {
         if (!isSpeakerOn) return;
+        if (!isTtsReadEmojisEnabled()) {
+            text = text.replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, '');
+        }
+
         // Synth paused ise resume et (mobil sorun)
         try { if (synth.paused) synth.resume(); } catch(e) {}
         ttsQueue.push(text);
