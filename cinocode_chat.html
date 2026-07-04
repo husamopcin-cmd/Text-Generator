@@ -1442,8 +1442,10 @@
             <button onclick="toggleAccountPopover(event)" title="Hesap" style="width:100%; min-width:0; background:#181825; border:1px solid #45475a; color:#a6e3a1; cursor:pointer; font-size:12px; font-weight:600; padding:7px 8px; border-radius:8px; display:flex; align-items:center; justify-content:center; gap:6px;">👤 Profil</button>
             <div id="accountPopover" style="display:none; position:absolute; bottom:35px; left:0; width:100%; background:#181825; border:1px solid #45475a; padding:12px; border-radius:8px; z-index:10010; box-shadow:0 4px 15px rgba(0,0,0,0.5); text-align:center; color:#cdd6f4;">
                 <div style="font-size:11px; color:#a6adc8; margin-bottom:12px;" id="accountStats">Sohbet verileriniz güvende.</div>
+                <button onclick="alert('Yakında eklenecek')" style="width:100%; min-width:0; background:transparent; border:1px solid #45475a; color:#cdd6f4; cursor:pointer; font-size:12px; font-weight:600; padding:7px 8px; border-radius:8px; margin-bottom:8px;">👤 Profil</button>
+                <button onclick="alert('Yakında eklenecek')" style="width:100%; min-width:0; background:transparent; border:1px solid #45475a; color:#cdd6f4; cursor:pointer; font-size:12px; font-weight:600; padding:7px 8px; border-radius:8px; margin-bottom:8px;">⚙️ Hesap Ayarları</button>
+                <button onclick="if(confirm('Hesabınızı kalıcı olarak silmek istediğinize emin misiniz?')) { alert('Yakında eklenecek'); }" style="width:100%; min-width:0; background:rgba(243,139,168,0.1); border:1px solid rgba(243,139,168,0.3); color:#f38ba8; cursor:pointer; font-size:12px; font-weight:600; padding:7px 8px; border-radius:8px; margin-bottom:8px;">🗑️ Hesabı Sil</button>
                 <button onclick="logout()" style="width:100%; min-width:0; background:rgba(243,139,168,0.1); border:1px solid rgba(243,139,168,0.3); color:#f38ba8; cursor:pointer; font-size:12px; font-weight:600; padding:7px 8px; border-radius:8px; margin-bottom:8px;">Çıkış Yap</button>
-
             </div>
         </div>
     </div>
@@ -7159,7 +7161,7 @@
             return !lower || fillerWords.includes(lower);
         });
 
-        if (clean.length < 15 || isFillerOnly) {
+        if (clean.length < 6 || isFillerOnly) {
             const now = new Date();
             let h = now.getHours().toString().padStart(2, '0');
             let m = now.getMinutes().toString().padStart(2, '0');
@@ -7189,6 +7191,7 @@
         const t = title.trim();
         return (
             t === "Yeni Sohbet" ||
+            t.startsWith("Yeni Sohbet") ||
             /^\s*Viewed\b/i.test(t) ||
             /^\s*Edited\b/i.test(t) ||
             /^\s*Ran command\b/i.test(t) ||
@@ -8366,6 +8369,48 @@
                 }
             }
             if (typeof applyShowMoreLogic === 'function') applyShowMoreLogic(document.getElementById(botId));
+
+            // --- Akıllı Başlık Üretimi ---
+            if (chat.messages && chat.messages.length === 2 && !chat.manualTitle && !chat.smartTitleGenerated) {
+                try {
+                    const summarizePrompt = "Bu konuşmayı en fazla 4 kelimeyle, başlık olarak özetle. Sadece başlığı yaz, başka hiçbir şey yazma, tırnak kullanma.";
+                    const getTxt = (c) => typeof c === 'string' ? c : (Array.isArray(c) ? c.map(x=>x.text||"").join(" ") : "Mesaj");
+                    const smartMessages = [
+                        { role: "user", content: getTxt(chat.messages[0].content) },
+                        { role: "assistant", content: getTxt(chat.messages[1].content) },
+                        { role: "user", content: summarizePrompt }
+                    ];
+                    
+                    let smartFetchOptions = JSON.parse(JSON.stringify(fetchOptions));
+                    if (smartFetchOptions.body) {
+                        const bodyObj = JSON.parse(smartFetchOptions.body);
+                        bodyObj.messages = smartMessages;
+                        bodyObj.stream = false;
+                        bodyObj.max_tokens = 20;
+                        if (bodyObj.options) bodyObj.options.num_predict = 20;
+                        smartFetchOptions.body = JSON.stringify(bodyObj);
+                    }
+                    
+                    chat.smartTitleGenerated = true; // Sadece 1 kere dene
+                    
+                    fetch(fetchUrl, smartFetchOptions).then(res => res.json()).then(data => {
+                        let titleText = "";
+                        if (data.choices && data.choices[0] && data.choices[0].message) {
+                            titleText = data.choices[0].message.content;
+                        } else if (data.message && data.message.content) {
+                            titleText = data.message.content;
+                        }
+                        if (titleText) {
+                            titleText = titleText.replace(/["']/g, "").replace(/\n/g, " ").trim();
+                            if (titleText && titleText.length < 60) {
+                                chat.title = titleText;
+                                saveDatabase();
+                                renderSidebar();
+                            }
+                        }
+                    }).catch(e => console.error("Smart title error:", e));
+                } catch(e) { console.error("Smart title logic error:", e); }
+            }
             // Streaming bittikten sonra kesin en alta kay
             scrollToBottom();
             setTimeout(scrollToBottom, 300);
