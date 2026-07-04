@@ -455,7 +455,14 @@
         .sidebar.collapsed .chat-item-title { max-width: none; }
         .sidebar.collapsed .chat-item-title span { display: none; }
         .sidebar.collapsed .chat-actions { display: none; }
-        .sidebar.collapsed .user-profile { display: none; }
+        .sidebar.collapsed summary,
+        .sidebar.collapsed .chat-section-header,
+        .sidebar.collapsed #welcomeText {
+            display: none !important;
+        }
+        .sidebar.collapsed .user-profile { justify-content: center; }
+        .sidebar.collapsed .user-profile img { margin-right: 0; }
+        .sidebar.collapsed .user-profile-info { display: none; }
         .sidebar-toggle-btn {
             display: inline-flex !important;
             justify-content: center;
@@ -1347,7 +1354,19 @@
             min-width: 0;
         }
 
-</style>
+
+        /* Dropdown Theme Fix */
+        select option {
+            background-color: #181825;
+            color: #cdd6f4;
+        }
+        select optgroup {
+            background-color: #181825;
+            color: #a6adc8;
+            font-weight: bold;
+        }
+
+    </style>
 
 
     <script>
@@ -1390,15 +1409,15 @@
             <summary style="font-size: 11px; color:#a6adc8; font-weight:bold; letter-spacing: 1px; margin-bottom: 5px; cursor:pointer; outline:none; user-select:none;">STÜDYOLAR</summary>
             <div style="display:flex; flex-direction:column; gap:4px; margin-top:4px;">
                 <button class="new-chat-btn" onclick="setAppMode('chat'); createNewChat();" style="background:#89b4fa; color:#11111b; font-weight:600; justify-content:center; font-size:12px; padding: 6px;">💬 <span class="sidebar-text">Standart Sohbet</span></button>
-                <button class="new-chat-btn" id="sidebarImageStudioBtn" onclick="setAppMode('image'); triggerImageGeneration();" style="border-color:#fab387; color:#fab387; font-size:12px; padding: 6px;">🎨 <span class="sidebar-text">Görsel Stüdyosu</span></button>
-                <button class="new-chat-btn" id="sidebarVideoStudioBtn" onclick="setAppMode('video'); triggerVideoGeneration();" style="border-color:#cba6f7; color:#cba6f7; font-size:12px; padding: 6px;">🎬 <span class="sidebar-text">Video Stüdyosu</span></button>
-                <button class="new-chat-btn" id="sidebarGameStudioBtn" onclick="setAppMode('game'); triggerGameGeneration();" style="border-color:#a6e3a1; color:#a6e3a1; font-size:12px; padding: 6px;">🎮 <span class="sidebar-text">Oyun Stüdyosu</span></button>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
+                    <button class="new-chat-btn" id="sidebarImageStudioBtn" onclick="setAppMode('image'); triggerImageGeneration();" style="border-color:#fab387; color:#fab387; font-size:12px; padding: 6px; justify-content:center;">🎨 <span class="sidebar-text">Görsel</span></button>
+                    <button class="new-chat-btn" id="sidebarVideoStudioBtn" onclick="setAppMode('video'); triggerVideoGeneration();" style="border-color:#cba6f7; color:#cba6f7; font-size:12px; padding: 6px; justify-content:center;">🎬 <span class="sidebar-text">Video</span></button>
+                    <button class="new-chat-btn" id="sidebarGameStudioBtn" onclick="setAppMode('game'); triggerGameGeneration();" style="border-color:#a6e3a1; color:#a6e3a1; font-size:12px; padding: 6px; justify-content:center;">🎮 <span class="sidebar-text">Oyun</span></button>
+                    <button class="new-chat-btn" id="sidebarProjectsBtn" onclick="openProjectsScreen()" style="border-color:#f9e2af; color:#f9e2af; font-size:12px; padding: 6px; justify-content:center;">📁 <span class="sidebar-text">Projeler</span></button>
+                </div>
             </div>
         </details>
-
-        <button class="new-chat-btn" id="sidebarProjectsBtn" onclick="openProjectsScreen()" style="border-color:#f9e2af; color:#f9e2af; font-size:12px; padding: 6px; margin-top:4px;">📁 <span class="sidebar-text">Projeler</span></button>
-    </div>
-
+    </div> <!-- Close sidebar-top-sections -->
     <script>
         function applySidebarMobileCollapse() {
             if(window.innerWidth <= 768) {
@@ -1437,14 +1456,47 @@
             <div class="status-indicator" id="statusIndicator" title="Ollama Bağlantısı"></div>
             CinoCode
         </div>
-        <div class="header-controls">
-            <div class="style-mode-badge" id="styleModeBadge">Serbest Üslup Aktif</div>
-            <select id="styleModeSelect" title="Üslup Modu" onchange="onStyleModeHeaderChange()" aria-hidden="true" tabindex="-1" style="max-width:150px; background:#181825; color:#cdd6f4; border:1px solid #45475a; padding:5px; border-radius:5px;">
+        <div class="header-controls" style="display:flex; flex-direction:column; gap:8px; width:100%;">
+            <div style="display:flex; flex-wrap:wrap; align-items:center; gap:8px; width:100%;">
+                <div style="display:flex; flex:1; justify-content:center; align-items:center; flex-wrap:wrap; gap:8px; min-width:0;">
+                <div class="style-mode-badge" id="styleModeBadge" style="display:none;">Serbest Üslup Aktif</div>
+                <select id="styleModeSelect" title="Üslup Modu" onchange="onStyleModeHeaderChange()" style="width:120px; background:#181825; color:#cdd6f4; border:1px solid #45475a; padding:5px; border-radius:5px; font-size:12px;">
                 <option value="safe">Güvenli Mod</option>
                 <option value="balanced">Dengeli Mod</option>
-                <option value="free">Serbest Üslup</option>
+                <option value="free" selected>Serbest Üslup</option>
             </select>
-            <select id="speechStyleSelect" title="Konuşma Tarzı" onchange="onSpeechStyleHeaderChange()" aria-hidden="true" tabindex="-1" style="max-width:170px; background:#181825; color:#cdd6f4; border:1px solid #45475a; padding:5px; border-radius:5px;">
+                <select id="modelSelect" style="flex:1; min-width:180px; max-width:250px; background:#181825; color:#cba6f7; border:1px solid #45475a; padding:6px; border-radius:6px; font-size:13px; font-weight:600;">
+                <option value="auto">⚡ Otomatik (Önerilen)</option>
+                <option disabled>──────────</option>
+                <option value="openai" title="Genel amaçlı, güvenilir yanıtlar">OpenAI Cloud</option>
+                <option value="cerebras" title="Hızlı çıkarım">Cerebras Cloud ☁️</option>
+                <option value="deepseek" title="Kod ve mantık güçlü">DeepSeek Cloud ☁️</option>
+                <option value="mistral" title="Hafif ve hızlı">Mistral Cloud ☁️</option>
+                <option value="openrouter" title="Çok model tek kapı">OpenRouter Cloud</option>
+                <option value="gemini" title="Hızlı, uzun metin iyi">Gemini Cloud</option>
+                <option value="groq" title="Çok hızlı cevap">Groq Cloud</option>
+                <option value="fireworks" title="Yüksek performanslı modeller">Fireworks Cloud ☁️</option>
+                <option value="together" title="Geniş model yelpazesi">Together Cloud ☁️</option>
+                <option value="grok-3-xai" title="Kapsamlı ve güncel veri">Grok 3 - xAI</option>
+                <option value="grok-3-mini-xai" title="Hızlı ve hafif">Grok 3 Mini - xAI</option>
+                <option disabled>──────────</option>
+                <option value="meta-llama/llama-4-scout-17b-16e-instruct-groq" title="Görsel analiz">Llama 4 Scout (Görsel analiz) - Groq Bulut ⚡</option>
+                <option value="nvidia/nemotron-nano-12b-v2-vl-nvidia" title="Görsel analiz">👁️ Nemotron Nano VL (Görsel analiz) - NVIDIA NIM ⚡</option>
+                <option value="meta-llama/llama-3.2-11b-vision-instruct:free-openrouter" title="Görsel analiz">👁️ Llama 3.2 Vision (11B) (Görsel analiz) - OpenRouter Ücretsiz</option>
+                <option disabled>──────────</option>
+                <optgroup id="ollamaOptGroup" label="Yerel modeller (Ollama kapalı — bilgisayarında başlatın)"></optgroup>
+            </select>
+                </div>
+                <div style="display:flex; gap:4px; margin-left:auto;">
+                <button class="icon-btn sidebar-hamburger-btn" id="sidebarHamburgerBtn" onclick="toggleSidebar()" title="Sidebar">☰</button>
+                <button class="icon-btn speaker-btn active" id="speakerBtn" onclick="toggleSpeaker()" title="Sesli Okuma">🔊</button>
+                <button class="icon-btn" onclick="printChat()" title="Sohbeti PDF Yap (Yazdır)">📄 PDF</button>
+                <button class="icon-btn" onclick="exportChat()" title="Sohbeti .txt Kaydet">💾</button>
+                <button class="icon-btn" onclick="openSettings()" title="Genel Ayarlar">⚙️</button>
+            </div>
+            </div>
+            <div style="display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:8px; width:100%;">
+                <select id="speechStyleSelect" title="Konuşma Tarzı" onchange="onSpeechStyleHeaderChange()" style="width:120px; background:#181825; color:#cdd6f4; border:1px solid #45475a; padding:5px; border-radius:5px; font-size:12px;">
                 <option value="default">Varsayılan</option>
                 <option value="kanka">Kanka</option>
                 <option value="teacher">Resmi / Öğretmen</option>
@@ -1455,81 +1507,20 @@
                 <option value="diyarbakir">Diyarbakır ağzı denemesi</option>
                 <option value="kurdish_zazaki">Kürtçe / Zazaca denemesi</option>
             </select>
-            <!-- Kişilik Seçici -->
-            <select id="personaSelect" style="max-width:180px; font-weight:bold; background:#a6e3a1; color:#11111b; border:none; padding:5px; border-radius:5px;">
-                <option value="kanka">🧠 Standart Zeka (Kanka)</option>
-                <option value="usta_yazilimci">💻 Usta Yazılımcı Modu</option>
-                <option value="akademik_koc">🎓 Sınav Koçu Modu (Ders Hazırlık)</option>
-                <option value="dil_kocu">🗣️ Özel Dil Koçu Modu</option>
-                <option value="derin_arastirma">🔍 Derin Araştırma Modu</option>
+                <select id="personaSelect" style="width:140px; font-weight:bold; background:rgba(166,227,161,0.2); color:#a6e3a1; border:1px solid #a6e3a1; padding:5px; border-radius:5px; font-size:12px;">
+                <option value="kanka">🤖 Standart Zeka (Kanka)</option>
+                <option value="usta_yazilimci">💻 Usta Yazılımcı</option>
+                <option value="akademik_koc">📚 Sınav Koçu</option>
+                <option value="dil_kocu">🌍 Özel Dil Koçu</option>
+                <option value="derin_arastirma">🔍 Derin Araştırma</option>
             </select>
-            <!-- Model Seçici -->
-            <select id="modelSelect">
-                <!-- Netlify Bulut Proxy -->
-                <option value="openai">OpenAI Cloud </option>
-                <option value="cerebras">Cerebras Cloud ☁️</option>
-                <option value="deepseek">DeepSeek Cloud ☁️</option>
-                <option value="mistral">Mistral Cloud ☁️</option>
-                <option value="openrouter">OpenRouter Cloud </option>
-                <option value="gemini">Gemini Cloud </option>
-                <option value="groq">Groq Cloud </option>
-                <option value="fireworks">Fireworks Cloud ☁️</option>
-                <option value="together">Together Cloud ☁️</option>
-                <!-- xAI / Grok (doğrudan API) -->
-                <option value="grok-3-xai">Grok 3 - xAI</option>
-                <option value="grok-3-mini-xai">Grok 3 Mini - xAI</option>
-                <option disabled>──────────</option>
-                <!-- Görsel Modeller -->
-                <option value="meta-llama/llama-4-scout-17b-16e-instruct-groq">Llama 4 Scout (Görsel) - Groq Bulut ⚡</option>
-                <option value="nvidia/nemotron-nano-12b-v2-vl-nvidia">👁️ Nemotron Nano VL (Görsel) - NVIDIA NIM ⚡</option>
-                <option value="meta-llama/llama-3.2-11b-vision-instruct:free-openrouter">👁️ Llama 3.2 Vision (11B) - OpenRouter Ücretsiz</option>
-                <option disabled>──────────</option>
-                <!-- Yerel Modeller -->
-                <option value="qwen2.5:14b">Qwen 2.5 (14B) - Yerel</option>
-                <option value="qwen2.5">Qwen 2.5 (7B) - Yerel</option>
-                <option value="gemma2:2b">Gemma 2 (2B) - Yerel</option>
-                <option value="llama3:8b">Llama 3 (8B) - Yerel</option>
-                <option value="llava">LLaVA (Görsel Model) - Yerel</option>
-            </select>
-            <!-- Ses Seçici (Dinamik Yüklenecek) -->
-            <div id="voiceControlsContainer" style="display:inline-flex; align-items:center;">
-                <select id="voiceSelect" style="max-width:180px;" onchange="saveVoicePref()"></select>
-                <div style="position:relative; display:inline-block; vertical-align:middle; margin-left:4px;">
-                    <button class="icon-btn" id="voiceQuickSettingsBtn" onclick="toggleVoiceQuickSettings(event)" title="Ses ayarları" aria-label="Ses ayarları" style="padding:6px 8px;">⚙️</button>
-                    <div id="voiceQuickSettingsPopover" style="display:none; position:absolute; top:35px; right:0; background:#181825; border:1px solid #45475a; padding:12px; border-radius:8px; z-index:10005; box-shadow:0 4px 15px rgba(0,0,0,0.5); width:240px; max-height:85vh; overflow-y:auto; text-align:left; color:#cdd6f4; font-family:sans-serif;">
-                        <div style="font-weight:bold; font-size:13px; margin-bottom:8px; border-bottom:1px solid #313244; padding-bottom:6px;">Ses Ayarları</div>
-
-                        <div style="font-size:12px; margin-bottom:8px;"><strong>Seçili Ses:</strong> <span id="quickSelectedVoiceName" style="color:#89b4fa;">-</span></div>
-
-                        <div style="display:flex; gap:4px; margin-bottom:10px;">
-                            <button type="button" onclick="quickEditSelectedVoice(event)" style="background:#313244; border:none; color:#89b4fa; cursor:pointer; font-size:11px; padding:4px 8px; border-radius:4px;">Görünen adı değiştir</button>
-                            <button type="button" onclick="quickResetSelectedVoice(event)" style="background:#313244; border:none; color:#f38ba8; cursor:pointer; font-size:11px; padding:4px 8px; border-radius:4px;">Varsayılana döndür</button>
-                        </div>
-
-                        <label style="display:flex; align-items:flex-start; gap:8px; cursor:pointer; margin-bottom:10px; padding-top:6px; border-top:1px solid #313244;">
-                            <input type="checkbox" id="quickVoiceLockToggle" style="margin-top:2px; accent-color:#a6e3a1;" onchange="quickSyncVoiceLock(this.checked)">
-                            <span style="font-size:11px; line-height:1.2;">
-                                <strong>Ses sabit kalsın</strong><br>
-                                <span style="color:#a6adc8; font-size:10px;">Açıkken seçili ses, Türkçe/İngilizce karışık metinlerde değişmez.</span>
-                            </span>
-                        </label>
-
-                        <details style="border-top:1px solid #313244; padding-top:6px;">
-                            <summary style="font-size:11px; cursor:pointer; color:#a6e3a1; font-weight:600;">Tüm ses adlarını düzenle</summary>
-                            <div id="quickVoiceAllList" style="margin-top:6px; max-height:40vh; overflow-y:auto; display:flex; flex-direction:column; gap:4px; padding-right:4px;"></div>
-                        </details>
-                    </div>
-                </div>
+                <div id="voiceControlsContainer" style="display:inline-flex; align-items:center; gap:4px;">
+                <select id="voiceSelect" style="max-width:180px; background:#181825; color:#cdd6f4; border:1px solid #45475a; padding:5px; border-radius:5px; font-size:12px;" onchange="saveVoicePref()"></select>
+                <button class="icon-btn" id="voiceQuickSettingsBtn" onclick="toggleVoiceQuickSettings(event)" title="Ses ayarları" aria-label="Ses ayarları" style="padding:4px 6px; border-radius:4px;">⚙️</button>
             </div>
-
-            <button class="icon-btn sidebar-hamburger-btn" id="sidebarHamburgerBtn" onclick="toggleSidebar()" title="Sidebar">☰</button>
-        <button class="icon-btn speaker-btn active" id="speakerBtn" onclick="toggleSpeaker()" title="Sesli Okuma">&#x1F50A;</button>
-            <button class="icon-btn" onclick="printChat()" title="Sohbeti PDF Yap (Yazdır)">&#x1F4C4; PDF</button>
-            <button class="icon-btn" onclick="exportChat()" title="Sohbeti .txt Kaydet">&#x1F4BE;</button>
-            <button class="icon-btn" onclick="openSettings()" title="Ayarlar">&#x2699;&#xFE0F;</button>
+            </div>
         </div>
     </div>
-
     <!-- ===== DİL KOÇU MODU PANELİ ===== -->
     <div id="dilKocuPanel">
         <!-- Satır 1: Dil + Seviye + Model bilgisi -->
@@ -1990,7 +1981,6 @@
     </div>
 
 
-</div> <!-- Close body flex -->
 
 <script>
     // === GROQ API AYARI ===
@@ -3556,17 +3546,17 @@
         settingsMenu.style.transition = 'opacity 0.3s';
 
         const currentKey = localStorage.getItem('groq_api_key') || "";
-        document.getElementById('groqApiKeyInput').value = currentKey;
+        if(document.getElementById('groqApiKeyInput')) document.getElementById('groqApiKeyInput').value = currentKey;
 
         const currentGeminiKey = localStorage.getItem('gemini_api_key') || "";
-        document.getElementById('geminiApiKeyInput').value = currentGeminiKey;
+        if(document.getElementById('geminiApiKeyInput')) document.getElementById('geminiApiKeyInput').value = currentGeminiKey;
 
-        document.getElementById('nvidiaApiKeyInput').value = localStorage.getItem('nvidia_api_key') || "";
-        document.getElementById('openrouterApiKeyInput').value = localStorage.getItem('openrouter_api_key') || "";
-        document.getElementById('runwareApiKeyInput').value = localStorage.getItem('runware_api_key') || "";
-        document.getElementById('xaiApiKeyInput').value = localStorage.getItem('xai_api_key') || "";
-        document.getElementById('cloudflareAccountIdInput').value = localStorage.getItem('cloudflare_account_id') || "";
-        document.getElementById('cloudflareApiTokenInput').value = localStorage.getItem('cloudflare_api_token') || "";
+        if(document.getElementById('nvidiaApiKeyInput')) document.getElementById('nvidiaApiKeyInput').value = localStorage.getItem('nvidia_api_key') || "";
+        if(document.getElementById('openrouterApiKeyInput')) document.getElementById('openrouterApiKeyInput').value = localStorage.getItem('openrouter_api_key') || "";
+        if(document.getElementById('runwareApiKeyInput')) document.getElementById('runwareApiKeyInput').value = localStorage.getItem('runware_api_key') || "";
+        if(document.getElementById('xaiApiKeyInput')) document.getElementById('xaiApiKeyInput').value = localStorage.getItem('xai_api_key') || "";
+        if(document.getElementById('cloudflareAccountIdInput')) document.getElementById('cloudflareAccountIdInput').value = localStorage.getItem('cloudflare_account_id') || "";
+        if(document.getElementById('cloudflareApiTokenInput')) document.getElementById('cloudflareApiTokenInput').value = localStorage.getItem('cloudflare_api_token') || "";
 
         const currentOllamaIp = localStorage.getItem('ollama_ip') || "";
         document.getElementById('ollamaIpInput').value = currentOllamaIp;
@@ -3747,19 +3737,19 @@
     }
 
     function saveSettings() {
-        const groqKey = document.getElementById('groqApiKeyInput').value.trim();
+        const groqKey = document.getElementById('groqApiKeyInput')?.value?.trim() || "";
         localStorage.setItem('groq_api_key', groqKey);
 
-        const nvidiaKey = document.getElementById('nvidiaApiKeyInput').value.trim();
+        const nvidiaKey = document.getElementById('nvidiaApiKeyInput')?.value?.trim() || "";
         localStorage.setItem('nvidia_api_key', nvidiaKey);
 
-        const openrouterKey = document.getElementById('openrouterApiKeyInput').value.trim();
+        const openrouterKey = document.getElementById('openrouterApiKeyInput')?.value?.trim() || "";
         localStorage.setItem('openrouter_api_key', openrouterKey);
 
-        const runwareKey = document.getElementById('runwareApiKeyInput').value.trim();
+        const runwareKey = document.getElementById('runwareApiKeyInput')?.value?.trim() || "";
         localStorage.setItem('runware_api_key', runwareKey);
 
-        const xaiKey = document.getElementById('xaiApiKeyInput').value.trim();
+        const xaiKey = document.getElementById('xaiApiKeyInput')?.value?.trim() || "";
         localStorage.setItem('xai_api_key', xaiKey);
 
         // Cloudflare sonraki faz — kaydetme devre dışı
@@ -4089,7 +4079,7 @@
                 <span>${safeTitle}</span>
             </div>
             <div class="chat-actions">
-                <button class="action-btn chat-menu-btn" onclick="toggleChatMenu('${id}', event)" title="Sohbet menüsü" aria-label="Sohbet menüsü">...</button>
+                <button class="action-btn chat-menu-btn" onclick="toggleChatMenu('${id}', event)" title="Sohbet menüsü" aria-label="Sohbet menüsü">⋮</button>
             </div>
             <div class="chat-action-menu" id="menu-${id}">
                 <button class="chat-menu-item" onclick="toggleStarChat('${id}', event)">${starLabel}</button>
@@ -4443,6 +4433,16 @@
     }
 
     function handleGeneratedImageError(img) {
+        if (!img) return;
+        const retryCount = parseInt(img.dataset.retryCount || '0', 10);
+        const currentSrc = img.src || '';
+        if (retryCount < 2 && currentSrc.includes('image.pollinations.ai')) {
+            img.dataset.retryCount = String(retryCount + 1);
+            const newSeed = Math.floor(Math.random() * 999999);
+            const newSrc = currentSrc.replace(/seed=\d+/, 'seed=' + newSeed);
+            setTimeout(() => { img.src = newSrc; }, 1200);
+            return;
+        }
         const card = img && img.closest ? img.closest('[data-generated-image-card="true"]') : null;
         if (card) {
             let promptText = "";
@@ -4586,6 +4586,9 @@
         });
         // VIDEO regex
         html = html.replace(/\[GENERATE_VIDEO:\s*(.*?)\]/gi, (match, promptText) => {
+            if (!isLast) {
+                return `<div style="padding: 15px; border: 1px dashed #cba6f7; border-radius: 8px; margin-top: 10px; color: #cdd6f4; background: rgba(203,166,247,0.05);"><i class="fas fa-video"></i> 🎥 Video komutu alındı (mesaj tamamlanınca oluşturulacak)...</div>`;
+            }
             if (isTechnicalText(promptText)) return '';
             let finalPrompt = buildCleanMediaPrompt(promptText, "video");
             lastMediaPrompt = finalPrompt;
@@ -5175,9 +5178,9 @@
                     <video controls autoplay style="max-width:100%; border-radius: 8px; border: 2px solid #89b4fa; box-shadow: 0 4px 12px rgba(0,0,0,0.5);" src="${videoUrl}"></video>
                     <div class="artifact-card-actions" style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 12px;">
                         <button class="artifact-dl-btn" data-video-action="download" data-video-url="${videoUrl}">⬇️ İndir</button>
-                        <button class="artifact-dl-btn" style="background:#cba6f7; color:#11111b;" data-video-action="regenerate" data-video-prompt="${encodeURIComponent(prompt)}" data-video-container="${containerId}">?��� Yeniden Oluştur</button>
+                        <button class="artifact-dl-btn" style="background:#cba6f7; color:#11111b;" data-video-action="regenerate" data-video-prompt="${encodeURIComponent(prompt)}" data-video-container="${containerId}">🔄 Yeniden Oluştur</button>
                         <button class="artifact-dl-btn" style="background:#89b4fa; color:#11111b;" data-video-action="edit" data-video-prompt="${encodeURIComponent(prompt)}">✏️ Düzenle</button>
-                        <button class="artifact-dl-btn" style="background:#f38ba8; color:#11111b;" data-video-action="delete" data-video-container="${containerId}">?���️ Sil</button>
+                        <button class="artifact-dl-btn" style="background:#f38ba8; color:#11111b;" data-video-action="delete" data-video-container="${containerId}">🗑️ Sil</button>
                     </div>
                 </div>
             `;
@@ -5432,9 +5435,9 @@
                 const actionDiv = document.createElement("div");
                 actionDiv.className = "msg-actions";
                 actionDiv.innerHTML = `
-                    <button class="msg-action-btn" onclick="copyMessage(${index}, this)" title="Kopyala">?���</button>
-                    <button class="msg-action-btn" onclick="speakMessage(${index})" title="Sesli Oku">?���</button>
-                    ${index === history.length - 1 ? `<button class="msg-action-btn" onclick="regenerateMessage()" title="Yeniden Üret">?���</button>` : ''}
+                    <button class="msg-action-btn" onclick="copyMessage(${index}, this)" title="Kopyala">📋</button>
+                    <button class="msg-action-btn" onclick="speakMessage(${index})" title="Sesli Oku">🔊</button>
+                    ${index === history.length - 1 ? `<button class="msg-action-btn" onclick="regenerateMessage()" title="Yeniden Üret">🔄</button>` : ''}
                 `;
                 div.appendChild(actionDiv);
                 const prevUser = [...history.slice(0, index)].reverse().find(m => m.role === "user" && m.content);
@@ -5640,8 +5643,15 @@
     function toggleVoiceQuickSettings(e) {
         if(e) e.stopPropagation();
         const popover = document.getElementById('voiceQuickSettingsPopover');
+        const btn = document.getElementById('voiceQuickSettingsBtn');
         if (!popover) return;
         if (popover.style.display === 'none') {
+            if(btn) {
+                const rect = btn.getBoundingClientRect();
+                popover.style.top = (rect.bottom + 8) + 'px';
+                popover.style.left = (rect.left - 250) + 'px';
+                popover.style.right = 'auto';
+            }
             updateVoiceQuickSettingsPopover();
             popover.style.display = 'block';
         } else {
@@ -6553,7 +6563,7 @@
             let extraButtons = '';
             if(item.type === 'video' && item.prompt) {
                 extraButtons = `
-                    <button class="artifact-dl-btn" style="background:#cba6f7; color:#11111b; padding:8px; border-radius:6px; font-size:11px;" data-video-action="regenerate" data-video-prompt="${item.prompt}" data-video-container="archive-${item.id}" title="Yeniden Oluştur">?���</button>
+                    <button class="artifact-dl-btn" style="background:#cba6f7; color:#11111b; padding:8px; border-radius:6px; font-size:11px;" data-video-action="regenerate" data-video-prompt="${item.prompt}" data-video-container="archive-${item.id}" title="Yeniden Oluştur">🔄</button>
                     <button class="artifact-dl-btn" style="background:#89b4fa; color:#11111b; padding:8px; border-radius:6px; font-size:11px;" data-video-action="edit" data-video-prompt="${item.prompt}" title="Düzenle">✏️</button>
                 `;
             }
@@ -7142,15 +7152,26 @@
 
     function generateChatTitleFromMessage(message, attachmentInfo) {
         let clean = cleanTextForTitle(message);
-        if (clean.length > 48) clean = clean.substring(0, 48) + '...';
-
+        
         const fillerWords = ["knk", "kanka", "ya", "yaaa", "yahu", "abi", "hocam", "deli", "misin", "ne", "yaptın", "naptın"];
-        let words = clean.split(" ");
-        words = words.filter(w => {
+        const isFillerOnly = clean.toLowerCase().split(" ").every(w => {
+            const lower = w.replace(/[^a-z0-9ğüşıöç]/g, "");
+            return !lower || fillerWords.includes(lower);
+        });
+
+        if (clean.length < 15 || isFillerOnly) {
+            const now = new Date();
+            let h = now.getHours().toString().padStart(2, '0');
+            let m = now.getMinutes().toString().padStart(2, '0');
+            return `Yeni Sohbet ${h}:${m}`;
+        }
+
+        let words = clean.split(" ").filter(w => {
             const lower = w.toLowerCase().replace(/[^a-z0-9ğüşıöç]/g, "");
             return lower && !fillerWords.includes(lower);
         });
         clean = words.join(" ").trim();
+        if (clean.length > 48) clean = clean.substring(0, 48) + '...';
 
         const isDebug = /(provider|reason|network_error|üretilemedi|hata|çalışmıyor|log|console|bug)/i.test(message);
         if (isDebug) {
@@ -7310,7 +7331,24 @@
             return;
         }
 
-        const selectedModel = document.getElementById("modelSelect").value;
+        let selectedModel = document.getElementById("modelSelect").value;
+        let actualModelForAuto = "";
+        
+        if (selectedModel === "auto") {
+            const hasImage = !!selectedImageBase64;
+            const hasCode = /\b(function|const|let|var|if|else|for|while|import|export|class|=>|#include|\bdef\b|import\s+pandas)\b/i.test(messageText);
+            
+            if (hasImage) {
+                selectedModel = "meta-llama/llama-3.2-11b-vision-instruct:free-openrouter";
+                actualModelForAuto = "Llama Vision";
+            } else if (hasCode) {
+                selectedModel = "deepseek";
+                actualModelForAuto = "DeepSeek Cloud";
+            } else {
+                selectedModel = "openai";
+                actualModelForAuto = "OpenAI Cloud";
+            }
+        }
         const isVisionCapable = isVisionCapableModel(selectedModel);
 
         if (selectedImageBase64 && !isVisionCapable) {
@@ -7501,7 +7539,24 @@
         }
 
         try {
-            const selectedModel = document.getElementById("modelSelect").value;
+            let selectedModel = document.getElementById("modelSelect").value;
+        let actualModelForAuto = "";
+        
+        if (selectedModel === "auto") {
+            const hasImage = !!selectedImageBase64;
+            const hasCode = /\b(function|const|let|var|if|else|for|while|import|export|class|=>|#include|\bdef\b|import\s+pandas)\b/i.test(messageText);
+            
+            if (hasImage) {
+                selectedModel = "meta-llama/llama-3.2-11b-vision-instruct:free-openrouter";
+                actualModelForAuto = "Llama Vision";
+            } else if (hasCode) {
+                selectedModel = "deepseek";
+                actualModelForAuto = "DeepSeek Cloud";
+            } else {
+                selectedModel = "openai";
+                actualModelForAuto = "OpenAI Cloud";
+            }
+        }
             let reqMessages = [];
             const personaValue = document.getElementById("personaSelect") ? document.getElementById("personaSelect").value : "kanka";
             let baseSystemPrompt = personas[personaValue] || systemPrompt;
@@ -8001,6 +8056,9 @@
                         scrubPlaceholderErrorImages(document.getElementById(botId));
                         addCopyButtons(document.getElementById(botId));
                         appendSmartSuggestions(botId, botReply, text);
+                        if (typeof actualModelForAuto !== 'undefined' && actualModelForAuto) {
+                            botReply += "\n\n<div style='font-size:10px; color:#a6adc8; margin-top:8px;'>⚡ Model: " + actualModelForAuto + "</div>";
+                        }
                         chat.messages.push({ role: 'assistant', content: botReply });
                         chat.updatedAt = Date.now();
                         saveDatabase();
@@ -8291,6 +8349,9 @@
                     const failMsg = renderMediaErrorMessage("Gerçek video sağlayıcısı yok. Storyboard önizlemesi hazırlandı.");
                     chat.messages.push({ role: "assistant", content: failMsg });
                 } else {
+                    if (typeof actualModelForAuto !== 'undefined' && actualModelForAuto) {
+                        botReply += "\n\n<div style='font-size:10px; color:#a6adc8; margin-top:8px;'>⚡ Model: " + actualModelForAuto + "</div>";
+                    }
                     chat.messages.push({ role: "assistant", content: botReply });
                 }
             }
@@ -9276,5 +9337,58 @@ function buildExamCoachSuffix() {
             }
         });
     </script>
-    </body>
+    <div id="voiceQuickSettingsPopover" style="display:none; position:fixed; top:35px; right:0; background:#181825; border:1px solid #45475a; padding:12px; border-radius:8px; z-index:10005; box-shadow:0 4px 15px rgba(0,0,0,0.5); width:240px; max-height:85vh; overflow-y:auto; text-align:left; color:#cdd6f4; font-family:sans-serif;">
+                          <div style="font-weight:bold; font-size:13px; margin-bottom:8px; border-bottom:1px solid #313244; padding-bottom:6px;">Ses Ayarları</div>
+  
+                          <div style="font-size:12px; margin-bottom:8px;"><strong>Seçili Ses:</strong> <span id="quickSelectedVoiceName" style="color:#89b4fa;">-</span></div>
+  
+                          <div style="display:flex; gap:4px; margin-bottom:10px;">
+                              <button type="button" onclick="quickEditSelectedVoice(event)" style="background:#313244; border:none; color:#89b4fa; cursor:pointer; font-size:11px; padding:4px 8px; border-radius:4px;">Görünen adı değiştir</button>
+                              <button type="button" onclick="quickResetSelectedVoice(event)" style="background:#313244; border:none; color:#f38ba8; cursor:pointer; font-size:11px; padding:4px 8px; border-radius:4px;">Varsayılana döndür</button>
+                          </div>
+  
+                          <label style="display:flex; align-items:flex-start; gap:8px; cursor:pointer; margin-bottom:10px; padding-top:6px; border-top:1px solid #313244;">
+                              <input type="checkbox" id="quickVoiceLockToggle" style="margin-top:2px; accent-color:#a6e3a1;" onchange="quickSyncVoiceLock(this.checked)">
+                              <span style="font-size:11px; line-height:1.2;">
+                                  <strong>Ses sabit kalsın</strong><br>
+                                  <span style="color:#a6adc8; font-size:10px;">Açıkken seçili ses, Türkçe/İngilizce karışık metinlerde değişmez.</span>
+                              </span>
+                          </label>
+  
+                          <details style="border-top:1px solid #313244; padding-top:6px;">
+                              <summary style="font-size:11px; cursor:pointer; color:#a6e3a1; font-weight:600;">Tüm ses adlarını düzenle</summary>
+                              <div id="quickVoiceAllList" style="margin-top:6px; max-height:40vh; overflow-y:auto; display:flex; flex-direction:column; gap:4px; padding-right:4px;"></div>
+                          </details>
+                      </div>
+
+<script>
+window.addEventListener('DOMContentLoaded', async () => {
+    const ollamaGrp = document.getElementById('ollamaOptGroup');
+    if(!ollamaGrp) return;
+    try {
+        const ip = localStorage.getItem('ollama_ip') || '127.0.0.1';
+        const port = ip.includes(':') ? '' : ':11434';
+        const url = `http://${ip}${port}/api/tags`;
+        const res = await fetch(url);
+        if(res.ok) {
+            const data = await res.json();
+            if(data.models && data.models.length > 0) {
+                ollamaGrp.label = 'Yerel Modeller';
+                data.models.forEach(m => {
+                    const opt = document.createElement('option');
+                    opt.value = m.name;
+                    opt.textContent = m.name + ' - Yerel';
+                    ollamaGrp.appendChild(opt);
+                });
+            } else {
+                ollamaGrp.label = 'Yerel modeller (Yüklü model yok)';
+            }
+        }
+    } catch(e) {
+        ollamaGrp.label = 'Yerel modeller (Ollama kapalı — bilgisayarında başlatın)';
+    }
+});
+</script>
+
+</body>
 </html>
