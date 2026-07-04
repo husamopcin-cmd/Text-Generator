@@ -1349,6 +1349,22 @@
 
 </style>
 
+
+    <script>
+        // Override showToast/showNonBlockingToast to prevent spam from simple dropdowns
+        const originalToast = window.showToast || window.showNonBlockingToast;
+        const quietMessages = ["ayar", "değiştirildi", "kaydedildi", "ses"];
+        if (originalToast) {
+            window.showToast = window.showNonBlockingToast = function(msg, type) {
+                if (msg && quietMessages.some(q => msg.toLowerCase().includes(q)) && !msg.toLowerCase().includes("hata")) {
+                    console.log("Silenced Toast:", msg);
+                    return; // Sessize al
+                }
+                originalToast(msg, type);
+            };
+        }
+    </script>
+
 </head>
 <body>
 
@@ -1834,46 +1850,32 @@
             <span style="color:#f9e2af; display:block; margin-top:5px;">⚠️ Kendi bulut anahtarlarınız için: <i>Netlify Dashboard > Site settings > Environment variables</i> bölümüne RUNWARE_API_KEY ekleyin.</span>
         </div>
 
+
+        <div style="background:rgba(166, 227, 161, 0.1); color:#a6e3a1; padding:10px; border-radius:8px; margin-bottom:15px; font-size:12px; text-align:center;">
+            ℹ️ Groq, Gemini, OpenRouter API anahtarları Netlify Environment üzerinden otomatik bağlanır.
+        </div>
         <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px; text-align: left;">
             Runware API Key <span style="color: #6c7086; font-size: 11px;">(Lokal kullanacaksanız elle girin - boş bırakılırsa Netlify Env kullanılır)</span>:
         </div>
         <input type="password" id="runwareApiKeyInput" placeholder="API key girilirse yerel tarayıcıda saklanır" type="password" style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px; border-radius:8px; margin-bottom: 10px; box-sizing: border-box; outline: none; font-size: 13px;">
 
-        <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px; text-align: left;">
-            Groq API Key <span style="color: #6c7086; font-size: 11px;">(Netlify Environment Variables ile yönetilir - readonly)</span>:
-        </div>
-        <input type="text" id="groqApiKeyInput" placeholder="Netlify Environment Variables üzerinden yönetilir" type="password" disabled readonly style="width:100%; background:#11111b; border:1px solid #313244; color:#6c7086; padding:8px; border-radius:8px; margin-bottom: 10px; box-sizing: border-box; outline: none; font-size: 13px; cursor:not-allowed; opacity:0.7;">
 
-        <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px; text-align: left;">
-            Google Gemini API Key <span style="color: #6c7086; font-size: 11px;">(Netlify Environment Variables ile yönetilir - readonly)</span>:
-        </div>
-        <input type="text" id="geminiApiKeyInput" placeholder="Netlify Environment Variables üzerinden yönetilir" type="password" disabled readonly style="width:100%; background:#11111b; border:1px solid #313244; color:#6c7086; padding:8px; border-radius:8px; margin-bottom: 10px; box-sizing: border-box; outline: none; font-size: 13px; cursor:not-allowed; opacity:0.7;">
+
+
 
         <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px; text-align: left;">
             NVIDIA NIM API Key <span style="color: #cba6f7; font-size: 11px;">(build.nvidia.com)</span>:
         </div>
         <input type="text" id="nvidiaApiKeyInput" placeholder="API key girilirse yerel tarayıcıda saklanır" type="password" style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px; border-radius:8px; margin-bottom: 10px; box-sizing: border-box; outline: none; font-size: 13px;">
 
-        <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px; text-align: left;">
-            OpenRouter API Key <span style="color: #6c7086; font-size: 11px;">(Netlify Environment Variables ile yönetilir - readonly)</span>:
-        </div>
-        <input type="text" id="openrouterApiKeyInput" placeholder="Netlify Environment Variables üzerinden yönetilir" type="password" disabled readonly style="width:100%; background:#11111b; border:1px solid #313244; color:#6c7086; padding:8px; border-radius:8px; margin-bottom: 10px; box-sizing: border-box; outline: none; font-size: 13px; cursor:not-allowed; opacity:0.7;">
+
 
         <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px; text-align: left;">
             xAI API Key <span style="color: #f38ba8; font-size: 11px;">(Grok 3 / Grok 3 Mini — console.x.ai)</span>:
         </div>
         <input type="password" id="xaiApiKeyInput" placeholder="API key girilirse yerel tarayıcıda saklanır" type="password" style="width:100%; background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px; border-radius:8px; margin-bottom: 10px; box-sizing: border-box; outline: none; font-size: 13px;">
 
-        <div style="display: flex; gap: 10px; margin-bottom: 10px; opacity:0.55;">
-            <div style="flex: 1; text-align: left;">
-                <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px;">Cloudflare Account ID <span style="color:#6c7086;font-size:11px;">(sonraki faz)</span>:</div>
-                <input type="text" id="cloudflareAccountIdInput" placeholder="Netlify Environment Variables üzerinden yönetilir" type="password" disabled readonly style="width:100%; background:#11111b; border:1px solid #313244; color:#6c7086; padding:8px; border-radius:8px; box-sizing: border-box; outline: none; font-size: 13px; cursor:not-allowed;">
-            </div>
-            <div style="flex: 1; text-align: left;">
-                <div style="color: #cdd6f4; font-size: 13px; margin-bottom: 5px;">CF API Token <span style="color:#6c7086;font-size:11px;">(sonraki faz)</span>:</div>
-                <input type="password" id="cloudflareApiTokenInput" placeholder="Netlify Environment Variables üzerinden yönetilir" type="password" disabled readonly style="width:100%; background:#11111b; border:1px solid #313244; color:#6c7086; padding:8px; border-radius:8px; box-sizing: border-box; outline: none; font-size: 13px; cursor:not-allowed;">
-            </div>
-        </div>
+
 
                     </div>
         </details>
@@ -3802,7 +3804,7 @@
         applyFeatureUiState();
 
         closeSettings();
-        alert("Ayarlar kaydedildi!");
+        if(typeof showNonBlockingToast === 'function') showNonBlockingToast('Ayarlar kaydedildi!');
     }
 
     let sessions = {}; // Tüm sohbetleri tutan obje
