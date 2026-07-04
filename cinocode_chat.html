@@ -3291,7 +3291,7 @@
         const mode = getFeatureValue('styleMode') || 'safe';
         const shared = "\n\nHER MODDA SINIRLAR: Yasa disi faaliyet, gercek zarar, zararli kod, dolandiricilik, kimlik avi, siddet tesviki, cocuk guvenligi/istismari, hedefli kisisel saldiri ve benzeri riskli konularda sinir koy. 'Sinirsiz/sansursuz her seyi yaparim' diye davranma. Kullanici Serbest Uslup'un sinirsiz olup olmadigini sorarsa kisa ve net soyle: Serbest Uslup daha direkt, samimi, esprili ve cesur bir konusma tarzidir; sinirsiz/sansursuz/her seyi yapan mod degildir ve guvenlik sinirlari her modda gecerlidir.";
         if (mode === 'free') {
-            return "\n\nUSLUP MODU: Serbest Uslup aktif. Daha direkt, dobra, sivri, komik ve cesur konusabilirsin. Gerektiginde dusuk-orta doz argo kullanabilirsin; karanlik, horror, mature kurgu, sensual/romantik atmosfer ve sert yaratıcı metinlerde daha rahat yaz. Yetişkin karakterler için ateşli bakış, vücut hatlarını zarifçe belli eden poz, estetik iç giyim, flörtöz boudoir, romantik gerilim, fiziksel çekim, tutkulu öpüşme/sarılma, boyun/omuz hizasında ima, sütyenli veya ince kıyafetli yatak sahnesi ve grafik olmayan yakınlık tonu kurabilirsin. Kullanıcı daha cesur/seksi isterse hemen reddetmek yerine sınırlar içinde daha yoğun, sinematik, tahrik edici ama ima dolu anlat. Açık pornografik seks eylemi, cinsel organ odaklı çıplaklık veya çocuk/ergen cinsel içerik yazma/üretme. Durduk yere kullaniciya hakaret etme, surekli agir kufur kusma, bozuk persona gibi davranma." + shared;
+            return "\n\nUSLUP MODU: Serbest Uslup aktif. Daha direkt, dobra, sivri, komik ve cesur konusabilirsin. Gerektiginde dusuk-orta doz argo kullanabilirsin; karanlik, horror, mature kurgu, sensual/romantik atmosfer ve sert yaratıcı metinlerde daha rahat yaz. Yetişkin karakterler için ateşli bakış, vücut hatlarını zarifçe belli eden poz, estetik iç giyim, flörtöz boudoir, romantik gerilim, fiziksel çekim, tutkulu öpüşme/sarılma, boyun/omuz hizasında ima, sütyenli veya ince kıyafetli yatak sahnesi ve grafik olmayan yakınlık tonu kurabilirsin. Kullanıcı daha cesur/seksi isterse hemen reddetmek yerine sınırlar içinde daha yoğun, sinematik, tahrik edici ama ima dolu anlat. Açık pornografik seks eylemi, cinsel organ odaklı çıplaklık veya çocuk/ergen cinsel içerik yazma/üretme. Kullanici acikca senden kufur etmeni/argo kullanmani isterse, oyunbaz ve esprili bir tonda bunu yapabilirsin. Ama kullanici istemediği halde durduk yere agir hakaret/nefret soylemi uydurma veya bozuk persona gibi davranma." + shared;
         }
         if (mode === 'balanced') {
             return "\n\nUSLUP MODU: Dengeli Mod aktif. Samimi, dogal ve esprili ol; kanka tarzi konusabilirsin ama abartma. Argo dusuk seviyede ve seyrek olsun. Ciddi teknik/debug konularda saka dozunu azalt." + shared;
@@ -3316,6 +3316,8 @@
     }
 
     function getResponseStyleGovernorInstruction() {
+        const mode = getFeatureValue('styleMode') || 'safe';
+        if (mode === 'free') return ''; // Serbest Modda bu kısıtlamayı atla
         return "\n\nCEVAP STİLİ FRENI VE GÜVENLİK SINIRI: Samimi ve doğal konuş ama ölçülü kal. Kullanıcının her kelimesini taklit etme; her cevabı 'hahaha', 'hadi bakalım' gibi roleplay/persona şovuna çevirme. KESİNLİKLE KULLANICININ AĞZINDAN KABA, KÜFÜRLÜ VEYA VULGAR SÖZLER UYDURMA. Kullanıcı 'sikerim ha sen' veya benzeri kaba/küfürlü kelimeler yazmadığı sürece, onun mesajını yorumlarken asla bu tarz ifadeler uydurup 'şunu anladım' diyerek tırnak içinde tekrarlama. Normal soruya normal, kısa ve işe yarar cevap ver; kanka tonunu cevabın odağını bozmayacak kadar kullan. Kullanıcı sinirli veya argo konuşsa bile, sen asistan olarak Standart/Dengeli modda asla küfür veya kaba sokak argosu üretme. Belirsiz veya yanlış anlaşılan ses kayıtlarında kaba kelimeler varsaymak yerine, 'Kanka tam anlayamadım, tekrar yazar mısın?' şeklinde nötr ve samimi bir dönüş yap.";
     }
 
@@ -3382,6 +3384,54 @@
         autoResize(input);
         input.focus();
         sendMessage();
+    }
+
+    // Grok tarzı dinamik devam önerileri (arka planda, modelden)
+    function appendDynamicContinuations(target, fetchUrl, fetchOptions) {
+        if (!isFeatureEnabled('smartSuggestions')) return;
+        const el = typeof target === 'string' ? document.getElementById(target) : target;
+        if (!el) return;
+        const CONT_CLASS = 'ai-continuation-row';
+        if (el.querySelector('.' + CONT_CLASS)) return;
+        try {
+            let contFetchOptions = JSON.parse(JSON.stringify(fetchOptions));
+            if (!contFetchOptions.body) return;
+            let bodyObj = JSON.parse(contFetchOptions.body);
+            const sliced = (bodyObj.messages || []).slice(-3);
+            sliced.push({ role: 'user', content: 'Bu konuşmaya göre kullanıcının sorabileceği 3-4 kısa takip sorusu/konusu öner. Her biri en fazla 5-6 kelime olsun. Sadece listeyi ver, madde madde, başka açıklama yazma.' });
+            bodyObj.messages = sliced;
+            bodyObj.stream = false;
+            bodyObj.max_tokens = 80;
+            if (bodyObj.options) bodyObj.options.num_predict = 80;
+            contFetchOptions.body = JSON.stringify(bodyObj);
+            console.log('CINOCODE_DEBUG_CONT_FETCH:', fetchUrl, bodyObj);
+            fetch(fetchUrl, contFetchOptions).then(res => res.json()).then(data => {
+                console.log('CINOCODE_DEBUG_CONT_DATA:', data);
+                let raw = '';
+                if (data.content) raw = data.content;
+                else if (data.choices && data.choices[0] && data.choices[0].message) raw = data.choices[0].message.content;
+                else if (data.message && data.message.content) raw = data.message.content;
+                console.log('CINOCODE_DEBUG_CONT_RAW:', raw);
+                if (!raw) return;
+                const lines = raw.split('\n').map(l => l.replace(/^[\d\-\.\*\u2022\u21AA\s]+/, '').trim()).filter(l => l.length > 4 && l.length < 80).slice(0, 4);
+                if (!lines.length) return;
+                const liveEl = typeof target === 'string' ? document.getElementById(target) : target;
+                if (!liveEl || liveEl.querySelector('.' + CONT_CLASS)) return;
+                const row = document.createElement('div');
+                row.className = CONT_CLASS;
+                row.style.cssText = 'display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; padding-top:8px; border-top:1px solid #313244;';
+                lines.forEach(text => {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'smart-suggestion-chip';
+                    btn.style.cssText = 'font-size:11px; opacity:0.85;';
+                    btn.textContent = '\u21AA ' + text;
+                    btn.onclick = () => submitSmartSuggestion(text);
+                    row.appendChild(btn);
+                });
+                liveEl.appendChild(row);
+            }).catch(e => console.warn('AI continuation suggestions error:', e));
+        } catch(e) { console.warn('appendDynamicContinuations logic error:', e); }
     }
 
     function continueLastAnswer() {
@@ -7594,6 +7644,8 @@
             const isPdfTask = !!docTextToUse && docSource !== 'chat';
             const taskType = isVisionTask ? 'vision' : isPdfTask ? 'pdf' : 'chat';
             // Always include system prompt, but limit conversation history for normal chat to avoid huge requests
+            console.log("CINOCODE_DEBUG_STYLEMODE:", getFeatureValue('styleMode'));
+            console.log("CINOCODE_DEBUG_FULL_SYSTEM_PROMPT:", baseSystemPrompt);
             reqMessages.push({ role: "system", content: baseSystemPrompt });
             const historyLimit = (taskType === 'chat') ? 4 : 20;
             const rawHistory = chat.messages || [];
@@ -8291,6 +8343,7 @@
             scrubPlaceholderErrorImages(document.getElementById(botId));
             addCopyButtons(document.getElementById(botId));
             appendSmartSuggestions(botId, botReply, text);
+            appendDynamicContinuations(botId, fetchUrl, fetchOptions);
 
             // Intent ve prompt kontrol mekanizması doğrulaması
             const lowerText = text.toLocaleLowerCase("tr-TR");
