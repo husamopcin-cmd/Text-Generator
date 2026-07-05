@@ -380,6 +380,31 @@
         .smart-suggestion-chip:hover {
             background: rgba(137, 180, 250, 0.2);
         }
+        .settings-mobile-only {
+            display: none !important;
+        }
+        @media (max-width: 768px) {
+            .settings-mobile-only {
+                display: flex !important;
+                flex-direction: column;
+                background: #181825;
+                border: 1px solid #313244;
+                border-radius: 12px;
+                padding: 12px;
+                margin-bottom: 15px;
+            }
+            .settings-mobile-only select {
+                width: 100%;
+                background: #11111b;
+                border: 1px solid #45475a;
+                color: #cdd6f4;
+                padding: 8px;
+                border-radius: 8px;
+                margin-bottom: 10px;
+                outline: none;
+                font-size: 13px;
+            }
+        }
 
         /* ----- ATTACH MENU (POPUP) ----- */
         .attach-menu {
@@ -1102,11 +1127,11 @@
             .welcome-screen h2 { margin-bottom: 18px; font-size: 24px; }
             .welcome-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; justify-items: center; width: 100%; max-width: 100%; }
             .welcome-btn { width: 100%; min-width: 0; padding: 10px 14px; font-size: 13px; }
-            .header { flex-wrap: wrap; gap: 8px; align-items: flex-start; }
-            .header-controls { position: relative; flex-wrap: wrap; gap: 8px; align-items: center; width: 100%; }
-            .header-controls select { max-width: 100%; min-width: 100px; }
-            #modelSelect, #voiceSelect, #personaSelect { max-width: 100%; font-size: 12px; padding: 6px 8px; }
-            .style-mode-badge { width: 100%; justify-content: center; white-space: normal; text-align: center; }
+            .header { flex-wrap: nowrap !important; align-items: center !important; justify-content: space-between !important; }
+            .header-controls { width: auto !important; margin-left: auto !important; position: relative; }
+            .header-controls select, .style-mode-badge, #voiceControlsContainer { display: none !important; }
+            .header-controls > div { flex-wrap: nowrap !important; gap: 4px !important; }
+            .header-controls > div > div { display: none !important; }
             .provider-shell { width: 100%; max-width: 100%; flex-wrap: wrap; }
             .provider-shell select { flex: 1 1 130px; max-width: 100%; }
             .provider-hint { flex: 1 1 100%; max-width: 100%; }
@@ -1148,6 +1173,38 @@
             }
             .chat-item { min-height: 46px; }
             .input-box { width: 100%; }
+            #mediaSourceToggleContainer {
+                flex-wrap: wrap;
+                gap: 8px;
+                align-items: center;
+                justify-content: flex-start !important;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            #mediaSourceToggleContainer label {
+                flex: 0 0 auto;
+                white-space: nowrap;
+            }
+            #suggestionChipsContainer {
+                flex-wrap: nowrap !important;
+                overflow-x: auto;
+                justify-content: flex-start !important;
+                max-width: 100%;
+                -webkit-overflow-scrolling: touch;
+            }
+            #suggestionChipsContainer > * {
+                flex: 0 0 auto;
+                max-width: 82vw;
+            }
+            .input-box textarea {
+                flex: 1 1 auto;
+                min-width: 0;
+                max-width: 100%;
+                width: auto;
+                word-break: normal;
+                overflow-wrap: break-word;
+                white-space: pre-wrap;
+            }
             .sidebar.collapsed { transform: translateX(-100%); }
             .action-btn { padding: 8px; font-size: 12px; }
         }
@@ -1596,8 +1653,8 @@
         <div class="skp-row">
             <span class="skp-label">&#x1F4C4; Kaynak:</span>
             <select id="skp-source" class="skp-select">
-                <option value="pdf" selected>Bu PDF</option>
-                <option value="chat">Sohbet Geçmişi</option>
+                <option value="pdf">Bu PDF</option>
+                <option value="chat" selected>Sohbet Geçmişi</option>
                 <option value="both">PDF + Sohbet</option>
             </select>
 
@@ -1743,10 +1800,10 @@
         <!-- MEDIA SOURCE TOGGLE CONTAINER -->
         <div id="mediaSourceToggleContainer" style="display:none; gap:12px; justify-content:center; margin-bottom:10px; background: rgba(30, 30, 46, 0.6); padding: 8px; border-radius: 12px; border: 1px solid #313244;">
             <label style="cursor:pointer; display:flex; align-items:center; gap:6px; font-size:13px; color:#cdd6f4;">
-                <input type="radio" name="mediaSource" value="ai" checked style="accent-color:#cba6f7;"> 🎨 Yapay Zeka ile Üret
+                <input type="radio" id="mediaSourceAi" name="mediaSource" value="ai" checked onchange="saveMediaSourceSelection(this.value)" style="accent-color:#cba6f7;"> 🎨 Yapay Zeka ile Üret
             </label>
             <label style="cursor:pointer; display:flex; align-items:center; gap:6px; font-size:13px; color:#a6adc8;">
-                <input type="radio" name="mediaSource" value="web" style="accent-color:#cba6f7;"> 🔍 İnternetten Bul
+                <input type="radio" id="mediaSourceWeb" name="mediaSource" value="web" onchange="saveMediaSourceSelection(this.value)" style="accent-color:#cba6f7;"> 🔍 İnternetten Bul
             </label>
         </div>
 
@@ -1859,6 +1916,65 @@
     <div class="attach-menu" id="settingsMenu" style="bottom: 50%; transform: translate(-50%, 50%); display: none; opacity: 0; pointer-events: auto; max-height: 85vh; overflow-y: auto;" onclick="event.stopPropagation()">
         <button class="attach-menu-close" onclick="closeSettings()">×</button>
         <div class="attach-menu-title">Ayarlar & API</div>
+
+        <!-- MOBILE-ONLY RAPID SETTINGS PANEL -->
+        <div class="settings-mobile-only">
+            <div style="color: #a6e3a1; font-weight: bold; font-size: 13px; margin-bottom: 8px; text-align: left;">📱 Mobil Hızlı Ayarlar:</div>
+
+            <div style="color: #cdd6f4; font-size: 12px; margin-bottom: 4px; text-align: left;">Model Seçimi:</div>
+            <select id="modelSelectMobile" onchange="document.getElementById('modelSelect').value = this.value; document.getElementById('modelSelect').dispatchEvent(new Event('change'));">
+                <option value="auto">⚡ Otomatik (Önerilen)</option>
+                <option disabled>──────────</option>
+                <option value="openai">OpenAI Cloud</option>
+                <option value="cerebras">Cerebras Cloud ☁️</option>
+                <option value="deepseek">DeepSeek Cloud ☁️</option>
+                <option value="mistral">Mistral Cloud ☁️</option>
+                <option value="openrouter">OpenRouter Cloud</option>
+                <option value="gemini">Gemini Cloud</option>
+                <option value="groq">Groq Cloud</option>
+                <option value="fireworks">Fireworks Cloud ☁️</option>
+                <option value="together">Together Cloud ☁️</option>
+                <option value="grok-3-xai">Grok 3 - xAI</option>
+                <option value="grok-3-mini-xai">Grok 3 Mini - xAI</option>
+                <option disabled>──────────</option>
+                <option value="meta-llama/llama-4-scout-17b-16e-instruct-groq">Llama 4 Scout (Görsel analiz) - Groq Bulut ⚡</option>
+                <option value="nvidia/nemotron-nano-12b-v2-vl-nvidia">👁️ Nemotron Nano VL (Görsel analiz) - NVIDIA NIM ⚡</option>
+                <option value="meta-llama/llama-3.2-11b-vision-instruct:free-openrouter">👁️ Llama 3.2 Vision (11B) (Görsel analiz) - OpenRouter Ücretsiz</option>
+            </select>
+
+            <div style="color: #cdd6f4; font-size: 12px; margin-bottom: 4px; text-align: left;">Persona (Karakter):</div>
+            <select id="personaSelectMobile" onchange="document.getElementById('personaSelect').value = this.value; document.getElementById('personaSelect').dispatchEvent(new Event('change'));">
+                <option value="kanka">🤖 Standart Zeka (Kanka)</option>
+                <option value="usta_yazilimci">💻 Usta Yazılımcı</option>
+                <option value="akademik_koc">📚 Sınav Koçu</option>
+                <option value="dil_kocu">🌍 Özel Dil Koçu</option>
+                <option value="derin_arastirma">🔍 Derin Araştırma</option>
+            </select>
+
+            <div style="color: #cdd6f4; font-size: 12px; margin-bottom: 4px; text-align: left;">Üslup Modu:</div>
+            <select id="styleModeSelectMobile" onchange="document.getElementById('styleModeSelect').value = this.value; onStyleModeHeaderChange();">
+                <option value="safe">Güvenli Mod</option>
+                <option value="balanced">Dengeli Mod</option>
+                <option value="free">Serbest Üslup</option>
+            </select>
+
+            <div style="color: #cdd6f4; font-size: 12px; margin-bottom: 4px; text-align: left;">Konuşma Tarzı (Ton):</div>
+            <select id="speechStyleSelectMobile" onchange="document.getElementById('speechStyleSelect').value = this.value; onSpeechStyleHeaderChange();">
+                <option value="default">Varsayılan</option>
+                <option value="kanka">Kanka</option>
+                <option value="teacher">Resmi / Öğretmen</option>
+                <option value="short">Kısa-net</option>
+                <option value="grokish">Grokvari</option>
+                <option value="expert">Ciddi uzman</option>
+                <option value="izmir">İzmir rahat tonu</option>
+                <option value="diyarbakir">Diyarbakır ağzı denemesi</option>
+                <option value="kurdish_zazaki">Kürtçe / Zazaca denemesi</option>
+            </select>
+
+            <div style="color: #cdd6f4; font-size: 12px; margin-bottom: 4px; text-align: left;">Ses Seçimi (TTS):</div>
+            <select id="voiceSelectMobile" onchange="document.getElementById('voiceSelect').value = this.value; saveVoicePref();">
+            </select>
+        </div>
 
                 <details style="background:#181825; border:1px solid #313244; border-radius:8px; padding:10px; margin-bottom:10px;">
             <summary style="cursor:pointer; color:#a6e3a1; font-weight:600; font-size:13px; outline:none; user-select:none;">API & Sunucu Yapılandırması</summary>
@@ -2099,7 +2215,7 @@
         return input ? input.value : '';
     }
 
-    
+
     function saveMediaSourceSelection(value) {
         localStorage.setItem('cinocode_media_source', value);
     }
@@ -2294,7 +2410,7 @@
         liveSearch: '0'
     };
 
-    
+
     const isDebugMode = () => localStorage.getItem('debugCinoCode') === 'true';
 
     function getFeatureValue(key) {
@@ -2459,7 +2575,7 @@
         restoreComposerDraftIfNeeded();
                 loadMediaSourceSelection();
 
-        
+
         const mediaSourceToggle = document.getElementById("mediaSourceToggleContainer");
         if (mediaSourceToggle) {
             mediaSourceToggle.style.display = (mode === "image" || mode === "video") ? "flex" : "none";
@@ -2880,7 +2996,7 @@
     let selectedImageBase64 = null;
     let selectedStudyFileName = "";
 
-    
+
     let cameraStream = null;
 
     function triggerCameraCapture() {
@@ -2931,11 +3047,11 @@
         ctx.translate(canvas.width, 0);
         ctx.scale(-1, 1);
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        
+
         const base64 = canvas.toDataURL('image/jpeg');
         selectedImageBase64 = base64;
         selectedStudyFileName = `camera-${new Date().toISOString().slice(0,10)}-${Date.now().toString().slice(-4)}.jpg`;
-        
+
         const previewContainer = document.getElementById('imagePreviewContainer');
         const previewImg = document.getElementById('imagePreview');
         if (previewImg && previewContainer) {
@@ -2950,11 +3066,11 @@
     function handleMediaSelect(event) {
         const file = event.target.files[0];
         if (!file) return;
-        
+
         if (file.size > 2 * 1024 * 1024) {
             showNonBlockingToast("Dosya büyük olabilir; yükleme uzun sürebilir.");
         }
-        
+
         selectedStudyFileName = file.name;
         if (file.type.startsWith('image/')) {
             processFileAsBase64(file, true);
@@ -2977,11 +3093,11 @@
     function handleAudioSelect(event) {
         const file = event.target.files[0];
         if (!file) return;
-        
+
         if (file.size > 2 * 1024 * 1024) {
             showNonBlockingToast("Dosya büyük olabilir; yükleme uzun sürebilir.");
         }
-        
+
         selectedStudyFileName = file.name;
         const reader = new FileReader();
         reader.onload = function(e) {
@@ -3141,7 +3257,7 @@
                                 <div style="color: #a6e3a1; font-size: 14px; margin-bottom: 10px;">✅ Fotoğraf başarıyla sinematik klibe dönüştürüldü!</div>
                                 <video controls autoplay style="max-width:100%; border-radius: 8px; border: 2px solid #89b4fa;" src="${videoUrl}"></video>
                                 <br>
-                                <button class="run-code-btn" style="background: linear-gradient(135deg, #89b4fa, #cba6f7); color:#11111b; width:auto; padding:10px 20px; margin-top:10px; font-weight:bold; border-radius: 8px;" onclick="downloadVideo('${videoUrl}')">? Videoyu İndir (WebM)</button>
+                                <button class="run-code-btn" style="background: linear-gradient(135deg, #89b4fa, #cba6f7); color:#11111b; width:auto; padding:10px 20px; margin-top:10px; font-weight:bold; border-radius: 8px;" onclick="downloadVideo('${videoUrl}')">Videoyu İndir (WebM)</button>
                             </div>
                         `;
                     }
@@ -3779,6 +3895,9 @@
                 window.activeDocText = window.selectedDocumentText;
                 window.activeDocName = window.selectedDocumentName;
                 window.activeDocCursor = 0;
+                const skpSourceEl = document.getElementById('skp-source');
+                if (skpSourceEl) skpSourceEl.value = 'pdf';
+                try { localStorage.setItem('cinocode_skp_source', 'pdf'); } catch(e) {}
                 if (typeof skpUpdateDocStatus === 'function') skpUpdateDocStatus();
 
                 // UI'da dosyanın seçildiğini göster
@@ -3806,7 +3925,7 @@
     }
 
     // ----- AYARLAR (SETTINGS) -----
-    
+
     function changeUiMode(mode) {
         localStorage.setItem('cinocodeUiMode', mode);
         showNonBlockingToast("Arayüz modu güncellendi: " + (mode === 'classic' ? 'Klasik' : 'Yeni'));
@@ -3820,7 +3939,7 @@
         settingsMenu.style.display = 'flex';
         settingsMenu.style.transition = 'opacity 0.3s';
 
-        
+
         const savedUiMode = localStorage.getItem('cinocodeUiMode') || 'new';
         const uiSel = document.getElementById('cinocodeUiModeSelect');
         if (uiSel) uiSel.value = savedUiMode;
@@ -3865,6 +3984,13 @@
         const legacyBehaviorInput = document.getElementById('legacyBehaviorInput');
         if (legacyBehaviorInput) legacyBehaviorInput.checked = isLegacyBehaviorMode();
         applyFeatureUiState();
+
+        // Mobil Hizli Ayarlar Senkronizasyonu
+        ['modelSelect', 'personaSelect', 'styleModeSelect', 'speechStyleSelect', 'voiceSelect'].forEach(id => {
+            const dest = document.getElementById(id + 'Mobile');
+            const src = document.getElementById(id);
+            if (dest && src) dest.value = src.value;
+        });
 
         setTimeout(() => { settingsMenu.style.opacity = '1'; }, 10);
     }
@@ -4254,7 +4380,7 @@
         const menu = document.getElementById('menu-' + id);
         menu.classList.toggle('active');
     }
-    
+
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
             document.querySelectorAll('.chat-action-menu').forEach(menu => {
@@ -4426,7 +4552,7 @@
         return id;
     }
 
-    
+
     function cinocodeAsyncPrompt(titleText, defaultValue = "", placeholderText = "") {
         return new Promise((resolve) => {
             const modal = document.getElementById('cinocodeCustomPromptModal');
@@ -4434,36 +4560,36 @@
             const input = document.getElementById('customPromptInput');
             const cancelBtn = document.getElementById('customPromptCancelBtn');
             const confirmBtn = document.getElementById('customPromptConfirmBtn');
-            
+
             if (!modal || !title || !input || !cancelBtn || !confirmBtn) {
                 resolve(window.prompt(titleText, defaultValue));
                 return;
             }
-            
+
             title.textContent = titleText;
             input.value = defaultValue;
             input.placeholder = placeholderText;
             modal.style.display = 'flex';
             input.focus();
-            
+
             const cleanup = () => {
                 modal.style.display = 'none';
                 confirmBtn.onclick = null;
                 cancelBtn.onclick = null;
                 input.onkeydown = null;
             };
-            
+
             confirmBtn.onclick = () => {
                 const val = input.value;
                 cleanup();
                 resolve(val);
             };
-            
+
             cancelBtn.onclick = () => {
                 cleanup();
                 resolve(null);
             };
-            
+
             input.onkeydown = (e) => {
                 if (e.key === 'Enter') {
                     confirmBtn.click();
@@ -4673,7 +4799,7 @@
         try { decoded = decodeURIComponent(raw); } catch(e) {}
         const value = (raw + " " + decoded).toLocaleLowerCase("tr-TR").replace(/\+/g, " ");
         if (!value) return true;
-        
+
         const dummyDomains = [
             "via.placeholder.com",
             "placeholder.com",
@@ -4684,10 +4810,10 @@
             "placebear.com"
         ];
         const isDummy = dummyDomains.some(domain => value.includes(domain));
-        
+
         const hasErrorColor = value.includes("f38ba8");
         const hasErrorText = /(baglanti|baglanti|hata|hatasi|hatasi|error|connection error|network error)/i.test(value);
-        return isDummy 
+        return isDummy
             || (isDummy && (hasErrorColor || hasErrorText))
             || value.includes("baglanti hatasi")
             || value.includes("baglanti hatasi");
@@ -4764,6 +4890,10 @@
                             • Next Step: ${safeNextStep}
                         </div>
                     </details>
+                    <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:10px;">
+                        <button type="button" onclick="retryLastMediaPrompt('image', lastMediaPrompt)" style="background:#313244; color:#cdd6f4; border:1px solid #45475a; border-radius:6px; padding:6px 12px; font-size:11px; cursor:pointer;">Tekrar Dene</button>
+                        <button type="button" onclick="copyPromptTextFallback(lastMediaPrompt || '', this)" style="background:#313244; color:#cdd6f4; border:1px solid #45475a; border-radius:6px; padding:6px 12px; font-size:11px; cursor:pointer;">Promptu Kopyala</button>
+                    </div>
                 </div>`;
     }
 
@@ -4778,7 +4908,7 @@
                     <div style="font-size:13px; line-height:1.5; margin-bottom: 8px;">${safeMessage}</div>
                     <div style="display:flex; flex-wrap:wrap; gap:8px;">
                         <button class="icon-btn" onclick="navigator.clipboard.writeText(this.parentElement.parentElement.innerText); showNonBlockingToast('Kopyalandı.');" style="font-size:11px; padding:6px 12px; border:1px solid #45475a; background:#313244; min-height:32px;">📋 Hatayı Kopyala</button>
-                        <button class="icon-btn" onclick="retryMessage()" style="font-size:11px; padding:6px 12px; border:1px solid #45475a; background:#313244; min-height:32px;">🔄 Tekrar Dene</button>
+                        <button class="icon-btn" onclick="retryLastMediaPrompt('image', lastMediaPrompt)" style="font-size:11px; padding:6px 12px; border:1px solid #45475a; background:#313244; min-height:32px;">🔄 Tekrar Dene</button>
                     </div>
                 </div>`;
     }
@@ -4798,7 +4928,9 @@
         if (card) {
             let promptText = "";
             try {
-                if (card.dataset.imageUrl) {
+                if (card.dataset.runwarePrompt) {
+                    promptText = card.dataset.runwarePrompt;
+                } else if (card.dataset.imageUrl) {
                     const encoded = card.dataset.imageUrl.split('/prompt/')[1].split('?')[0];
                     promptText = decodeURIComponent(encoded);
                 }
@@ -4816,8 +4948,9 @@
                             Endpoint: image.pollinations.ai
                         </div>
                     </details>
-                    <div style="display:flex; gap:8px;">
-                        <button type="button" onclick="copyPromptTextFallback(decodeURIComponent('${encodeURIComponent(promptText)}'), this)" style="background:#313244; color:#a6adc8; border:1px solid #45475a; border-radius:6px; padding:6px 12px; font-size:11px; cursor:pointer;">Promptu Kopyala</button>
+                    <div style="display:flex; flex-wrap:wrap; gap:8px;">
+                        <button type="button" onclick="retryLastMediaPrompt('image', decodeURIComponent('${encodeURIComponent(promptText)}'))" style="background:#313244; color:#cdd6f4; border:1px solid #45475a; border-radius:6px; padding:6px 12px; font-size:11px; cursor:pointer;">Tekrar Dene</button>
+                        <button type="button" onclick="copyPromptTextFallback(decodeURIComponent('${encodeURIComponent(promptText)}'), this)" style="background:#313244; color:#cdd6f4; border:1px solid #45475a; border-radius:6px; padding:6px 12px; font-size:11px; cursor:pointer;">Promptu Kopyala</button>
                     </div>
                 </div>`;
         }
@@ -4958,8 +5091,8 @@
                             <div style="color: #f9e2af; font-size: 13px; margin-bottom: 10px;">Storyboard/slideshow taslağı (önbellekten)</div>
                             <video controls autoplay style="max-width:100%; border-radius: 8px; border: 2px solid #89b4fa; box-shadow: 0 4px 12px rgba(0,0,0,0.5);" src="${cachedUrl}"></video>
                             <div class="artifact-card-actions">
-                                <button class="artifact-dl-btn" onclick="downloadVideo('${cachedUrl}', 'CinoCode_Video.webm')">? İndir</button>
-                                <button class="artifact-dl-btn" style="background:#89b4fa; color:#11111b;" onclick="replayVideo('${safePromptValue}', '${cachedUrl}')">? Yeniden Oynat</button>
+                                <button class="artifact-dl-btn" onclick="downloadVideo('${cachedUrl}', 'CinoCode_Video.webm')">İndir</button>
+                                <button class="artifact-dl-btn" style="background:#89b4fa; color:#11111b;" onclick="replayVideo('${safePromptValue}', '${cachedUrl}')">Yeniden Oynat</button>
                             </div>
                         </div>`;
             }
@@ -4971,8 +5104,8 @@
                             <div style="color: #f9e2af; font-size: 13px; margin-bottom: 10px;">Storyboard/slideshow taslağı (kaydedilmiş)</div>
                             <video controls style="max-width:100%; border-radius: 8px; border: 2px solid #89b4fa; box-shadow: 0 4px 12px rgba(0,0,0,0.5);" src="${persistedDataUrl}"></video>
                             <div class="artifact-card-actions">
-                                <button class="artifact-dl-btn" onclick="downloadVideo('${persistedDataUrl}', 'CinoCode_Video.webm')">? İndir</button>
-                                <button class="artifact-dl-btn" style="background:#cba6f7; color:#11111b;" onclick="triggerVideoRenderOnDemand('${finalPrompt.replace(/'/g, "\\'").replace(/"/g, '&quot;')}', 'video-replay-' + Date.now())">? Yeniden Oluştur</button>
+                                <button class="artifact-dl-btn" onclick="downloadVideo('${persistedDataUrl}', 'CinoCode_Video.webm')">İndir</button>
+                                <button class="artifact-dl-btn" style="background:#cba6f7; color:#11111b;" onclick="triggerVideoRenderOnDemand('${finalPrompt.replace(/'/g, "\\'").replace(/"/g, '&quot;')}', 'video-replay-' + Date.now())">Yeniden Oluştur</button>
                             </div>
                         </div>`;
             }
@@ -4987,7 +5120,7 @@
                         <div style="color: #a6adc8; font-size: 14px; margin-bottom: 8px;">Bu gerçek video değil, storyboard/slideshow taslağıdır.</div>
                         <div style="color:#f9e2af; font-size:12px; margin-bottom:10px;">${pendingText}</div>
                         <div class="artifact-card-actions" style="justify-content:center;">
-                            <button class="run-code-btn" style="background: linear-gradient(135deg, #89b4fa, #cba6f7); color:#11111b; width:auto; padding:10px 20px; font-weight:bold; border-radius: 8px;" onclick="triggerVideoRenderOnDemand('${escapedPrompt}', '${videoId}')">📖 Yeniden Oluştur</button>
+                            <button class="run-code-btn" style="background: linear-gradient(135deg, #89b4fa, #cba6f7); color:#11111b; width:auto; padding:10px 20px; font-weight:bold; border-radius: 8px;" onclick="triggerVideoRenderOnDemand('${escapedPrompt}', '${videoId}')">Yeniden Oluştur</button>
                         </div>
                     </div>`;
         });
@@ -5613,7 +5746,7 @@
         if (container) {
             container.innerHTML = `
                 <div style="text-align:center; background: #181825; padding: 15px; border-radius: 12px; border: 1px solid #45475a;">
-                    <div style="color: #cba6f7; font-size: 14px; margin-bottom: 10px;">? Video yeniden oluşturuluyor...</div>
+                    <div style="color: #cba6f7; font-size: 14px; margin-bottom: 10px;">🎬 Video yeniden oluşturuluyor...</div>
                     <div id="${containerId}-progress" style="width: 100%; height: 6px; background: #313244; border-radius: 3px; margin-bottom: 10px; overflow: hidden;">
                         <div style="width: 0%; height: 100%; background: linear-gradient(90deg, #cba6f7, #89b4fa); transition: width 0.3s;"></div>
                     </div>
@@ -5678,6 +5811,17 @@
         }
     }
 
+    function retryLastMediaPrompt(type, promptText) {
+        const prompt = String(promptText || lastMediaPrompt || '').trim();
+        if (!prompt) {
+            showNonBlockingToast('Tekrar denenecek prompt bulunamadı.');
+            return;
+        }
+        const mediaType = type || lastMediaType || 'image';
+        setAppMode(mediaType === 'video' ? 'video' : 'image');
+        setComposerValue(mediaType === 'video' ? `Video oluştur: ${prompt}` : `Resim çiz: ${prompt}`, { focus: false });
+        sendMessage();
+    }
     function copyPromptToClipboard(prompt) {
         navigator.clipboard.writeText(prompt).then(() => {
             alert("✅ Prompt kopyalandı!");
@@ -5693,6 +5837,7 @@
     window.editVideoPrompt = editVideoPrompt;
     window.deleteVideoCard = deleteVideoCard;
     window.copyPromptToClipboard = copyPromptToClipboard;
+    window.retryLastMediaPrompt = retryLastMediaPrompt;
     window.toggleLikeMessage = toggleLikeMessage;
     window.toggleDislikeMessage = toggleDislikeMessage;
     window.copyUserMessage = copyUserMessage;
@@ -5762,18 +5907,18 @@
         return getPublicVideoSubject(match[1]);
     }
 
-    
-    
+
+
     function continueFromMessage(index) {
         const chat = sessions[currentChatId];
         if (!chat || !chat.messages) return;
-        
+
         const slicedHistory = chat.messages.slice(0, index + 1);
         if (slicedHistory.length === 0) return;
 
         const newId = "chat_" + Date.now();
         const baseTitle = chat.title || "";
-        
+
         let newTitle;
         if (isBadAutoTitle(baseTitle)) {
             const firstUserMsg = slicedHistory.find(m => m.role === "user");
@@ -5815,8 +5960,8 @@
         renderCurrentChat();
     }
 
-    
-    
+
+
     function shareMessage(index) {
         const msg = sessions[currentChatId].messages[index];
         if (!msg) return;
@@ -5896,7 +6041,7 @@
         const chat = sessions[currentChatId];
         if (!chat || !chat.messages || !chat.messages[index]) return;
         const msg = chat.messages[index];
-        
+
         let isLastUser = true;
         for (let i = index + 1; i < chat.messages.length; i++) {
             if (chat.messages[i].role === "user") {
@@ -5904,7 +6049,7 @@
                 break;
             }
         }
-        
+
         if (isLastUser) {
             setComposerValue(msg.content);
             if (msg.images && msg.images.length > 0) {
@@ -5936,7 +6081,7 @@
             };
             currentChatId = newId;
             saveDatabase();
-            
+
             setComposerValue(msg.content);
             if (msg.images && msg.images.length > 0) {
                 selectedImageBase64 = msg.images[0];
@@ -6032,7 +6177,7 @@
                         <button class="msg-action-btn" onclick="editMessage(${index}, event)" title="Mesajı düzenle">✏️</button>
                         <button class="msg-action-btn" onclick="copyUserMessage(${index}, this)" title="Mesajı kopyala">📋</button>
                         <button class="msg-action-btn" onclick="shareUserMessage(${index})" title="Paylaş">↗</button>
-                        
+
                         <div style="position:relative; display:inline-block;">
                             <button class="msg-action-btn" onclick="toggleMsgMoreMenu(${index}, event)" title="Daha Fazla">⋯</button>
                             <div class="chat-action-menu" id="msg-more-menu-${index}" style="right:0; top:100%; min-width:180px;">
@@ -6074,7 +6219,7 @@
                     <button class="msg-action-btn" onclick="shareMessage(${index})" title="Paylaş">↗</button>
                     ${index === history.length - 1 ? `<button class="msg-action-btn" onclick="regenerateMessage()" title="Bu cevabı yeniden oluştur">🔄</button>` : ''}
                     <button class="msg-action-btn" onclick="continueFromMessage(${index})" title="Bu mesaja kadar olan konuşmayı yeni sohbete kopyala ve buradan devam et">↳ Buradan Devam Et</button>
-                    
+
                     <div style="position:relative; display:inline-block;">
                         <button class="msg-action-btn" onclick="toggleMsgMoreMenu(${index}, event)" title="Daha Fazla">⋯</button>
                         <div class="chat-action-menu" id="msg-more-menu-${index}" style="right:0; top:100%; min-width:180px;">
@@ -6490,10 +6635,17 @@
         }
 
         voiceSelect.innerHTML = defaultHtml;
+        const voiceSelectMobile = document.getElementById('voiceSelectMobile');
+        if (voiceSelectMobile) voiceSelectMobile.innerHTML = defaultHtml;
 
         const savedVoice = localStorage.getItem("cinocode_voice_idx");
-        if (savedVoice !== null && voiceSelect.querySelector(`option[value="${savedVoice}"]`)) {
-            voiceSelect.value = savedVoice;
+        if (savedVoice !== null) {
+            if (voiceSelect.querySelector(`option[value="${savedVoice}"]`)) {
+                voiceSelect.value = savedVoice;
+            }
+            if (voiceSelectMobile && voiceSelectMobile.querySelector(`option[value="${savedVoice}"]`)) {
+                voiceSelectMobile.value = savedVoice;
+            }
         }
 
         if (document.getElementById("voiceControlsContainer")) document.getElementById("voiceControlsContainer").style.display = "inline-flex";
@@ -6890,7 +7042,7 @@
         });
     }
 
-    
+
     function quickSyncVoiceReadEmojis(checked) {
         localStorage.setItem('cinocode_tts_read_emojis', checked ? '1' : '0');
     }
@@ -7210,9 +7362,9 @@
                 currentHeader = dateHeader;
             }
 
-            let icon = item.type === 'image' ? '?' : (item.type === 'video' ? '📖' : '?');
+            let icon = item.type === 'image' ? 'Görsel' : (item.type === 'video' ? 'Video' : 'Dosya');
             let action = item.type === 'image' ? `downloadImage('${item.content}', 'CinoCode_Gorsel.jpg')` : `openArtifactOverlay('${item.content}')`;
-            let btnText = item.type === 'image' ? '? İndir' : (item.type === 'video' ? '? İndir' : '▶️ Önizle');
+            let btnText = item.type === 'image' ? 'İndir' : (item.type === 'video' ? 'İndir' : 'Önizle');
             let dataAction = '';
             let dataUrl = '';
 
@@ -7823,7 +7975,7 @@
 
             function generateChatTitleFromMessage(message, attachmentInfo) {
         let clean = cleanTextForTitle(message);
-        
+
         // Lowercase for checking keywords
         const lower = clean.toLowerCase();
 
@@ -7837,7 +7989,7 @@
         if (lower.includes("tts") || lower.includes("sesli okuma")) {
             if (lower.includes("hata") || lower.includes("bozuldu") || lower.includes("çalışmıyor")) return "TTS Sesli Okuma Hatası";
         }
-        
+
         // General rule-based semantic translation for common expressions
         if (lower.includes("hata") || lower.includes("error") || lower.includes("çalışmıyor") || lower.includes("calismiyor")) {
             let noun = "Hata";
@@ -7856,11 +8008,11 @@
             /\b(knk|kanka|ya+h?u?|abi|hocam|deli|misin|yaptın|naptın|lan|amına\s+koy(im|ayım)|amk|aq|orospu(\s+çocuğu)?|siktir(\s+lan)?|sik(tir)?|piç|göt|mal|yavşak|lütfen|şunu|bunu|şey|baksana|hadi)\b/gi,
             /[.,\/#!$%\^&\*;:{}=\-_\\`~()?]/g
         ];
-        
+
         patterns.forEach(pat => {
             clean = clean.replace(pat, "");
         });
-        
+
         // Collapse spaces
         clean = clean.replace(/\s+/g, " ").trim();
 
@@ -7875,10 +8027,10 @@
         if (clean.length > 36) {
             clean = clean.substring(0, 36).trim();
         }
-        
+
         // Strip trailing dots
         clean = clean.replace(/\.+$/, "").trim();
-        
+
         return clean.charAt(0).toUpperCase() + clean.slice(1);
     }
 
@@ -8037,6 +8189,13 @@
             mediaSourceToggle.style.display = "none";
         }
         maybeApplyDynamicSpeechStyle(text);
+
+        const hasExplicitImageGenerationIntent = !!text && isDirectImageGenerationRequest(text);
+        if (selectedImageBase64 && hasExplicitImageGenerationIntent) {
+            // Üretim fiili baskınsa eski/ekli görsel vision analizine sürüklemesin.
+            removeImage();
+        }
+
         if (!text && (selectedImageBase64 || window.selectedDocumentText)) {
             userInput.placeholder = "PDF/fotoğraf hazır. Lütfen bir talimat yaz ve gönder.";
             userInput.focus();
@@ -8045,11 +8204,11 @@
 
         let selectedModel = document.getElementById("modelSelect").value;
         let actualModelForAuto = "";
-        
+
         if (selectedModel === "auto") {
             const hasImage = !!selectedImageBase64;
             const hasCode = /\b(function|const|let|var|if|else|for|while|import|export|class|=>|#include|\bdef\b|import\s+pandas)\b/i.test(messageText);
-            
+
             if (hasImage) {
                 selectedModel = "meta-llama/llama-3.2-11b-vision-instruct:free-openrouter";
                 actualModelForAuto = "Llama Vision";
@@ -8180,7 +8339,7 @@
 
         if (selectedMediaSource === 'web' && isMediaRequest) {
             delete typingDiv.dataset.typingIndicator;
-            const noticeText = "🌐 İnternetten görsel arama özelliği yakında aktif olacak. Şimdilik Yapay Zeka ile Üret’i deneyin!";
+            const noticeText = "🌐 Bu özellik henüz aktif değil. Gerçek internet görsel/medya araması için ayrı arama API entegrasyonu gerekir. Şimdilik 'Yapay Zeka ile Üret' seçeneğini kullanabilirsiniz.";
             typingDiv.innerHTML = renderContentWithImages(noticeText, true);
             chat.messages.push({ role: "assistant", content: noticeText });
             chat.updatedAt = Date.now();
@@ -8207,7 +8366,7 @@
             cleanupGenerationUi();
             return;
         }
-        
+
 
         if (!msgObj.images && !docTextToUse && isAmbiguousImageCreationRequest(text)) {
             delete typingDiv.dataset.typingIndicator;
@@ -8220,7 +8379,7 @@
             return;
         }
 
-        
+
 
         if (wantsImageGeneration) {
             setAppMode("image");
@@ -8272,11 +8431,11 @@
         try {
             let selectedModel = document.getElementById("modelSelect").value;
         let actualModelForAuto = "";
-        
+
         if (selectedModel === "auto") {
             const hasImage = !!selectedImageBase64;
             const hasCode = /\b(function|const|let|var|if|else|for|while|import|export|class|=>|#include|\bdef\b|import\s+pandas)\b/i.test(messageText);
-            
+
             if (hasImage) {
                 selectedModel = "meta-llama/llama-3.2-11b-vision-instruct:free-openrouter";
                 actualModelForAuto = "Llama Vision";
@@ -9111,7 +9270,7 @@
                         { role: "assistant", content: getTxt(chat.messages[1].content) },
                         { role: "user", content: summarizePrompt }
                     ];
-                    
+
                     let smartFetchOptions = JSON.parse(JSON.stringify(fetchOptions));
                     if (smartFetchOptions.body) {
                         const bodyObj = JSON.parse(smartFetchOptions.body);
@@ -9121,9 +9280,9 @@
                         if (bodyObj.options) bodyObj.options.num_predict = 20;
                         smartFetchOptions.body = JSON.stringify(bodyObj);
                     }
-                    
+
                     chat.smartTitleGenerated = true; // Sadece 1 kere dene
-                    
+
                     fetch(fetchUrl, smartFetchOptions).then(res => res.json()).then(data => {
                         let titleText = "";
                         if (data.choices && data.choices[0] && data.choices[0].message) {
@@ -9597,7 +9756,10 @@ function skpBuildStartInstruction() {
             modeLabel = 'Bilinmeyen Mod';
     }
 
-    return `Bu PDF'yi seçili Sınav Koçu moduna göre işle. Mod: ${modeLabel}. ${extra}`.trim();
+    const sourceEl = document.getElementById('skp-source');
+    const sourceVal = sourceEl ? skpGuardSourceSelection() : 'chat';
+    const sourceLabel = sourceVal === 'pdf' ? 'PDF içeriğini' : sourceVal === 'both' ? 'Bu PDF ve sohbet geçmişini' : 'Sohbet geçmişini';
+    return `${sourceLabel} seçili Sınav Koçu moduna göre işle. Mod: ${modeLabel}. ${extra}`.trim();
 }
 
 // Mod değişince dinamik alt seçenek göster
@@ -9665,16 +9827,47 @@ function skpOnModeChange() {
     }
 }
 
+function skpHasDocument() {
+    return !!(window.activeDocText || window.selectedDocumentText);
+}
+
+function skpGuardSourceSelection() {
+    const sourceEl = document.getElementById('skp-source');
+    if (!sourceEl) return 'chat';
+    const hasDoc = skpHasDocument();
+    Array.from(sourceEl.options).forEach(opt => { opt.disabled = false; });
+    if (!hasDoc && sourceEl.value !== 'chat') {
+        sourceEl.value = 'chat';
+        try { localStorage.setItem('cinocode_skp_source', 'chat'); } catch(e) {}
+        if (typeof showNonBlockingToast === 'function') {
+            showNonBlockingToast('PDF yüklü değil; Sohbet Geçmişi kullanılacak.');
+        }
+    }
+    return sourceEl.value || 'chat';
+}
+
 // PDF yüklü mü kontrolü — durum yazısını güncelle
 function skpUpdateDocStatus() {
     const el = document.getElementById('skp-doc-status');
+    const sourceEl = document.getElementById('skp-source');
+    const hasDoc = skpHasDocument();
+    skpGuardSourceSelection();
+    if (sourceEl && sourceEl.dataset.sourceGuardBound !== '1') {
+        sourceEl.dataset.sourceGuardBound = '1';
+        sourceEl.addEventListener('change', () => {
+            skpGuardSourceSelection();
+            try { localStorage.setItem('cinocode_skp_source', sourceEl.value || 'chat'); } catch(e) {}
+            skpUpdateDocStatus();
+        });
+    }
     if (!el) return;
-    const hasDoc = !!(window.activeDocText || window.selectedDocumentText);
-    const docName = window.activeDocName || window.selectedDocumentName || '';
     if (hasDoc) {
-        el.style.display = 'none';
+        el.textContent = '📄 PDF hazır';
+        el.className = '';
+        el.style.display = 'inline';
     } else {
-        el.textContent = '📄 PDF yüklü değil';
+        el.textContent = '📄 PDF yüklü değil — Sohbet Geçmişi kullanılacak.';
+        el.className = 'skp-no-doc';
         el.style.display = 'inline';
     }
 }
@@ -9690,11 +9883,10 @@ function skpTriggerGo() {
     const userInputEl = document.getElementById('userInput');
     if (!userInputEl) return;
 
-    const hasDocument = !!(window.selectedDocumentText || window.activeDocText);
-    if (!hasDocument) {
-        userInputEl.placeholder = "Önce bir PDF yükle veya normal bir mesaj yaz.";
-        userInputEl.focus();
-        return;
+    const hasDocument = skpHasDocument();
+    const sourceValue = skpGuardSourceSelection();
+    if (!hasDocument && sourceValue !== 'chat') {
+        userInputEl.placeholder = 'PDF yüklü değil; Sohbet Geçmişi kullanılacak.';
     }
 
     const startInstruction = skpBuildStartInstruction();
@@ -10115,14 +10307,14 @@ function buildExamCoachSuffix() {
     </script>
     <div id="voiceQuickSettingsPopover" style="display:none; position:fixed; top:35px; right:0; background:#181825; border:1px solid #45475a; padding:12px; border-radius:8px; z-index:10005; box-shadow:0 4px 15px rgba(0,0,0,0.5); width:240px; max-height:85vh; overflow-y:auto; text-align:left; color:#cdd6f4; font-family:sans-serif;">
                           <div style="font-weight:bold; font-size:13px; margin-bottom:8px; border-bottom:1px solid #313244; padding-bottom:6px;">Ses Ayarları</div>
-  
+
                           <div style="font-size:12px; margin-bottom:8px;"><strong>Seçili Ses:</strong> <span id="quickSelectedVoiceName" style="color:#89b4fa;">-</span></div>
-  
+
                           <div style="display:flex; gap:4px; margin-bottom:10px;">
                               <button type="button" onclick="quickEditSelectedVoice(event)" style="background:#313244; border:none; color:#89b4fa; cursor:pointer; font-size:11px; padding:4px 8px; border-radius:4px;">Görünen adı değiştir</button>
                               <button type="button" onclick="quickResetSelectedVoice(event)" style="background:#313244; border:none; color:#f38ba8; cursor:pointer; font-size:11px; padding:4px 8px; border-radius:4px;">Varsayılana döndür</button>
                           </div>
-  
+
                           <label style="display:flex; align-items:flex-start; gap:8px; cursor:pointer; margin-bottom:10px; padding-top:6px; border-top:1px solid #313244;">
                               <input type="checkbox" id="quickVoiceLockToggle" style="margin-top:2px; accent-color:#a6e3a1;" onchange="quickSyncVoiceLock(this.checked)">
                               <span style="font-size:11px; line-height:1.2;">
@@ -10130,7 +10322,7 @@ function buildExamCoachSuffix() {
                                   <span style="color:#a6adc8; font-size:10px;">Açıkken seçili ses, Türkçe/İngilizce karışık metinlerde değişmez.</span>
                               </span>
                           </label>
-  
+
                           <details style="border-top:1px solid #313244; padding-top:6px;">
                               <summary style="font-size:11px; cursor:pointer; color:#a6e3a1; font-weight:600;">Tüm ses adlarını düzenle</summary>
                               <div id="quickVoiceAllList" style="margin-top:6px; max-height:40vh; overflow-y:auto; display:flex; flex-direction:column; gap:4px; padding-right:4px;"></div>
