@@ -10142,9 +10142,14 @@ window.addEventListener('DOMContentLoaded', async () => {
     const ollamaGrp = document.getElementById('ollamaOptGroup');
     if(!ollamaGrp) return;
     try {
-        const ip = localStorage.getItem('ollama_ip') || '127.0.0.1';
-        const port = ip.includes(':') ? '' : ':11434';
-        const url = `http://${ip}${port}/api/tags`;
+        let ip = localStorage.getItem('ollama_ip') || '127.0.0.1';
+        // Kullanıcı zaten "http://" veya "https://" ile IP girmiş olabilir; protokolü
+        // kontrol etmeden tekrar eklemek "http://http://..." gibi bozuk URL üretiyordu.
+        const hasProtocol = /^https?:\/\//i.test(ip);
+        if (hasProtocol) ip = ip.replace(/\/+$/, "");
+        const bareIp = hasProtocol ? ip.replace(/^https?:\/\//i, "") : ip;
+        const port = bareIp.includes(':') ? '' : ':11434';
+        const url = hasProtocol ? `${ip}${port}/api/tags` : `http://${ip}${port}/api/tags`;
         const res = await fetch(url);
         if(res.ok) {
             const data = await res.json();
