@@ -7172,7 +7172,7 @@
     // sadece "Turkish" gibi jenerik bir isim). Dar bir anahtar kelime listesi eşleşmeyi
     // kaçırıp yanlışlıkla kadın sesli bir fallback seçtiriyordu — listeyi genişlettik.
     const MALE_VOICE_KEYWORDS = ["cem", "erkek", "male", "tolga", "cüneyt", "cuneyt", "ahmet", "mehmet", "kerem", "burak", "mustafa", "david", "mark", "daniel", "fred", "george", "man"];
-    const FEMALE_VOICE_KEYWORDS = ["yelda", "siri", "female", "kadın", "kadin", "ayşe", "ayse", "cino", "zira", "samantha", "victoria", "karen", "sara", "elif", "susan", "woman", "kız", "kiz"];
+    const FEMALE_VOICE_KEYWORDS = ["emel", "yelda", "siri", "female", "kadın", "kadin", "ayşe", "ayse", "cino", "zira", "samantha", "victoria", "karen", "sara", "elif", "susan", "woman", "kız", "kiz"];
 
     function resolveTtsVoiceForSegment(voices, expectedVoiceId, langCode) {
         const requestedLang = (langCode || "tr-TR").toLowerCase();
@@ -7294,6 +7294,7 @@
         try { if (synth.paused) synth.resume(); } catch(e) {}
         ttsQueue.push(text);
         if (!isPlayingTTS) {
+            isPlayingTTS = true; // FIX: Race condition önleme - anında kilitle
             playNextTTS();
         }
     }
