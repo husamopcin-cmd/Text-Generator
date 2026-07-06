@@ -116,7 +116,10 @@ exports.handler = async function(event) {
       data = null;
     }
 
-    const result = data && data.data && data.data[0];
+    const result = (data && data.data && data.data[0]) || (Array.isArray(data) && data[0]) || null;
+    if (!result || !result.imageURL) {
+      console.error('Runware parse failed, raw response:', JSON.stringify(data));
+    }
     if (result && result.imageURL) {
       return {
         statusCode: 200,
