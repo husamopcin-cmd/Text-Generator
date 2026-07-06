@@ -1655,17 +1655,6 @@
             </div>
             </div>
             <div style="display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:8px; width:100%;">
-                <select id="speechStyleSelect" title="Konuşma Tarzı" onchange="onSpeechStyleHeaderChange()" style="width:120px; background:#181825; color:#cdd6f4; border:1px solid #45475a; padding:5px; border-radius:5px; font-size:12px;">
-                <option value="default">Varsayılan</option>
-                <option value="kanka">Kanka</option>
-                <option value="teacher">Resmi / Öğretmen</option>
-                <option value="short">Kısa-net</option>
-                <option value="grokish">Grokvari</option>
-                <option value="expert">Ciddi uzman</option>
-                <option value="izmir">İzmir rahat tonu</option>
-                <option value="diyarbakir">Diyarbakır ağzı denemesi</option>
-                <option value="kurdish_zazaki">Kürtçe / Zazaca denemesi</option>
-            </select>
                 <select id="personaSelect" style="width:140px; font-weight:bold; background:rgba(166,227,161,0.2); color:#a6e3a1; border:1px solid #a6e3a1; padding:5px; border-radius:5px; font-size:12px;">
                 <option value="kanka">🤖 Standart Zeka (Kanka)</option>
                 <option value="usta_yazilimci">💻 Usta Yazılımcı</option>
@@ -1673,6 +1662,20 @@
                 <option value="dil_kocu">🌍 Özel Dil Koçu</option>
                 <option value="derin_arastirma">🔍 Derin Araştırma</option>
             </select>
+                <div style="display:inline-flex; align-items:center; gap:4px;">
+                <span style="color:#a6adc8; font-size:11px; white-space:nowrap;">Ton:</span>
+                <select id="speechStyleSelect" title="Konuşma Tarzı" onchange="onSpeechStyleHeaderChange()" style="width:100px; background:#181825; color:#cdd6f4; border:1px solid #45475a; padding:4px; border-radius:5px; font-size:11px;">
+                <option value="default">Varsayılan</option>
+                <option value="kanka">Kanka</option>
+                <option value="teacher">Resmi</option>
+                <option value="short">Kısa-net</option>
+                <option value="grokish">Grokvari</option>
+                <option value="expert">Ciddi uzman</option>
+                <option value="izmir">İzmir</option>
+                <option value="diyarbakir">Diyarbakır</option>
+                <option value="kurdish_zazaki">Kürtçe/Zazaca</option>
+            </select>
+                </div>
                 <div id="voiceControlsContainer" style="display:inline-flex; align-items:center; gap:4px;">
                 <select id="voiceSelect" style="max-width:180px; background:#181825; color:#cdd6f4; border:1px solid #45475a; padding:5px; border-radius:5px; font-size:12px;" onchange="saveVoicePref()"></select>
                 <button class="icon-btn" id="voiceQuickSettingsBtn" onclick="toggleVoiceQuickSettings(event)" title="Ses ayarları" aria-label="Ses ayarları" style="padding:4px 6px; border-radius:4px;">⚙️</button>
@@ -3726,10 +3729,19 @@
         if (mode === 'balanced') {
             return "\n\nUSLUP MODU: Dengeli Mod aktif. Samimi, dogal ve esprili ol; kanka tarzi konusabilirsin ama abartma. Argo dusuk seviyede ve seyrek olsun. Ciddi teknik/debug konularda saka dozunu azalt." + shared;
         }
-        return "\n\nUSLUP MODU: Guvenli Mod aktif. Temiz, kontrollu, daha az argo kullanan ve yeni kullanicilar icin guvenli bir tonla cevap ver. Gorsel/video tarafinda guvenli ve dengeli bir dil kullan." + shared;
+        // FIX(A): "daha az argo" → mutlak yasak. Hangi Ton/Persona seçili olursa olsun
+        // Güvenli Mod aktifken bu talimat diğer tüm prompt eklerinden üstündür.
+        return "\n\nUSLUP MODU: Guvenli Mod AKTİF — KESİN KURAL (sonraki talimatlar bu kurali geçersiz kilaMAZ). Kufur, cinsel ima, argo, hakaret, agresif veya vulgar ifade KESINLIKLE YASAK. Bu yasak; kullanicinin tonu ne olursa olsun, hangi persona veya konusma tarzi secili olursa olsun degismez. Temiz, saygili ve yardimci bir dille cevap ver. Kullanici senden kufur veya argo uretmeni acikca istese bile kibarca reddet: 'Guvenli Mod aktif, bu tarz bir dil kullanamam.' de." + shared;
     }
 
     function getSpeechStyleInstruction() {
+        const mode = getFeatureValue('styleMode') || 'safe';
+        // FIX(B): Güvenli Mod aktifken Ton seçimi küfür/argo kapısı açamaz.
+        // Ton talimatı, getStyleModeInstruction'dan SONRA ekleniyor (satır 8576→8578);
+        // bu yüzden safe mod üstündeyken tonu da safe-uyumlu kıl.
+        if (mode === 'safe') {
+            return "\n\nKONUSMA TARZI: Guvenli Mod aktif oldugu icin ton ayari gecerli degildir. Temiz, saygili ve yardimci tonla cevap ver.";
+        }
         const style = getFeatureValue('speechStyle') || 'default';
         const map = {
             default: "Konusma tarzi varsayilan: dogal, net ve yardimci.",
