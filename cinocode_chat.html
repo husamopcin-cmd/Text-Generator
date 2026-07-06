@@ -266,6 +266,15 @@
         }
         .welcome-btn:hover { background: rgba(49, 50, 68, 0.6); border-color: #89b4fa; transform: translateY(-3px); box-shadow: 0 5px 15px rgba(137,180,250,0.2); }
 
+        .usage-role-row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; max-width: 680px; width: 100%; margin-bottom: 18px; min-width: 0; }
+        .usage-role-chip {
+            background: rgba(49, 50, 68, 0.3); border: 1px solid rgba(255,255,255,0.08); color: #bac2de;
+            padding: 6px 14px; border-radius: 999px; font-size: 12px; cursor: pointer;
+            transition: all 0.2s ease; display: inline-flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; max-width: 100%;
+        }
+        .usage-role-chip:hover { background: rgba(49, 50, 68, 0.55); border-color: #89b4fa; }
+        .usage-role-chip.active { background: rgba(166,227,161,0.18); border-color: #a6e3a1; color: #a6e3a1; font-weight: 600; }
+
         .style-mode-badge {
             display: none;
             align-items: center;
@@ -1864,7 +1873,8 @@
                 <button class="new-project-card" onclick="startNewProject('blank')"><strong>Bos Sohbet</strong><span>Klasik bos chat baslat.</span></button>
             </div>
         </div>
-        <div class="welcome-actions">
+        <div class="usage-role-row" id="usageRoleRow"></div>
+        <div class="welcome-actions" id="welcomeActions">
             <button class="welcome-btn" onclick="setQuickStart('Bana Python ile basit bir API yazıp açıklama yap.')">⌨️ Kod Yazdır</button>
             <button class="welcome-btn" onclick="triggerImageGeneration()">🖼️ Görsel Stüdyosu</button>
             <button class="welcome-btn" onclick="triggerVideoGeneration()">🎥 Video Stüdyosu</button>
@@ -2573,7 +2583,7 @@
         if (speechHeader) speechHeader.style.display = 'inline-block';
 
         const newProjectPanel = document.getElementById('newProjectPanel');
-        const welcomeActions = document.querySelector('.welcome-actions');
+        const welcomeActions = document.getElementById('welcomeActions');
         if (newProjectPanel) newProjectPanel.style.display = isFeatureEnabled('newProject') ? 'flex' : 'none';
         if (welcomeActions) welcomeActions.style.display = isFeatureEnabled('newProject') ? 'none' : 'flex';
 
@@ -7741,6 +7751,7 @@
         applySidebarState(isSidebarCollapsed, false);
         applyFeatureUiState();
         restoreComposerDraftIfNeeded();
+        try { renderUsageRoleUI(localStorage.getItem(USAGE_ROLE_KEY) || 'general'); } catch (e) {}
 
         // Paste (CTRL+V) olayını dinle ve kopyalanan resimleri yakala
         document.addEventListener('paste', function(e) {
@@ -7981,6 +7992,100 @@
     }
     function handleKey(e) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }
     function setQuickStart(text) { setComposerValue(text); }
+
+    const USAGE_ROLE_KEY = 'cinocode_usage_role';
+    const USAGE_ROLE_STARTERS = {
+        general: { label: "Genel", icon: "✨", starters: [
+            { icon: "⌨️", text: "Kod Yazdır", prompt: "Bana Python ile basit bir API yazıp açıklama yap." },
+            { icon: "🖼️", text: "Görsel Stüdyosu", action: "image" },
+            { icon: "🎥", text: "Video Stüdyosu", action: "video" },
+            { icon: "🎮", text: "Oyun Stüdyosu", action: "game" },
+            { icon: "📄", text: "Belge Özetlet", action: "doc" },
+            { icon: "🤖", text: "Yapay Zeka", prompt: "Sıfırdan yapay zeka nasıl yapılır?" }
+        ] },
+        developer: { label: "Yazılımcı", icon: "💻", starters: [
+            { icon: "🔍", text: "Kodumu İncele", prompt: "Az sonra paylaşacağım kodu incele; hataları, kötü pratikleri ve iyileştirme önerilerini listele." },
+            { icon: "🐛", text: "Bu Hatayı Çöz", prompt: "Az sonra bir hata mesajı ve ilgili kodu paylaşacağım. Kök nedeni bul ve minimal bir düzeltme öner." },
+            { icon: "💡", text: "Proje Fikri Ver", prompt: "Portföyüme ekleyebileceğim, orta zorlukta 3 web/uygulama proje fikri öner." },
+            { icon: "🧪", text: "Test Senaryosu Yaz", prompt: "Az sonra paylaşacağım fonksiyon için birim test senaryoları yaz." }
+        ] },
+        student: { label: "Öğrenci", icon: "🎓", starters: [
+            { icon: "📘", text: "Bu Konuyu Anlat", prompt: "Şimdi bir konu ismi vereceğim; onu sıfırdan, basit örneklerle anlat." },
+            { icon: "📝", text: "Test Sorusu Hazırla", prompt: "Şimdi vereceğim konudan çoktan seçmeli 5 test sorusu hazırla, cevap anahtarıyla." },
+            { icon: "📚", text: "Notlarımı Özetle", prompt: "Az sonra ders notlarımı paylaşacağım; kısa ve öz şekilde özetle." },
+            { icon: "🗓️", text: "Sınav Planı Çıkar", prompt: "Sınavıma kaç gün kaldığını ve konuları vereceğim; günlük çalışma planı hazırla." }
+        ] },
+        language: { label: "Dil Öğrenen", icon: "🗣️", starters: [
+            { icon: "🔤", text: "Bu Cümleyi Çevir", prompt: "Şimdi bir cümle vereceğim; İngilizce'ye/Türkçe'ye çevirip alternatif ifade şekilleri de göster." },
+            { icon: "✏️", text: "Gramerimi Düzelt", prompt: "Şimdi yazacağım metindeki gramer hatalarını düzelt ve nedenini kısaca açıkla." },
+            { icon: "💬", text: "Örnek Cümle Ver", prompt: "Şimdi vereceğim kelime/deyim için 3 örnek cümle kur." },
+            { icon: "🧠", text: "Kelime Çalışması Yapalım", prompt: "Günlük hayatta sık kullanılan 10 kelime/deyim seç, anlamlarıyla birlikte quiz yap." }
+        ] },
+        content: { label: "İçerik Üretici", icon: "🎬", starters: [
+            { icon: "🎥", text: "Video Fikri Üret", prompt: "Sosyal medya için 5 kısa video/reels fikri üret, her biri için hook cümlesi de yaz." },
+            { icon: "✍️", text: "Sosyal Medya Metni Yaz", prompt: "Şimdi vereceğim konu için ilgi çekici bir sosyal medya gönderisi yaz." },
+            { icon: "🏷️", text: "Başlık Öner", prompt: "Şimdi vereceğim içerik için tıklanma oranı yüksek 5 alternatif başlık öner." },
+            { icon: "🔥", text: "Metni Daha Etkileyici Yap", prompt: "Az sonra paylaşacağım metni daha akıcı ve etkileyici hale getir." }
+        ] },
+        research: { label: "Araştırmacı", icon: "🔬", starters: [
+            { icon: "📖", text: "Konuyu Derin Araştır", prompt: "Şimdi vereceğim konuyu derinlemesine, farklı açılardan araştırıp özetle." },
+            { icon: "📑", text: "Kaynaklı Özet Çıkar", prompt: "Şimdi vereceğim metni, ana noktaları ve olası kaynaklarıyla özetle." },
+            { icon: "⚖️", text: "Artı/Eksi Analizi Yap", prompt: "Şimdi vereceğim konu için artı ve eksileri dengeli şekilde karşılaştır." },
+            { icon: "🎓", text: "Literatür Gibi Açıkla", prompt: "Şimdi vereceğim konuyu akademik bir üslupla, kavramları tanımlayarak açıkla." }
+        ] },
+        founder: { label: "Girişimci", icon: "🚀", starters: [
+            { icon: "💼", text: "SaaS Fikri Öner", prompt: "Küçük bir ekip tarafından 3 ayda yapılabilecek 3 SaaS fikri öner, hedef kitleleriyle birlikte." },
+            { icon: "🗺️", text: "Proje Planı Çıkar", prompt: "Şimdi vereceğim proje fikri için adım adım bir yol haritası çıkar." },
+            { icon: "🧩", text: "MVP Özelliklerini Belirle", prompt: "Şimdi vereceğim fikir için ilk sürümde (MVP) olması gereken minimum özellik listesini çıkar." },
+            { icon: "💰", text: "Para Kazanma Modeli Kur", prompt: "Şimdi vereceğim ürün fikri için 3 farklı gelir modeli öner, artı/eksileriyle." }
+        ] }
+    };
+
+    function runUsageRoleStarter(starter) {
+        if (!starter) return;
+        if (starter.action === 'image') { triggerImageGeneration(); return; }
+        if (starter.action === 'video') { triggerVideoGeneration(); return; }
+        if (starter.action === 'game') { triggerGameGeneration(); return; }
+        if (starter.action === 'doc') { triggerFileInput('docUpload'); return; }
+        if (starter.prompt) setQuickStart(starter.prompt);
+    }
+
+    function runUsageRoleStarterByIndex(role, idx) {
+        const roleData = USAGE_ROLE_STARTERS[role] || USAGE_ROLE_STARTERS.general;
+        runUsageRoleStarter(roleData.starters[idx]);
+    }
+
+    function renderUsageRoleUI(role) {
+        const roleData = USAGE_ROLE_STARTERS[role] || USAGE_ROLE_STARTERS.general;
+        const activeRole = USAGE_ROLE_STARTERS[role] ? role : 'general';
+        const rowEl = document.getElementById('usageRoleRow');
+        const actionsEl = document.getElementById('welcomeActions');
+        if (rowEl) {
+            rowEl.innerHTML = Object.keys(USAGE_ROLE_STARTERS).map(key => {
+                const r = USAGE_ROLE_STARTERS[key];
+                const activeClass = key === activeRole ? ' active' : '';
+                return `<button type="button" class="usage-role-chip${activeClass}" onclick="selectUsageRole('${key}')">${r.icon} ${r.label}</button>`;
+            }).join('');
+        }
+        if (actionsEl) {
+            actionsEl.innerHTML = roleData.starters.map((s, idx) =>
+                `<button type="button" class="welcome-btn" onclick="runUsageRoleStarterByIndex('${activeRole}', ${idx})">${s.icon} ${s.text}</button>`
+            ).join('');
+        }
+    }
+
+    function selectUsageRole(role) {
+        try { localStorage.setItem(USAGE_ROLE_KEY, role); } catch (e) {}
+        renderUsageRoleUI(role);
+    }
+
+    function getUsageRoleInstruction() {
+        let role = 'general';
+        try { role = localStorage.getItem(USAGE_ROLE_KEY) || 'general'; } catch (e) {}
+        if (role === 'general' || !USAGE_ROLE_STARTERS[role]) return '';
+        const label = USAGE_ROLE_STARTERS[role].label;
+        return `\n\nKULLANICI BAĞLAMI: Kullanıcı bu sohbete "${label}" kullanım amacıyla başladı. Mümkün olduğunda cevaplarını bu bağlama göre önceliklendir; ancak kullanıcı farklı bir konu sorarsa doğal şekilde ona uy. Bu bağlam güvenlik kurallarını, üslup modunu, tonu veya persona talimatlarını hiçbir zaman geçersiz kılmaz.`;
+    }
 
     function startNewProject(type) {
         const name = (document.getElementById('newProjectName')?.value || '').trim();
@@ -8724,6 +8829,7 @@
             baseSystemPrompt += getClaudeProviderInstruction();
             baseSystemPrompt += getSpeechStyleInstruction();
             baseSystemPrompt += getResponseStyleGovernorInstruction();
+            baseSystemPrompt += getUsageRoleInstruction();
             baseSystemPrompt += getResponseControlInstruction(text);
 
             // ===== KRİTİK FIX: reqMessages'a sistem + sınırlı sohbet geçmişini ekle =====
