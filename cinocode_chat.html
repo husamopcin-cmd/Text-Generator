@@ -3817,23 +3817,34 @@
     function getSmartSuggestions(assistantText, userText) {
         const combined = ((assistantText || "") + " " + (userText || "")).toLocaleLowerCase("tr-TR");
         const safetyContext = /(reddedemem|yardimci olamam|yardımcı olamam|güvenli alternatif|guvenli alternatif|güvenlik uyarısı|guvenlik uyarisi|riskleri|riskli|tehlikeli|zararlı|zararli|illegal|yasa dışı|yasadışı|unsafe|phishing|kimlik avi|dolandırıcılık|dolandiricilik|şiddet|siddet|çocuk güvenliği|cocuk guvenligi)/i.test(combined);
+        
+        let dynamic = [];
         if (safetyContext) {
-            return ["Güvenli alternatif öner", "Riskleri açıkla"];
+            dynamic = ["Güvenli alternatif öner", "Riskleri açıkla"];
+        } else {
+            const technicalContext = /(kod|proje|cinocode|terminal|git|debug|patch|api|provider|netlify|deploy|hata|bug|test|function|endpoint|stack|log)/i.test(combined);
+            if (technicalContext) {
+                dynamic = ["Codex prompt'una çevir", "Teknik detayları göster"];
+            } else {
+                dynamic = ["Farklı örnek ver", "Daha detaylı açıkla"];
+            }
         }
-
-        const technicalContext = /(kod|proje|cinocode|terminal|git|debug|patch|api|provider|netlify|deploy|hata|bug|test|function|endpoint|stack|log)/i.test(combined);
-        if (technicalContext) {
-            return ["Bunu Codex prompt'una çevir", "Teknik detayları göster", "Test senaryosu yaz"];
-        }
-
-        return ["Kısa özet ver", "Daha detaylı açıkla", "Farklı örnek ver"];
+        
+        return ["Kısalt", "Uzat", "Sadeleştir", ...dynamic];
     }
+
     function appendSmartSuggestions(target, assistantText, userText = "") {
         if (!isFeatureEnabled('smartSuggestions')) return;
         const el = typeof target === 'string' ? document.getElementById(target) : target;
         if (!el || el.querySelector('.smart-suggestion-row')) return;
-        const suggestions = getSmartSuggestions(assistantText, userText).slice(0, window.innerWidth <= 768 ? 3 : 4);
+        
+        const suggestions = getSmartSuggestions(assistantText, userText).slice(0, window.innerWidth <= 768 ? 5 : 6);
         if (!suggestions.length) return;
+        
+        const targetId = typeof target === 'string' ? target : (el.id || "");
+        const msgIndexMatch = targetId.match(/^msg-(\d+)$/);
+        const msgIndex = msgIndexMatch ? parseInt(msgIndexMatch[1], 10) : -1;
+
         const row = document.createElement('div');
         row.className = 'smart-suggestion-row';
         suggestions.forEach(text => {
@@ -3841,7 +3852,13 @@
             btn.type = 'button';
             btn.className = 'smart-suggestion-chip';
             btn.textContent = text;
-            btn.onclick = () => submitSmartSuggestion(text);
+            
+            if (text === "Kısalt" && msgIndex >= 0 && typeof shortenMessage === "function") {
+                btn.onclick = () => shortenMessage(msgIndex);
+            } else {
+                btn.onclick = () => submitSmartSuggestion(text);
+            }
+            
             row.appendChild(btn);
         });
         el.appendChild(row);
