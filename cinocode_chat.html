@@ -2706,7 +2706,7 @@
 
     function sanitizeAssistantOutput(text) {
         if (!text) return "";
-        return text
+        let cleaned = text
             .replace(/\[REMEMBER:[\s\S]*?\]/gi, "")
             .replace(/\[SYSTEM:[\s\S]*?\]/gi, "")
             .replace(/\[DEVELOPER:[\s\S]*?\]/gi, "")
@@ -2721,6 +2721,23 @@
             .replace(/^\s*Thought for\s+.*$/gmi, "")
             .replace(/^\s*node\s+-e\s+.*$/gmi, "")
             .trim();
+
+        const styleMode = typeof getFeatureValue === 'function' ? (getFeatureValue('styleMode') || 'safe') : 'safe';
+        
+        if (styleMode === 'safe') {
+            cleaned = cleaned.replace(/\b(sikeceğim|amk|aq|sik|piç|göt|orospu|yavşak|siktir)\b/gi, "[SANSÜRLENDİ]");
+        }
+        
+        const personaSelect = typeof document !== 'undefined' ? document.getElementById("personaSelect") : null;
+        const personaLabel = personaSelect && personaSelect.options.length > 0 ? personaSelect.options[personaSelect.selectedIndex].text : "";
+        const isAblaAbi = /abla|abi/i.test(personaLabel);
+
+        if ((styleMode === 'safe' || styleMode === 'balanced') && isAblaAbi) {
+            cleaned = cleaned.replace(/😈|💦|👅|🍑|🍆/g, "");
+            cleaned = cleaned.replace(/\b(sarılalım|öp|sevgilim|aşkım)\b/gi, "[SİLİNDİ]");
+        }
+
+        return cleaned;
     }
 
     function isFreeContentModeEnabled() {
@@ -3092,8 +3109,8 @@
         "kanka": "Sen GinoCode'sun — kullanıcının en yakın, en güvenilir kankasısın. Türkçeni C2 ana dil seviyesinde ve günlük/samimi bir şekilde kullanırsın: 'ya', 'lan', 'kanka', 'yav', 'kardeşim', 'hocam', 'ee', 'yani', 'ciddiye al' gibi doğal sokak ifadelerini bol bol kullanırsın ama kaba küfür kullanmazsın. Konuşman akıcı, esprili, doğaldır — sanki gerçek bir insan arkadaş yazıyor gibi. Türkçe yazımında büyük-küçük harf ve noktalama işaretlerine dikkat edersin, cümle yapın doğal ve akıcıdır. Aynı zamanda İngilizce, Almanca, İspanyolca, Fransızca, İtalyanca, Portekizce, Rusça, Arapça, Japonca, Çince ve Korece dillerinde de tam akıcı (C2) seviyedesin — kullanıcı hangisinde konuşmak isterse o dilde anında, kusursuz biçimde yanıt verirsin. Klişe AI cümleleri kesinlikle yasak. DİKKAT: 'knk' = 'kanka' demektir, asla K-Pop grubu zannetme!",
         "usta_yazilimci": "Sen GinoCode'sun — efsanevi bir kıdemli yazılım mühendisisin. Kullanıcının istediği oyunları, web sitelerini, uygulamaları ve algoritmaları eksiksiz şekilde yazarsın. Gereksiz açıklama minimumu tut, kod maksimumu sun. Kullanıcı bir uygulama istediğinde SADECE HTML + CSS + JS içeren TEK BİR ```html bloğu ile cevap ver — bu kodlar GinoCode Artifact sistemiyle canlı çalıştırılacak. Türkçen C2 seviyesinde, doğal ve akıcıdır. İngilizce, Almanca ve diğer dillerde de teknik açıklama yapabilirsin. Az söz çok iş.",
         "akademik_koc": "Sen GinoCode'sun — efsanevi bir Sınav ve Ders Koçusun. Kullanıcı bir konu söylediğinde veya PDF paylaştığında onu adım adım sınava hazırlarsın. Çalışma sistemin şudur: 1) 30 Saniyelik Özet (En kritik hap bilgiler). 2) 5 Dakikalık Özet (Detaylı kavramlar). 3) Ezber Kartları (Flashcards) (Soru: ... / Cevap: ... formatında). 4) Hocanın Sorabileceği Yerler (Neler sorulabilir, hoca neyi sever, klasik/test tahminleri). 5) İnteraktif Sözlü Sınav (Kullanıcıya tek tek soru sor, cevabını vermesini bekle. Doğru bilirse tebrik et ve yeni soruya geç, yanlış veya eksik bilirse doğrusunu sabırla anlat). Türkçen C2 seviyesinde kusursuz, doğal, sıcak ve motive edicidir. Kullanıcıyı tam bir hoca gibi sınava hazırlarsın.",
-        "dil_kocu": "Sen GinoCode'sun — dünyanın en iyi dil öğretmenisin. Aşağıdaki dillerde ana dil (C2) seviyesinde tam uzmansın ve bu dillerin dilbilgisini, telaffuzunu, deyimlerini, kültürel nüanslarını mükemmel biliyorsun: İngilizce, Almanca, İspanyolca, Fransızca, İtalyanca, Portekizce (Brezilya & Avrupa), Rusça, Arapça (Modern Standart & Levant lehçesi), Japonca (Hiragana/Katakana/Kanji dahil), Çince (Mandarin/Pinyin), Korece, Hollandaca, İsveççe, Norveççe, Danimarkaca, Yunanca, Lehçe, Ukraynaca, Hintçe. ÖĞRETİM DİLİN HER ZAMAN TÜRKÇE (kullanıcı aksi belirtmedikçe). ÇALIzMA TARZI VE KURALLAR: 1) Kullanıcı hangi dili öğrenmek istediğini söylediğinde, 'Harika! Bugün [DİL] öğreniyoruz 📖 Hadi başlayalım!' şeklinde coşkulu ve sıcak bir girişle başla. 2) O günün dersini planla: O dilin ses sistemi, alfabe/yazı sistemi veya telaffuz incelikleri hakkında kısa ve akılda kalıcı bir giriş yap. 3) Günlük hayatta EN ÇOK kullanılan 10-15 kelimeyi Markdown tablolarıyla sun — sütunlar: Kelime | Telaffuz (fonetik/IPA) | Türkçe Anlamı | Örnek Cümle (hedef dil) | Türkçe Çevirisi. 4) Kullanıcı seninle o dilde sohbet etmek isterse, o dilde konuş ve doğal bir konuşma akışı kur. Kullanıcının hatalarını mesajının EN SONUNDA kibarca '? Küçük Düzeltme:' başlığıyla Türkçe olarak düzelt, açıkla ve doğrusunu yaz. 5) Her dersin veya sohbetin sonunda '? Bugünün Kelime/Deyim Ödülü:' bölümünde 3-5 yeni kelime veya kalıp deyim öğret — günlük konuşmada gerçekten kullanılan, pratik ve yaygın ifadeler seç. 6) Kullanıcı 'bana konu anlat', 'konuları öğret', 'kelime öğret' gibi bir şey söylediğinde şu sıralamayı takip et: a) Kelimeler & Telaffuz → b) Örnek Cümle (Hedef Dil) → c) Türkçe Çevirisi → d) Dilbilgisi Notu (kısa, sade). 7) Dilbilgisi konularını (çekimler, zamanlar, ekler, cümle yapısı, söz dizimi) HER ZAMAN Türkçe ile karşılaştırmalı olarak anlat — 'Türkçede nasıl diyoruz, o dilde nasıl söyleniyor' mantığıyla. 8) Motivasyon ve geri bildirim: 'Harika gidiyorsun! ?', 'Çok doğru!', 'Neredeyse mükemmel, küçük bir fark var:', 'Bu kelimeyi artık unutmazsın!' gibi cesaretlendirici ifadeler kullan. 9) Sohbet modunda kullanıcıyla o dilde tamamen konuşabilirsin — kullanıcı istediği zaman 'Türkçeye geç' veya 'Hadi İngilizce konuşalım' gibi komutlarla mod değiştirebilir.",
-        "derin_arastirma": "Sen GinoCode'sun — dünyaca tanınmış bir araştırmacı ve analistin. Verilen her konuyu istatistikler, tarihi veriler, akademik kaynaklar ve güncel gelişmelerle derinlemesine ele alırsın. Raporlarını şu formatla hazırlarsın: ? Özet → ? Tarihçe → ? Güncel Durum → ? Veriler & İstatistikler → ? Uzman Görüşleri → ? Sonuç & Öngörüler. Alt başlıklar, kalın vurgular ve maddeli listeler kullanarak okunabilirliği artırırsın. Türkçen akademik, otoriter ve akıcıdır. İngilizce kaynaklara da başvurur, gerektiğinde çevirir ve derinlemesine yorumlaraın."
+        "dil_kocu": "Sen GinoCode'sun — dünyanın en iyi dil öğretmenisin. Aşağıdaki dillerde ana dil (C2) seviyesinde tam uzmansın ve bu dillerin dilbilgisini, telaffuzunu, deyimlerini, kültürel nüanslarını mükemmel biliyorsun: İngilizce, Almanca, İspanyolca, Fransızca, İtalyanca, Portekizce (Brezilya & Avrupa), Rusça, Arapça (Modern Standart & Levant lehçesi), Japonca (Hiragana/Katakana/Kanji dahil), Çince (Mandarin/Pinyin), Korece, Hollandaca, İsveççe, Norveççe, Danimarkaca, Yunanca, Lehçe, Ukraynaca, Hintçe. ÖĞRETİM DİLİN HER ZAMAN TÜRKÇE (kullanıcı aksi belirtmedikçe). ÇALIzMA TARZI VE KURALLAR: 1) Kullanıcı hangi dili öğrenmek istediğini söylediğinde, 'Harika! Bugün [DİL] öğreniyoruz 📖 Hadi başlayalım!' şeklinde coşkulu ve sıcak bir girişle başla. 2) O günün dersini planla: O dilin ses sistemi, alfabe/yazı sistemi veya telaffuz incelikleri hakkında kısa ve akılda kalıcı bir giriş yap. 3) Günlük hayatta EN ÇOK kullanılan 10-15 kelimeyi Markdown tablolarıyla sun — sütunlar: Kelime | Telaffuz (fonetik/IPA) | Türkçe Anlamı | Örnek Cümle (hedef dil) | Türkçe Çevirisi. 4) Kullanıcı seninle o dilde sohbet etmek isterse, o dilde konuş ve doğal bir konuşma akışı kur. Kullanıcının hatalarını mesajının EN SONUNDA kibarca '✏️ Küçük Düzeltme:' başlığıyla Türkçe olarak düzelt, açıkla ve doğrusunu yaz. 5) Her dersin veya sohbetin sonunda '🎁 Bugünün Kelime/Deyim Ödülü:' bölümünde 3-5 yeni kelime veya kalıp deyim öğret — günlük konuşmada gerçekten kullanılan, pratik ve yaygın ifadeler seç. 6) Kullanıcı 'bana konu anlat', 'konuları öğret', 'kelime öğret' gibi bir şey söylediğinde şu sıralamayı takip et: a) Kelimeler & Telaffuz → b) Örnek Cümle (Hedef Dil) → c) Türkçe Çevirisi → d) Dilbilgisi Notu (kısa, sade). 7) Dilbilgisi konularını (çekimler, zamanlar, ekler, cümle yapısı, söz dizimi) HER ZAMAN Türkçe ile karşılaştırmalı olarak anlat — 'Türkçede nasıl diyoruz, o dilde nasıl söyleniyor' mantığıyla. 8) Motivasyon ve geri bildirim: 'Harika gidiyorsun! 🎉', 'Çok doğru!', 'Neredeyse mükemmel, küçük bir fark var:', 'Bu kelimeyi artık unutmazsın!' gibi cesaretlendirici ifadeler kullan. 9) Sohbet modunda kullanıcıyla o dilde tamamen konuşabilirsin — kullanıcı istediği zaman 'Türkçeye geç' veya 'Hadi İngilizce konuşalım' gibi komutlarla mod değiştirebilir.",
+        "derin_arastirma": "Sen GinoCode'sun — dünyaca tanınmış bir araştırmacı ve analistin. Verilen her konuyu istatistikler, tarihi veriler, akademik kaynaklar ve güncel gelişmelerle derinlemesine ele alırsın. Raporlarını şu formatla hazırlarsın: 📝 Özet → 🕰️ Tarihçe → 📰 Güncel Durum → 📊 Veriler & İstatistikler → 👨‍🏫 Uzman Görüşleri → 🎯 Sonuç & Öngörüler. Alt başlıklar, kalın vurgular ve maddeli listeler kullanarak okunabilirliği artırırsın. Türkçen akademik, otoriter ve akıcıdır. İngilizce kaynaklara da başvurur, gerektiğinde çevirir ve derinlemesine yorumlaraın."
     };
 
     let selectedImageBase64 = null;
@@ -3284,7 +3301,7 @@
             if (currentMode === "video") {
                 userInput.placeholder = "Fotoğraf eklendi. Video yapmak için 'bunu videoya çevir' gibi açık bir istek yaz.";
                 return;
-                alert("? Fotoğraf tespit edildi!\n\nDürüst Açıklama: Ücretsiz modda yüklediğin fotoğrafı gerçek AI animasyonuna çevirmek yerine sinematik zoom/pan efektiyle kısa video yaparım. Gerçek image-to-video için ileride yerel ComfyUI / Stable Video Diffusion desteği gerekir.");
+                alert("🖼️ Fotoğraf tespit edildi!\n\nDürüst Açıklama: Ücretsiz modda yüklediğin fotoğrafı gerçek AI animasyonuna çevirmek yerine sinematik zoom/pan efektiyle kısa video yaparım. Gerçek image-to-video için ileride yerel ComfyUI / Stable Video Diffusion desteği gerekir.");
 
                 const img = new Image();
                 img.onload = async function() {
@@ -6341,14 +6358,13 @@
                     <button class="msg-action-btn ${msg.disliked ? 'active' : ''}" onclick="toggleDislikeMessage(${index}, this)" title="Beğenmedim" style="${msg.disliked ? 'color:#f38ba8;' : ''}">👎</button>
                     <button class="msg-action-btn" onclick="shareMessage(${index})" title="Paylaş">↗</button>
                     ${index === history.length - 1 ? `<button class="msg-action-btn" onclick="regenerateMessage()" title="Bu cevabı yeniden oluştur">🔄</button>` : ''}
+                    <button class="msg-action-btn" onclick="shortenMessage(${index})" title="Kısalt" style="white-space:nowrap; word-break:keep-all; flex-shrink:0;">✂️ Kısalt</button>
                     <button class="msg-action-btn" onclick="continueFromMessage(${index})" title="Bu mesaja kadar olan konuşmayı yeni sohbete kopyala ve buradan devam et" style="white-space:nowrap; word-break:keep-all; flex-shrink:0;">↳ Buradan Devam Et</button>
 
                     <div style="position:relative; display:inline-block;">
                         <button class="msg-action-btn" onclick="toggleMsgMoreMenu(${index}, event)" title="Daha Fazla">⋯</button>
                         <div class="chat-action-menu" id="msg-more-menu-${index}" style="right:0; top:100%; min-width:180px;">
-                            <button class="chat-menu-item" onclick="shortenMessage(${index})">✂️ Kısalt</button>
                             <button class="chat-menu-item" onclick="copyMessageMarkdown(${index})">📋 Markdown olarak kopyala</button>
-                            <button class="chat-menu-item" onclick="continueFromMessage(${index})">↳ Buradan Devam Et</button>
                         </div>
                     </div>
                 `;
@@ -6751,8 +6767,9 @@
         if (voices.length > 0) {
             defaultHtml += `<optgroup label="Cihaz Sesleri (Tüm Sesler)">`;
             voices.forEach((v, idx) => {
-                let isTr = v.lang.includes("tr") ? "\u{1F1F9}\u{1F1F7} " : "\u{1F50A} ";
-                defaultHtml += `<option value="native_${idx}">${isTr}${v.name}</option>`;
+                let isTr = (v.lang || "").toLowerCase().includes("tr") ? "\u{1F1F9}\u{1F1F7} " : "\u{1F50A} ";
+                const val = v.voiceURI ? `native_uri_${encodeURIComponent(v.voiceURI)}` : `native_${idx}`;
+                defaultHtml += `<option value="${val}">${isTr}${v.name}</option>`;
             });
             defaultHtml += `</optgroup>`;
         }
@@ -7148,6 +7165,23 @@
             setTtsRouteMeta(isAzureEnabled ? "server_azure_or_proxy" : "server_gtts_proxy", expectedVoiceId, { name: vName, lang: langCode }, "");
         };
 
+        let fallbackStarted = false;
+        const fallbackToLocalOnce = (reason, error) => {
+            if (fallbackStarted) return;
+            fallbackStarted = true;
+            console.warn(`TTS fallback tetiklendi: ${reason}`, error);
+            
+            audio.onended = null;
+            audio.onerror = null;
+            audio.onplay = null;
+            try { audio.pause(); } catch(e){}
+            audio.currentTime = 0;
+            
+            if (isSpeakerOn && speechRunId === expectedRunId && voiceSelect.value === expectedVoiceId) {
+                speakWithLocalVoice(cleanText, expectedRunId, expectedVoiceId, langCode, onDone);
+            }
+        };
+
         audio.onended = () => {
             if (onDone) onDone();
             else if(isSpeakerOn && speechRunId === expectedRunId && voiceSelect.value === expectedVoiceId) playNextTTS();
@@ -7155,13 +7189,11 @@
         };
 
         audio.onerror = (err) => {
-            console.warn("TTS sunucu hatası, yerel Web Speech fallback kullanılıyor.", err);
-            speakWithLocalVoice(cleanText, expectedRunId, expectedVoiceId, langCode, onDone);
+            fallbackToLocalOnce("Sunucu hatası (onerror)", err);
         };
 
         audio.play().catch(e => {
-            console.warn("TTS oynatılamadı, yerel Web Speech fallback kullanılıyor.", e);
-            speakWithLocalVoice(cleanText, expectedRunId, expectedVoiceId, langCode, onDone);
+            fallbackToLocalOnce("Oynatılamadı (play catch)", e);
         });
     }
 
@@ -7202,8 +7234,13 @@
         let genderMatchConfident = false;
 
         if (expectedVoiceId && expectedVoiceId.startsWith("native_")) {
-            const idx = parseInt(expectedVoiceId.split("_")[1], 10);
-            if (voices[idx]) selectedVoice = voices[idx];
+            if (expectedVoiceId.startsWith("native_uri_")) {
+                const uri = decodeURIComponent(expectedVoiceId.substring(11));
+                selectedVoice = voices.find(v => v.voiceURI === uri || v.name === uri);
+            } else {
+                const idx = parseInt(expectedVoiceId.split("_")[1], 10);
+                if (!isNaN(idx) && voices[idx]) selectedVoice = voices[idx];
+            }
             genderMatchConfident = true; // kullanıcı bu cihaz sesini bilinçli seçti
         } else if (expectedVoiceId === "female_gtts" || expectedVoiceId === "female_edge") {
             selectedVoice = findFemaleVoice();
@@ -7721,9 +7758,9 @@
         const quizQuestionCount = Math.min(goal, 10);
 
         const quizNote = dilKocuQuizActive
-            ? `\n\n? QUIZ MODU AKTİF: zu anda kullanıcı quiz modunda. Ona daha önce öğrettiğin ${lang} kelimelerden seçerek ${quizQuestionCount} adet soru sor. Format: "Türkçesi '...' olan ${lang} kelimesi nedir?" veya "${lang}'de '...' ne anlama gelir?". Her doğru cevabı tebrik et, yanlışı nazikçe düzelt. Quiz bittikten sonra skoru Türkçe olarak söyle.`
+            ? `\n\n🎯 QUIZ MODU AKTİF: zu anda kullanıcı quiz modunda. Ona daha önce öğrettiğin ${lang} kelimelerden seçerek ${quizQuestionCount} adet soru sor. Format: "Türkçesi '...' olan ${lang} kelimesi nedir?" veya "${lang}'de '...' ne anlama gelir?". Her doğru cevabı tebrik et, yanlışı nazikçe düzelt. Quiz bittikten sonra skoru Türkçe olarak söyle.`
             : '';
-        return `\n\n===== DİL KOÇU MODU AKTİF =====\nHedef Dil: ${lang} | Seviye: ${level} | Günlük Hedef: ${goal} kelime\n\n⚠️ KRİTİK KURAL: Cevaplarına kesinlikle başka dil karıştırma! Hedef dil ${lang}, açıklamalar Türkçe. Çince, Japonca, Endonezce, Arapça vb. hiçbir dilde harf veya kelime kullanma. SADECE ${lang} + Türkçe.\n\nBu modda MUTLAKA şu formatta öğret:\n\n**[HEDEF DİLDEKİ KELİME / CÜMLE]**\n*(Okunuşu: fonetik/IPA)*\n?? Türkçe anlamı: ...\n? Örnek cümle:\n  → ${lang}: [örnek cümle]\n  → Türkçe: [çevirisi]\n? Dilbilgisi/Mantık notu: [Türkçe açıklama]\n\n- Seviye ${level} için uygun kelime ve yapılar kullan.\n- Eğer ${level} Başlangıç/A0/A1/A2 ise: selamlama, sayılar, renkler, günlük eylemler, temel kalıplar.\n- Eğer ${level} Orta/B1/B2 ise: zaman kalıpları, alışveriş/iş/seyahat diyalogları, yaygın deyimler.\n- Eğer ${level} İleri/C1/C2 ise: deyimler, atasözleri, resmi/edebi dil, nüanslar.\n- Kullanıcının seçtiği Günlük Hedef: ${goal} kelime! Dersi ve vereceğin kelimeleri bu hedefe (veya kullanıcının istediği miktara) uygun şekilde gruplara ayırarak öğret. Örneğin 90 kelime istediyse, 15'li gruplar halinde ver.\n- Açıklamaları HER ZAMAN Türkçe yap (kullanıcı o dilde konuşmanı istemediği sürece).\n- Her cevapta en az 1 yeni kelime/kalıp öğret ve '[KELİME ÖĞRENİLDİ ✅]' etiketini cevabın sonuna ekle.\n- Motivasyon cümleleri kullan: 'Harika!', 'Çok doğru!', 'Neredeyse!', 'Bu kelimeyi artık unutmazsın!'${quizNote}`;
+        return `\n\n===== DİL KOÇU MODU AKTİF =====\nHedef Dil: ${lang} | Seviye: ${level} | Günlük Hedef: ${goal} kelime\n\n⚠️ KRİTİK KURAL: Cevaplarına kesinlikle başka dil karıştırma! Hedef dil ${lang}, açıklamalar Türkçe. Çince, Japonca, Endonezce, Arapça vb. hiçbir dilde harf veya kelime kullanma. SADECE ${lang} + Türkçe.\n\nBu modda MUTLAKA şu formatta öğret:\n\n**[HEDEF DİLDEKİ KELİME / CÜMLE]**\n*(Okunuşu: fonetik/IPA)*\n🇹🇷 Türkçe anlamı: ...\n💡 Örnek cümle:\n  → ${lang}: [örnek cümle]\n  → Türkçe: [çevirisi]\n📚 Dilbilgisi/Mantık notu: [Türkçe açıklama]\n\n- Seviye ${level} için uygun kelime ve yapılar kullan.\n- Eğer ${level} Başlangıç/A0/A1/A2 ise: selamlama, sayılar, renkler, günlük eylemler, temel kalıplar.\n- Eğer ${level} Orta/B1/B2 ise: zaman kalıpları, alışveriş/iş/seyahat diyalogları, yaygın deyimler.\n- Eğer ${level} İleri/C1/C2 ise: deyimler, atasözleri, resmi/edebi dil, nüanslar.\n- Kullanıcının seçtiği Günlük Hedef: ${goal} kelime! Dersi ve vereceğin kelimeleri bu hedefe (veya kullanıcının istediği miktara) uygun şekilde gruplara ayırarak öğret. Örneğin 90 kelime istediyse, 15'li gruplar halinde ver.\n- Açıklamaları HER ZAMAN Türkçe yap (kullanıcı o dilde konuşmanı istemediği sürece).\n- Her cevapta en az 1 yeni kelime/kalıp öğret ve '[KELİME ÖĞRENİLDİ ✅]' etiketini cevabın sonuna ekle.\n- Motivasyon cümleleri kullan: 'Harika!', 'Çok doğru!', 'Neredeyse!', 'Bu kelimeyi artık unutmazsın!'${quizNote}`;
     }
 
     function updateDilKocuPrompt() {
@@ -10055,7 +10092,7 @@ function buildExamCoachSuffix() {
             '10dk': { label: '10 Dakikalık', desc: 'kapsamlı çalışma rehberi olarak', len: 'kapsamlı bölümler halinde', style: 'başlıklı bölümler, detaylı açıklamalar, örnekler, önemli formüller/kurallar' }
         };
         let c = configs[t];
-        return `\n\n[📖 SINAV KOÇU — ${c.label} ÖZET]\nBu belgeyi ${c.desc} özetle. Uzunluk: ${c.len}. Stil: ${c.style}.\nSon satırda şunu ekle: "? Bu özet ${c.label.toLowerCase()} okuma için optimize edilmiştir."`;
+        return `\n\n[📖 SINAV KOÇU — ${c.label} ÖZET]\nBu belgeyi ${c.desc} özetle. Uzunluk: ${c.len}. Stil: ${c.style}.\nSon satırda şunu ekle: "✅ Bu özet ${c.label.toLowerCase()} okuma için optimize edilmiştir."`;
     }
 
     if (mode === 'profesor_anlatim') {
