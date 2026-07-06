@@ -1059,10 +1059,28 @@
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #45475a; border-radius: 4px; }
 
+        #suggestionChipsContainer {
+            display: none;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+            justify-content: center;
+            min-width: 0;
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: thin;
+        }
+        #suggestionChipsContainer > * {
+            flex-shrink: 0;
+        }
         .suggestion-chip {
             background: rgba(137, 180, 250, 0.1); border: 1px solid #89b4fa; color: #cdd6f4;
             padding: 6px 12px; border-radius: 16px; font-size: 13px; cursor: pointer;
             transition: all 0.2s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px;
+            flex-shrink: 0;
         }
         .suggestion-chip:hover { background: rgba(137, 180, 250, 0.2); transform: translateY(-2px); }
         .suggestion-refresh-btn {
@@ -1074,7 +1092,7 @@
 
         /* Message Actions */
         .msg-actions {
-            display: flex; gap: 8px; margin-top: 8px; opacity: 0; transition: opacity 0.2s; justify-content: flex-end;
+            display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; opacity: 0; transition: opacity 0.2s; justify-content: flex-end; align-items: center;
         }
         .message:hover .msg-actions { opacity: 1; }
         .msg-action-btn { min-width: 32px; min-height: 32px; padding: 6px; font-size: 16px; display: inline-flex; justify-content: center; align-items: center; cursor: pointer;
@@ -1085,6 +1103,10 @@
         @media (max-width: 768px) {
             .msg-actions { opacity: 1; }
         }
+
+        /* "Devam et" kartı — buton metni dar mobil genişlikte iki satıra bölünüp tuhaf sarmıyor */
+        .continue-response-card { display: flex; flex-direction: column; align-items: flex-start; }
+        .continue-response-card .run-code-btn { white-space: nowrap; word-break: keep-all; flex-shrink: 0; }
 
         /* Archive Grid Layout */
         .archive-grid {
@@ -1099,11 +1121,75 @@
             width: 100%;
             max-width: 260px;
             margin: 0 auto; /* Center card in its grid cell */
+            min-width: 0;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+
+        .library-screen {
+            flex: 1;
+            min-width: 0;
+            max-width: 100%;
+            box-sizing: border-box;
+            overflow-x: hidden;
+        }
+        .library-screen-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            border-bottom: 1px solid #313244;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+        .library-screen-header > div:first-child {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            min-width: 0;
+            flex: 1 1 auto;
+        }
+        #librarySearch {
+            width: 250px;
+            max-width: 100%;
+            min-width: 0;
+            flex: 1 1 220px;
+            box-sizing: border-box;
+        }
+        .library-empty-state {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 50px 20px;
+            color: #a6adc8;
+            word-break: break-word;
+            overflow-wrap: anywhere;
         }
 
         @media (max-width: 768px) {
             .archive-grid {
-                grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+            .archive-card {
+                max-width: 100%;
+            }
+            .library-screen {
+                padding: 16px !important;
+            }
+            .library-screen-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .library-screen-header > div:first-child {
+                flex-wrap: wrap;
+            }
+            #librarySearch {
+                width: 100%;
+                flex: 1 1 100%;
+            }
+            .library-empty-state {
+                padding: 24px 12px;
             }
         }
 
@@ -1122,7 +1208,11 @@
                 z-index: 1003;
             }
             .main-chat { width: 100% !important; max-width: 100% !important; height: 100dvh; padding: 0 !important; min-height: 0; }
-            .messages { padding-bottom: calc(140px + env(safe-area-inset-bottom, 0px)); }
+            .messages {
+                gap: 12px;
+                padding: 12px 12px calc(140px + env(safe-area-inset-bottom, 0px));
+            }
+            .message { max-width: 92%; }
             .welcome-screen { padding-bottom: calc(180px + env(safe-area-inset-bottom, 0px)); overflow-y: auto; -webkit-overflow-scrolling: touch; justify-content: flex-start; padding-top: 24px; }
             .welcome-screen h2 { margin-bottom: 18px; font-size: 24px; }
             .welcome-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; justify-items: center; width: 100%; max-width: 100%; }
@@ -1152,6 +1242,7 @@
                 -webkit-backdrop-filter: blur(16px);
                 box-shadow: 0 20px 50px rgba(0,0,0,0.35);
                 z-index: 1004;
+                overflow-x: visible;
             }
             .input-box {
                 flex-wrap: nowrap;
@@ -1162,6 +1253,10 @@
                 width: 38px;
                 height: 38px;
                 min-width: 38px;
+                flex: 0 0 auto;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
             }
             .input-box textarea {
                 min-height: 46px;
@@ -1191,15 +1286,20 @@
                 justify-content: flex-start !important;
                 max-width: 100%;
                 -webkit-overflow-scrolling: touch;
+                padding-bottom: 4px;
             }
             #suggestionChipsContainer > * {
                 flex: 0 0 auto;
-                max-width: 82vw;
+                max-width: min(82vw, 280px);
+            }
+            .suggestion-chip,
+            .suggestion-refresh-btn {
+                max-width: min(82vw, 280px);
             }
             .input-box textarea {
-                flex: 1 1 auto;
+                flex: 1 1 0;
                 min-width: 0;
-                max-width: 100%;
+                max-width: none;
                 width: auto;
                 word-break: normal;
                 overflow-wrap: break-word;
@@ -1767,12 +1867,12 @@
 
     <!-- KÜTÜPHANE EKRANI -->
     <div class="library-screen" id="libraryScreen" style="display:none; flex: 1; padding: 30px; overflow-y: auto; background: linear-gradient(135deg, #1e1e2e, #11111b);">
-        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid #313244; padding-bottom: 15px; margin-bottom: 20px;">
-            <div style="display:flex; align-items:center; gap:15px;">
+        <div class="library-screen-header">
+            <div>
                 <button onclick="closeLibrary()" style="background:rgba(255,255,255,0.1); color:#cdd6f4; border:none; border-radius:8px; padding:8px 12px; cursor:pointer; font-weight:bold; font-size:14px; transition:0.2s;">⬅️ Geri</button>
                 <h2 id="libraryTitle" style="color: #a6e3a1; margin:0; font-size:24px;">Arşiv</h2>
             </div>
-            <input type="text" id="librarySearch" placeholder="🔍 Başlık veya tarihe göre ara..." oninput="renderLibrary(currentLibraryTab)" style="background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px 15px; border-radius:20px; font-size:13px; width:250px; outline:none;">
+            <input type="text" id="librarySearch" placeholder="🔍 Başlık veya tarihe göre ara..." oninput="renderLibrary(currentLibraryTab)" style="background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px 15px; border-radius:20px; font-size:13px; outline:none;">
         </div>
         <div id="libraryContent" class="archive-grid">
             <!-- İçerik buraya dinamik yüklenecek -->
@@ -1781,8 +1881,8 @@
 
     <!-- PROJELER EKRANI -->
     <div class="library-screen" id="projectsScreen" style="display:none; flex: 1; padding: 30px; overflow-y: auto; background: linear-gradient(135deg, #1e1e2e, #11111b);">
-        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid #313244; padding-bottom: 15px; margin-bottom: 20px;">
-            <div style="display:flex; align-items:center; gap:15px;">
+        <div class="library-screen-header">
+            <div>
                 <button onclick="closeProjectsScreen()" style="background:rgba(255,255,255,0.1); color:#cdd6f4; border:none; border-radius:8px; padding:8px 12px; cursor:pointer; font-weight:bold; font-size:14px; transition:0.2s;">⬅️ Geri</button>
                 <h2 id="projectsScreenTitle" style="color: #f9e2af; margin:0; font-size:24px;">📁 Projeler</h2>
             </div>
@@ -1816,7 +1916,7 @@
         </div>
 
         <!-- SUGGESTION CHIPS CONTAINER -->
-        <div id="suggestionChipsContainer" style="display:none; gap:8px; flex-wrap:wrap; margin-bottom:10px; justify-content:center;"></div>
+        <div id="suggestionChipsContainer"></div>
 
         <div class="input-box">
             <button class="icon-btn" onclick="openAttachMenu()" title="Eklentiler" style="font-size:22px; margin-bottom:2px;">+</button>
@@ -3818,7 +3918,7 @@
                 // 20-80 sayfa → 2-4 eşit parçaya böl (API'yi ezdirme)
                 // 80+ sayfa → kullanıcıya sor (hepsi / belirli aralık)
 
-                let promptMsg = `? PDF Yüklendi: "${file.name}" (${totalPages} sayfa)\n\n`;
+                let promptMsg = `📄 PDF Yüklendi: "${file.name}" (${totalPages} sayfa)\n\n`;
                 let autoMode = false;
 
                 if (totalPages <= 20) {
@@ -6177,6 +6277,7 @@
                         <button class="msg-action-btn" onclick="editMessage(${index}, event)" title="Mesajı düzenle">✏️</button>
                         <button class="msg-action-btn" onclick="copyUserMessage(${index}, this)" title="Mesajı kopyala">📋</button>
                         <button class="msg-action-btn" onclick="shareUserMessage(${index})" title="Paylaş">↗</button>
+                        <button class="msg-action-btn" onclick="speakMessage(${index})" title="Sesli Oku">🔊</button>
 
                         <div style="position:relative; display:inline-block;">
                             <button class="msg-action-btn" onclick="toggleMsgMoreMenu(${index}, event)" title="Daha Fazla">⋯</button>
@@ -6184,7 +6285,6 @@
                                 <button class="chat-menu-item" onclick="continueFromMessage(${index})">↳ Buradan Devam Et</button>
                                 <button class="chat-menu-item" onclick="resendUserMessage(${index})">🔄 Tekrar Gönder</button>
                                 <button class="chat-menu-item" onclick="improveUserPrompt(${index})">✨ Promptu İyileştir</button>
-                                <button class="chat-menu-item" onclick="speakMessage(${index})">🔊 Sesli Oku</button>
                             </div>
                         </div>
                     </div>`;
@@ -6218,7 +6318,7 @@
                     <button class="msg-action-btn ${msg.disliked ? 'active' : ''}" onclick="toggleDislikeMessage(${index}, this)" title="Beğenmedim" style="${msg.disliked ? 'color:#f38ba8;' : ''}">👎</button>
                     <button class="msg-action-btn" onclick="shareMessage(${index})" title="Paylaş">↗</button>
                     ${index === history.length - 1 ? `<button class="msg-action-btn" onclick="regenerateMessage()" title="Bu cevabı yeniden oluştur">🔄</button>` : ''}
-                    <button class="msg-action-btn" onclick="continueFromMessage(${index})" title="Bu mesaja kadar olan konuşmayı yeni sohbete kopyala ve buradan devam et">↳ Buradan Devam Et</button>
+                    <button class="msg-action-btn" onclick="continueFromMessage(${index})" title="Bu mesaja kadar olan konuşmayı yeni sohbete kopyala ve buradan devam et" style="white-space:nowrap; word-break:keep-all; flex-shrink:0;">↳ Buradan Devam Et</button>
 
                     <div style="position:relative; display:inline-block;">
                         <button class="msg-action-btn" onclick="toggleMsgMoreMenu(${index}, event)" title="Daha Fazla">⋯</button>
@@ -7348,7 +7448,7 @@
         }
 
         if(filtered.length === 0) {
-            content.innerHTML = `<div style="grid-column: 1 / -1; text-align:center; padding: 50px; color:#a6adc8;">Bu kategoride henüz bir içerik yok veya aramanla eşleşmedi.</div>`;
+            content.innerHTML = `<div class="library-empty-state">Bu kategoride henüz bir içerik yok veya aramanla eşleşmedi.</div>`;
             return;
         }
 
@@ -7358,7 +7458,7 @@
         filtered.forEach(item => {
             const dateHeader = formatDateHeader(item.date);
             if(dateHeader !== currentHeader) {
-                html += `<div style="grid-column: 1 / -1; margin-top:10px; font-weight:bold; color:#89b4fa; border-bottom:1px solid #313244; padding-bottom:5px;">? ${dateHeader}</div>`;
+                html += `<div style="grid-column: 1 / -1; margin-top:10px; font-weight:bold; color:#89b4fa; border-bottom:1px solid #313244; padding-bottom:5px;">📅 ${dateHeader}</div>`;
                 currentHeader = dateHeader;
             }
 
@@ -7398,7 +7498,7 @@
                     <div style="display:flex; gap:5px; margin-top:auto; flex-wrap:wrap;">
                         <button class="artifact-dl-btn" style="flex:1; text-align:center; padding:8px; font-weight:bold;" ${dataAction} ${dataUrl} ${action ? `onclick="${action}"` : ''}>${btnText}</button>
                         ${extraButtons}
-                        <button class="artifact-dl-btn" style="background:#f38ba8; color:#11111b; padding:8px; border-radius:6px;" onclick="deleteFromLibrary('${item.id}')" title="Sil">?</button>
+                        <button class="artifact-dl-btn" style="background:#f38ba8; color:#11111b; padding:8px; border-radius:6px;" onclick="deleteFromLibrary('${item.id}')" title="Sil">🗑️</button>
                     </div>
                 </div>
             `;
@@ -7928,7 +8028,9 @@
             if (msg.role === "user") txt += "Sen: " + msg.content + "\n\n";
             if (msg.role === "assistant") txt += "CinoCode: " + msg.content + "\n\n-----------------\n\n";
         });
-        const blob = new Blob([txt], {type: "text/plain"});
+        // BOM eklenmezse bazı editörler (özellikle Windows Notepad) UTF-8 Türkçe karakterleri
+        // (ş, ğ, ı, ö, ü, ç) mojibake olarak gösteriyordu.
+        const blob = new Blob(["\uFEFF" + txt], { type: "text/plain;charset=utf-8" });
         const a = document.createElement("a");
         a.href = URL.createObjectURL(blob); a.download = "CinoCode_" + sessions[currentChatId].title.replace(/ /g, "_") + ".txt"; a.click();
     }
