@@ -1666,14 +1666,20 @@
                 <span style="color:#a6adc8; font-size:11px; white-space:nowrap;">Ton:</span>
                 <select id="speechStyleSelect" title="Konuşma Tarzı" onchange="onSpeechStyleHeaderChange()" style="width:100px; background:#181825; color:#cdd6f4; border:1px solid #45475a; padding:4px; border-radius:5px; font-size:11px;">
                 <option value="default">Varsayılan</option>
-                <option value="kanka">Kanka</option>
+                <optgroup label="Genel">
                 <option value="teacher">Resmi</option>
                 <option value="short">Kısa-net</option>
-                <option value="grokish">Grokvari</option>
                 <option value="expert">Ciddi uzman</option>
+                </optgroup>
+                <optgroup label="Samimi">
+                <option value="kanka">Kanka</option>
+                <option value="grokish">Grokvari</option>
+                </optgroup>
+                <optgroup label="Bölgesel">
                 <option value="izmir">İzmir</option>
                 <option value="diyarbakir">Diyarbakır</option>
                 <option value="kurdish_zazaki">Kürtçe/Zazaca</option>
+                </optgroup>
             </select>
                 </div>
                 <div id="voiceControlsContainer" style="display:inline-flex; align-items:center; gap:4px;">
@@ -2064,14 +2070,20 @@
             <div style="color: #cdd6f4; font-size: 12px; margin-bottom: 4px; text-align: left;">Konuşma Tarzı (Ton):</div>
             <select id="speechStyleSelectMobile" onchange="document.getElementById('speechStyleSelect').value = this.value; onSpeechStyleHeaderChange();">
                 <option value="default">Varsayılan</option>
-                <option value="kanka">Kanka</option>
+                <optgroup label="Genel">
                 <option value="teacher">Resmi / Öğretmen</option>
                 <option value="short">Kısa-net</option>
-                <option value="grokish">Grokvari</option>
                 <option value="expert">Ciddi uzman</option>
+                </optgroup>
+                <optgroup label="Samimi">
+                <option value="kanka">Kanka</option>
+                <option value="grokish">Grokvari</option>
+                </optgroup>
+                <optgroup label="Bölgesel">
                 <option value="izmir">İzmir rahat tonu</option>
                 <option value="diyarbakir">Diyarbakır ağzı denemesi</option>
                 <option value="kurdish_zazaki">Kürtçe / Zazaca denemesi</option>
+                </optgroup>
             </select>
 
             <div style="color: #cdd6f4; font-size: 12px; margin-bottom: 4px; text-align: left;">Ses Seçimi (TTS):</div>
