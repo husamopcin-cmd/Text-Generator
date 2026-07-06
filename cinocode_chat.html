@@ -4127,11 +4127,47 @@
                 console.error("PDF okuma hatası:", err);
                 alert("PDF okunamadı. Lütfen içeriği kopyalayıp yapıştırın.");
             }
-        } else {
+        } else if (isPlainTextDocument(file)) {
+            try {
+                const text = await file.text();
+                const docName = file.name;
+                window.isExamMode = false;
+                window.pdfChunks = null;
+                window.selectedDocumentText = `\n[${docName} İÇERİĞİ]:\n${text}\n`;
+                window.selectedDocumentName = docName;
+                window.activeDocText = window.selectedDocumentText;
+                window.activeDocName = window.selectedDocumentName;
+                window.activeDocCursor = 0;
+                const skpSourceEl = document.getElementById('skp-source');
+                if (skpSourceEl) skpSourceEl.value = 'text';
+                try { localStorage.setItem('cinocode_skp_source', 'text'); } catch(e) {}
+                if (typeof skpUpdateDocStatus === 'function') skpUpdateDocStatus();
+
+                const previewContainer = document.getElementById('imagePreviewContainer');
+                const previewImg = document.getElementById('imagePreview');
+                previewImg.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 24 24' fill='none' stroke='%2389b4fa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'></path><polyline points='14 2 14 8 20 8'></polyline><line x1='16' y1='13' x2='8' y2='13'></line><line x1='16' y1='17' x2='8' y2='17'></line><polyline points='10 9 9 9 8 9'></polyline></svg>";
+                previewContainer.style.display = 'inline-block';
+                selectedImageBase64 = null;
+            } catch (err) {
+                console.error("Metin dosyası okuma hatası:", err);
+                alert("Dosya okunamadı. Lütfen içeriği kopyalayıp yapıştırın.");
+            }
+        } else if (file.type.startsWith('image/')) {
             processFileAsBase64(file, false);
+        } else {
+            alert("Bu dosya türü (." + (file.name.split('.').pop() || '?') + ") şu anda doğrudan okunamıyor — sadece PDF ve düz metin dosyaları (.txt, .js, .py, .md, .csv, .json vb.) desteklenir. .docx/.xlsx/.pptx/.zip için lütfen içeriği kopyalayıp mesaj kutusuna yapıştır.");
+            if (event.target.id === 'docUpload') event.target.value = '';
+            return;
         }
 
         if (event.target.id === 'docUpload') event.target.value = '';
+    }
+
+    function isPlainTextDocument(file) {
+        if (file.type && file.type.startsWith('text/')) return true;
+        const plainTextExtensions = ['.txt', '.js', '.py', '.ts', '.html', '.css', '.md', '.csv', '.json'];
+        const name = (file.name || '').toLowerCase();
+        return plainTextExtensions.some(ext => name.endsWith(ext));
     }
 
     // ----- AYARLAR (SETTINGS) -----
