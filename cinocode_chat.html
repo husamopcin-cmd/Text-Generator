@@ -3864,6 +3864,47 @@
         el.appendChild(row);
     }
 
+    function buildMsgActionsHTML(index, msg, uiMode, isLast) {
+        if (uiMode === 'classic') {
+            // Simpler Classic UI actions: Copy, Speak, Like, Dislike, Regenerate (No branch, share, or more menu)
+            return `
+                <button class="msg-action-btn" onclick="copyMessage(${index}, this)" title="Kopyala">📋</button>
+                <button class="msg-action-btn" onclick="speakMessage(${index})" title="Sesli Oku">🔊</button>
+                <button class="msg-action-btn ${msg.liked ? 'active' : ''}" onclick="toggleLikeMessage(${index}, this)" style="${msg.liked ? 'color:#a6e3a1;' : ''}">👍</button>
+                <button class="msg-action-btn ${msg.disliked ? 'active' : ''}" onclick="toggleDislikeMessage(${index}, this)" style="${msg.disliked ? 'color:#f38ba8;' : ''}">👎</button>
+                ${isLast ? `<button class="msg-action-btn" onclick="regenerateMessage()" title="Yeniden Üret">🔄</button>` : ''}
+            `;
+        }
+        // New v3.2 actions with sharing, branching, and popovers
+        return `
+            <button class="msg-action-btn" onclick="copyMessage(${index}, this)" title="Kopyala">📋</button>
+            <button class="msg-action-btn" onclick="speakMessage(${index})" title="Sesli Oku">🔊</button>
+            <button class="msg-action-btn ${msg.liked ? 'active' : ''}" onclick="toggleLikeMessage(${index}, this)" title="Beğendim" style="${msg.liked ? 'color:#a6e3a1;' : ''}">👍</button>
+            <button class="msg-action-btn ${msg.disliked ? 'active' : ''}" onclick="toggleDislikeMessage(${index}, this)" title="Beğenmedim" style="${msg.disliked ? 'color:#f38ba8;' : ''}">👎</button>
+            <button class="msg-action-btn" onclick="shareMessage(${index})" title="Paylaş">↗</button>
+            ${isLast ? `<button class="msg-action-btn" onclick="regenerateMessage()" title="Bu cevabı yeniden oluştur">🔄</button>` : ''}
+            <button class="msg-action-btn" onclick="shortenMessage(${index})" title="Kısalt" style="white-space:nowrap; word-break:keep-all; flex-shrink:0;">✂️ Kısalt</button>
+            <button class="msg-action-btn" onclick="continueFromMessage(${index})" title="Bu mesaja kadar olan konuşmayı yeni sohbete kopyala ve buradan devam et" style="white-space:nowrap; word-break:keep-all; flex-shrink:0;">↳ Buradan Devam Et</button>
+
+            <div style="position:relative; display:inline-block;">
+                <button class="msg-action-btn" onclick="toggleMsgMoreMenu(${index}, event)" title="Daha Fazla">⋯</button>
+                <div class="chat-action-menu" id="msg-more-menu-${index}" style="right:0; top:100%; min-width:180px;">
+                    <button class="chat-menu-item" onclick="copyMessageMarkdown(${index})">📋 Markdown olarak kopyala</button>
+                </div>
+            </div>
+        `;
+    }
+
+    function attachMsgActionsToBotDiv(botId, index, msg) {
+        const el = typeof botId === 'string' ? document.getElementById(botId) : botId;
+        if (!el || el.querySelector('.msg-actions')) return;
+        const uiMode = localStorage.getItem('cinocodeUiMode') || 'new';
+        const actionDiv = document.createElement("div");
+        actionDiv.className = "msg-actions";
+        actionDiv.innerHTML = buildMsgActionsHTML(index, msg || {}, uiMode, true);
+        el.appendChild(actionDiv);
+    }
+
     function submitSmartSuggestion(text) {
         const input = document.getElementById('userInput');
         if (!input) return;
@@ -6356,36 +6397,7 @@
                 actionDiv.className = "msg-actions";
 
                 const uiMode = localStorage.getItem('cinocodeUiMode') || 'new';
-                if (uiMode === 'classic') {
-                    // Simpler Classic UI actions: Copy, Speak, Like, Dislike, Regenerate (No branch, share, or more menu)
-                    actionDiv.innerHTML = `
-                        <button class="msg-action-btn" onclick="copyMessage(${index}, this)" title="Kopyala">📋</button>
-                        <button class="msg-action-btn" onclick="speakMessage(${index})" title="Sesli Oku">🔊</button>
-                        <button class="msg-action-btn ${msg.liked ? 'active' : ''}" onclick="toggleLikeMessage(${index}, this)" style="${msg.liked ? 'color:#a6e3a1;' : ''}">👍</button>
-                        <button class="msg-action-btn ${msg.disliked ? 'active' : ''}" onclick="toggleDislikeMessage(${index}, this)" style="${msg.disliked ? 'color:#f38ba8;' : ''}">👎</button>
-                        ${index === history.length - 1 ? `<button class="msg-action-btn" onclick="regenerateMessage()" title="Yeniden Üret">🔄</button>` : ''}
-                    `;
-                } else {
-                    // New v3.2 actions with sharing, branching, and popovers
-
-                actionDiv.innerHTML = `
-                    <button class="msg-action-btn" onclick="copyMessage(${index}, this)" title="Kopyala">📋</button>
-                    <button class="msg-action-btn" onclick="speakMessage(${index})" title="Sesli Oku">🔊</button>
-                    <button class="msg-action-btn ${msg.liked ? 'active' : ''}" onclick="toggleLikeMessage(${index}, this)" title="Beğendim" style="${msg.liked ? 'color:#a6e3a1;' : ''}">👍</button>
-                    <button class="msg-action-btn ${msg.disliked ? 'active' : ''}" onclick="toggleDislikeMessage(${index}, this)" title="Beğenmedim" style="${msg.disliked ? 'color:#f38ba8;' : ''}">👎</button>
-                    <button class="msg-action-btn" onclick="shareMessage(${index})" title="Paylaş">↗</button>
-                    ${index === history.length - 1 ? `<button class="msg-action-btn" onclick="regenerateMessage()" title="Bu cevabı yeniden oluştur">🔄</button>` : ''}
-                    <button class="msg-action-btn" onclick="shortenMessage(${index})" title="Kısalt" style="white-space:nowrap; word-break:keep-all; flex-shrink:0;">✂️ Kısalt</button>
-                    <button class="msg-action-btn" onclick="continueFromMessage(${index})" title="Bu mesaja kadar olan konuşmayı yeni sohbete kopyala ve buradan devam et" style="white-space:nowrap; word-break:keep-all; flex-shrink:0;">↳ Buradan Devam Et</button>
-
-                    <div style="position:relative; display:inline-block;">
-                        <button class="msg-action-btn" onclick="toggleMsgMoreMenu(${index}, event)" title="Daha Fazla">⋯</button>
-                        <div class="chat-action-menu" id="msg-more-menu-${index}" style="right:0; top:100%; min-width:180px;">
-                            <button class="chat-menu-item" onclick="copyMessageMarkdown(${index})">📋 Markdown olarak kopyala</button>
-                        </div>
-                    </div>
-                `;
-                }
+                actionDiv.innerHTML = buildMsgActionsHTML(index, msg, uiMode, index === history.length - 1);
                 div.appendChild(actionDiv);
                 const prevUser = [...history.slice(0, index)].reverse().find(m => m.role === "user" && m.content);
                 appendSmartSuggestions(div, msg.content, prevUser ? prevUser.content : "");
@@ -8522,6 +8534,7 @@
             const noticeText = "🌐 Bu özellik henüz aktif değil. Gerçek internet görsel/medya araması için ayrı arama API entegrasyonu gerekir. Şimdilik 'Yapay Zeka ile Üret' seçeneğini kullanabilirsiniz.";
             typingDiv.innerHTML = renderContentWithImages(noticeText, true);
             chat.messages.push({ role: "assistant", content: noticeText });
+            attachMsgActionsToBotDiv(botId, chat.messages.length - 1, chat.messages[chat.messages.length - 1]);
             chat.updatedAt = Date.now();
             saveDatabase();
             scrollToBottom();
@@ -8540,6 +8553,7 @@
             addCopyButtons(boundaryDiv);
             appendSmartSuggestions(boundaryDiv, answer, text);
             chat.messages.push({ role: "assistant", content: answer });
+            attachMsgActionsToBotDiv(boundaryDiv, chat.messages.length - 1, chat.messages[chat.messages.length - 1]);
             chat.updatedAt = Date.now();
             saveDatabase();
             scrollToBottom();
@@ -8553,6 +8567,7 @@
             const askText = "Neyi çizmemi istiyorsun kanka?";
             typingDiv.innerHTML = renderContentWithImages(askText, true);
             chat.messages.push({ role: "assistant", content: askText });
+            attachMsgActionsToBotDiv(botId, chat.messages.length - 1, chat.messages[chat.messages.length - 1]);
             chat.updatedAt = Date.now();
             saveDatabase();
             scrollToBottom();
@@ -8569,6 +8584,7 @@
             scrubPlaceholderErrorImages(typingDiv);
             addCopyButtons(typingDiv);
             chat.messages.push({ role: "assistant", content: `[GENERATE_IMAGE: ${cleanPrompt}]` });
+            attachMsgActionsToBotDiv(botId, chat.messages.length - 1, chat.messages[chat.messages.length - 1]);
             chat.updatedAt = Date.now();
             saveDatabase();
             scrollToBottom();
@@ -8592,6 +8608,7 @@
             lastMediaType = "video";
             queueVideoSlideshow(cleanPrompt, botId + "-video", { rawPrompt: text });
             chat.messages.push({ role: "assistant", content: `[GENERATE_VIDEO: ${cleanPrompt}]` });
+            attachMsgActionsToBotDiv(botId, chat.messages.length - 1, chat.messages[chat.messages.length - 1]);
             chat.updatedAt = Date.now();
             saveDatabase();
             return;
@@ -8603,6 +8620,7 @@
             lastMediaType = "video";
             queueVideoSlideshow(cleanPrompt, botId, { rawPrompt: text });
             chat.messages.push({ role: "assistant", content: `[GENERATE_VIDEO: ${cleanPrompt}]` });
+            attachMsgActionsToBotDiv(botId, chat.messages.length - 1, chat.messages[chat.messages.length - 1]);
             chat.updatedAt = Date.now();
             saveDatabase();
             return;
@@ -9132,6 +9150,7 @@
                             botReply += "\n\n<div style='font-size:10px; color:#a6adc8; margin-top:8px;'>⚡ Model: " + actualModelForAuto + "</div>";
                         }
                         chat.messages.push({ role: 'assistant', content: botReply });
+                        attachMsgActionsToBotDiv(botId, chat.messages.length - 1, chat.messages[chat.messages.length - 1]);
                         chat.updatedAt = Date.now();
                         saveDatabase();
                         const proxyFinishReason = jsonData.finish_reason || jsonData.finishReason || jsonData.stopReason || jsonData.stop_reason || jsonData.reason;
@@ -9421,11 +9440,13 @@
                 if (hasVideoFallback) {
                     const failMsg = renderMediaErrorMessage("Gerçek video sağlayıcısı yok. Storyboard önizlemesi hazırlandı.");
                     chat.messages.push({ role: "assistant", content: failMsg });
+                    attachMsgActionsToBotDiv(botId, chat.messages.length - 1, chat.messages[chat.messages.length - 1]);
                 } else {
                     if (typeof actualModelForAuto !== 'undefined' && actualModelForAuto) {
                         botReply += "\n\n<div style='font-size:10px; color:#a6adc8; margin-top:8px;'>⚡ Model: " + actualModelForAuto + "</div>";
                     }
                     chat.messages.push({ role: "assistant", content: botReply });
+                    attachMsgActionsToBotDiv(botId, chat.messages.length - 1, chat.messages[chat.messages.length - 1]);
                 }
             }
 
