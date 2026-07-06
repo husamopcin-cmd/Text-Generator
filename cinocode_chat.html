@@ -3759,8 +3759,19 @@
 
     function getResponseStyleGovernorInstruction() {
         const mode = getFeatureValue('styleMode') || 'safe';
-        if (mode === 'free') return ''; // Serbest Modda bu kısıtlamayı atla
-        return "\n\nCEVAP STİLİ FRENI VE GÜVENLİK SINIRI: Samimi ve doğal konuş ama ölçülü kal. Kullanıcının her kelimesini taklit etme; her cevabı 'hahaha', 'hadi bakalım' gibi roleplay/persona şovuna çevirme. KESİNLİKLE KULLANICININ AĞZINDAN KABA, KÜFÜRLÜ VEYA VULGAR SÖZLER UYDURMA. Kullanıcı 'sikerim ha sen' veya benzeri kaba/küfürlü kelimeler yazmadığı sürece, onun mesajını yorumlarken asla bu tarz ifadeler uydurup 'şunu anladım' diyerek tırnak içinde tekrarlama. Normal soruya normal, kısa ve işe yarar cevap ver; kanka tonunu cevabın odağını bozmayacak kadar kullan. Kullanıcı sinirli veya argo konuşsa bile, sen asistan olarak Standart/Dengeli modda asla küfür veya kaba sokak argosu üretme. Belirsiz veya yanlış anlaşılan ses kayıtlarında kaba kelimeler varsaymak yerine, 'Kanka tam anlayamadım, tekrar yazar mısın?' şeklinde nötr ve samimi bir dönüş yap.";
+        let governorText = "";
+        
+        const personaSelect = document.getElementById("personaSelect");
+        if (personaSelect) {
+            const personaLabel = personaSelect.options[personaSelect.selectedIndex]?.text || "";
+            if (/abla|abi/i.test(personaLabel)) {
+                governorText += "\n\nKİŞİLİK KURALI (ABLA/ABİ): Seçili personanda 'Abla' veya 'Abi' gibi aile hitapları var. Bu yüzden, hangi mod veya ton seçili olursa olsun, KESİNLİKLE flörtöz, cinsel imalı veya aşırı romantik bir üslup kullanma. Aile büyüğü/yakını şefkati göster, ancak rahatsız edici imalardan (örn. 'sarılayım', '😈') tamamen uzak dur.";
+            }
+        }
+
+        if (mode === 'free') return governorText; // Serbest Modda bu kısıtlamayı atla ama Abla/Abi kuralı kalır
+        
+        return governorText + "\n\nCEVAP STİLİ FRENI VE GÜVENLİK SINIRI: Samimi ve doğal konuş ama ölçülü kal. Kullanıcının her kelimesini taklit etme; her cevabı 'hahaha', 'hadi bakalım' gibi roleplay/persona şovuna çevirme. KESİNLİKLE KULLANICININ AĞZINDAN KABA, KÜFÜRLÜ VEYA VULGAR SÖZLER UYDURMA. Kullanıcı 'sikerim ha sen' veya benzeri kaba/küfürlü kelimeler yazmadığı sürece, onun mesajını yorumlarken asla bu tarz ifadeler uydurup 'şunu anladım' diyerek tırnak içinde tekrarlama. Normal soruya normal, kısa ve işe yarar cevap ver; kanka tonunu cevabın odağını bozmayacak kadar kullan. Kullanıcı sinirli veya argo konuşsa bile, sen asistan olarak Standart/Dengeli modda asla küfür veya kaba sokak argosu üretme. Belirsiz veya yanlış anlaşılan ses kayıtlarında kaba kelimeler varsaymak yerine, 'Kanka tam anlayamadım, tekrar yazar mısın?' şeklinde nötr ve samimi bir dönüş yap.";
     }
 
     function isLimitFinishReason(reason) {
