@@ -13,6 +13,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/tokyo-night-dark.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <!-- Mammoth.js (Word/.docx Metin Çıkarma) -->
+    <script src="https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js"></script>
 
     <!-- PWA Cache Busting -->
     <script>
@@ -4163,10 +4165,47 @@
                 console.error("Metin dosyası okuma hatası:", err);
                 alert("Dosya okunamadı. Lütfen içeriği kopyalayıp yapıştırın.");
             }
+        } else if (isDocxDocument(file)) {
+            try {
+                if (typeof mammoth === 'undefined') {
+                    alert("Word okuyucu yüklenemedi. Lütfen içeriği kopyalayıp yapıştırın.");
+                    if (event.target.id === 'docUpload') event.target.value = '';
+                    return;
+                }
+                const arrayBuffer = await file.arrayBuffer();
+                const result = await mammoth.extractRawText({ arrayBuffer });
+                const text = (result && result.value || "").trim();
+                if (!text) {
+                    alert("Bu Word belgesinden metin çıkarılamadı (boş olabilir). Lütfen içeriği kopyalayıp yapıştırın.");
+                    if (event.target.id === 'docUpload') event.target.value = '';
+                    return;
+                }
+                const docName = file.name;
+                window.isExamMode = false;
+                window.pdfChunks = null;
+                window.selectedDocumentText = `\n[${docName} İÇERİĞİ]:\n${text}\n`;
+                window.selectedDocumentName = docName;
+                window.activeDocText = window.selectedDocumentText;
+                window.activeDocName = window.selectedDocumentName;
+                window.activeDocCursor = 0;
+                const skpSourceEl = document.getElementById('skp-source');
+                if (skpSourceEl) skpSourceEl.value = 'text';
+                try { localStorage.setItem('cinocode_skp_source', 'text'); } catch(e) {}
+                if (typeof skpUpdateDocStatus === 'function') skpUpdateDocStatus();
+
+                const previewContainer = document.getElementById('imagePreviewContainer');
+                const previewImg = document.getElementById('imagePreview');
+                previewImg.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 24 24' fill='none' stroke='%2389b4fa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'></path><polyline points='14 2 14 8 20 8'></polyline><line x1='16' y1='13' x2='8' y2='13'></line><line x1='16' y1='17' x2='8' y2='17'></line><polyline points='10 9 9 9 8 9'></polyline></svg>";
+                previewContainer.style.display = 'inline-block';
+                selectedImageBase64 = null;
+            } catch (err) {
+                console.error("Word okuma hatası:", err);
+                alert("Word belgesi okunamadı. Lütfen içeriği kopyalayıp yapıştırın.");
+            }
         } else if (file.type.startsWith('image/')) {
             processFileAsBase64(file, false);
         } else {
-            alert("Bu dosya türü (." + (file.name.split('.').pop() || '?') + ") şu anda doğrudan okunamıyor — sadece PDF ve düz metin dosyaları (.txt, .js, .py, .md, .csv, .json vb.) desteklenir. .docx/.xlsx/.pptx/.zip için lütfen içeriği kopyalayıp mesaj kutusuna yapıştır.");
+            alert("Bu dosya türü (." + (file.name.split('.').pop() || '?') + ") şu anda doğrudan okunamıyor — sadece PDF, Word (.docx) ve düz metin dosyaları (.txt, .js, .py, .md, .csv, .json vb.) desteklenir. .xlsx/.pptx/.zip için lütfen içeriği kopyalayıp mesaj kutusuna yapıştır.");
             if (event.target.id === 'docUpload') event.target.value = '';
             return;
         }
@@ -4179,6 +4218,11 @@
         const plainTextExtensions = ['.txt', '.js', '.py', '.ts', '.html', '.css', '.md', '.csv', '.json'];
         const name = (file.name || '').toLowerCase();
         return plainTextExtensions.some(ext => name.endsWith(ext));
+    }
+
+    function isDocxDocument(file) {
+        if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') return true;
+        return (file.name || '').toLowerCase().endsWith('.docx');
     }
 
     // ----- AYARLAR (SETTINGS) -----
