@@ -2857,10 +2857,12 @@
                 .replace(/\s{2,}/g, " ")
                 .trim();
         }
-        // İstem dışı Türkçe kelimeleri / talimatları temizle
-        clean = clean.replace(/lütfen/gi, "").replace(/çiz/gi, "").replace(/yap/gi, "").replace(/oluştur/gi, "");
-        // Hafızadan/Sohbetten gelen kirlilikleri temizle
-        clean = clean.replace(/ahmet/gi, "").replace(/hüsamettin abim/gi, "").replace(/kanka hadi/gi, "");
+        // Sadece komut kalıplarını temizle; kelime içlerini ve kullanıcı isimlerini bozma.
+        clean = clean
+            .replace(new RegExp(`${TR_WB_BEFORE}(lütfen|lutfen|kanka|knk|bana|şu|su|bu)${TR_WB_AFTER}`, "giu"), " ")
+            .replace(new RegExp(`${TR_WB_BEFORE}(çiz|ciz|yap|oluştur|olustur|üret|uret|hazırla|hazirla)${TR_WB_AFTER}`, "giu"), " ")
+            .replace(/\s{2,}/g, " ")
+            .trim();
 
         // Temel İngilizce kaçınma/negatif kurallarını prompta yedir
         let avoidanceParts = ["no extra limbs", "no deformed anatomy", "no text", "no watermark", "high quality", "cinematic"];
@@ -3321,8 +3323,7 @@
 
             // Eğer video modundaysak, doğrudan fotoğraftan sinematik WebM üretimine başla
             if (currentMode === "video") {
-                userInput.placeholder = "Fotoğraf eklendi. Video yapmak için 'bunu videoya çevir' gibi açık bir istek yaz.";
-                return;
+                userInput.placeholder = "Fotoğraf eklendi. Sinematik klip taslağı hazırlanıyor...";
                 alert("🖼️ Fotoğraf tespit edildi!\n\nDürüst Açıklama: Ücretsiz modda yüklediğin fotoğrafı gerçek AI animasyonuna çevirmek yerine sinematik zoom/pan efektiyle kısa video yaparım. Gerçek image-to-video için ileride yerel ComfyUI / Stable Video Diffusion desteği gerekir.");
 
                 const img = new Image();
