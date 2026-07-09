@@ -7,7 +7,9 @@ const PROXY_PROVIDERS = [
   'gemini',
   'groq',
   'fireworks',
-  'together'
+  'together',
+  'xai',
+  'anthropic'
 ];
 
 const PROVIDER_KEYS = {
@@ -19,19 +21,23 @@ const PROVIDER_KEYS = {
   gemini: process.env.GEMINI_API_KEY || '',
   groq: process.env.GROQ_API_KEY || '',
   fireworks: process.env.FIREWORKS_API_KEY || '',
-  together: process.env.TOGETHER_API_KEY || ''
+  together: process.env.TOGETHER_API_KEY || '',
+  xai: process.env.XAI_API_KEY || '',
+  anthropic: process.env.ANTHROPIC_API_KEY || ''
 };
 
 const DEFAULT_MODELS = {
   openai: 'gpt-4o-mini',
-  cerebras: 'llama-3.3-70b',
+  cerebras: 'gemma-4-31b',
   deepseek: 'deepseek-chat',
   mistral: 'mistral-small-latest',
-  openrouter: 'meta-llama/llama-3.1-8b-instruct:free',
+  openrouter: 'meta-llama/llama-3.3-70b-instruct:free',
   gemini: 'gemini-2.0-flash',
   groq: 'llama-3.3-70b-versatile',
-  fireworks: 'accounts/fireworks/models/llama-v3p1-8b-instruct',
-  together: 'meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo'
+  fireworks: 'accounts/fireworks/models/gpt-oss-120b',
+  together: 'meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo',
+  xai: 'grok-3-mini',
+  anthropic: 'claude-haiku-4-5-20251001'
 };
 
 const PROVIDER_TIMEOUTS = {
@@ -75,6 +81,8 @@ function parseModelLabel(label) {
     : normalized.includes('-groq') ? 'groq'
     : normalized.includes('-fireworks') ? 'fireworks'
     : normalized.includes('-together') ? 'together'
+    : normalized.includes('-xai') ? 'xai'
+    : normalized.includes('-anthropic') ? 'anthropic'
     : null;
   const modelId = provider
     ? normalized.replace(new RegExp(`-${provider}$`, 'i'), '').trim() || DEFAULT_MODELS[provider]
@@ -138,12 +146,50 @@ function extractContent(data, provider) {
     const parts = data?.candidates?.[0]?.content?.parts || [];
     return parts.filter(p => p.text).map(p => p.text).join('');
   }
+  if (provider === 'anthropic') {
+    const blocks = Array.isArray(data?.content) ? data.content : [];
+    return blocks.filter(b => b.type === 'text' && b.text).map(b => b.text).join('');
+  }
   return data?.choices?.[0]?.message?.content
     || data?.completion?.content
     || data?.text
     || data?.output?.[0]?.content
     || data?.response
     || '';
+}
+
+function toAnthropicMessages(messages) {
+  const system = messages.filter(m => m.role === 'system').map(m => m.content).filter(Boolean).join('\n');
+  const msgs = [];
+  for (const msg of messages) {
+    if (msg.role === 'system') continue;
+    const role = msg.role === 'assistant' ? 'assistant' : 'user';
+    let content;
+    if (Array.isArray(msg.images) && msg.images.length > 0) {
+      content = [];
+      if (msg.content) content.push({ type: 'text', text: msg.content });
+      for (const img of msg.images) {
+        const match = String(img).match(/^data:([^;]+);base64,(.*)$/s);
+        if (match) content.push({ type: 'image', source: { type: 'base64', media_type: match[1], data: match[2] } });
+      }
+    } else {
+      content = msg.content || '';
+    }
+    // Anthropic ardışık aynı-rol mesajı kabul etmez; birleştir
+    if (msgs.length && msgs[msgs.length - 1].role === role) {
+      const prev = msgs[msgs.length - 1];
+      const prevArr = Array.isArray(prev.content) ? prev.content : [{ type: 'text', text: prev.content }];
+      const currArr = Array.isArray(content) ? content : [{ type: 'text', text: content }];
+      prev.content = prevArr.concat(currArr);
+    } else {
+      msgs.push({ role, content });
+    }
+  }
+  // İlk mesaj user olmak zorunda
+  if (msgs.length && msgs[0].role !== 'user') {
+    msgs.unshift({ role: 'user', content: '(önceki bağlam)' });
+  }
+  return { system, msgs };
 }
 
 function buildProviderPayload(provider, model, messages, temperature, maxTokens) {
@@ -311,6 +357,47 @@ function buildProviderPayload(provider, model, messages, temperature, maxTokens)
         }
       };
 
+    case 'xai':
+      return {
+        url: 'https://api.x.ai/v1/chat/completions',
+        options: {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${PROVIDER_KEYS.xai}`
+          },
+          body: JSON.stringify({
+            model,
+            messages: chatMessages,
+            temperature,
+            max_tokens: maxTokens
+          })
+        }
+      };
+
+    case 'anthropic': {
+      const { system, msgs } = toAnthropicMessages(messages);
+      const payload = {
+        model,
+        max_tokens: maxTokens,
+        temperature,
+        messages: msgs
+      };
+      if (system) payload.system = system;
+      return {
+        url: 'https://api.anthropic.com/v1/messages',
+        options: {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': PROVIDER_KEYS.anthropic,
+            'anthropic-version': '2023-06-01'
+          },
+          body: JSON.stringify(payload)
+        }
+      };
+    }
+
     default:
       return null;
   }
@@ -318,9 +405,9 @@ function buildProviderPayload(provider, model, messages, temperature, maxTokens)
 
 function getFallbackOrder(taskType) {
   if (taskType === 'pdf') {
-    return ['gemini', 'openai', 'deepseek', 'cerebras', 'mistral', 'openrouter'];
+    return ['gemini', 'openai', 'deepseek', 'cerebras', 'mistral', 'openrouter', 'anthropic'];
   }
-  return ['openai', 'cerebras', 'deepseek', 'mistral', 'openrouter', 'gemini', 'groq', 'fireworks', 'together'];
+  return ['openai', 'cerebras', 'deepseek', 'mistral', 'openrouter', 'gemini', 'groq', 'fireworks', 'together', 'xai', 'anthropic'];
 }
 
 exports.handler = async function(event) {

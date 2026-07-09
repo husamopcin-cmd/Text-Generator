@@ -1,14 +1,238 @@
+const PROVIDER_TIMEOUT_MS = 18000;
+
+function corsJson(statusCode, bodyObj) {
+  return {
+    statusCode,
+    headers: { 'Access-Control-Allow-Origin': '*' },
+    body: JSON.stringify(bodyObj)
+  };
+}
+
+async function fetchWithTimeout(url, options, timeoutMs) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+// Genişlik/yükseklikten sağlayıcıların kabul ettiği en yakın oranı seç
+function pickAspectRatio(width, height) {
+  const ratios = [
+    { label: '1:1', value: 1 },
+    { label: '4:3', value: 4 / 3 },
+    { label: '3:4', value: 3 / 4 },
+    { label: '16:9', value: 16 / 9 },
+    { label: '9:16', value: 9 / 16 },
+    { label: '3:2', value: 3 / 2 },
+    { label: '2:3', value: 2 / 3 }
+  ];
+  const target = width / height;
+  let best = ratios[0];
+  for (const r of ratios) {
+    if (Math.abs(r.value - target) < Math.abs(best.value - target)) best = r;
+  }
+  return best.label;
+}
+
+async function tryRunware(prompt, width, height) {
+  const key = (process.env.RUNWARE_API_KEY || '').trim();
+  if (!key) return { ok: false, error: 'missing_env' };
+
+  const taskUUID = Date.now().toString(36) + Math.random().toString(36).slice(2);
+  let resp;
+  try {
+    resp = await fetchWithTimeout('https://api.runware.ai/v1', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + key
+      },
+      body: JSON.stringify([{
+        taskType: 'imageInference',
+        taskUUID,
+        positivePrompt: prompt,
+        model: 'runware:100@1',
+        width,
+        height,
+        numberResults: 1,
+        outputType: ['URL']
+      }])
+    }, PROVIDER_TIMEOUT_MS);
+  } catch (err) {
+    return { ok: false, error: err.name === 'AbortError' ? 'timeout' : 'network' };
+  }
+
+  const text = await resp.text();
+  if (!resp.ok) {
+    const error = text.includes('insufficientCredits') ? 'insufficient_credits' : 'provider_error';
+    return { ok: false, error, status: resp.status, details: text.slice(0, 500) };
+  }
+
+  let data;
+  try { data = JSON.parse(text); } catch (e) { data = null; }
+  const result = (data && data.data && data.data[0]) || (Array.isArray(data) && data[0]) || null;
+  if (result && result.imageURL) return { ok: true, url: result.imageURL };
+  return { ok: false, error: 'empty_response', details: text.slice(0, 500) };
+}
+
+async function tryFal(prompt, width, height) {
+  const key = (process.env.FAL_KEY || '').trim();
+  if (!key) return { ok: false, error: 'missing_env' };
+
+  let resp;
+  try {
+    resp = await fetchWithTimeout('https://fal.run/fal-ai/flux/schnell', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Key ' + key
+      },
+      body: JSON.stringify({
+        prompt,
+        image_size: { width, height },
+        num_images: 1
+      })
+    }, PROVIDER_TIMEOUT_MS);
+  } catch (err) {
+    return { ok: false, error: err.name === 'AbortError' ? 'timeout' : 'network' };
+  }
+
+  const text = await resp.text();
+  if (!resp.ok) {
+    return { ok: false, error: 'provider_error', status: resp.status, details: text.slice(0, 500) };
+  }
+
+  let data;
+  try { data = JSON.parse(text); } catch (e) { data = null; }
+  const url = data && data.images && data.images[0] && data.images[0].url;
+  if (url) return { ok: true, url };
+  return { ok: false, error: 'empty_response', details: text.slice(0, 500) };
+}
+
+async function tryReplicate(prompt, width, height) {
+  const key = (process.env.REPLICATE_API_TOKEN || '').trim();
+  if (!key) return { ok: false, error: 'missing_env' };
+
+  let resp;
+  try {
+    resp = await fetchWithTimeout('https://api.replicate.com/v1/models/black-forest-labs/flux-schnell/predictions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + key,
+        'Prefer': 'wait'
+      },
+      body: JSON.stringify({
+        input: {
+          prompt,
+          num_outputs: 1,
+          aspect_ratio: pickAspectRatio(width, height),
+          output_format: 'jpg'
+        }
+      })
+    }, PROVIDER_TIMEOUT_MS);
+  } catch (err) {
+    return { ok: false, error: err.name === 'AbortError' ? 'timeout' : 'network' };
+  }
+
+  const text = await resp.text();
+  if (!resp.ok) {
+    return { ok: false, error: 'provider_error', status: resp.status, details: text.slice(0, 500) };
+  }
+
+  let data;
+  try { data = JSON.parse(text); } catch (e) { data = null; }
+  const output = data && data.output;
+  const url = Array.isArray(output) ? output[0] : (typeof output === 'string' ? output : null);
+  if (url) return { ok: true, url };
+  return { ok: false, error: 'empty_response', details: text.slice(0, 500) };
+}
+
+async function tryStability(prompt, width, height) {
+  const key = (process.env.STABILITY_API_KEY || '').trim();
+  if (!key) return { ok: false, error: 'missing_env' };
+
+  const form = new FormData();
+  form.append('prompt', prompt);
+  form.append('output_format', 'jpeg');
+  form.append('aspect_ratio', pickAspectRatio(width, height));
+
+  let resp;
+  try {
+    resp = await fetchWithTimeout('https://api.stability.ai/v2beta/stable-image/generate/core', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + key,
+        'Accept': 'application/json'
+      },
+      body: form
+    }, PROVIDER_TIMEOUT_MS);
+  } catch (err) {
+    return { ok: false, error: err.name === 'AbortError' ? 'timeout' : 'network' };
+  }
+
+  const text = await resp.text();
+  if (!resp.ok) {
+    return { ok: false, error: 'provider_error', status: resp.status, details: text.slice(0, 500) };
+  }
+
+  let data;
+  try { data = JSON.parse(text); } catch (e) { data = null; }
+  if (data && data.image) return { ok: true, url: 'data:image/jpeg;base64,' + data.image };
+  return { ok: false, error: 'empty_response', details: text.slice(0, 300) };
+}
+
+async function tryHuggingFace(prompt) {
+  const key = (process.env.HUGGINGFACE_API_KEY || '').trim();
+  if (!key) return { ok: false, error: 'missing_env' };
+
+  let resp;
+  try {
+    resp = await fetchWithTimeout('https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + key
+      },
+      body: JSON.stringify({ inputs: prompt })
+    }, PROVIDER_TIMEOUT_MS);
+  } catch (err) {
+    return { ok: false, error: err.name === 'AbortError' ? 'timeout' : 'network' };
+  }
+
+  if (!resp.ok) {
+    const text = await resp.text();
+    return { ok: false, error: 'provider_error', status: resp.status, details: text.slice(0, 500) };
+  }
+
+  const contentType = resp.headers.get('content-type') || '';
+  if (!contentType.startsWith('image/')) {
+    const text = await resp.text();
+    return { ok: false, error: 'unexpected_response', details: text.slice(0, 300) };
+  }
+
+  const buffer = Buffer.from(await resp.arrayBuffer());
+  return { ok: true, url: 'data:' + contentType + ';base64,' + buffer.toString('base64') };
+}
+
+const PROVIDERS = [
+  { name: 'runware', fn: tryRunware },
+  { name: 'fal', fn: tryFal },
+  { name: 'replicate', fn: tryReplicate },
+  { name: 'stability', fn: tryStability },
+  { name: 'huggingface', fn: tryHuggingFace }
+];
+
 exports.handler = async function(event) {
   if (typeof fetch === 'undefined') {
-    return {
-      statusCode: 500,
-      headers: { 'Access-Control-Allow-Origin': '*' },
-      body: JSON.stringify({
-        ok: false,
-        error: 'runtime_fetch_missing',
-        message: 'Netlify runtime fetch desteği bulunamadı.'
-      })
-    };
+    return corsJson(500, {
+      ok: false,
+      error: 'runtime_fetch_missing',
+      message: 'Netlify runtime fetch desteği bulunamadı.'
+    });
   }
 
   if (event.httpMethod === 'OPTIONS') {
@@ -24,136 +248,68 @@ exports.handler = async function(event) {
   }
 
   if (event.httpMethod !== 'POST') {
-    return {
-      statusCode: 405,
-      headers: { 'Access-Control-Allow-Origin': '*' },
-      body: JSON.stringify({ ok: false, error: 'Sadece POST desteklenir.' })
-    };
-  }
-
-  const runwareKey = (process.env.RUNWARE_API_KEY || '').trim();
-  if (!runwareKey) {
-    return {
-      statusCode: 503,
-      headers: { 'Access-Control-Allow-Origin': '*' },
-      body: JSON.stringify({
-        ok: false,
-        error: 'missing_env',
-        message: 'Netlify üzerinde RUNWARE_API_KEY tanımlanmamış.'
-      })
-    };
+    return corsJson(405, { ok: false, error: 'Sadece POST desteklenir.' });
   }
 
   let body;
   try {
     body = JSON.parse(event.body || '{}');
   } catch (err) {
-    return {
-      statusCode: 400,
-      headers: { 'Access-Control-Allow-Origin': '*' },
-      body: JSON.stringify({ ok: false, error: 'bad_json', message: 'Geçersiz istek gövdesi.' })
-    };
+    return corsJson(400, { ok: false, error: 'bad_json', message: 'Geçersiz istek gövdesi.' });
   }
 
   const prompt = body.prompt;
   const width = parseInt(body.width, 10) || 1024;
   const height = parseInt(body.height, 10) || 1024;
+  const forceProvider = String(body.forceProvider || '').trim().toLowerCase();
 
   if (!prompt) {
-    return {
-      statusCode: 400,
-      headers: { 'Access-Control-Allow-Origin': '*' },
-      body: JSON.stringify({ ok: false, error: 'missing_prompt', message: 'Prompt alanı zorunludur.' })
-    };
+    return corsJson(400, { ok: false, error: 'missing_prompt', message: 'Prompt alanı zorunludur.' });
   }
 
-  const taskUUID = Date.now().toString(36) + Math.random().toString(36).slice(2);
+  const chain = forceProvider
+    ? PROVIDERS.filter(p => p.name === forceProvider)
+    : PROVIDERS;
 
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 25000);
+  if (!chain.length) {
+    return corsJson(400, { ok: false, error: 'unknown_provider', message: 'Bilinmeyen sağlayıcı: ' + forceProvider });
+  }
 
-    const resp = await fetch('https://api.runware.ai/v1', {
-      method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + runwareKey
-      },
-      body: JSON.stringify([{
-        taskType: 'imageInference',
-        taskUUID,
-        positivePrompt: prompt,
-        model: 'runware:100@1',
-        width,
-        height,
-        numberResults: 1,
-        outputType: ['URL']
-      }]),
-      signal: controller.signal
-    });
-
-    clearTimeout(timeoutId);
-
-    const text = await resp.text();
-    if (!resp.ok) {
-      return {
-        statusCode: resp.status,
-        headers: { 'Access-Control-Allow-Origin': '*' },
-        body: JSON.stringify({
-          ok: false,
-          error: 'provider_error',
-          status: resp.status,
-          message: 'Runware API hatası.',
-          details: text
-        })
-      };
-    }
-
-    let data;
+  const attempts = [];
+  for (const provider of chain) {
+    let result;
     try {
-      data = JSON.parse(text);
-    } catch (e) {
-      data = null;
+      result = await provider.fn(prompt, width, height);
+    } catch (err) {
+      result = { ok: false, error: 'internal', details: String(err && err.message || err).slice(0, 300) };
     }
 
-    const result = (data && data.data && data.data[0]) || (Array.isArray(data) && data[0]) || null;
-    if (!result || !result.imageURL) {
-      console.error('Runware parse failed, raw response:', JSON.stringify(data));
+    if (result.ok) {
+      return corsJson(200, {
+        ok: true,
+        provider: provider.name,
+        images: [result.url],
+        attempts
+      });
     }
-    if (result && result.imageURL) {
-      return {
-        statusCode: 200,
-        headers: { 'Access-Control-Allow-Origin': '*' },
-        body: JSON.stringify({
-          ok: true,
-          provider: 'runware',
-          images: [result.imageURL]
-        })
-      };
-    } else {
-      return {
-        statusCode: 502,
-        headers: { 'Access-Control-Allow-Origin': '*' },
-        body: JSON.stringify({
-          ok: false,
-          error: 'empty_response',
-          message: 'Sağlayıcı görsel adresi döndürmedi.',
-          details: text
-        })
-      };
-    }
-  } catch (err) {
-    if (err.name === 'AbortError') {
-      return {
-        statusCode: 504,
-        headers: { 'Access-Control-Allow-Origin': '*' },
-        body: JSON.stringify({ ok: false, error: 'timeout', message: 'Runware API zaman aşımına uğradı.' })
-      };
-    }
-    return {
-      statusCode: 500,
-      headers: { 'Access-Control-Allow-Origin': '*' },
-      body: JSON.stringify({ ok: false, error: 'network', message: 'Proxy ağ hatası veya bağlantı kesildi.' })
-    };
+
+    attempts.push({
+      provider: provider.name,
+      error: result.error,
+      status: result.status || null,
+      details: result.details || null
+    });
   }
+
+  const configured = attempts.filter(a => a.error !== 'missing_env');
+  const message = configured.length === 0
+    ? 'Hiçbir görsel sağlayıcısı yapılandırılmamış (env anahtarları eksik).'
+    : 'Tüm görsel sağlayıcıları başarısız oldu: ' + attempts.map(a => `${a.provider}=${a.error}`).join(', ');
+
+  return corsJson(502, {
+    ok: false,
+    error: configured.length === 0 ? 'missing_env' : 'all_providers_failed',
+    message,
+    details: JSON.stringify(attempts)
+  });
 };
