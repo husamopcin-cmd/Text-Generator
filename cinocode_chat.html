@@ -7796,6 +7796,7 @@
         applySidebarState(isSidebarCollapsed, false);
         applyFeatureUiState();
         restoreComposerDraftIfNeeded();
+        loadMediaSourceSelection();
         try { renderUsageRoleUI(localStorage.getItem(USAGE_ROLE_KEY) || 'general'); } catch (e) {}
 
         // Paste (CTRL+V) olayını dinle ve kopyalanan resimleri yakala
