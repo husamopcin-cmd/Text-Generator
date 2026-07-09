@@ -4134,6 +4134,9 @@
                     // Sınav Koçu modu aktif, ancak otomatik gönderme yapmıyoruz.
                     // Kullanıcı önce metnini yazarak onaylamalı.
                     document.getElementById("userInput").placeholder = "PDF hazır. Ne yapmamı istediğini yaz...";
+                } else if (endPage < totalPages) {
+                    showNonBlockingToast(`⚠️ Bu PDF ${totalPages} sayfa; sadece ilk ${endPage} sayfa okundu. Devamı için mesajında sayfa aralığı belirt (örn: "31-60. sayfaları oku").`);
+                    document.getElementById("userInput").placeholder = `PDF hazır (ilk ${endPage}/${totalPages} sayfa okundu). Ne yapmamı istediğini yaz...`;
                 }
 
             } catch (err) {
