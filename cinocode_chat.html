@@ -2752,9 +2752,9 @@
             cleaned = cleaned.replace(/\b(sikeceğim|amk|aq|sik|piç|göt|orospu|yavşak|siktir)\b/gi, "[SANSÜRLENDİ]");
         }
         
-        const personaSelect = typeof document !== 'undefined' ? document.getElementById("personaSelect") : null;
-        const personaLabel = personaSelect && personaSelect.options.length > 0 ? personaSelect.options[personaSelect.selectedIndex].text : "";
-        const isAblaAbi = /abla|abi/i.test(personaLabel);
+        const activeVoiceSelect = typeof document !== 'undefined' ? document.getElementById("voiceSelect") : null;
+        const activeVoiceLabel = activeVoiceSelect && activeVoiceSelect.options.length > 0 ? activeVoiceSelect.options[activeVoiceSelect.selectedIndex].text : "";
+        const isAblaAbi = /abla|abi/i.test(activeVoiceLabel);
 
         if ((styleMode === 'safe' || styleMode === 'balanced') && isAblaAbi) {
             cleaned = cleaned.replace(/😈|💦|👅|🍑|🍆/g, "");
@@ -3803,11 +3803,11 @@
         const mode = getFeatureValue('styleMode') || 'safe';
         let governorText = "";
         
-        const personaSelect = document.getElementById("personaSelect");
-        if (personaSelect) {
-            const personaLabel = personaSelect.options[personaSelect.selectedIndex]?.text || "";
-            if (/abla|abi/i.test(personaLabel)) {
-                governorText += "\n\nKİŞİLİK KURALI (ABLA/ABİ): Seçili personanda 'Abla' veya 'Abi' gibi aile hitapları var. Bu yüzden, hangi mod veya ton seçili olursa olsun, KESİNLİKLE flörtöz, cinsel imalı veya aşırı romantik bir üslup kullanma. Aile büyüğü/yakını şefkati göster, ancak rahatsız edici imalardan (örn. 'sarılayım', '😈') tamamen uzak dur.";
+        const activeVoiceSelectForGovernor = document.getElementById("voiceSelect");
+        if (activeVoiceSelectForGovernor) {
+            const activeVoiceLabelForGovernor = activeVoiceSelectForGovernor.options[activeVoiceSelectForGovernor.selectedIndex]?.text || "";
+            if (/abla|abi/i.test(activeVoiceLabelForGovernor)) {
+                governorText += "\n\nKİŞİLİK KURALI (ABLA/ABİ): Seçili seste 'Abla' veya 'Abi' gibi aile hitapları var. Bu yüzden, hangi mod veya ton seçili olursa olsun, KESİNLİKLE flörtöz, cinsel imalı veya aşırı romantik bir üslup kullanma. Aile büyüğü/yakını şefkati göster, ancak rahatsız edici imalardan (örn. 'sarılayım', '😈') tamamen uzak dur.";
             }
         }
 
