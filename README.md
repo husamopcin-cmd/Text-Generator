@@ -4,8 +4,8 @@ A multi-provider AI chat application built as a single-file web app, with text, 
 
 > **Note:** The product UI and prompts are in Turkish (built for Turkish-speaking users), but the code, architecture, and this README are documented for a general technical audience.
 
-**Live demo:** _add your Netlify URL here_
-**Repo:** _add your GitHub URL here_
+**Live demo:** (demo linki yakında eklenecek)
+**Repo:** https://github.com/husamopcin-cmd/Text-Generator
 
 ---
 
