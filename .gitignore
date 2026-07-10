@@ -3,3 +3,8 @@
 
 # Secrets
 .env
+
+*.log
+node_modules
+*.mp3
+users.db
