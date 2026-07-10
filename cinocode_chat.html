@@ -2805,7 +2805,19 @@
 
     function hasRenderableMediaSubject(text) {
         const subject = getMediaCommandSubject(text);
-        return subject.length >= 3 && !/^(kanka|knk|abi|abim|reis|dostum)$/.test(subject);
+        // FIX(ROUTER-2): Kısa mesajlarda (örn. "elma çiz", "kedi çiz") verb strip
+        // sonrası kalan subject yeterli uzunlukta olmayabilir. Orijinal metin
+        // kısa (< 25 karakter) ve en az bir fiil içeriyorsa subject kontrolünü
+        // atla — bu mesajlar neredeyse her zaman görsel isteğidir.
+        const normalized = (text || "").toLocaleLowerCase("tr-TR").trim();
+        const isShortDrawCommand = normalized.length < 25 &&
+            /(?:çiz|ciz|oluştur|olustur|üret|uret|draw|create|paint|tasarla)/i.test(normalized);
+        if (isShortDrawCommand) return true;
+        const isValid = subject.length >= 3 && !/^(kanka|knk|abi|abim|reis|dostum)$/.test(subject);
+        if (!isValid) {
+
+        }
+        return isValid;
     }
 
     function isAmbiguousImageCreationRequest(text) {
@@ -3562,6 +3574,14 @@
 
     function isImageTechnicalDiscussion(text) {
         const normalized = (text || "").toLocaleLowerCase("tr-TR");
+        // FIX(ROUTER-1): Eğer mesaj açıkça bir çizim/görsel üretim isteği ise
+        // ("X çiz", "X resmi oluştur" kalıpları) teknik tartışma olarak işaretleme.
+        // Teknik kelimeler mesajın geri kalanında geçse bile görsel intent kazanır.
+        const hasExplicitDrawCommand = new RegExp(
+            `(?:^|\\s)(?:bir\\s+)?(?:[\\w\\u00C0-\\u024F\\u011E\\u011F\\u0130\\u0131\\u015E\\u015F\\u00D6\\u00F6\\u00DC\\u00FC]+\\s+)(?:çiz|ciz|çizsene|cizsene|resmi oluştur|resim oluştur|görseli oluştur|gorsel olustur|görsel üret|gorsel uret)`,
+            "iu"
+        ).test(normalized);
+        if (hasExplicitDrawCommand) return false;
         return /(patch|bug|fix|hata|sistemi|provider|code|kod|console|error|api|key|token|ayarlar|settings|log|debug|developer|geliştirici|gelistirici|select-string|get-content|node --check)/i.test(normalized);
     }
 
@@ -9356,6 +9376,33 @@
                         window.lastWorkingModelAt = Date.now();
 
                         const botReply = sanitizeAssistantOutput(String(jsonData.content || '').trim());
+                                                // Parse potential JSON action from model output
+                        let parsedAction = null;
+                        try {
+                          const trimmed = botReply.trim();
+                          if (trimmed.startsWith('{')) {
+                            const obj = JSON.parse(trimmed);
+                            if (obj && typeof obj === 'object' && obj.action) {
+                              parsedAction = obj;
+                            }
+                          }
+                        } catch (e) {
+                          // Not valid JSON, ignore
+                        }
+
+                        if (parsedAction && parsedAction.action === 'generate_image' && parsedAction.prompt) {
+                          // Use existing image generation flow by inserting placeholder
+                          const cleanPrompt = buildCleanMediaPrompt(parsedAction.prompt, "image");
+                          chat.messages.push({ role: 'assistant', content: `[GENERATE_IMAGE: ${cleanPrompt}]` });
+                          // Render placeholder now
+                          document.getElementById(botId).innerHTML = renderContentWithImages(`[GENERATE_IMAGE: ${cleanPrompt}]`, true);
+                          attachMsgActionsToBotDiv(botId, chat.messages.length - 1, chat.messages[chat.messages.length - 1]);
+                          scrollToBottom();
+                          // Skip normal rendering below
+                          return;
+                        }
+
+                        // Existing rendering for plain text responses
                         document.getElementById(botId).removeAttribute('data-typing-indicator');
                         document.getElementById(botId).innerHTML = renderContentWithImages(botReply, true);
                         scrubPlaceholderErrorImages(document.getElementById(botId));

@@ -1,3 +1,5 @@
+
+
 const PROVIDER_TIMEOUT_MS = 18000;
 
 function corsJson(statusCode, bodyObj) {
@@ -219,10 +221,10 @@ async function tryHuggingFace(prompt) {
 }
 
 const PROVIDERS = [
+  { name: 'stability', fn: tryStability },
   { name: 'runware', fn: tryRunware },
   { name: 'fal', fn: tryFal },
   { name: 'replicate', fn: tryReplicate },
-  { name: 'stability', fn: tryStability },
   { name: 'huggingface', fn: tryHuggingFace }
 ];
 
