@@ -2736,7 +2736,6 @@
             .replace(/\[DEVELOPER:[\s\S]*?\]/gi, "")
             .replace(/\[(?:senin\s+ad[ıi]n|kullanıcı\s+ad[ıi]|ad[ıi]n|isim)\]/gi, "kanka")
             .replace(/\bSenin\s+ad[ıi]n?\b/gi, "kanka")
-            .replace(/Ahmet\w*/gi, "")
             .replace(/^\s*(Sen|Kullanıcı|User|Assistant|Bot):\s*.*$/gmi, "")
             .replace(/^\s*Viewed\s+.*$/gmi, "")
             .replace(/^\s*Edited\s+.*$/gmi, "")
@@ -2745,6 +2744,12 @@
             .replace(/^\s*Thought for\s+.*$/gmi, "")
             .replace(/^\s*node\s+-e\s+.*$/gmi, "")
             .trim();
+
+        let currentUser = "";
+        try { currentUser = localStorage.getItem('cinocode_user') || ""; } catch(e) {}
+        if (!currentUser || currentUser.trim().toLowerCase() !== "ahmet") {
+            cleaned = cleaned.replace(/Ahmet\w*/gi, "");
+        }
 
         const styleMode = typeof getFeatureValue === 'function' ? (getFeatureValue('styleMode') || 'safe') : 'safe';
         
@@ -8865,8 +8870,9 @@
 
             let userMemory = localStorage.getItem('cinocode_memory_' + (loggedUser || "default"));
             if (userMemory) {
-                // "Ahmet" bugını kalıcı olarak temizle
-                if (userMemory.toLowerCase().includes("ahmet")) {
+                // "Ahmet" bugını kalıcı olarak temizle (sadece gerçek adı Ahmet olmayanlar için)
+                let actualUser = (loggedUser || "default").toLowerCase();
+                if (actualUser !== "ahmet" && userMemory.toLowerCase().includes("ahmet")) {
                     userMemory = userMemory.replace(/ahmet/gi, "").trim();
                     localStorage.setItem('cinocode_memory_' + (loggedUser || "default"), userMemory);
                 }
