@@ -9383,6 +9383,15 @@
                           if (trimmed.startsWith('{')) {
                             const obj = JSON.parse(trimmed);
                             if (obj && typeof obj === 'object' && obj.action) {
+                              if (obj.action === 'dalle.text2im' && typeof obj.action_input === 'string') {
+                                try {
+                                  const inner = JSON.parse(obj.action_input);
+                                  if (inner && inner.prompt) {
+                                    obj.prompt = inner.prompt;
+                                  }
+                                } catch (_) { }
+                                obj.action = 'generate_image';
+                              }
                               parsedAction = obj;
                             }
                           }
