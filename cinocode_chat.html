@@ -2775,6 +2775,17 @@
         }
     }
 
+    function isStaleStyleMetaRefusal(message, activeStyleMode) {
+        if (activeStyleMode !== 'free') return false;
+        const low = message.toLowerCase();
+        
+        // Teknik veya kod baglami iceriyorsa filtreleme
+        if (low.includes('throw new error') || low.includes('catch (')) return false;
+        
+        const refusalPattern = /(k[uü]f[uü]r edemem|sistemim izin vermiyor|etik kural|kodlar[iı]mda (b[oö]yle|k[uü]f[uü]r)|sayg[iı]l[iı] konu[sş]|bu sohbeti (burada )?sonland[iı]r|bu dille ilerlemeyelim|ben (bir )?yapay zek[aâ])/i;
+        return refusalPattern.test(low);
+    }
+
     function sanitizeAssistantOutput(text) {
         if (!text) return "";
         let cleaned = text
@@ -6694,6 +6705,7 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
         recognition.lang = 'tr-TR';
 
         recognition.onstart = () => {
+            isStarting = false;
             isRecording = true;
             sttFinalBuffer = '';  // Yeni oturum başlıyor, buffer temizle
             if (sttFlushTimer) { clearTimeout(sttFlushTimer); sttFlushTimer = null; }
@@ -6747,6 +6759,7 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
         };
 
         recognition.onerror = (err) => {
+            isStarting = false;
             console.error("STT Hatası:", err);
             if (err.error === 'not-allowed') {
                 alert("Tarayıcı mikrofon iznini engellemiş olabilir. Lütfen siteye mikrofon izni verin.");
@@ -6756,6 +6769,7 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
             if (err.error !== 'no-speech') stopMic();
         };
         recognition.onend = () => {
+            isStarting = false;
             // Buffer'da bekleyen varsa hemen yaz
             if (sttFinalBuffer && sttFinalBuffer.trim()) {
                 if (sttFlushTimer) clearTimeout(sttFlushTimer);
@@ -6770,7 +6784,11 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
                 }
             }
             if (isRecording) {
-                try { recognition.start(); } catch(e) { stopMic(); }
+                setTimeout(() => {
+                    if (isRecording) {
+                        try { recognition.start(); } catch(e) { stopMic(); }
+                    }
+                }, 100);
             } else {
                 stopMic();
             }
@@ -6779,19 +6797,26 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
 
     function toggleMic() {
         if (!recognition) return alert("Tarayıcınız mikrofon desteklemiyor veya sayfa yeniden yüklenmesi gerekebilir.");
-        if (isRecording) {
+        if (isRecording || isStarting) {
             stopMic();
         } else {
             // userInput.value = ""; // İPTAL! Artık eski yazdıklarını veya dosya eklerini silmeyecek!
+            isStarting = true;
             try {
                 recognition.start();
             } catch(e) {
-                console.log("Mikrofon zaten açık:", e);
+                isStarting = false;
+                if (e.name === 'NotAllowedError') {
+                    alert("Tarayıcı mikrofon iznini engellemiş olabilir. Lütfen siteye mikrofon izni verin.");
+                } else {
+                    console.log("Mikrofon zaten açık:", e);
+                }
             }
         }
     }
 
     function stopMic() {
+        isStarting = false;
         if (!isRecording) return;
         isRecording = false;
         // Buffer'ı temizle
@@ -9043,6 +9068,10 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
                 if (hm.role === 'assistant' && typeof hm.content === 'string') {
                     const low = hm.content.toLowerCase();
                     if (low.includes('otomatik yedekleme') || low.includes('yedek model') || low.includes('yanıt hazırlanıyor') || low.includes('kota') || low.includes('hata:')) continue;
+                    
+                    if (isStaleStyleMetaRefusal(hm.content, getFeatureValue('styleMode') || 'safe')) {
+                        continue;
+                    }
                 }
                 // skip messages that were inserted as UI/system warnings
                 if (hm.meta && hm.meta.ui) continue;
@@ -9251,6 +9280,10 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
             const triedModels = new Set();
             let lastErrorMessage = null;
             let lastErrorDetails = null;
+
+            let fallbackNote = "";
+            const firstChoiceModel = fallbackQueue[0];
+            const firstChoiceInfo = firstChoiceModel ? parseModelLabel(firstChoiceModel) : null;
 
             for (let i = 0; i < fallbackQueue.length; i++) {
                 const currentTryModel = fallbackQueue[i];
@@ -9484,7 +9517,11 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
                         }
 
                         setModelScore(currentTryModel, +2);
-                        document.getElementById("modelSelect").value = currentTryModel;
+                        if (i > 0 && firstChoiceInfo) {
+                            fallbackNote = `<div class="fallback-note" style="font-size:11px; color:#f38ba8; margin-top:8px; padding:6px; background:rgba(243, 139, 168, 0.1); border-radius:4px; border-left:3px solid #f38ba8;">⚡ <b>Otomatik Geçiş:</b> ${firstChoiceInfo.displayLabel} bağlantısı başarısız oldu. Yanıt <b>${currentTryInfo.displayLabel}</b> ile üretildi.</div>`;
+                        } else {
+                            document.getElementById("modelSelect").value = currentTryModel;
+                        }
                         window.lastWorkingProvider = currentTryInfo.provider;
                         window.lastWorkingModel = actualModel;
                         window.lastWorkingModelAt = Date.now();
@@ -9520,9 +9557,15 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
                         if (parsedAction && parsedAction.action === 'generate_image' && parsedAction.prompt) {
                           // Use existing image generation flow by inserting placeholder
                           const cleanPrompt = buildCleanMediaPrompt(parsedAction.prompt, "image");
-                          chat.messages.push({ role: 'assistant', content: `[GENERATE_IMAGE: ${cleanPrompt}]` });
+                          let imgContent = `[GENERATE_IMAGE: ${cleanPrompt}]`;
+                          if (fallbackNote) {
+                              imgContent += "\n\n" + fallbackNote;
+                          } else if (typeof actualModelForAuto !== 'undefined' && actualModelForAuto) {
+                              imgContent += "\n\n<div style='font-size:10px; color:#a6adc8; margin-top:8px;'>⚡ Model: " + actualModelForAuto + "</div>";
+                          }
+                          chat.messages.push({ role: 'assistant', content: imgContent });
                           // Render placeholder now
-                          document.getElementById(botId).innerHTML = renderContentWithImages(`[GENERATE_IMAGE: ${cleanPrompt}]`, true);
+                          document.getElementById(botId).innerHTML = renderContentWithImages(imgContent, true);
                           attachMsgActionsToBotDiv(botId, chat.messages.length - 1, chat.messages[chat.messages.length - 1]);
                           scrollToBottom();
                           // Skip normal rendering below
@@ -9535,7 +9578,9 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
                         scrubPlaceholderErrorImages(document.getElementById(botId));
                         addCopyButtons(document.getElementById(botId));
                         appendSmartSuggestions(botId, botReply, text);
-                        if (typeof actualModelForAuto !== 'undefined' && actualModelForAuto) {
+                        if (fallbackNote) {
+                            botReply += "\n\n" + fallbackNote;
+                        } else if (typeof actualModelForAuto !== 'undefined' && actualModelForAuto) {
                             botReply += "\n\n<div style='font-size:10px; color:#a6adc8; margin-top:8px;'>⚡ Model: " + actualModelForAuto + "</div>";
                         }
                         chat.messages.push({ role: 'assistant', content: botReply });
@@ -9581,7 +9626,11 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
                         }
 
                         setModelScore(currentTryModel, +2); // AI Router: başarı
-                        document.getElementById("modelSelect").value = currentTryModel;
+                        if (i > 0 && firstChoiceInfo) {
+                            fallbackNote = `<div class="fallback-note" style="font-size:11px; color:#f38ba8; margin-top:8px; padding:6px; background:rgba(243, 139, 168, 0.1); border-radius:4px; border-left:3px solid #f38ba8;">⚡ <b>Otomatik Geçiş:</b> ${firstChoiceInfo.displayLabel} bağlantısı başarısız oldu. Yanıt <b>${currentTryInfo.displayLabel}</b> ile üretildi.</div>`;
+                        } else {
+                            document.getElementById("modelSelect").value = currentTryModel;
+                        }
                         // mark last working early so next message can prefer it
                         window.lastWorkingProvider = provider || window.lastWorkingProvider;
                         window.lastWorkingModel = actualModel;
@@ -9614,7 +9663,11 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
                         }
 
                         setModelScore(currentTryModel, +2);
-                        document.getElementById("modelSelect").value = currentTryModel;
+                        if (i > 0 && firstChoiceInfo) {
+                            fallbackNote = `<div class="fallback-note" style="font-size:11px; color:#f38ba8; margin-top:8px; padding:6px; background:rgba(243, 139, 168, 0.1); border-radius:4px; border-left:3px solid #f38ba8;">⚡ <b>Otomatik Geçiş:</b> ${firstChoiceInfo.displayLabel} bağlantısı başarısız oldu. Yanıt <b>${currentTryInfo.displayLabel}</b> ile üretildi.</div>`;
+                        } else {
+                            document.getElementById("modelSelect").value = currentTryModel;
+                        }
                         window.lastWorkingProvider = 'ollama';
                         window.lastWorkingModel = actualModel;
                         window.lastWorkingModelAt = Date.now();
@@ -9764,6 +9817,47 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
 
             botReply = sanitizeAssistantOutput(botReply);
             document.getElementById(botId).removeAttribute('data-typing-indicator');
+            
+            let parsedAction = null;
+            try {
+                const trimmed = botReply.trim();
+                if (trimmed.startsWith('{')) {
+                    const obj = JSON.parse(trimmed);
+                    if (obj && typeof obj === 'object' && obj.action) {
+                        if (obj.action === 'dalle.text2im') {
+                            if (typeof obj.action_input === 'string') {
+                                try {
+                                    const inner = JSON.parse(obj.action_input);
+                                    if (inner && inner.prompt) obj.prompt = inner.prompt;
+                                } catch (_) { }
+                                if (!obj.prompt) obj.prompt = obj.action_input;
+                            } else if (obj.action_input && typeof obj.action_input === 'object') {
+                                if (obj.action_input.prompt) obj.prompt = obj.action_input.prompt;
+                            }
+                            obj.action = 'generate_image';
+                        }
+                        parsedAction = obj;
+                    }
+                }
+            } catch (e) { }
+
+            if (parsedAction && parsedAction.action === 'generate_image' && parsedAction.prompt) {
+                const cleanPrompt = buildCleanMediaPrompt(parsedAction.prompt, "image");
+                let imgContent = `[GENERATE_IMAGE: ${cleanPrompt}]`;
+                if (fallbackNote) {
+                    imgContent += "\n\n" + fallbackNote;
+                } else if (typeof actualModelForAuto !== 'undefined' && actualModelForAuto) {
+                    imgContent += "\n\n<div style='font-size:10px; color:#a6adc8; margin-top:8px;'>⚡ Model: " + actualModelForAuto + "</div>";
+                }
+                chat.messages.push({ role: 'assistant', content: imgContent });
+                document.getElementById(botId).innerHTML = renderContentWithImages(imgContent, true);
+                attachMsgActionsToBotDiv(botId, chat.messages.length - 1, chat.messages[chat.messages.length - 1]);
+                scrollToBottom();
+                chat.updatedAt = Date.now();
+                saveDatabase();
+                if (typeof applyShowMoreLogic === 'function') applyShowMoreLogic(document.getElementById(botId));
+                return;
+            }
             document.getElementById(botId).innerHTML = renderContentWithImages(botReply, true);
             scrubPlaceholderErrorImages(document.getElementById(botId));
             addCopyButtons(document.getElementById(botId));
@@ -9831,7 +9925,9 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
                     chat.messages.push({ role: "assistant", content: failMsg });
                     attachMsgActionsToBotDiv(botId, chat.messages.length - 1, chat.messages[chat.messages.length - 1]);
                 } else {
-                    if (typeof actualModelForAuto !== 'undefined' && actualModelForAuto) {
+                    if (fallbackNote) {
+                        botReply += "\n\n" + fallbackNote;
+                    } else if (typeof actualModelForAuto !== 'undefined' && actualModelForAuto) {
                         botReply += "\n\n<div style='font-size:10px; color:#a6adc8; margin-top:8px;'>⚡ Model: " + actualModelForAuto + "</div>";
                     }
                     chat.messages.push({ role: "assistant", content: botReply });
