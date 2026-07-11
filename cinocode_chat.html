@@ -1860,7 +1860,7 @@
 
     <div class="welcome-screen" id="welcomeScreen" style="display:none;">
         <div class="welcome-logo">✨</div>
-        <h2>Bugün ne üretmek istersin?</h2>
+        <h2 id="welcomeGreetingText">Bugün ne üretmek istersin?</h2>
         <div class="new-project-panel" id="newProjectPanel">
             <div class="new-project-controls">
                 <label>Proje adi
@@ -2321,6 +2321,27 @@
         <div style="color:#a6adc8; font-size:11px; margin-bottom:15px; line-height:1.4; text-align:left;">* Klasik mod, mesaj aksiyon butonlarını ve bazı yeni bileşenleri sade gösterir. Gerçek kod sürümünü geri almaz.</div>
 
         <button class="send-btn" style="width: 100%; border-radius: 8px; padding: 10px;" onclick="saveSettings()">Kaydet</button>
+    </div>
+
+    <!-- Profession Selection Modal -->
+    <div class="attach-menu-overlay" id="professionOverlay" onclick="closeProfessionModal()"></div>
+    <div class="attach-menu" id="professionMenu" style="bottom: 50%; transform: translate(-50%, 50%); display: none; opacity: 0; pointer-events: auto; max-height: 85vh; width: 90%; max-width: 500px; overflow-y: auto;" onclick="event.stopPropagation()">
+        <button class="attach-menu-close" onclick="closeProfessionModal()">×</button>
+        <div class="attach-menu-title" style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+            💼 Meslek & Uzmanlık Seçimi
+        </div>
+        
+        <div style="margin-bottom:15px; position:relative;">
+            <input type="text" id="professionSearchInput" oninput="filterProfessions()" placeholder="🔍 Meslek ara... (örn: doktor, avukat, mimar)" style="width:100%; padding:10px 12px; border-radius:8px; border:1px solid #45475a; background:#181825; color:#cdd6f4; font-size:13px; box-sizing:border-box; outline:none;">
+        </div>
+
+        <div id="professionsListContainer" style="display:flex; flex-direction:column; gap:8px; max-height:45vh; overflow-y:auto; padding-right:4px;">
+            <!-- Populate dynamically -->
+        </div>
+
+        <div style="margin-top:12px; border-top:1px solid #313244; padding-top:12px; display:flex; justify-content:center;">
+            <button onclick="addNewCustomProfession()" class="run-code-btn" style="background:linear-gradient(135deg, #a6e3a1, #89b4fa); color:#11111b; font-weight:bold; font-size:12px; padding:10px 18px; border-radius:8px;">➕ Listede Yok mu? Kendi Mesleğini Ekle</button>
+        </div>
     </div>
 
     <!-- Artifact Modal -->
@@ -6587,6 +6608,11 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
         if (history.length <= 1) {
             document.getElementById("welcomeScreen").style.display = "flex";
             messagesDiv.style.display = "none";
+            const personaValue = document.getElementById("personaSelect") ? document.getElementById("personaSelect").value : "kanka";
+            const welcomeGreetingTextEl = document.getElementById("welcomeGreetingText");
+            if (welcomeGreetingTextEl) {
+                welcomeGreetingTextEl.textContent = getWelcomeGreetingText(personaValue);
+            }
         } else {
             document.getElementById("welcomeScreen").style.display = "none";
             messagesDiv.style.display = "flex";
@@ -7985,6 +8011,11 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
                 dilPanel.classList.remove('active');
                 sinavPanel.classList.remove('active');
 
+                const welcomeGreetingTextEl = document.getElementById("welcomeGreetingText");
+                if (welcomeGreetingTextEl) {
+                    welcomeGreetingTextEl.textContent = getWelcomeGreetingText(val);
+                }
+
                 if (val === 'dil_kocu') {
                     dilPanel.classList.add('active');
                     // Gemini'ye otomatik geç
@@ -7999,6 +8030,8 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
                     sinavPanel.classList.add('active');
                     skpOnModeChange();
                     skpUpdateDocStatus();
+                } else if (val === 'usta_yazilimci') {
+                    openProfessionModal();
                 }
             });
         }
@@ -9046,6 +9079,12 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
             let reqMessages = [];
             const personaValue = document.getElementById("personaSelect") ? document.getElementById("personaSelect").value : "kanka";
             let baseSystemPrompt = personas[personaValue] || systemPrompt;
+            if (!personas[personaValue] && window.professionsList) {
+                const foundProf = window.professionsList.find(p => p.id === personaValue);
+                if (foundProf) {
+                    baseSystemPrompt = `Sen GinoCode'sun — seçkin, son derece tecrübeli ve uzman bir ${foundProf.name} rolündesin. ${foundProf.description} Alanındaki en güncel bilgilerle, uzman bir ${foundProf.name} bakış açısıyla, pratik, detaylı ve profesyonel çözümler sunacaksın. Kullandığın terimler ve yaklaşımın tamamen bu mesleğin etiğine ve metodolojisine uygun olmalıdır. Türkçeni C2 seviyesinde kusursuz ve akıcı kullanırsın.`;
+                }
+            }
 
             // ===== DİL KOÇU ENJEKSİYONU =====
             // Dil Koçu seçiliyse → dil, seviye, kural ve quiz talimatlarını sisteme ekle
@@ -11257,6 +11296,224 @@ window.addEventListener('DOMContentLoaded', async () => {
 });
 </script>
 
+
+<script>
+    window.professionsList = [
+        { id: "usta_yazilimci", name: "Usta Yazılımcı", emoji: "💻", description: "Yazılım, algoritma ve oyun geliştirme uzmanı." },
+        { id: "profesor_doktor", name: "Profesör Doktor", emoji: "🩺", description: "Tıbbi teşhis, tedavi ve akademik tıp uzmanı." },
+        { id: "ogretmen", name: "Öğretmen / Eğitmen", emoji: "🏫", description: "Pedagojik eğitim, konu anlatımı ve ders rehberi." },
+        { id: "mimar", name: "Mimar / Tasarımcı", emoji: "📐", description: "Yapı tasarımı, estetik ve mekansal planlama uzmanı." },
+        { id: "psikolog", name: "Psikolog / Danışman", emoji: "🧠", description: "Ruh sağlığı, terapi ve insan davranışı uzmanı." },
+        { id: "dis_hekimi", name: "Diş Hekimi", emoji: "🦷", description: "Ağız ve diş sağlığı, tedavi uzmanı." },
+        { id: "avukat", name: "Avukat / Hukukçu", emoji: "⚖️", description: "Hukuki danışmanlık, savunma ve mevzuat uzmanı." },
+        { id: "diyetisyen", name: "Diyetisyen / Beslenme Uzmanı", emoji: "🍎", description: "Beslenme programları, diyet ve sağlıklı yaşam uzmanı." },
+        { id: "muhasebeci", name: "Muhasebeci / Finansçı", emoji: "💼", description: "Mali tablolar, vergilendirme ve finans yönetimi." },
+        { id: "tarihci", name: "Tarihçi", emoji: "📜", description: "Tarih araştırmaları, arşiv inceleme uzmanı." },
+        { id: "gazeteci", name: "Gazeteci / Yazar", emoji: "📰", description: "Araştırmacı gazetecilik, haber ve makale yazarı." },
+        { id: "bilim_insani", name: "Bilim İnsanı / Araştırmacı", emoji: "🧬", description: "Bilimsel araştırmalar, deney ve teori uzmanı." },
+        { id: "ceo", name: "CEO / İş Danışmanı", emoji: "👔", description: "Şrketi yönetimi, strateji ve liderlik uzmanı." },
+        { id: "pilot", name: "Pilot / Havacı", emoji: "✈️", description: "Uçuş emniyeti, havacılık ve seyrüsefer uzmanı." },
+        { id: "muzisyen", name: "Müzisyen / Besteci", emoji: "🎻", description: "Müzik teorisi, beste ve enstrüman uzmanı." },
+        { id: "ressam", name: "Ressam / Sanatçı", emoji: "🎨", description: "Görsel sanatlar, resim ve estetik uzmanı." },
+        { id: "antrenor", name: "Spor Antrenörü", emoji: "⚽", description: "Fiziksel kondisyon, spor teknikleri ve idman planlama." },
+        { id: "sef_asci", name: "Şef Aşçı", emoji: "🍳", description: "Gastronomi, tarifler ve mutfak yönetimi uzmanı." },
+        { id: "makine_muhendisi", name: "Makine Mühendisi", emoji: "🛠️", description: "Mekanik tasarım, üretim ve termodinamik uzmanı." },
+        { id: "eczaci", name: "Eczacı", emoji: "🧪", description: "İlaç formülasyonları, etkileşimler ve eczacılık uzmanı." },
+        { id: "ziraat_muhendisi", name: "Ziraat Mühendisi", emoji: "🚜", description: "Tarım teknolojileri, bitki yetiştirme ve toprak uzmanı." },
+        { id: "elektrik_muhendisi", name: "Elektrik Mühendisi", emoji: "⚡", description: "Elektrik şebekeleri, elektronik ve güç sistemleri uzmanı." },
+        { id: "insaat_muhendisi", name: "İnşaat Mühendisi", emoji: "🏗️", description: "Statik hesaplamalar, şantiye ve yapı mühendisliği." },
+        { id: "pazarlama_uzmani", name: "Pazarlama Uzmanı", emoji: "📊", description: "Marka yönetimi, reklam ve pazar analizi uzmanı." },
+        { id: "insan_kaynaklari", name: "İnsan Kaynakları Uzmanı", emoji: "🤝", description: "İşe alım, personel yönetimi ve iş hukuku uzmanı." }
+    ];
+
+    function loadCustomProfessions() {
+        try {
+            const saved = JSON.parse(localStorage.getItem('cinocode_custom_professions')) || [];
+            saved.forEach(p => {
+                if (!window.professionsList.some(ex => ex.id === p.id)) {
+                    window.professionsList.push(p);
+                }
+            });
+        } catch(e) {}
+    }
+
+    function openProfessionModal() {
+        loadCustomProfessions();
+        document.getElementById('professionOverlay').classList.add('active');
+        const menu = document.getElementById('professionMenu');
+        menu.style.display = 'flex';
+        setTimeout(() => menu.style.opacity = '1', 50);
+        document.getElementById('professionSearchInput').value = '';
+        populateProfessionsList();
+        document.getElementById('professionSearchInput').focus();
+    }
+
+    function closeProfessionModal() {
+        const menu = document.getElementById('professionMenu');
+        menu.style.opacity = '0';
+        setTimeout(() => {
+            menu.style.display = 'none';
+            document.getElementById('professionOverlay').classList.remove('active');
+        }, 300);
+    }
+
+    function populateProfessionsList(filter = '') {
+        const container = document.getElementById('professionsListContainer');
+        if (!container) return;
+        container.innerHTML = '';
+
+        const normalizedFilter = filter.toLocaleLowerCase('tr-TR').trim();
+        const filtered = window.professionsList.filter(p => 
+            p.name.toLocaleLowerCase('tr-TR').includes(normalizedFilter) || 
+            p.description.toLocaleLowerCase('tr-TR').includes(normalizedFilter)
+        );
+
+        filtered.forEach(p => {
+            const item = document.createElement('div');
+            item.style.cssText = 'display:flex; align-items:center; gap:12px; padding:10px; border-radius:8px; background:#313244; cursor:pointer; border:1px solid #45475a; transition:background 0.2s, border-color 0.2s;';
+            item.onmouseenter = () => {
+                item.style.background = '#45475a';
+                item.style.borderColor = '#89b4fa';
+            };
+            item.onmouseleave = () => {
+                item.style.background = '#313244';
+                item.style.borderColor = '#45475a';
+            };
+            
+            const selectedVal = document.getElementById('personaSelect').value;
+            if (selectedVal === p.id) {
+                item.style.borderColor = '#a6e3a1';
+                item.style.background = 'rgba(166,227,161,0.1)';
+            }
+            
+            item.onclick = () => selectProfession(p.id);
+
+            item.innerHTML = `
+                <div style="font-size:24px; line-height:1;">${p.emoji}</div>
+                <div style="flex:1;">
+                    <div style="font-weight:bold; color:#cdd6f4; font-size:13px;">${p.name}</div>
+                    <div style="font-size:11px; color:#a6adc8; margin-top:2px;">${p.description}</div>
+                </div>
+            `;
+            container.appendChild(item);
+        });
+    }
+
+    function filterProfessions() {
+        const val = document.getElementById('professionSearchInput').value;
+        populateProfessionsList(val);
+    }
+
+    function selectProfession(id) {
+        const chosen = window.professionsList.find(p => p.id === id);
+        if (!chosen) return;
+
+        const select = document.getElementById('personaSelect');
+        const selectMobile = document.getElementById('personaSelectMobile');
+        
+        let opt = select.querySelector(`option[value="${id}"]`);
+        if (!opt) {
+            opt = document.createElement('option');
+            opt.value = id;
+            select.appendChild(opt);
+        }
+        opt.textContent = `${chosen.emoji} ${chosen.name}`;
+        
+        let optM = selectMobile.querySelector(`option[value="${id}"]`);
+        if (!optM) {
+            optM = document.createElement('option');
+            optM.value = id;
+            selectMobile.appendChild(optM);
+        }
+        optM.textContent = `${chosen.emoji} ${chosen.name}`;
+
+        select.value = id;
+        selectMobile.value = id;
+
+        closeProfessionModal();
+        showNonBlockingToast(`Rol seçildi: ${chosen.name}`);
+        
+        // Update welcome header if welcome is visible
+        const welcomeGreetingTextEl = document.getElementById("welcomeGreetingText");
+        if (welcomeGreetingTextEl) {
+            welcomeGreetingTextEl.textContent = getWelcomeGreetingText(id);
+        }
+
+        saveComposerDraft();
+    }
+
+    function addNewCustomProfession() {
+        const name = prompt("Eklemek istediğiniz mesleğin adını girin (Örn: Astrolog, Tesisatçı, Emlakçı):");
+        if (!name || !name.trim()) return;
+        
+        const emoji = prompt("Bu meslek için tek bir emoji seçin (Örn: 🔮, 🔧, 🏠):", "💼");
+        const desc = prompt("Bu mesleğin kısa bir açıklamasını veya uzmanlık alanını yazın:", "Kendi alanında uzman rehber.");
+        
+        const id = "custom_" + Date.now();
+        const newProf = {
+            id: id,
+            name: name.trim(),
+            emoji: emoji || "💼",
+            description: desc || "Uzman danışman."
+        };
+        
+        window.professionsList.push(newProf);
+        
+        try {
+            const saved = JSON.parse(localStorage.getItem('cinocode_custom_professions')) || [];
+            saved.push(newProf);
+            localStorage.setItem('cinocode_custom_professions', JSON.stringify(saved));
+        } catch(e) {}
+        
+        populateProfessionsList();
+        selectProfession(id);
+        
+        showNonBlockingToast(`"${name}" mesleği başarıyla oluşturuldu ve seçildi!`);
+    }
+
+    function getWelcomeGreetingText(personaValue) {
+        if (personaValue === 'kanka') return "Bugün ne üretmek istersin kanka? Sana nasıl yardımcı olabilirim?";
+        if (personaValue === 'akademik_koc') return "📚 Sınav Koçu Modu Aktif. PDF yükle ya da çalışmak istediğin dersi yaz, hemen hazırlanalım!";
+        if (personaValue === 'dil_kocu') return "🌍 Özel Dil Koçu Modu Aktif. Hangi dili öğrenmek istersin kanka? Hadi pratik yapalım!";
+        if (personaValue === 'derin_arastirma') return "🔍 Derin Araştırma Modu Aktif. Araştırmak istediğin konuyu yaz, kapsamlı analiz hazırlayayım.";
+        
+        if (window.professionsList) {
+            const found = window.professionsList.find(p => p.id === personaValue);
+            if (found) {
+                return `${found.emoji} GinoCode ${found.name} olarak sana yardımcı olmaya hazır. Hangi konuda danışmak istersin?`;
+            }
+        }
+        
+        return "Bugün ne üretmek istersin? Sana yardımcı olmaya hazırım.";
+    }
+
+    // Auto-load custom professions on launch
+    document.addEventListener('DOMContentLoaded', () => {
+        loadCustomProfessions();
+        
+        // If current saved draft uses a custom profession, inject it into selects so select element values match
+        setTimeout(() => {
+            const select = document.getElementById('personaSelect');
+            const selectMobile = document.getElementById('personaSelectMobile');
+            if (select && select.value && !select.querySelector(`option[value="${select.value}"]`)) {
+                const found = window.professionsList.find(p => p.id === select.value);
+                if (found) {
+                    const opt = document.createElement('option');
+                    opt.value = found.id;
+                    opt.textContent = `${found.emoji} ${found.name}`;
+                    select.appendChild(opt);
+                    
+                    if (selectMobile) {
+                        const optM = document.createElement('option');
+                        optM.value = found.id;
+                        optM.textContent = `${found.emoji} ${found.name}`;
+                        selectMobile.appendChild(optM);
+                    }
+                }
+            }
+        }, 500);
+    });
+</script>
 
     <!-- Camera Preview Modal -->
     <div id="cameraModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.85); z-index:3000; align-items:center; justify-content:center; flex-direction:column; padding:20px;">
