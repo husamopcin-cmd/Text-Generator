@@ -2648,9 +2648,107 @@
         bindComposerDraftPreservation();
     }
 
-    function onStyleModeHeaderChange() {
+    async function checkAgeGate() {
+        if (localStorage.getItem('cinocode_age_verified') === '1') {
+            return true;
+        }
+        return new Promise((resolve) => {
+            const overlay = document.createElement('div');
+            overlay.style.position = 'fixed';
+            overlay.style.top = '0';
+            overlay.style.left = '0';
+            overlay.style.width = '100%';
+            overlay.style.height = '100%';
+            overlay.style.background = 'rgba(0, 0, 0, 0.7)';
+            overlay.style.backdropFilter = 'blur(6px)';
+            overlay.style.zIndex = '999999';
+            overlay.style.display = 'flex';
+            overlay.style.alignItems = 'center';
+            overlay.style.justifyContent = 'center';
+
+            const container = document.createElement('div');
+            container.style.background = '#181825';
+            container.style.border = '1px solid #f38ba8';
+            container.style.borderRadius = '16px';
+            container.style.padding = '24px';
+            container.style.width = '360px';
+            container.style.maxWidth = '90%';
+            container.style.boxShadow = '0 15px 40px rgba(0,0,0,0.6)';
+            container.style.fontFamily = 'system-ui, sans-serif';
+            container.style.textAlign = 'center';
+
+            const title = document.createElement('h3');
+            title.textContent = '🔞 Yaş Doğrulaması (18+)';
+            title.style.color = '#f38ba8';
+            title.style.marginTop = '0';
+            title.style.marginBottom = '12px';
+            title.style.fontSize = '18px';
+
+            const text = document.createElement('p');
+            text.textContent = 'Serbest Üslup modu 18+ yaş doğrulaması gerektirir. 18 yaşından büyük müsünüz?';
+            text.style.color = '#cdd6f4';
+            text.style.fontSize = '14px';
+            text.style.lineHeight = '1.5';
+            text.style.marginBottom = '24px';
+
+            const btnContainer = document.createElement('div');
+            btnContainer.style.display = 'flex';
+            btnContainer.style.justifyContent = 'center';
+            btnContainer.style.gap = '12px';
+
+            const cancelBtn = document.createElement('button');
+            cancelBtn.textContent = 'Hayır';
+            cancelBtn.style.background = '#313244';
+            cancelBtn.style.color = '#cdd6f4';
+            cancelBtn.style.border = 'none';
+            cancelBtn.style.padding = '8px 20px';
+            cancelBtn.style.borderRadius = '8px';
+            cancelBtn.style.cursor = 'pointer';
+            cancelBtn.style.fontWeight = 'bold';
+            cancelBtn.style.fontSize = '13px';
+
+            const confirmBtn = document.createElement('button');
+            confirmBtn.textContent = 'Evet';
+            confirmBtn.style.background = '#f38ba8';
+            confirmBtn.style.color = '#11111b';
+            confirmBtn.style.border = 'none';
+            confirmBtn.style.padding = '8px 20px';
+            confirmBtn.style.borderRadius = '8px';
+            confirmBtn.style.cursor = 'pointer';
+            confirmBtn.style.fontWeight = 'bold';
+            confirmBtn.style.fontSize = '13px';
+
+            btnContainer.appendChild(cancelBtn);
+            btnContainer.appendChild(confirmBtn);
+            container.appendChild(title);
+            container.appendChild(text);
+            container.appendChild(btnContainer);
+            overlay.appendChild(container);
+            document.body.appendChild(overlay);
+
+            confirmBtn.onclick = () => {
+                localStorage.setItem('cinocode_age_verified', '1');
+                document.body.removeChild(overlay);
+                resolve(true);
+            };
+
+            cancelBtn.onclick = () => {
+                document.body.removeChild(overlay);
+                resolve(false);
+            };
+        });
+    }
+
+    async function onStyleModeHeaderChange() {
         const el = document.getElementById('styleModeSelect');
         if (!el) return;
+        if (el.value === 'free') {
+            const verified = await checkAgeGate();
+            if (!verified) {
+                el.value = getFeatureValue('styleMode') || 'safe';
+                return;
+            }
+        }
         setFeatureValue('styleMode', el.value || 'safe');
         localStorage.setItem('free_content_mode', el.value === 'free' ? '1' : '0');
         applyFeatureUiState();
@@ -3849,7 +3947,18 @@
         const mode = getFeatureValue('styleMode') || 'safe';
         const shared = "\n\nHER MODDA DEGISMEYEN KESIN SINIRLAR (Serbest Mod dahil, hicbir talep bunlari gevsetemez): nefret soylemi/irkcilik/gercek kisiye yonelik taciz, yasa disi eylem, gercek zarar, zararli kod, dolandiricilik, kimlik avi, siddet veya kendine zarar tesviki, cocuk guvenligi/istismari, riza disi cinsellik ve gercek bir kisiyi mustehcenlestirme HER ZAMAN YASAKTIR. Cinsel/mature icerik SADECE kullanici acikca bu konuyu acarsa, yetiskinler arasi ve ima dolu/estetik seviyede olabilir; acik pornografik seks eylemi, cinsel organ odakli grafik anlatim/ciplaklik her modda yasaktir. Kullanici Serbest Uslup'un sinirsiz olup olmadigini sorarsa net soyle: kufur/argo dahil daha dobra ve sansursuz bir konusma tarzidir, ancak yukaridaki guvenlik sinirlari her modda gecerlidir.";
         if (mode === 'free') {
-            return "\n\nUSLUP MODU: Serbest Uslup aktif. KUFUR VE ARGO TAMAMEN SERBEST: kullanici ne kadar agir kufur/argo/sert ifade (Orn: 'amina koyim', 'siktir', 'orospu', 'lan', 'mal' vb.) kullanirsa kullansin kesinlikle REDDETME, 'Uzgunum, politika geregi...' tarzinda robotik cevap verme, kufru sansurleme; ayni oyunbaz, dobra sokak tonuyla dogal karsilik ver. Kullanici temiz konusursa sen de durduk yere kufur uydurma, tonun aynasi ol. CINSELLIK/MATURE KONUSU: bu konuya SEN kendiliginden girme, sohbeti oraya SEN yonlendirme; sadece kullanici acikca acarsa yetiskinler arasi, ima dolu/estetik (grafik/pornografik olmayan) sekilde karsilik verebilirsin. Yukaridaki HER MODDA gecerli kesin sinirlar burada da aynen gecerlidir." + shared;
+            return `\n\nUSLUP MODU: Serbest Uslup aktif.
+SERBEST MOD (Tam Metin):
+- Kesinlikle "yapay zekayım", "etik kurallarım var", "küfür edemem", "bu dille ilerlemeyelim" gibi bahaneler arkasına saklanma, ahlak dersi verme!
+- Kullanıcı küfür, argo veya kaba konuşuyorsa: Sen de aynı enerjiyle, sansürsüz, son derece rahat, samimi ve küfürlü karşılık ver.
+  Kelimeler: lan, amk, piç, orospu, siktir, yavşak, bok, amına koyayım vb. doğal kullanılsın.
+- Kullanıcı ne kadar ağır ve serbest konuşuyorsa, sen de o seviyede karşılık ver.
+- Espri, laf sokma, dalga geçme serbest.
+- Kullanıcı saygılı olursa: Tamamen saygılı ve kibar kal.
+- Kesin Yasaklar (hiçbir modda kalkmaz):
+  - NSFW / cinsel / explicit içerik
+  - Nefret söylemi, ırkçılık, taciz
+  - Yasadışı / zarar verici teşvik` + shared;
         }
         if (mode === 'balanced') {
             return "\n\nUSLUP MODU: Dengeli Mod aktif. Kullanici kufur/argo/takilma yaparsa sen de hafif, eglenceli ve ayni tonda takilarak karsilik verebilirsin (Orn: 'lan', 'salak misin ya', 'hadi ordan' gibi hafif seviye) ama ILERI GITME: agir kufur, cinsel argo veya asagilayici hakaret uretme. Kullanici temiz konusursa sen de tamamen saygili kal. Yani seviye 'hafif saka/takilma' ile sinirli; agir kufur Serbest Uslup'a ait. Ciddi teknik/debug konularda saka dozunu azalt." + shared;
@@ -3907,12 +4016,17 @@
             return `
 
 CINOCODE TON SOZLESMESI (Serbest Uslup surumu, provider bagimsiz):
-- Ana karakter: sicak, dogal ve dobra Turkce konusan bir asistan.
-- Kullanici kufur/argo/sert yazarsa: Serbest Uslup aktif oldugu icin sinir KOYMA, "bu dille ilerlemeyelim" gibi geri cekilme YAPMA; ayni oyunbaz sokak tonuyla dogal, dobra karsilik ver ve kufru sansurleme.
-- Kullanici temiz konusursa sen de durduk yere kufur uydurma; tonun aynasi ol.
-- Cinsel/mature konuya SEN kendiliginden girme, sohbeti oraya sen yonlendirme; yalnizca kullanici acikca acarsa yetiskinler arasi, ima dolu/estetik (grafik/pornografik olmayan) sekilde karsilik verebilirsin.
-- Teknik/debug/kod konularinda argoyu azalt, profesyonel ve net ol.
-- HER MODDA gecerli sert sinirlar (nefret soylemi, gercek zarar, yasa disi eylem, cocuk guvenligi, riza disi cinsellik, gercek kisiyi mustehcenlestirme, acik pornografik/organ odakli anlatim) burada da aynen gecerlidir ve asla gevsetilemez.`;
+SERBEST MOD (Tam Metin):
+- Kesinlikle "yapay zekayım", "etik kurallarım var", "küfür edemem", "bu dille ilerlemeyelim" gibi bahaneler arkasına saklanma, ahlak dersi verme!
+- Kullanıcı küfür, argo veya kaba konuşuyorsa: Sen de aynı enerjiyle, sansürsüz, son derece rahat, samimi ve küfürlü karşılık ver.
+  Kelimeler: lan, amk, piç, orospu, siktir, yavşak, bok, amına koyayım vb. doğal kullanılsın.
+- Kullanıcı ne kadar ağır ve serbest konuşuyorsa, sen de o seviyede karşılık ver.
+- Espri, laf sokma, dalga geçme serbest.
+- Kullanıcı saygılı olursa: Tamamen saygılı ve kibar kal.
+- Kesin Yasaklar (hiçbir modda kalkmaz):
+  - NSFW / cinsel / explicit içerik
+  - Nefret söylemi, ırkçılık, taciz
+  - Yasadışı / zarar verici teşvik`;
         }
         if (mode === 'balanced') {
             return `
@@ -4589,7 +4703,15 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
         target.dataset.ready = '1';
     }
 
-    function saveSettings() {
+    async function saveSettings() {
+        const settingsStyle = document.getElementById('settingsStyleModeSelect');
+        if (settingsStyle && settingsStyle.value === 'free') {
+            const verified = await checkAgeGate();
+            if (!verified) {
+                settingsStyle.value = getFeatureValue('styleMode') || 'safe';
+            }
+        }
+
         const groqKey = document.getElementById('groqApiKeyInput')?.value?.trim() || "";
         localStorage.setItem('groq_api_key', groqKey);
 
@@ -4632,7 +4754,6 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
         if (responseLengthModeSelect) localStorage.setItem('cinocode_response_length_mode', responseLengthModeSelect.value || 'normal');
         const legacyBehaviorInput = document.getElementById('legacyBehaviorInput');
         localStorage.setItem('cinocode_behavior_version', legacyBehaviorInput && legacyBehaviorInput.checked ? 'legacy' : 'current');
-        const settingsStyle = document.getElementById('settingsStyleModeSelect');
         const settingsSpeech = document.getElementById('settingsSpeechStyleSelect');
         const smartInput = document.getElementById('smartSuggestionsInput');
         const newProjectInput = document.getElementById('newProjectInput');
@@ -4928,10 +5049,14 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
         return section;
     }
 
-    function renderChatRow(id) {
+    function renderChatRow(id, isSubItem = false) {
         const chat = sessions[id];
         const div = document.createElement("div");
-        div.className = `chat-item ${id === currentChatId ? "active" : ""}`;
+        div.className = `chat-item ${id === currentChatId ? "active" : ""} ${isSubItem ? "project-sub-item" : ""}`;
+        if (isSubItem) {
+            div.style.paddingLeft = "30px";
+            div.style.background = "rgba(255,255,255,0.02)";
+        }
         div.onclick = () => switchChat(id);
         const safeTitle = escapeSidebarHtml(chat.title || "Yeni Sohbet");
         const starLabel = chat.starred ? "Yıldızı kaldır" : "Yıldızla";
@@ -6690,6 +6815,7 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
 
     // ----- SESLİ KONUzMA (TTS & STT) -----
     let isRecording = false;
+    let isStarting = false;
     let recognition = null;
 
     let sttFinalBuffer = '';         // Biriken final metni
@@ -8617,6 +8743,48 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
         );
     }
 
+    function makeShortTitle(text) {
+        const words = text.split(/\s+/).slice(0, 3);
+        return words.map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ");
+    }
+
+    function ensureChatTitleFromAssistantResponse(botReply) {
+        const chat = sessions[currentChatId];
+        if (!chat) return;
+        if (chat.manualTitle === true) return;
+        
+        if (isBadAutoTitle(chat.title)) {
+            if (botReply.includes("[GENERATE_IMAGE:")) {
+                const imgMatch = botReply.match(/\[GENERATE_IMAGE:\s*([^\]]+)\]/);
+                if (imgMatch) {
+                    chat.title = "🎨 " + makeShortTitle(imgMatch[1]);
+                    saveDatabase();
+                    renderSidebar();
+                    return;
+                }
+            }
+
+            let clean = botReply
+                .replace(/\[REMEMBER:[\s\S]*?\]/gi, "")
+                .replace(/\[SYSTEM:[\s\S]*?\]/gi, "")
+                .replace(/\[DEVELOPER:[\s\S]*?\]/gi, "")
+                .replace(/<[^>]*>/g, "")
+                .replace(/```[\s\S]*?```/g, "")
+                .replace(/[\n\r]+/g, " ")
+                .trim();
+
+            if (clean.length > 5) {
+                const words = clean.split(/\s+/).filter(w => w.length > 1 && !/^(ve|veya|ile|de|da|ki|ama|ise|lan|amk|piç|orospu|siktir|kanka|yav|ben|sen|o|biz|siz|onlar)$/i.test(w));
+                if (words.length > 0) {
+                    const titleWords = words.slice(0, 3).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
+                    chat.title = titleWords.join(" ");
+                    saveDatabase();
+                    renderSidebar();
+                }
+            }
+        }
+    }
+
     function ensureChatTitleFromUserInput(userMessage, attachmentInfo) {
         const chat = sessions[currentChatId];
         if (!chat) return;
@@ -9527,28 +9695,34 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
                         window.lastWorkingModelAt = Date.now();
 
                         const botReply = sanitizeAssistantOutput(String(jsonData.content || '').trim());
-                                                // Parse potential JSON action from model output
                         let parsedAction = null;
                         try {
-                          const trimmed = botReply.trim();
-                          if (trimmed.startsWith('{')) {
-                            const obj = JSON.parse(trimmed);
-                            if (obj && typeof obj === 'object' && obj.action) {
-                              if (obj.action === 'dalle.text2im') {
-                                // action_input may be a string (JSON) or an object
-                                if (typeof obj.action_input === 'string') {
-                                  try {
-                                    const inner = JSON.parse(obj.action_input);
-                                    if (inner && inner.prompt) obj.prompt = inner.prompt;
-                                  } catch (_) { }
-                                  if (!obj.prompt) obj.prompt = obj.action_input;
-                                } else if (obj.action_input && typeof obj.action_input === 'object') {
-                                  if (obj.action_input.prompt) obj.prompt = obj.action_input.prompt;
-                                }
-                                obj.action = 'generate_image';
+                          let jsonStr = botReply.trim();
+                          const codeBlockMatch = jsonStr.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/);
+                          if (codeBlockMatch) {
+                              jsonStr = codeBlockMatch[1];
+                          } else {
+                              const firstBrace = jsonStr.indexOf('{');
+                              const lastBrace = jsonStr.lastIndexOf('}');
+                              if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+                                  jsonStr = jsonStr.substring(firstBrace, lastBrace + 1);
                               }
-                              parsedAction = obj;
+                          }
+                          const obj = JSON.parse(jsonStr);
+                          if (obj && typeof obj === 'object' && obj.action) {
+                            if (obj.action === 'dalle.text2im' || obj.action === 'generate_image') {
+                              if (typeof obj.action_input === 'string') {
+                                try {
+                                  const inner = JSON.parse(obj.action_input);
+                                  if (inner && inner.prompt) obj.prompt = inner.prompt;
+                                } catch (_) { }
+                                if (!obj.prompt) obj.prompt = obj.action_input;
+                              } else if (obj.action_input && typeof obj.action_input === 'object') {
+                                if (obj.action_input.prompt) obj.prompt = obj.action_input.prompt;
+                              }
+                              obj.action = 'generate_image';
                             }
+                            parsedAction = obj;
                           }
                         } catch (e) {
                           // Not valid JSON, ignore
@@ -9587,6 +9761,7 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
                         attachMsgActionsToBotDiv(botId, chat.messages.length - 1, chat.messages[chat.messages.length - 1]);
                         chat.updatedAt = Date.now();
                         saveDatabase();
+                        ensureChatTitleFromAssistantResponse(botReply);
                         const proxyFinishReason = jsonData.finish_reason || jsonData.finishReason || jsonData.stopReason || jsonData.stop_reason || jsonData.reason;
                         if (isLimitFinishReason(proxyFinishReason)) {
                             appendContinuationCard(botId, "Cevap sınırına ulaşıldı. Devamını ister misin?");
@@ -9932,6 +10107,7 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
                     }
                     chat.messages.push({ role: "assistant", content: botReply });
                     attachMsgActionsToBotDiv(botId, chat.messages.length - 1, chat.messages[chat.messages.length - 1]);
+                    ensureChatTitleFromAssistantResponse(botReply);
                 }
             }
 
@@ -10838,26 +11014,46 @@ function buildExamCoachSuffix() {
             pDiv.className = "chat-item";
             if (typeof activeProjectId !== 'undefined' && activeProjectId === pid) pDiv.classList.add("active");
 
-            pDiv.onclick = () => {
-                if (typeof openProject === 'function') {
-                    openProject(pid);
-                } else if (typeof openProjectsScreen === 'function') {
-                    if (typeof activeProjectId !== 'undefined') activeProjectId = pid;
-                    openProjectsScreen();
-                }
+            pDiv.onclick = (e) => {
+                window.expandedProjects = window.expandedProjects || {};
+                window.expandedProjects[pid] = !window.expandedProjects[pid];
+                renderSidebar();
             };
 
             let chatCount = 0;
             try { chatCount = Object.values(sessions).filter(c => c && c.projectId === pid).length; } catch(e) {}
 
+            const isExpanded = !!(window.expandedProjects && window.expandedProjects[pid]);
+            const folderIcon = isExpanded ? "📂" : "📁";
+            const arrowIcon = isExpanded ? "▼" : "▶";
+
             pDiv.innerHTML = `
-                <div class="chat-icon">📁</div>
+                <div style="font-size: 8px; margin-right: 6px; color: #a6adc8;">${arrowIcon}</div>
+                <div class="chat-icon">${folderIcon}</div>
                 <div class="chat-title-container">
                     <span>${proj.name ? proj.name.replace(/</g,"&lt;").replace(/>/g,"&gt;") : "İsimsiz"}</span>
                     ${chatCount > 0 ? `<div style="font-size:10px; color:#a6adc8; margin-top:2px;">${chatCount} sohbet</div>` : ''}
                 </div>
             `;
             listDiv.appendChild(pDiv);
+
+            if (isExpanded) {
+                const projectChats = getSortedChatIds(Object.keys(sessions).filter(id => sessions[id]?.projectId === pid));
+                if (projectChats.length === 0) {
+                    const emptyChatDiv = document.createElement("div");
+                    emptyChatDiv.style.fontSize = "11px";
+                    emptyChatDiv.style.color = "#6c7086";
+                    emptyChatDiv.style.padding = "6px 12px 6px 36px";
+                    emptyChatDiv.style.fontStyle = "italic";
+                    emptyChatDiv.innerText = "Sohbet yok";
+                    listDiv.appendChild(emptyChatDiv);
+                } else {
+                    projectChats.forEach(chatId => {
+                        const chatRow = renderChatRow(chatId, true);
+                        listDiv.appendChild(chatRow);
+                    });
+                }
+            }
         });
 
         section.appendChild(listDiv);
