@@ -3406,84 +3406,86 @@
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
         const base64 = canvas.toDataURL('image/jpeg');
-        selectedImageBase64 = base64;
-        selectedStudyFileName = `camera-${new Date().toISOString().slice(0,10)}-${Date.now().toString().slice(-4)}.jpg`;
-
-        const previewContainer = document.getElementById('imagePreviewContainer');
-        const previewImg = document.getElementById('imagePreview');
-        if (previewImg && previewContainer) {
-            previewImg.src = base64;
-            previewContainer.style.display = 'block';
-        }
+        
+        const fileObj = {
+            id: "file_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9),
+            name: `camera-${new Date().toISOString().slice(0,10)}.jpg`,
+            type: 'image/jpeg',
+            content: base64,
+            rawType: "image"
+        };
+        
+        addSelectedFile(fileObj);
         closeCameraModal();
         showNonBlockingToast("Fotoğraf kameradan başarıyla alındı.");
         saveComposerDraft();
     }
 
-    function handleMediaSelect(event) {
-        const file = event.target.files[0];
-        if (!file) return;
+    window.selectedFiles = window.selectedFiles || [];
 
-        if (file.size > 2 * 1024 * 1024) {
-            showNonBlockingToast("Dosya büyük olabilir; yükleme uzun sürebilir.");
+    function addSelectedFile(fileObj) {
+        if (window.selectedFiles.length >= 30) {
+            showNonBlockingToast("En fazla 30 dosya yükleyebilirsiniz.");
+            return;
         }
+        window.selectedFiles.push(fileObj);
+        renderFilePreviews();
+    }
 
-        selectedStudyFileName = file.name;
-        if (file.type.startsWith('image/')) {
-            processFileAsBase64(file, true);
-        } else if (file.type.startsWith('video/')) {
+    function removeSelectedFile(id) {
+        window.selectedFiles = window.selectedFiles.filter(f => f.id !== id);
+        renderFilePreviews();
+    }
+
+    function renderFilePreviews() {
+        const container = document.getElementById('imagePreviewContainer');
+        if (!container) return;
+        container.innerHTML = "";
+        
+        if (!window.selectedFiles || window.selectedFiles.length === 0) {
+            container.style.display = "none";
+            return;
+        }
+        
+        container.style.cssText = 'display:flex; flex-direction:row; flex-wrap:nowrap; gap:10px; overflow-x:auto; margin-bottom:10px; padding:6px; background:rgba(255,255,255,0.02); border-radius:10px; border:1px dashed var(--cc-surface2);';
+        
+        window.selectedFiles.forEach((fileObj) => {
+            const item = document.createElement("div");
+            item.style.cssText = 'position:relative; flex:0 0 auto; width:70px; height:70px; border-radius:8px; border:1px solid var(--cc-surface2); background:var(--cc-mantle); display:flex; align-items:center; justify-content:center; overflow:hidden;';
+            
+            if (fileObj.rawType === 'image') {
+                const img = document.createElement("img");
+                img.src = fileObj.content;
+                img.style.cssText = 'width:100%; height:100%; object-fit:cover;';
+                item.appendChild(img);
+            } else {
+                const icon = document.createElement("div");
+                icon.style.cssText = 'text-align:center; padding:4px; width:100%; box-sizing:border-box;';
+                const emoji = fileObj.rawType === 'document' ? '📄' : (fileObj.rawType === 'audio' ? '🎵' : '📎');
+                const truncatedName = fileObj.name.length > 8 ? fileObj.name.substring(0, 5) + '..' + fileObj.name.substring(fileObj.name.lastIndexOf('.') - 1) : fileObj.name;
+                icon.innerHTML = `
+                    <div style="font-size:24px; line-height:1;">${emoji}</div>
+                    <div style="font-size:8px; color:var(--cc-subtext0); margin-top:4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${fileObj.name}">${truncatedName}</div>
+                `;
+                item.appendChild(icon);
+            }
+            
+            const delBtn = document.createElement("button");
+            delBtn.innerHTML = "×";
+            delBtn.style.cssText = 'position:absolute; top:2px; right:2px; background:#f38ba8; color:#11111b; border:none; border-radius:50%; width:16px; height:16px; cursor:pointer; font-weight:bold; font-size:11px; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 4px rgba(0,0,0,0.5); z-index:5;';
+            delBtn.onclick = (e) => {
+                e.stopPropagation();
+                removeSelectedFile(fileObj.id);
+            };
+            item.appendChild(delBtn);
+            container.appendChild(item);
+        });
+    }
+
+    function processImageAsPromise(file) {
+        return new Promise((resolve) => {
             const reader = new FileReader();
             reader.onload = function(e) {
-                selectedImageBase64 = e.target.result;
-                const previewImg = document.getElementById('imagePreview');
-                const previewContainer = document.getElementById('imagePreviewContainer');
-                if (previewImg && previewContainer) {
-                    previewImg.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 24 24' fill='none' stroke='%23a6e3a1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='2' y='2' width='20' height='20' rx='2.18' ry='2.18'></rect><line x1='7' y1='2' x2='7' y2='22'></line><line x1='17' y1='2' x2='17' y2='22'></line><line x1='2' y1='12' x2='22' y2='12'></line><line x1='2' y1='7' x2='7' y2='7'></line><line x1='2' y1='17' x2='7' y2='17'></line><line x1='17' y1='17' x2='22' y2='17'></line><line x1='17' y1='7' x2='22' y2='7'></line></svg>";
-                    previewContainer.style.display = 'inline-block';
-                }
-                showNonBlockingToast("Video eklendi; analiz desteği sağlayıcıya bağlı.");
-            };
-            reader.readAsDataURL(file);
-        }
-    }
-
-    function handleAudioSelect(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-
-        if (file.size > 2 * 1024 * 1024) {
-            showNonBlockingToast("Dosya büyük olabilir; yükleme uzun sürebilir.");
-        }
-
-        selectedStudyFileName = file.name;
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            selectedImageBase64 = e.target.result;
-            const previewImg = document.getElementById('imagePreview');
-            const previewContainer = document.getElementById('imagePreviewContainer');
-            if (previewImg && previewContainer) {
-                previewImg.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 24 24' fill='none' stroke='%23f9e2af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M9 18V5l12-2v13'></path><circle cx='6' cy='18' r='3'></circle><circle cx='18' cy='16' r='3'></circle></svg>";
-                previewContainer.style.display = 'inline-block';
-            }
-            showNonBlockingToast("Ses dosyası eklendi; transkripsiyon desteği sağlayıcıya bağlı.");
-        };
-        reader.readAsDataURL(file);
-    }
-
-    function handleImageSelect(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-        selectedStudyFileName = file.name;
-        processFileAsBase64(file, true);
-    }
-
-    function processFileAsBase64(file, isImage) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const previewContainer = document.getElementById('imagePreviewContainer');
-            const previewImg = document.getElementById('imagePreview');
-
-            if (isImage) {
                 const img = new Image();
                 img.onload = function() {
                     const canvas = document.createElement('canvas');
@@ -3493,144 +3495,107 @@
                     let height = img.height;
 
                     if (width > height) {
-                        if (width > MAX_WIDTH) {
-                            height *= MAX_WIDTH / width;
-                            width = MAX_WIDTH;
-                        }
+                        if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
                     } else {
-                        if (height > MAX_HEIGHT) {
-                            width *= MAX_HEIGHT / height;
-                            height = MAX_HEIGHT;
-                        }
+                        if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
                     }
                     canvas.width = width;
                     canvas.height = height;
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, width, height);
 
-                    const dataUrl = canvas.toDataURL('image/jpeg', 0.85); // JPEG compression
-                    selectedImageBase64 = dataUrl;
-                    previewImg.src = dataUrl;
-                    previewContainer.style.display = 'inline-block';
-
-                    // Video modu tetikleyicisi asekron olduğu için burada çağırmamız gerek
-                    triggerPostImageLoad();
-                };
-                img.src = e.target.result;
-            } else {
-                selectedImageBase64 = e.target.result;
-                previewImg.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 24 24' fill='none' stroke='%2389b4fa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'></path><polyline points='14 2 14 8 20 8'></polyline><line x1='16' y1='13' x2='8' y2='13'></line><line x1='16' y1='17' x2='8' y2='17'></line><polyline points='10 9 9 9 8 9'></polyline></svg>";
-                previewContainer.style.display = 'inline-block';
-                triggerPostImageLoad();
-            }
-
-            function triggerPostImageLoad() {
-
-            const currentModel = document.getElementById('modelSelect').value;
-            const preferredVisionModel = getPreferredVisionModel(currentModel);
-            if (preferredVisionModel && preferredVisionModel !== currentModel) {
-                document.getElementById('modelSelect').value = preferredVisionModel;
-            } else if (!preferredVisionModel) {
-                userInput.placeholder = "Görsel analizi için vision destekli model bulunamadı. Gemini/OpenRouter/Groq Vision yapılandırmasını kontrol edin.";
-            }
-
-            // Eğer video modundaysak, doğrudan fotoğraftan sinematik WebM üretimine başla
-            if (currentMode === "video") {
-                userInput.placeholder = "Fotoğraf eklendi. Sinematik klip taslağı hazırlanıyor...";
-                alert("🖼️ Fotoğraf tespit edildi!\n\nDürüst Açıklama: Ücretsiz modda yüklediğin fotoğrafı gerçek AI animasyonuna çevirmek yerine sinematik zoom/pan efektiyle kısa video yaparım. Gerçek image-to-video için ileride yerel ComfyUI / Stable Video Diffusion desteği gerekir.");
-
-                const img = new Image();
-                img.onload = async function() {
-                    const videoId = 'video-' + Date.now();
-                    const list = document.getElementById("messages");
-                    if (list) {
-                        const card = document.createElement("div");
-                        card.className = "message bot";
-                        card.innerHTML = `<div id="${videoId}" style="text-align:center; margin: 15px 0; background: #181825; padding: 15px; border-radius: 12px; border: 1px solid #45475a;">
-                                            <div style="color: #cdd6f4; font-size: 16px; margin-bottom: 10px;">📖 Fotoğraf Sinematik Klibe Dönüştürülüyor...</div>
-                                            <div style="background: #313244; border-radius: 8px; height: 20px; overflow: hidden; margin-bottom: 8px;">
-                                                <div id="${videoId}-progress" style="background: linear-gradient(90deg, #89b4fa, #cba6f7); height: 100%; width: 0%; border-radius: 8px; transition: width 0.5s ease;"></div>
-                                            </div>
-                                            <div id="${videoId}-status" style="color: #a6adc8; font-size: 13px;">Efekt uygulanıyor...</div>
-                                        </div>`;
-                        list.appendChild(card);
-                        scrollToBottom();
-                    }
-
-                    removeImage(); // Preview temizle
-
-                    // Canvas oluşturup tek resimden Ken Burns slayt yap
-                    const canvas = document.createElement('canvas');
-                    canvas.width = 512;
-                    canvas.height = 512;
-                    const ctx = canvas.getContext('2d');
-                    const FPS = 20;
-                    const stream = canvas.captureStream(FPS);
-                    const chunks = [];
-                    const recorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
-
-                    recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
-                    const videoReady = new Promise((resolve) => {
-                        recorder.onstop = () => resolve(new Blob(chunks, { type: 'video/webm' }));
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+                    resolve({
+                        id: "file_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9),
+                        name: file.name,
+                        type: file.type,
+                        size: file.size,
+                        content: dataUrl,
+                        rawType: "image"
                     });
-
-                    recorder.start();
-                    let frame = 0;
-                    const totalFrames = 5 * FPS; // 5 saniye
-
-                    const drawFrame = () => {
-                        if (frame >= totalFrames) {
-                            recorder.stop();
-                            return;
-                        }
-                        const progress = frame / totalFrames;
-                        const zoom = 1.0 + progress * 0.15; // Zoom in
-                        const panX = progress * 10;
-
-                        ctx.save();
-                        ctx.translate(256 + panX, 256);
-                        ctx.scale(zoom, zoom);
-                        ctx.translate(-256, -256);
-                        ctx.drawImage(img, 0, 0, 512, 512);
-                        ctx.restore();
-
-                        const progPercent = Math.floor(progress * 100);
-                        const progressEl = document.getElementById(videoId + "-progress");
-                        const statusEl = document.getElementById(videoId + "-status");
-                        if (progressEl) progressEl.style.width = progPercent + "%";
-                        if (statusEl) statusEl.textContent = `📖 Sinematik efekt işleniyor... (${progPercent}%)`;
-
-                        frame++;
-                        setTimeout(drawFrame, 1000 / FPS);
-                    };
-                    drawFrame();
-                    const videoBlob = await videoReady;
-                    const videoUrl = URL.createObjectURL(videoBlob);
-                    const container = document.getElementById(videoId);
-                    if (container) {
-                        container.innerHTML = `
-                            <div style="text-align:center; background: #181825; padding: 15px; border-radius: 12px; border: 1px solid #45475a;">
-                                <div style="color: #a6e3a1; font-size: 14px; margin-bottom: 10px;">✅ Fotoğraf başarıyla sinematik klibe dönüştürüldü!</div>
-                                <video controls autoplay style="max-width:100%; border-radius: 8px; border: 2px solid #89b4fa;" src="${videoUrl}"></video>
-                                <br>
-                                <button class="run-code-btn" style="background: linear-gradient(135deg, #89b4fa, #cba6f7); color:#11111b; width:auto; padding:10px 20px; margin-top:10px; font-weight:bold; border-radius: 8px;" onclick="downloadVideo('${videoUrl}')">Videoyu İndir (WebM)</button>
-                            </div>
-                        `;
-                    }
                 };
                 img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    function handleAudioSelect(event) {
+        const files = Array.from(event.target.files);
+        if (!files.length) return;
+        closeAttachMenu();
+        
+        files.forEach(file => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                addSelectedFile({
+                    id: "file_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9),
+                    name: file.name,
+                    type: file.type,
+                    size: file.size,
+                    content: e.target.result,
+                    rawType: "audio"
+                });
+            };
+            reader.readAsDataURL(file);
+        });
+        event.target.value = '';
+    }
+
+    async function handleImageSelect(event) {
+        const files = Array.from(event.target.files);
+        if (!files.length) return;
+        closeAttachMenu();
+        showNonBlockingToast(`${files.length} görsel yükleniyor...`);
+        
+        for (const file of files) {
+            if (file.type.startsWith('image/')) {
+                const fileObj = await processImageAsPromise(file);
+                addSelectedFile(fileObj);
             }
-            } // Close triggerPostImageLoad
-        };
-        reader.readAsDataURL(file);
+        }
+        
+        const currentModel = document.getElementById('modelSelect').value;
+        const preferredVisionModel = getPreferredVisionModel(currentModel);
+        if (preferredVisionModel && preferredVisionModel !== currentModel) {
+            document.getElementById('modelSelect').value = preferredVisionModel;
+        }
+        event.target.value = '';
+    }
+
+    async function handleMediaSelect(event) {
+        const files = Array.from(event.target.files);
+        if (!files.length) return;
+        closeAttachMenu();
+        
+        for (const file of files) {
+            if (file.type.startsWith('image/')) {
+                const fileObj = await processImageAsPromise(file);
+                addSelectedFile(fileObj);
+            } else if (file.type.startsWith('video/')) {
+                await new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        addSelectedFile({
+                            id: "file_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9),
+                            name: file.name,
+                            type: file.type,
+                            size: file.size,
+                            content: e.target.result,
+                            rawType: "video"
+                        });
+                        resolve();
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+        }
+        event.target.value = '';
     }
 
     function removeImage() {
-        document.getElementById('imageUpload').value = '';
-        document.getElementById('cameraUpload').value = '';
-        document.getElementById('imagePreview').src = '';
-        document.getElementById('imagePreviewContainer').style.display = 'none';
-        selectedImageBase64 = null;
+        window.selectedFiles = [];
+        renderFilePreviews();
         saveComposerDraft();
     }
 
@@ -4305,212 +4270,81 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
     }
 
     async function handleDocSelect(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-
-        if (file.size > 5 * 1024 * 1024) {
-            alert("Dosya çok büyük! Lütfen 5MB'dan küçük belgeler yükleyin.");
-            if (event.target.id === 'docUpload') event.target.value = '';
-            return;
-        }
-
-        selectedStudyFileName = file.name;
-
-        if (file.type === "application/pdf") {
-            try {
-                // PDF.js worker ayarı
-                if (!window.pdfjsLib.GlobalWorkerOptions.workerSrc) {
-                    window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
-                }
-                const arrayBuffer = await file.arrayBuffer();
-                const pdf = await window.pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-                let fullText = "";
-
-                let startPage = 1;
-                let endPage = pdf.numPages;
-                window.isExamMode = false;
-                window.pdfChunks = null; // Çok büyük PDF için chunk modu
-
-                const totalPages = pdf.numPages;
-
-                // ===== AKILLI PDF BÖLME SİSTEMİ =====
-                // ≤20 sayfa → direkt oku (tek API isteği)
-                // 20-80 sayfa → 2-4 eşit parçaya böl (API'yi ezdirme)
-                // 80+ sayfa → kullanıcıya sor (hepsi / belirli aralık)
-
-                let promptMsg = `📄 PDF Yüklendi: "${file.name}" (${totalPages} sayfa)\n\n`;
-                let autoMode = false;
-
-                if (totalPages <= 20) {
-                    // Küçük PDF → otomatik tam okuma, sadece sınav seçeneği sun
-                    promptMsg += `✅ Küçük PDF (${totalPages} sayfa) — tamamını okuyabilirim!\n\n`;
-                    promptMsg += `Ne yapmamı istersin?\n`;
-                    promptMsg += `  • Normal okuma → boş bırak veya 'hepsi'\n`;
-                    promptMsg += `  • Sınav Koçu Modu → 'sınav'`;
-                } else if (totalPages <= 80) {
-                    // Orta büyüklük → akıllı parça önerisi
-                    promptMsg += `⚡ Orta büyüklükte PDF (${totalPages} sayfa)\n\n`;
-                    promptMsg += `Seçeneklerin:\n`;
-                    promptMsg += `  • Tamamını analiz et → 'hepsi' (2-4 parçaya bölerek gönderir)\n`;
-                    promptMsg += `  • Belirli sayfalar → örn: '10-40'\n`;
-                    promptMsg += `  • Tek sayfa → örn: '5'\n`;
-                    promptMsg += `  • Sınav Koçu Modu → 'sınav'`;
-                } else {
-                    // Büyük PDF → mutlaka soruyoruz
-                    promptMsg += `⚠️ Büyük PDF (${totalPages} sayfa) — tümünü göndermek modeli yorabilir!\n\n`;
-                    promptMsg += `Önerilen Seçenekler:\n`;
-                    promptMsg += `  • Belirli sayfalar → örn: '30-60'\n`;
-                    promptMsg += `  • İlk 30 sayfa → '1-30'\n`;
-                    promptMsg += `  • Sınav Koçu Modu (ilk 20 sayfa) → 'sınav'\n`;
-                    promptMsg += `  • Tamamını dene (yavaş olabilir) → 'hepsi'`;
-                }
-
-                // Bu eski prompt/alert akışını kaldırdık.
-                // Tüm PDF'i varsayılan olarak seçiyoruz ve kullanıcı
-                // mod seçimini uygulama içindeki CinoCode Akademi panelinden yapacak.
-                if (totalPages > 80) {
-                    // Çok büyük PDF'ler için otomatik olarak ilk 30 sayfayı alıyoruz.
-                    // Uygulama içinde kullanıcı istiyorsa farklı sayfa seçebilir.
-                    startPage = 1;
-                    endPage = Math.min(30, totalPages);
-                } else {
-                    startPage = 1;
-                    endPage = totalPages;
-                }
-                if (totalPages > 20 && totalPages <= 80) {
-                    const numChunks = totalPages <= 40 ? 2 : (totalPages <= 60 ? 3 : 4);
-                    const chunkSize = Math.ceil(totalPages / numChunks);
-                    window.pdfChunks = [];
-                    for (let c = 0; c < numChunks; c++) {
-                        window.pdfChunks.push({ start: c * chunkSize + 1, end: Math.min((c + 1) * chunkSize, totalPages) });
+        const files = Array.from(event.target.files);
+        if (!files.length) return;
+        closeAttachMenu();
+        showNonBlockingToast(`${files.length} belge yükleniyor...`);
+        
+        for (const file of files) {
+            if (file.size > 5 * 1024 * 1024) {
+                alert(`"${file.name}" çok büyük! Lütfen 5MB'dan küçük belgeler yükleyin.`);
+                continue;
+            }
+            
+            if (file.type === "application/pdf") {
+                try {
+                    if (!window.pdfjsLib.GlobalWorkerOptions.workerSrc) {
+                        window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
                     }
+                    const arrayBuffer = await file.arrayBuffer();
+                    const pdf = await window.pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                    let fullText = "";
+                    
+                    for (let p = 1; p <= Math.min(25, pdf.numPages); p++) {
+                        const page = await pdf.getPage(p);
+                        const textContent = await page.getTextContent();
+                        const pageText = textContent.items.map(item => item.str).join(" ");
+                        fullText += pageText + "\n";
+                    }
+                    
+                    addSelectedFile({
+                        id: "file_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9),
+                        name: file.name,
+                        type: file.type,
+                        size: file.size,
+                        content: `\n[${file.name} İÇERİĞİ]:\n${fullText}\n`,
+                        rawType: "document"
+                    });
+                } catch (err) {
+                    console.error("PDF okuma hatası:", err);
                 }
-
-                // Eğer uygulama zaten Sınav Koçu modundaysa, başlangıçta ilk 20 sayfayı kullan.
-                const personaSel = document.getElementById('personaSelect');
-                if (personaSel && personaSel.value === 'akademik_koc') {
-                    window.isExamMode = true;
-                    endPage = Math.min(20, totalPages);
+            } else if (isPlainTextDocument(file)) {
+                try {
+                    const text = await file.text();
+                    addSelectedFile({
+                        id: "file_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9),
+                        name: file.name,
+                        type: file.type,
+                        size: file.size,
+                        content: `\n[${file.name} İÇERİĞİ]:\n${text}\n`,
+                        rawType: "document"
+                    });
+                } catch (err) {
+                    console.error("Belge okuma hatası:", err);
                 }
-
-                // PDF sayfalarını oku
-                for (let i = startPage; i <= endPage; i++) {
-                    const page = await pdf.getPage(i);
-                    const textContent = await page.getTextContent();
-                    const pageText = textContent.items.map(item => item.str).join(' ');
-                    fullText += pageText + '\n';
+            } else if (isDocxDocument(file)) {
+                try {
+                    if (typeof mammoth === 'undefined') {
+                        alert("Word okuyucu yüklenemedi.");
+                        continue;
+                    }
+                    const arrayBuffer = await file.arrayBuffer();
+                    const result = await mammoth.extractRawText({ arrayBuffer });
+                    const text = (result && result.value || "").trim();
+                    addSelectedFile({
+                        id: "file_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9),
+                        name: file.name,
+                        type: file.type,
+                        size: file.size,
+                        content: `\n[${file.name} İÇERİĞİ]:\n${text}\n`,
+                        rawType: "document"
+                    });
+                } catch (err) {
+                    console.error("DOCX okuma hatası:", err);
                 }
-
-                let docName = file.name;
-                if (window.isExamMode) {
-                    docName += ` (Sınav Koçu Modu)`;
-                } else if (startPage !== 1 || endPage !== totalPages) {
-                    docName += ` (S. ${startPage}-${endPage})`;
-                } else if (window.pdfChunks) {
-                    docName += ` (Akıllı Bölme: ${window.pdfChunks.length} parça)`;
-                }
-
-                window.selectedDocumentText = `\n[${docName} İÇERİĞİ]:\n${fullText}\n`;
-                window.selectedDocumentName = docName;
-                window.activeDocText = window.selectedDocumentText;
-                window.activeDocName = window.selectedDocumentName;
-                window.activeDocCursor = 0;
-                const skpSourceEl = document.getElementById('skp-source');
-                if (skpSourceEl) skpSourceEl.value = 'pdf';
-                try { localStorage.setItem('cinocode_skp_source', 'pdf'); } catch(e) {}
-                if (typeof skpUpdateDocStatus === 'function') skpUpdateDocStatus();
-
-                // UI'da dosyanın seçildiğini göster
-                const previewContainer = document.getElementById('imagePreviewContainer');
-                const previewImg = document.getElementById('imagePreview');
-                previewImg.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 24 24' fill='none' stroke='%2389b4fa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'></path><polyline points='14 2 14 8 20 8'></polyline><line x1='16' y1='13' x2='8' y2='13'></line><line x1='16' y1='17' x2='8' y2='17'></line><polyline points='10 9 9 9 8 9'></polyline></svg>";
-                previewContainer.style.display = 'inline-block';
-                selectedImageBase64 = null;
-
-                if (window.isExamMode) {
-                    // Sınav Koçu modu aktif, ancak otomatik gönderme yapmıyoruz.
-                    // Kullanıcı önce metnini yazarak onaylamalı.
-                    document.getElementById("userInput").placeholder = "PDF hazır. Ne yapmamı istediğini yaz...";
-                } else if (endPage < totalPages) {
-                    showNonBlockingToast(`⚠️ Bu PDF ${totalPages} sayfa; sadece ilk ${endPage} sayfa okundu. Devamı için mesajında sayfa aralığı belirt (örn: "31-60. sayfaları oku").`);
-                    document.getElementById("userInput").placeholder = `PDF hazır (ilk ${endPage}/${totalPages} sayfa okundu). Ne yapmamı istediğini yaz...`;
-                }
-
-            } catch (err) {
-                console.error("PDF okuma hatası:", err);
-                alert("PDF okunamadı. Lütfen içeriği kopyalayıp yapıştırın.");
             }
-        } else if (isPlainTextDocument(file)) {
-            try {
-                const text = await file.text();
-                const docName = file.name;
-                window.isExamMode = false;
-                window.pdfChunks = null;
-                window.selectedDocumentText = `\n[${docName} İÇERİĞİ]:\n${text}\n`;
-                window.selectedDocumentName = docName;
-                window.activeDocText = window.selectedDocumentText;
-                window.activeDocName = window.selectedDocumentName;
-                window.activeDocCursor = 0;
-                const skpSourceEl = document.getElementById('skp-source');
-                if (skpSourceEl) skpSourceEl.value = 'text';
-                try { localStorage.setItem('cinocode_skp_source', 'text'); } catch(e) {}
-                if (typeof skpUpdateDocStatus === 'function') skpUpdateDocStatus();
-
-                const previewContainer = document.getElementById('imagePreviewContainer');
-                const previewImg = document.getElementById('imagePreview');
-                previewImg.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 24 24' fill='none' stroke='%2389b4fa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'></path><polyline points='14 2 14 8 20 8'></polyline><line x1='16' y1='13' x2='8' y2='13'></line><line x1='16' y1='17' x2='8' y2='17'></line><polyline points='10 9 9 9 8 9'></polyline></svg>";
-                previewContainer.style.display = 'inline-block';
-                selectedImageBase64 = null;
-            } catch (err) {
-                console.error("Metin dosyası okuma hatası:", err);
-                alert("Dosya okunamadı. Lütfen içeriği kopyalayıp yapıştırın.");
-            }
-        } else if (isDocxDocument(file)) {
-            try {
-                if (typeof mammoth === 'undefined') {
-                    alert("Word okuyucu yüklenemedi. Lütfen içeriği kopyalayıp yapıştırın.");
-                    if (event.target.id === 'docUpload') event.target.value = '';
-                    return;
-                }
-                const arrayBuffer = await file.arrayBuffer();
-                const result = await mammoth.extractRawText({ arrayBuffer });
-                const text = (result && result.value || "").trim();
-                if (!text) {
-                    alert("Bu Word belgesinden metin çıkarılamadı (boş olabilir). Lütfen içeriği kopyalayıp yapıştırın.");
-                    if (event.target.id === 'docUpload') event.target.value = '';
-                    return;
-                }
-                const docName = file.name;
-                window.isExamMode = false;
-                window.pdfChunks = null;
-                window.selectedDocumentText = `\n[${docName} İÇERİĞİ]:\n${text}\n`;
-                window.selectedDocumentName = docName;
-                window.activeDocText = window.selectedDocumentText;
-                window.activeDocName = window.selectedDocumentName;
-                window.activeDocCursor = 0;
-                const skpSourceEl = document.getElementById('skp-source');
-                if (skpSourceEl) skpSourceEl.value = 'text';
-                try { localStorage.setItem('cinocode_skp_source', 'text'); } catch(e) {}
-                if (typeof skpUpdateDocStatus === 'function') skpUpdateDocStatus();
-
-                const previewContainer = document.getElementById('imagePreviewContainer');
-                const previewImg = document.getElementById('imagePreview');
-                previewImg.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 24 24' fill='none' stroke='%2389b4fa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'></path><polyline points='14 2 14 8 20 8'></polyline><line x1='16' y1='13' x2='8' y2='13'></line><line x1='16' y1='17' x2='8' y2='17'></line><polyline points='10 9 9 9 8 9'></polyline></svg>";
-                previewContainer.style.display = 'inline-block';
-                selectedImageBase64 = null;
-            } catch (err) {
-                console.error("Word okuma hatası:", err);
-                alert("Word belgesi okunamadı. Lütfen içeriği kopyalayıp yapıştırın.");
-            }
-        } else if (file.type.startsWith('image/')) {
-            processFileAsBase64(file, false);
-        } else {
-            alert("Bu dosya türü (." + (file.name.split('.').pop() || '?') + ") şu anda doğrudan okunamıyor — sadece PDF, Word (.docx) ve düz metin dosyaları (.txt, .js, .py, .md, .csv, .json vb.) desteklenir. .xlsx/.pptx/.zip için lütfen içeriği kopyalayıp mesaj kutusuna yapıştır.");
-            if (event.target.id === 'docUpload') event.target.value = '';
-            return;
         }
-
-        if (event.target.id === 'docUpload') event.target.value = '';
+        event.target.value = '';
     }
 
     function isPlainTextDocument(file) {
@@ -8947,7 +8781,18 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
 
         window.generationStopRequested = false;
 
-        if (!text && !selectedImageBase64 && !window.selectedDocumentText) return;
+        const images = window.selectedFiles ? window.selectedFiles.filter(f => f.rawType === 'image').map(f => f.content) : [];
+        const hasImage = images.length > 0;
+        
+        const documents = window.selectedFiles ? window.selectedFiles.filter(f => f.rawType === 'document') : [];
+        let docTextToUse = null;
+        let docNameToUse = "Belge";
+        if (documents.length > 0) {
+            docTextToUse = documents.map(d => d.content).join("\n");
+            docNameToUse = documents.map(d => d.name).join(", ");
+        }
+
+        if (!text && !hasImage && !docTextToUse) return;
 
         const mediaSourceToggle = document.getElementById("mediaSourceToggleContainer");
         if (mediaSourceToggle) {
@@ -8956,12 +8801,11 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
         maybeApplyDynamicSpeechStyle(text);
 
         const hasExplicitImageGenerationIntent = !!text && isDirectImageGenerationRequest(text);
-        if (selectedImageBase64 && hasExplicitImageGenerationIntent) {
-            // Üretim fiili baskınsa eski/ekli görsel vision analizine sürüklemesin.
+        if (hasImage && hasExplicitImageGenerationIntent) {
             removeImage();
         }
 
-        if (!text && (selectedImageBase64 || window.selectedDocumentText)) {
+        if (!text && (hasImage || docTextToUse)) {
             userInput.placeholder = "PDF/fotoğraf hazır. Lütfen bir talimat yaz ve gönder.";
             userInput.focus();
             return;
@@ -8971,7 +8815,6 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
         let actualModelForAuto = "";
 
         if (selectedModel === "auto") {
-            const hasImage = !!selectedImageBase64;
             const hasCode = /\b(function|const|let|var|if|else|for|while|import|export|class|=>|#include|\bdef\b|import\s+pandas)\b/i.test(messageText);
 
             if (hasImage) {
@@ -8987,7 +8830,7 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
         }
         const isVisionCapable = isVisionCapableModel(selectedModel);
 
-        if (selectedImageBase64 && !isVisionCapable) {
+        if (hasImage && !isVisionCapable) {
             const preferredVisionModel = getPreferredVisionModel(selectedModel);
             if (preferredVisionModel) {
                 document.getElementById("modelSelect").value = preferredVisionModel;
@@ -9005,8 +8848,8 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
 
         const chat = sessions[currentChatId];
         let attachmentInfo = null;
-        if (selectedImageBase64) attachmentInfo = { type: "image/" };
-        else if (window.selectedDocumentText) attachmentInfo = { type: "document/" };
+        if (hasImage) attachmentInfo = { type: "image/" };
+        else if (docTextToUse) attachmentInfo = { type: "document/" };
         ensureChatTitleFromUserInput(text, attachmentInfo);
 
         let msgObj = { role: "user", content: text };
@@ -9014,24 +8857,17 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
             msgObj.internalInstruction = window.pendingContinuationInstruction;
             window.pendingContinuationInstruction = null;
         }
-        if (selectedImageBase64) {
-            msgObj.images = [selectedImageBase64];
+        if (hasImage) {
+            msgObj.images = images;
         }
-        // ===== SINAV KOÇU: aktif doküman kalıcı hafıza =====
-        // akademik_koc seçiliyken yüklenen PDF kaybolmasın
+        
         const isAkademikKocNow = (document.getElementById('personaSelect') && document.getElementById('personaSelect').value === 'akademik_koc');
-        if (window.selectedDocumentText) {
-            // PDF yeni yüklendi — aktif hafızaya kaydet
-            window.activeDocText = window.selectedDocumentText;
-            window.activeDocName = window.selectedDocumentName || 'Belge';
+        if (docTextToUse) {
+            window.activeDocText = docTextToUse;
+            window.activeDocName = docNameToUse;
         }
-
-        const docTextToUse = window.selectedDocumentText ||
-            (isAkademikKocNow && window.activeDocText ? window.activeDocText : null);
-        const docNameToUse = window.selectedDocumentName || window.activeDocName || 'Belge';
 
         if (docTextToUse) {
-            // Kaynak seçimi (skp-source): chat → doc metni gönderme
             const srcVal = document.getElementById('skp-source') ? document.getElementById('skp-source').value : 'pdf';
             if (srcVal !== 'chat') {
                 const chunkInfo = getDocumentChunkPayload(docTextToUse, selectedModel, window.isExamMode || isAkademikKocNow);
@@ -9073,12 +8909,8 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
         userInput.value = ""; autoResize(userInput);
         clearComposerDraft();
 
-        // Sadece görsel varsa preview temizle, PDF durumunu koru
-        if (selectedImageBase64) {
-            selectedImageBase64 = null;
-            const previewContainer = document.getElementById('imagePreviewContainer');
-            if (previewContainer) previewContainer.style.display = 'none';
-        }
+        window.selectedFiles = [];
+        renderFilePreviews();
 
         const botId = "bot-" + Date.now();
         clearTransientTypingIndicators();
@@ -9292,6 +9124,9 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
 
             for (let hm of historyMsgs) {
                 let hmClone = { role: hm.role, content: (hm.content || '') };
+                if (hm.images) {
+                    hmClone.images = hm.images;
+                }
                 if (hm.internalInstruction) {
                     hmClone.content = (hmClone.content || "Devam et 🔁") + "\n\n[Internal continuation instruction - do not reveal to user]\n" + String(hm.internalInstruction).substring(0, 2000);
                     delete hm.internalInstruction;
@@ -9300,15 +9135,18 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
                 // Do not include document text or prompt suffix in normal chat
                 if (taskType !== 'chat') {
                     if (hm.documentText) {
-                        // attach document text but ensure it's not huge
-                        hmClone.content = ((hmClone.content ? hmClone.content + "\n\n" : "") + (String(hm.documentText).substring(0, 2000)));
+                        hmClone.content = ((hmClone.content ? hmClone.content + "\n\n" : "") + (String(hm.documentText).substring(0, 20000)));
                     }
                     if (hm.promptSuffix) {
-                        hmClone.content = (hmClone.content || "") + String(hm.promptSuffix).substring(0, 2000);
+                        hmClone.content = (hmClone.content || "") + String(hm.promptSuffix).substring(0, 5000);
                     }
                 }
-                // truncate each message content to max 2000 chars
-                if (hmClone.content && hmClone.content.length > 2000) hmClone.content = hmClone.content.substring(0, 2000);
+                
+                const isLastMsg = (hm === rawHistory[rawHistory.length - 1]);
+                const maxTruncateLen = isLastMsg ? 40000 : 2000;
+                if (hmClone.content && hmClone.content.length > maxTruncateLen) {
+                    hmClone.content = hmClone.content.substring(0, maxTruncateLen);
+                }
                 reqMessages.push(hmClone);
             }
             if (clearedInternalInstructions) saveDatabase();
