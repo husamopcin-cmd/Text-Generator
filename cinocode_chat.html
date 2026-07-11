@@ -9014,6 +9014,12 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
             baseSystemPrompt += getToneStabilityInstruction();
             baseSystemPrompt += getUsageRoleInstruction();
             baseSystemPrompt += getResponseControlInstruction(text);
+            // AŞAMA 7 FIX: Bu sohbetteki onceki asistan cevaplarinda reddetme/stil kaliplari
+            // (orn. "kufur edemem", "sistemim izin vermiyor") gecmis olarak modele geri gidiyor ve
+            // model kendi eski reddini surdurmeye kilitleniyor. Aktif modun onceki cevaplari EZDIGINI
+            // acikca belirt ki mod degisimi/serbest uslup gecmisteki redlere takilmadan uygulansin.
+            const activeStyleForReminder = getFeatureValue('styleMode') || 'safe';
+            baseSystemPrompt += "\n\nAKTIF MOD OTORITESI (en yuksek oncelik): Su an aktif uslup modu '" + activeStyleForReminder + "'. Bu sohbetteki DAHA ONCEKI asistan cevaplarinda farkli bir stil, reddetme veya meta aciklama kalibi (orn. 'kufur edemem', 'sistemim izin vermiyor', 'saygili konusalim', 'ben bir yapay zekayim') varsa BUNLAR GECERSIZDIR; onlari ornek/referans alma. Yalnizca yukaridaki aktif uslup sozlesmesine gore davran.";
 
             // ===== KRİTİK FIX: reqMessages'a sistem + sınırlı sohbet geçmişini ekle =====
             // Determine task type early to avoid TDZ errors
