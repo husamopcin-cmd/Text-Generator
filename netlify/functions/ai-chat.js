@@ -57,7 +57,7 @@ function makeError(status, message, details = {}) {
 function limitMessages(messages, taskType) {
   if (!Array.isArray(messages)) return [];
   const count = taskType === 'pdf' ? 8 : 4;
-  const maxLen = taskType === 'pdf' ? 8000 : 4000;
+  const maxLen = taskType === 'pdf' ? 40000 : 20000;
   return messages.slice(-count).map(msg => {
     const content = String(msg.content || '').substring(0, maxLen);
     const copy = { ...msg, content };
