@@ -9135,15 +9135,15 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
                 // Do not include document text or prompt suffix in normal chat
                 if (taskType !== 'chat') {
                     if (hm.documentText) {
-                        hmClone.content = ((hmClone.content ? hmClone.content + "\n\n" : "") + (String(hm.documentText).substring(0, 20000)));
+                        hmClone.content = ((hmClone.content ? hmClone.content + "\n\n" : "") + (String(hm.documentText).substring(0, 500000)));
                     }
                     if (hm.promptSuffix) {
-                        hmClone.content = (hmClone.content || "") + String(hm.promptSuffix).substring(0, 5000);
+                        hmClone.content = (hmClone.content || "") + String(hm.promptSuffix).substring(0, 20000);
                     }
                 }
                 
                 const isLastMsg = (hm === rawHistory[rawHistory.length - 1]);
-                const maxTruncateLen = isLastMsg ? 40000 : 2000;
+                const maxTruncateLen = isLastMsg ? 1000000 : 50000;
                 if (hmClone.content && hmClone.content.length > maxTruncateLen) {
                     hmClone.content = hmClone.content.substring(0, maxTruncateLen);
                 }
