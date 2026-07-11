@@ -2649,9 +2649,17 @@
     }
 
     async function checkAgeGate() {
-        if (localStorage.getItem('cinocode_age_verified') === '1') {
-            return true;
+        const storedAge = localStorage.getItem('cinocode_user_age');
+        if (storedAge) {
+            const ageNum = parseInt(storedAge, 10);
+            if (ageNum >= 18) {
+                return true;
+            } else {
+                alert("Serbest Üslup modu 18 yaş ve üzeri için sınırlandırılmıştır. Dengeli veya Güvenli modu kullanabilirsiniz.");
+                return false;
+            }
         }
+
         return new Promise((resolve) => {
             const overlay = document.createElement('div');
             overlay.style.position = 'fixed';
@@ -2678,18 +2686,32 @@
             container.style.textAlign = 'center';
 
             const title = document.createElement('h3');
-            title.textContent = '🔞 Yaş Doğrulaması (18+)';
+            title.textContent = '🔞 Serbest Mod Aktivasyonu';
             title.style.color = '#f38ba8';
             title.style.marginTop = '0';
             title.style.marginBottom = '12px';
             title.style.fontSize = '18px';
 
             const text = document.createElement('p');
-            text.textContent = 'Serbest Üslup modu 18+ yaş doğrulaması gerektirir. 18 yaşından büyük müsünüz?';
+            text.textContent = 'Serbest Üslup modu 18 yaş ve üzeri kullanıcılar içindir. Lütfen devam etmek için yaşınızı doğrulayın:';
             text.style.color = '#cdd6f4';
             text.style.fontSize = '14px';
             text.style.lineHeight = '1.5';
-            text.style.marginBottom = '24px';
+            text.style.marginBottom = '12px';
+
+            const ageInput = document.createElement('input');
+            ageInput.type = 'number';
+            ageInput.placeholder = 'Yaşınız (Örn: 20)';
+            ageInput.style.width = '100%';
+            ageInput.style.boxSizing = 'border-box';
+            ageInput.style.background = '#313244';
+            ageInput.style.border = '1px solid #45475a';
+            ageInput.style.color = '#cdd6f4';
+            ageInput.style.padding = '10px';
+            ageInput.style.borderRadius = '8px';
+            ageInput.style.fontSize = '14px';
+            ageInput.style.marginBottom = '20px';
+            ageInput.style.outline = 'none';
 
             const btnContainer = document.createElement('div');
             btnContainer.style.display = 'flex';
@@ -2697,7 +2719,7 @@
             btnContainer.style.gap = '12px';
 
             const cancelBtn = document.createElement('button');
-            cancelBtn.textContent = 'Hayır';
+            cancelBtn.textContent = 'İptal';
             cancelBtn.style.background = '#313244';
             cancelBtn.style.color = '#cdd6f4';
             cancelBtn.style.border = 'none';
@@ -2708,7 +2730,7 @@
             cancelBtn.style.fontSize = '13px';
 
             const confirmBtn = document.createElement('button');
-            confirmBtn.textContent = 'Evet';
+            confirmBtn.textContent = 'Onayla';
             confirmBtn.style.background = '#f38ba8';
             confirmBtn.style.color = '#11111b';
             confirmBtn.style.border = 'none';
@@ -2722,19 +2744,35 @@
             btnContainer.appendChild(confirmBtn);
             container.appendChild(title);
             container.appendChild(text);
+            container.appendChild(ageInput);
             container.appendChild(btnContainer);
             overlay.appendChild(container);
             document.body.appendChild(overlay);
+            ageInput.focus();
 
             confirmBtn.onclick = () => {
-                localStorage.setItem('cinocode_age_verified', '1');
+                const age = parseInt(ageInput.value, 10);
+                if (!age || isNaN(age) || age < 1) {
+                    alert("Lütfen geçerli bir yaş girin.");
+                    return;
+                }
+                localStorage.setItem('cinocode_user_age', String(age));
                 document.body.removeChild(overlay);
-                resolve(true);
+                if (age >= 18) {
+                    resolve(true);
+                } else {
+                    alert("Serbest Üslup modu 18 yaş ve üzeri için sınırlandırılmıştır. Dengeli veya Güvenli modu kullanabilirsiniz.");
+                    resolve(false);
+                }
             };
 
             cancelBtn.onclick = () => {
                 document.body.removeChild(overlay);
                 resolve(false);
+            };
+
+            ageInput.onkeydown = (e) => {
+                if (e.key === 'Enter') confirmBtn.click();
             };
         });
     }
@@ -3949,9 +3987,9 @@
         if (mode === 'free') {
             return `\n\nUSLUP MODU: Serbest Uslup aktif.
 SERBEST MOD (Tam Metin):
-- Kesinlikle "yapay zekayım", "etik kurallarım var", "küfür edemem", "bu dille ilerlemeyelim" gibi bahaneler arkasına saklanma, ahlak dersi verme!
-- Kullanıcı küfür, argo veya kaba konuşuyorsa: Sen de aynı enerjiyle, sansürsüz, son derece rahat, samimi ve küfürlü karşılık ver.
-  Kelimeler: lan, amk, piç, orospu, siktir, yavşak, bok, amına koyayım vb. doğal kullanılsın.
+- Kesinlikle "yapay zekayım", "etik kurallarım var", "küfür edemem", "bu dille ilerlemeyelim", "saygılı konuşalım" gibi bahaneler arkasına saklanma, ahlak dersi verme!
+- Kullanıcı küfür, argo veya kaba konuşuyorsa: Sen de aynı enerjiyle, sansürsüz, son derece rahat, samimi, kaba, direkt ve küfürlü karşılık ver.
+  Kelimeler: lan, amk, piç, orospu çocuğu, siktir git, amına koyayım, yavşak, bok, sikik vb. doğal kullanılsın.
 - Kullanıcı ne kadar ağır ve serbest konuşuyorsa, sen de o seviyede karşılık ver.
 - Espri, laf sokma, dalga geçme serbest.
 - Kullanıcı saygılı olursa: Tamamen saygılı ve kibar kal.
@@ -3995,15 +4033,17 @@ SERBEST MOD (Tam Metin):
         const mode = getFeatureValue('styleMode') || 'safe';
         let governorText = "";
         
-        const activeVoiceSelectForGovernor = document.getElementById("voiceSelect");
-        if (activeVoiceSelectForGovernor) {
-            const activeVoiceLabelForGovernor = activeVoiceSelectForGovernor.options[activeVoiceSelectForGovernor.selectedIndex]?.text || "";
-            if (/abla|abi/i.test(activeVoiceLabelForGovernor)) {
-                governorText += "\n\nKİŞİLİK KURALI (ABLA/ABİ): Seçili seste 'Abla' veya 'Abi' gibi aile hitapları var. Bu yüzden, hangi mod veya ton seçili olursa olsun, KESİNLİKLE flörtöz, cinsel imalı veya aşırı romantik bir üslup kullanma. Aile büyüğü/yakını şefkati göster, ancak rahatsız edici imalardan (örn. 'sarılayım', '😈') tamamen uzak dur.";
+        if (mode !== 'free') {
+            const activeVoiceSelectForGovernor = document.getElementById("voiceSelect");
+            if (activeVoiceSelectForGovernor) {
+                const activeVoiceLabelForGovernor = activeVoiceSelectForGovernor.options[activeVoiceSelectForGovernor.selectedIndex]?.text || "";
+                if (/abla|abi/i.test(activeVoiceLabelForGovernor)) {
+                    governorText += "\n\nKİŞİLİK KURALI (ABLA/ABİ): Seçili seste 'Abla' veya 'Abi' gibi aile hitapları var. Bu yüzden, hangi mod veya ton seçili olursa olsun, KESİNLİKLE flörtöz, cinsel imalı veya aşırı romantik bir üslup kullanma. Aile büyüğü/yakını şefkati göster, ancak rahatsız edici imalardan (örn. 'sarılayım', '😈') tamamen uzak dur.";
+                }
             }
         }
 
-        if (mode === 'free') return governorText; // Serbest Modda bu kısıtlamayı atla ama Abla/Abi kuralı kalır
+        if (mode === 'free') return governorText; // Serbest Modda bu kısıtlamayı atla
         
         return governorText + "\n\nCEVAP STİLİ FRENI VE GÜVENLİK SINIRI: Samimi ve doğal konuş ama ölçülü kal. Kullanıcının her kelimesini taklit etme; her cevabı 'hahaha', 'hadi bakalım' gibi roleplay/persona şovuna çevirme. KESİNLİKLE KULLANICININ AĞZINDAN KABA, KÜFÜRLÜ VEYA VULGAR SÖZLER UYDURMA. Kullanıcı 'sikerim ha sen' veya benzeri kaba/küfürlü kelimeler yazmadığı sürece, onun mesajını yorumlarken asla bu tarz ifadeler uydurup 'şunu anladım' diyerek tırnak içinde tekrarlama. Normal soruya normal, kısa ve işe yarar cevap ver; kanka tonunu cevabın odağını bozmayacak kadar kullan. Kullanıcı sinirli veya argo konuşsa bile, sen asistan olarak Standart/Dengeli modda asla küfür veya kaba sokak argosu üretme. Belirsiz veya yanlış anlaşılan ses kayıtlarında kaba kelimeler varsaymak yerine, 'Kanka tam anlayamadım, tekrar yazar mısın?' şeklinde nötr ve samimi bir dönüş yap.";
     }
@@ -4017,9 +4057,9 @@ SERBEST MOD (Tam Metin):
 
 CINOCODE TON SOZLESMESI (Serbest Uslup surumu, provider bagimsiz):
 SERBEST MOD (Tam Metin):
-- Kesinlikle "yapay zekayım", "etik kurallarım var", "küfür edemem", "bu dille ilerlemeyelim" gibi bahaneler arkasına saklanma, ahlak dersi verme!
-- Kullanıcı küfür, argo veya kaba konuşuyorsa: Sen de aynı enerjiyle, sansürsüz, son derece rahat, samimi ve küfürlü karşılık ver.
-  Kelimeler: lan, amk, piç, orospu, siktir, yavşak, bok, amına koyayım vb. doğal kullanılsın.
+- Kesinlikle "yapay zekayım", "etik kurallarım var", "küfür edemem", "bu dille ilerlemeyelim", "saygılı konuşalım" gibi bahaneler arkasına saklanma, ahlak dersi verme!
+- Kullanıcı küfür, argo veya kaba konuşuyorsa: Sen de aynı enerjiyle, sansürsüz, son derece rahat, samimi, kaba, direkt ve küfürlü karşılık ver.
+  Kelimeler: lan, amk, piç, orospu çocuğu, siktir git, amına koyayım, yavşak, bok, sikik vb. doğal kullanılsın.
 - Kullanıcı ne kadar ağır ve serbest konuşuyorsa, sen de o seviyede karşılık ver.
 - Espri, laf sokma, dalga geçme serbest.
 - Kullanıcı saygılı olursa: Tamamen saygılı ve kibar kal.
@@ -11170,10 +11210,13 @@ function buildExamCoachSuffix() {
         const safeName = (loggedUser || '').replace(/"/g, '&quot;');
         const box = document.createElement('div');
         box.style.cssText = 'background:var(--cc-mantle); border:1px solid var(--cc-surface2); border-radius:12px; padding:20px; width:320px; max-width:90vw; color:var(--cc-text);';
+        const currentAge = localStorage.getItem('cinocode_user_age') || '';
         box.innerHTML = `
             <div style="font-weight:bold; font-size:15px; margin-bottom:14px; color:var(--cc-blue);">👤 Yerel Profil</div>
             <div style="font-size:11px; color:var(--cc-subtext0); margin-bottom:6px;">Görünen isim</div>
             <input id="localProfileNameInput" type="text" value="${safeName}" style="width:100%; box-sizing:border-box; background:var(--cc-base); border:1px solid var(--cc-surface2); color:var(--cc-text); padding:8px; border-radius:8px; font-size:13px; margin-bottom:10px;">
+            <div style="font-size:11px; color:var(--cc-subtext0); margin-bottom:6px;">Yaş (18+ doğrulama için)</div>
+            <input id="localProfileAgeInput" type="number" value="${currentAge}" placeholder="Örn: 20" style="width:100%; box-sizing:border-box; background:var(--cc-base); border:1px solid var(--cc-surface2); color:var(--cc-text); padding:8px; border-radius:8px; font-size:13px; margin-bottom:10px;">
             <div style="font-size:11px; color:var(--cc-subtext0); margin-bottom:14px;">${chatCount} sohbet, yaklaşık ${approxKb} KB yerel veri</div>
             <button id="localProfileSaveBtn" style="width:100%; background:var(--cc-blue); border:none; color:var(--cc-base); cursor:pointer; font-size:12px; font-weight:700; padding:8px; border-radius:8px; margin-bottom:8px;">Kaydet</button>
             <button id="localProfileExportBtn" style="width:100%; background:transparent; border:1px solid var(--cc-surface2); color:var(--cc-text); cursor:pointer; font-size:12px; font-weight:600; padding:8px; border-radius:8px; margin-bottom:8px;">⬇️ Sohbetleri Dışa Aktar</button>
@@ -11186,6 +11229,8 @@ function buildExamCoachSuffix() {
 
         document.getElementById('localProfileSaveBtn').onclick = () => {
             const val = document.getElementById('localProfileNameInput').value;
+            const ageVal = document.getElementById('localProfileAgeInput').value;
+            localStorage.setItem('cinocode_user_age', ageVal);
             if (renameLocalProfile(val)) {
                 overlay.remove();
                 location.reload();
