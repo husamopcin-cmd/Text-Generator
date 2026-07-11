@@ -7605,6 +7605,7 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
             return;
         }
         const utterance = new SpeechSynthesisUtterance(cleanText);
+        utterance.lang = langCode;
         const resolvedVoice = resolveTtsVoiceForSegment(voices, expectedVoiceId, langCode);
         let fallbackReason = resolvedVoice.fallbackReason || "";
         if (resolvedVoice.voice) utterance.voice = resolvedVoice.voice;
@@ -7632,7 +7633,6 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
             }
         }
         setTtsRouteMeta("web_speech_api", expectedVoiceId, utterance.voice, fallbackReason);
-        utterance.lang = langCode;
 
         utterance.onend = () => {
             if (onDone) onDone();
