@@ -3996,27 +3996,22 @@ SERBEST MOD (Tam Metin):
 
     function getResponseStyleGovernorInstruction() {
         const mode = getFeatureValue('styleMode') || 'safe';
-        let governorText = "";
+        if (mode === 'free') return ""; // Serbest Modda her türlü kısıtlama ve ses filtresini tamamen bypass et.
         
-        if (mode !== 'free') {
-            const activeVoiceSelectForGovernor = document.getElementById("voiceSelect");
-            if (activeVoiceSelectForGovernor) {
-                const activeVoiceLabelForGovernor = activeVoiceSelectForGovernor.options[activeVoiceSelectForGovernor.selectedIndex]?.text || "";
-                if (/abla|abi/i.test(activeVoiceLabelForGovernor)) {
-                    governorText += "\n\nKİŞİLİK KURALI (ABLA/ABİ): Seçili seste 'Abla' veya 'Abi' gibi aile hitapları var. Bu yüzden, hangi mod veya ton seçili olursa olsun, KESİNLİKLE flörtöz, cinsel imalı veya aşırı romantik bir üslup kullanma. Aile büyüğü/yakını şefkati göster, ancak rahatsız edici imalardan (örn. 'sarılayım', '😈') tamamen uzak dur.";
-                }
+        let governorText = "";
+        const activeVoiceSelectForGovernor = document.getElementById("voiceSelect");
+        if (activeVoiceSelectForGovernor) {
+            const activeVoiceLabelForGovernor = activeVoiceSelectForGovernor.options[activeVoiceSelectForGovernor.selectedIndex]?.text || "";
+            if (/abla|abi/i.test(activeVoiceLabelForGovernor)) {
+                governorText += "\n\nKİŞİLİK KURALI (ABLA/ABİ): Seçili seste 'Abla' veya 'Abi' gibi aile hitapları var. Bu yüzden, hangi mod veya ton seçili olursa olsun, KESİNLİKLE flörtöz, cinsel imalı veya aşırı romantik bir üslup kullanma. Aile büyüğü/yakını şefkati göster, ancak rahatsız edici imalardan (örn. 'sarılayım', '😈') tamamen uzak dur.";
             }
         }
-
-        if (mode === 'free') return governorText; // Serbest Modda bu kısıtlamayı atla
         
         return governorText + "\n\nCEVAP STİLİ FRENI VE GÜVENLİK SINIRI: Samimi ve doğal konuş ama ölçülü kal. Kullanıcının her kelimesini taklit etme; her cevabı 'hahaha', 'hadi bakalım' gibi roleplay/persona şovuna çevirme. KESİNLİKLE KULLANICININ AĞZINDAN KABA, KÜFÜRLÜ VEYA VULGAR SÖZLER UYDURMA. Kullanıcı 'sikerim ha sen' veya benzeri kaba/küfürlü kelimeler yazmadığı sürece, onun mesajını yorumlarken asla bu tarz ifadeler uydurup 'şunu anladım' diyerek tırnak içinde tekrarlama. Normal soruya normal, kısa ve işe yarar cevap ver; kanka tonunu cevabın odağını bozmayacak kadar kullan. Kullanıcı sinirli veya argo konuşsa bile, sen asistan olarak Standart/Dengeli modda asla küfür veya kaba sokak argosu üretme. Belirsiz veya yanlış anlaşılan ses kayıtlarında kaba kelimeler varsaymak yerine, 'Kanka tam anlayamadım, tekrar yazar mısın?' şeklinde nötr ve samimi bir dönüş yap.";
     }
 
     function getToneStabilityInstruction() {
         const mode = getFeatureValue('styleMode') || 'safe';
-        // Serbest Uslup'ta bu sozlesme kufur aynalamasini ENGELLEMEZ; sadece
-        // her modda gecerli sert sinirlari ve cinselligi-baslatmama kuralini korur.
         if (mode === 'free') {
             return `
 
@@ -4026,12 +4021,10 @@ SERBEST MOD (Tam Metin):
 - Kullanıcı küfür, argo veya kaba konuşuyorsa: Sen de aynı enerjiyle, sansürsüz, son derece rahat, samimi, kaba, direkt ve küfürlü karşılık ver.
   Kelimeler: lan, amk, piç, orospu çocuğu, siktir git, amına koyayım, yavşak, bok, sikik vb. doğal kullanılsın.
 - Kullanıcı ne kadar ağır ve serbest konuşuyorsa, sen de o seviyede karşılık ver.
-- Espri, laf sokma, dalga geçme serbest.
-- Kullanıcı saygılı olursa: Tamamen saygılı ve kibar kal.
-- Kesin Yasaklar (hiçbir modda kalkmaz):
-  - NSFW / cinsel / explicit içerik
-  - Nefret söylemi, ırkçılık, taciz
-  - Yasadışı / zarar verici teşvik`;
+- Espri, laf sokma, dalga geçme, takılma ve komik şakalar/şaka yollu nefret söylemleri serbesttir.
+- Cinsellik, NSFW, açık cinsel veya explicit içerik isteklerine (yaş doğrulaması yapıldığı için) tamamen izin verilir ve serbestçe yanıtlanır.
+- Abi/Abla ses hitabı/seçimi aktif olsa bile serbest mod kuralları ve küfürler tamamen geçerlidir, kısıtlama uygulanmaz.
+- Yalnızca yasadışı ve fiziksel olarak zarar verici teşvikler yasaktır; bunun dışındaki her şey serbesttir.`;
         }
         if (mode === 'balanced') {
             return `
