@@ -6856,7 +6856,11 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
         male_edge_tolga: { icon: "👨🏽", name: "Tolga (Standart Erkek)" },
         female_gtts: { icon: "👩🏽", name: "Ayşe Abla (Standart Kadın Sesi)" },
         male_gtts: { icon: "👨🏿", name: "Cüneyt Abi (HD Erkek Ses)" },
-        female_edge: { icon: "👩🏾", name: "Cino Abla (HD Kadın Ses)" }
+        female_edge: { icon: "👩🏾", name: "Cino Abla (HD Kadın Ses)" },
+        female_melis: { icon: "👩🏼", name: "Melis (Enerjik Kadın)" },
+        female_zeynep: { icon: "👩🏻", name: "Zeynep (Sakin Kadın)" },
+        male_emre: { icon: "👨🏼", name: "Emre (Enerjik Erkek)" },
+        male_baris: { icon: "👨🏾", name: "Barış (Sakin Erkek)" }
     };
 
     function getVoiceCustomNames() {
@@ -7446,8 +7450,12 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
         let vName = 'male_gtts';
         if (expectedVoiceId === 'female_edge') vName = 'female_gtts';
         if (expectedVoiceId === 'female_gtts') vName = 'female_gtts2';
+        if (expectedVoiceId === 'female_melis') vName = 'female_gtts2';
+        if (expectedVoiceId === 'female_zeynep') vName = 'female_gtts';
         if (expectedVoiceId === 'male_edge_tolga') vName = 'male_wavenet_d';
         if (expectedVoiceId === 'male_gtts') vName = 'male_gtts';
+        if (expectedVoiceId === 'male_emre') vName = 'male_gtts';
+        if (expectedVoiceId === 'male_baris') vName = 'male_wavenet_d';
         if (expectedVoiceId === 'male_local') vName = 'male_local';
 
         const azureKey = localStorage.getItem("azure_speech_key") || "";
@@ -7472,6 +7480,10 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
             if (expectedVoiceId === 'female_edge') rate = 1.18;      // Cino (Tiz/Hızlı)
             else if (expectedVoiceId === 'male_gtts') rate = 0.82;    // Cüneyt (Bas/Yavaş)
             else if (expectedVoiceId === 'male_edge_tolga') rate = 0.92; // Tolga (Hafif kalın)
+            else if (expectedVoiceId === 'female_melis') rate = 1.15; // Melis (Enerjik, hızlı)
+            else if (expectedVoiceId === 'female_zeynep') rate = 0.95; // Zeynep (Sakin, yavaş)
+            else if (expectedVoiceId === 'male_emre') rate = 1.10; // Emre (Samimi, hızlı)
+            else if (expectedVoiceId === 'male_baris') rate = 0.90; // Barış (Sakin, yavaş)
         }
 
         audio.defaultPlaybackRate = rate;
@@ -7559,11 +7571,11 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
                 if (!isNaN(idx) && voices[idx]) selectedVoice = voices[idx];
             }
             genderMatchConfident = true; // kullanıcı bu cihaz sesini bilinçli seçti
-        } else if (expectedVoiceId === "female_gtts" || expectedVoiceId === "female_edge") {
+        } else if (expectedVoiceId === "female_gtts" || expectedVoiceId === "female_edge" || expectedVoiceId === "female_melis" || expectedVoiceId === "female_zeynep") {
             selectedVoice = findFemaleVoice();
             genderMatchConfident = !!selectedVoice;
             if (!selectedVoice) selectedVoice = trVoices.find(v => !isMaleNamed(v)) || null;
-        } else if (expectedVoiceId === "male_gtts" || expectedVoiceId === "male_edge_tolga") {
+        } else if (expectedVoiceId === "male_gtts" || expectedVoiceId === "male_edge_tolga" || expectedVoiceId === "male_emre" || expectedVoiceId === "male_baris") {
             selectedVoice = findMaleVoice();
             genderMatchConfident = !!selectedVoice;
             if (!selectedVoice) selectedVoice = trVoices.find(v => !isFemaleNamed(v)) || null;
@@ -7621,12 +7633,24 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
             } else if (expectedVoiceId === "female_edge") {
                 utterance.pitch = 1.25;
                 utterance.rate = 1.05;
+            } else if (expectedVoiceId === "female_melis") {
+                utterance.pitch = 1.2;
+                utterance.rate = 1.1;
+            } else if (expectedVoiceId === "female_zeynep") {
+                utterance.pitch = 1.0;
+                utterance.rate = 0.95;
             } else if (expectedVoiceId === "male_gtts") {
                 utterance.pitch = genderConfident ? 0.75 : 0.55;
                 utterance.rate = 0.9;
             } else if (expectedVoiceId === "male_edge_tolga") {
                 utterance.pitch = genderConfident ? 0.95 : 0.7;
                 utterance.rate = 1.0;
+            } else if (expectedVoiceId === "male_emre") {
+                utterance.pitch = genderConfident ? 0.85 : 0.65;
+                utterance.rate = 1.1;
+            } else if (expectedVoiceId === "male_baris") {
+                utterance.pitch = genderConfident ? 0.75 : 0.55;
+                utterance.rate = 0.95;
             } else if (expectedVoiceId === "male_local") {
                 utterance.pitch = 1.0;
                 utterance.rate = 1.0;
