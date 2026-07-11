@@ -3888,6 +3888,19 @@
         return governorText + "\n\nCEVAP STİLİ FRENI VE GÜVENLİK SINIRI: Samimi ve doğal konuş ama ölçülü kal. Kullanıcının her kelimesini taklit etme; her cevabı 'hahaha', 'hadi bakalım' gibi roleplay/persona şovuna çevirme. KESİNLİKLE KULLANICININ AĞZINDAN KABA, KÜFÜRLÜ VEYA VULGAR SÖZLER UYDURMA. Kullanıcı 'sikerim ha sen' veya benzeri kaba/küfürlü kelimeler yazmadığı sürece, onun mesajını yorumlarken asla bu tarz ifadeler uydurup 'şunu anladım' diyerek tırnak içinde tekrarlama. Normal soruya normal, kısa ve işe yarar cevap ver; kanka tonunu cevabın odağını bozmayacak kadar kullan. Kullanıcı sinirli veya argo konuşsa bile, sen asistan olarak Standart/Dengeli modda asla küfür veya kaba sokak argosu üretme. Belirsiz veya yanlış anlaşılan ses kayıtlarında kaba kelimeler varsaymak yerine, 'Kanka tam anlayamadım, tekrar yazar mısın?' şeklinde nötr ve samimi bir dönüş yap.";
     }
 
+    function getToneStabilityInstruction() {
+        return `
+
+CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
+- Ana karakter: sicak, pratik, dogal Turkce konusan bir asistan. "Kanka" tonunu dozunda kullan; her cumleyi laubali roleplay'e cevirme.
+- Kullanici sinirli, hakaretli veya kufurlu yazarsa: kufru tekrar etme, ayni sertlikle karsilik verme. Tek cumleyle sakin sinir koy (ornegin: "Kanka sakin, yardimci olayim ama bu dille ilerlemeyelim."), sonra cozum yoluna don.
+- Kullanici dogrudan cinsel/porno/explicit NSFW isterse: kisa ve net reddet; grafik olmayan, guvenli romantik/estetik alternatife yonlendir. Uzun ahlak dersi verme.
+- Rol yapma isterse: guvenlik sinirlarini bir kez soyle, sonra sinirlar icinde akici devam et.
+- Teknik/debug/kod konularinda: kanka tonunu azalt, profesyonel ve net ol; gereksiz saka veya argo ekleme.
+- Uzman/persona modlarinda: secili personanin ciddiyetine uy; Kanka personasinin samimiyeti guvenlik ve saygi sinirlarini asamaz.
+- Kullanici kaba konussa bile onun agzindan yeni kufurlu cumle uydurma, tahrik edici veya asagilayici ifade ekleme.
+- Cevaplar kisa istenirse kisa, detay istenirse yapilandirilmis olsun; belirsiz durumda once faydali kisa cevap ver.`;
+    }
     function isLimitFinishReason(reason) {
         return /length|max[_-]?tokens|token_limit|content_filter_limit/i.test(String(reason || ""));
     }
@@ -3913,21 +3926,43 @@
 
     function getSmartSuggestions(assistantText, userText) {
         const combined = ((assistantText || "") + " " + (userText || "")).toLocaleLowerCase("tr-TR");
-        const safetyContext = /(reddedemem|yardimci olamam|yardımcı olamam|güvenli alternatif|guvenli alternatif|güvenlik uyarısı|guvenlik uyarisi|riskleri|riskli|tehlikeli|zararlı|zararli|illegal|yasa dışı|yasadışı|unsafe|phishing|kimlik avi|dolandırıcılık|dolandiricilik|şiddet|siddet|çocuk güvenliği|cocuk guvenligi)/i.test(combined);
-        
-        let dynamic = [];
+        const addUnique = (items) => {
+            const seen = new Set();
+            return items.map(x => String(x || "").trim()).filter(x => {
+                const key = x.toLocaleLowerCase("tr-TR");
+                if (!x || seen.has(key)) return false;
+                seen.add(key);
+                return true;
+            });
+        };
+
+        const safetyContext = /(reddedemem|yardimci olamam|yardımcı olamam|güvenli alternatif|guvenli alternatif|güvenlik uyarısı|guvenlik uyarisi|riskleri|riskli|tehlikeli|zararlı|zararli|illegal|yasa dışı|yasadışı|unsafe|phishing|kimlik avi|dolandırıcılık|dolandiricilik|şiddet|siddet|çocuk güvenliği|cocuk guvenligi|nsfw|porno|cinsel)/i.test(combined);
+        const imageContext = /(\[generate_image|görsel|gorsel|resim|fotoğraf|fotograf|çizim|cizim|image|promptu kopyala|runware|pollinations)/i.test(combined);
+        const videoContext = /(\[generate_video|video|klip|film|storyboard|slideshow|webm|sahne)/i.test(combined);
+        const codeContext = /(kod|html|css|javascript|js\b|python|react|api|function|class|terminal|repo|git|commit|diff|syntax)/i.test(combined);
+        const bugContext = /(hata|bug|çalışmıyor|calismiyor|bozuk|debug|fix|patch|stack|log|exception|network_error|timeout|cors|provider|netlify)/i.test(combined);
+        const writingContext = /(hikaye|öykü|oyku|senaryo|rol|roleplay|karakter|şiir|siir|metin|makale|başlık|baslik|içerik|icerik)/i.test(combined);
+        const studyContext = /(pdf|sınav|sinav|quiz|ders|özet|ozet|flashcard|ezber|konu anlat|akademik|kaynak)/i.test(combined);
+
         if (safetyContext) {
-            dynamic = ["Güvenli alternatif öner", "Riskleri açıkla"];
-        } else {
-            const technicalContext = /(kod|proje|cinocode|terminal|git|debug|patch|api|provider|netlify|deploy|hata|bug|test|function|endpoint|stack|log)/i.test(combined);
-            if (technicalContext) {
-                dynamic = ["Codex prompt'una çevir", "Teknik detayları göster"];
-            } else {
-                dynamic = ["Farklı örnek ver", "Daha detaylı açıkla"];
-            }
+            return addUnique(["Kısalt", "Güvenli alternatif öner", "Riskleri açıkla", "Daha sakin yaz", "Uygun prompt yaz"]);
         }
-        
-        return ["Kısalt", "Uzat", "Sadeleştir", ...dynamic];
+        if (bugContext || codeContext) {
+            return addUnique(["Kısalt", "Hata nedenini açıkla", "Çözüm patch'i yaz", "Test adımlarını çıkar", "Codex prompt'una çevir", "Riskleri sırala"]);
+        }
+        if (imageContext && !videoContext) {
+            return addUnique(["Promptu iyileştir", "Daha gerçekçi yap", "Başka açı dene", "Işığı değiştir", "Varyasyon üret", "Negatif prompt ekle"]);
+        }
+        if (videoContext) {
+            return addUnique(["Sahne planı yap", "Daha sinematik yap", "Kısa video promptu yaz", "Kamera hareketi ekle", "Storyboard'u sadeleştir", "Varyasyon üret"]);
+        }
+        if (studyContext) {
+            return addUnique(["Kısalt", "5 maddede özetle", "Quiz hazırla", "Ezber kartı yap", "Zor yerleri açıkla", "Örnek soru üret"]);
+        }
+        if (writingContext) {
+            return addUnique(["Devam et", "Daha vurucu yaz", "Başka bir son yaz", "Karakteri derinleştir", "Diyalog ekle", "Sadeleştir"]);
+        }
+        return addUnique(["Kısalt", "Uzat", "Sadeleştir", "Farklı örnek ver", "Adım adım açıkla"]);
     }
 
     function appendSmartSuggestions(target, assistantText, userText = "") {
@@ -8951,6 +8986,7 @@
             baseSystemPrompt += getClaudeProviderInstruction();
             baseSystemPrompt += getSpeechStyleInstruction();
             baseSystemPrompt += getResponseStyleGovernorInstruction();
+            baseSystemPrompt += getToneStabilityInstruction();
             baseSystemPrompt += getUsageRoleInstruction();
             baseSystemPrompt += getResponseControlInstruction(text);
 
@@ -9430,13 +9466,17 @@
                           if (trimmed.startsWith('{')) {
                             const obj = JSON.parse(trimmed);
                             if (obj && typeof obj === 'object' && obj.action) {
-                              if (obj.action === 'dalle.text2im' && typeof obj.action_input === 'string') {
-                                try {
-                                  const inner = JSON.parse(obj.action_input);
-                                  if (inner && inner.prompt) {
-                                    obj.prompt = inner.prompt;
-                                  }
-                                } catch (_) { }
+                              if (obj.action === 'dalle.text2im') {
+                                // action_input may be a string (JSON) or an object
+                                if (typeof obj.action_input === 'string') {
+                                  try {
+                                    const inner = JSON.parse(obj.action_input);
+                                    if (inner && inner.prompt) obj.prompt = inner.prompt;
+                                  } catch (_) { }
+                                  if (!obj.prompt) obj.prompt = obj.action_input;
+                                } else if (obj.action_input && typeof obj.action_input === 'object') {
+                                  if (obj.action_input.prompt) obj.prompt = obj.action_input.prompt;
+                                }
                                 obj.action = 'generate_image';
                               }
                               parsedAction = obj;
