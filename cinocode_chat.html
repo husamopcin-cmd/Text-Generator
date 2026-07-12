@@ -98,6 +98,17 @@
         .fz19-toggle input:checked + .fz19-slider { background: #a6e3a1; }
         .fz19-toggle input:checked + .fz19-slider:before { transform: translateX(20px); background: #11111b; }
 
+        /* FAZ 19 — Keşfet Turu (Discovery Tour) */
+        #fz19TourOverlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:99999; pointer-events:none; }
+        #fz19TourMask { position:absolute; box-shadow:0 0 0 9999px rgba(0,0,0,0.65); border-radius:8px; transition:all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); pointer-events:none; }
+        #fz19TourCard { position:absolute; background:#1e1e2e; border:1px solid #a6e3a1; border-radius:12px; padding:20px; width:280px; color:#cdd6f4; pointer-events:auto; transition:all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); box-shadow:0 8px 32px rgba(0,0,0,0.5); z-index:100000; }
+        #fz19TourCard h3 { margin-top:0; color:#a6e3a1; font-size:16px; margin-bottom:8px; }
+        #fz19TourCard p { font-size:13px; line-height:1.5; color:#a6adc8; margin:0 0 15px 0; }
+        .fz19-tour-btn { background:#313244; border:1px solid #45475a; color:#cdd6f4; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:12px; transition:all 0.2s; }
+        .fz19-tour-btn:hover { background:#45475a; color:#a6e3a1; }
+        .fz19-tour-btn.primary { background:rgba(166,227,161,0.15); border-color:#a6e3a1; color:#a6e3a1; font-weight:bold; }
+        .fz19-tour-btn.primary:hover { background:rgba(166,227,161,0.25); }
+
         /* Persona dropdown — seçili item vurgusu */
         .custom-persona-opt.active, .custom-persona-opt-mobile.active {
             background: rgba(137,180,250,0.18) !important;
@@ -2451,6 +2462,7 @@
         <div style="color:#a6adc8; font-size:11px; margin-bottom:15px; line-height:1.4; text-align:left;">* Klasik mod, mesaj aksiyon butonlarını ve bazı yeni bileşenleri sade gösterir. Gerçek kod sürümünü geri almaz.</div>
 
         <div style="height:1px; background:#313244; margin:14px 0;"></div>
+        <button onclick="closeSettings(); fz19StartTour();" style="width:100%; padding:11px; border-radius:8px; border:1px solid #a6e3a1; background:rgba(166,227,161,0.1); color:#a6e3a1; font-size:13px; font-weight:600; cursor:pointer; transition:all 0.2s; display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:10px;" onmouseover="this.style.background='rgba(166,227,161,0.2)'" onmouseout="this.style.background='rgba(166,227,161,0.1)'">🧭 CinoCode'u Keşfet (Tur)</button>
         <button onclick="openFz19Editor()" style="width:100%; padding:11px; border-radius:8px; border:1px solid #89b4fa; background:rgba(137,180,250,0.1); color:#89b4fa; font-size:13px; font-weight:600; cursor:pointer; transition:all 0.2s; display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:10px;" onmouseover="this.style.background='rgba(137,180,250,0.2)'" onmouseout="this.style.background='rgba(137,180,250,0.1)'">🎨 Arayüzü Düzenle</button>
         <button class="send-btn" style="width: 100%; border-radius: 8px; padding: 10px;" onclick="saveSettings()">Kaydet</button>
     </div>
@@ -4319,8 +4331,14 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
         if (isProgrammer && (bugContext || codeContext)) {
             return addUnique(["Kısalt", "Hata nedenini açıkla", "Çözüm patch'i yaz", "Test adımlarını çıkar", "Codex prompt'una çevir", "Riskleri sırala"]);
         }
-        if (bugContext || codeContext) {
-            return addUnique(["Kısalt", "Hata nedenini açıkla", "Çözüm patch'i yaz", "Test adımlarını çıkar", "Codex prompt'una çevir", "Riskleri sırala"]);
+        if (codeContext) {
+            return addUnique(["Kısalt", "Kodu açıkla", "Çözüm patch'i yaz", "Optimize et", "Riskleri sırala"]);
+        }
+        if (writingContext) {
+            return addUnique(["Devam et", "Daha vurucu yaz", "Başka bir son yaz", "Karakteri derinleştir", "Diyalog ekle", "Sadeleştir"]);
+        }
+        if (bugContext) {
+            return addUnique(["Kısalt", "Hata nedenini açıkla", "Çözüm yolları öner", "Adım adım düzelt", "Neden kaynaklanıyor?"]);
         }
         if (imageContext && !videoContext) {
             return addUnique(["Promptu iyileştir", "Daha gerçekçi yap", "Başka açı dene", "Işığı değiştir", "Varyasyon üret", "Negatif prompt ekle"]);
@@ -4330,9 +4348,6 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
         }
         if (studyContext) {
             return addUnique(["Kısalt", "5 maddede özetle", "Quiz hazırla", "Ezber kartı yap", "Zor yerleri açıkla", "Örnek soru üret"]);
-        }
-        if (writingContext) {
-            return addUnique(["Devam et", "Daha vurucu yaz", "Başka bir son yaz", "Karakteri derinleştir", "Diyalog ekle", "Sadeleştir"]);
         }
         return addUnique(["Kısalt", "Uzat", "Sadeleştir", "Farklı örnek ver", "Adım adım açıkla"]);
     }
@@ -4666,6 +4681,81 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
         historySidebar: { label: 'Sohbet Geçmişi',    desc: 'Sol panel — geçmiş sohbet listesi',       emoji: '📚', color: '#fab387' },
         profileButton:  { label: 'Profil Butonu',      desc: 'Kullanıcı adı ve hesap yönetimi',         emoji: '👤', color: '#f38ba8' }
     };
+
+    // --- FAZ 19: Keşfet Turu ---
+    const FZ19_TOUR_STEPS = [
+        { target: null, title: 'Hoş Geldin! 👋', desc: 'CinoCode Keşfet Turu\'na hoş geldin. Sana arayüzdeki en önemli araçları kısaca tanıtacağım.' },
+        { target: 'modelSelect', title: 'Üslup Modları', desc: 'Buradan modelin zeka seviyesini ve yazım tarzını değiştirebilirsin.', pref: 'styleMode' },
+        { target: 'customPersonaDropdownBtn', title: 'Özel Meslekler', desc: 'CinoCode\'u öğretmen veya doktor gibi farklı rollere büründürebilirsin.', pref: 'personaSelect' },
+        { target: 'micBtn', title: 'Sesle Yaz', desc: 'Yazmak yerine mikrofonu kullanarak konuşabilirsin.', pref: 'microphone' },
+        { target: 'speakerBtn', title: 'Sesli Okuma (TTS)', desc: 'Cevapların otomatik olarak sesli okunmasını sağlar.', pref: 'ttsButton' },
+        { target: 'voiceControlsContainer', title: 'Ses Kontrolleri', desc: 'Hangi sesin kullanılacağını ve okuma hızını buradan ayarlayabilirsin.', pref: 'voiceSelect' },
+        { target: null, title: 'Dosya Ekle', desc: 'Mesaj kutusunun yanındaki (+) butonuna basarak resim veya belge ekleyebilirsin.' },
+        { target: 'sidebarCollapseBtn', title: 'Sohbet Geçmişi', desc: 'Eski sohbetlerine dönmek için bu menüyü kullan.', pref: 'historySidebar' },
+        { target: null, title: 'Arayüzü Düzenle', desc: 'Ayarlar menüsündeki "Arayüzü Düzenle" ile kullanmadığın butonları gizleyebilirsin.' },
+        { target: null, title: 'Harika! 🎉', desc: 'Tur bitti. İstediğin zaman "Ayarlar"daki "Keşfet" butonuyla tekrar edebilirsin.' }
+    ];
+
+    let fz19CurrentTourStep = 0;
+
+    function fz19StartTour() {
+        fz19CurrentTourStep = 0;
+        const overlay = document.getElementById('fz19TourOverlay');
+        if (!overlay) return;
+        overlay.style.display = 'block';
+        fz19RenderTourStep();
+    }
+    function fz19EndTour() {
+        const overlay = document.getElementById('fz19TourOverlay');
+        if (overlay) overlay.style.display = 'none';
+        localStorage.setItem('fz19_tour_seen', '1');
+    }
+    function fz19NextTourStep() { fz19CurrentTourStep++; fz19RenderTourStep(); }
+    function fz19PrevTourStep() { fz19CurrentTourStep = Math.max(0, fz19CurrentTourStep - 1); fz19RenderTourStep(); }
+
+    function fz19RenderTourStep() {
+        const prefs = typeof fz19LoadUiPrefs === 'function' ? fz19LoadUiPrefs() : null;
+        while (fz19CurrentTourStep >= 0 && fz19CurrentTourStep < FZ19_TOUR_STEPS.length) {
+            let step = FZ19_TOUR_STEPS[fz19CurrentTourStep];
+            if (step.pref && prefs && prefs.visibility && prefs.visibility[step.pref] === false) { fz19CurrentTourStep++; continue; }
+            break;
+        }
+        if (fz19CurrentTourStep >= FZ19_TOUR_STEPS.length) return fz19EndTour();
+
+        const step = FZ19_TOUR_STEPS[fz19CurrentTourStep];
+        const mask = document.getElementById('fz19TourMask');
+        const card = document.getElementById('fz19TourCard');
+        if (!mask || !card) return;
+
+        document.getElementById('fz19TourTitle').textContent = step.title;
+        document.getElementById('fz19TourDesc').textContent = step.desc;
+        document.getElementById('fz19TourProgress').textContent = (fz19CurrentTourStep + 1) + ' / ' + FZ19_TOUR_STEPS.length;
+        document.getElementById('fz19TourPrevBtn').style.visibility = fz19CurrentTourStep === 0 ? 'hidden' : 'visible';
+        document.getElementById('fz19TourNextBtn').textContent = fz19CurrentTourStep === FZ19_TOUR_STEPS.length - 1 ? 'Bitir' : 'İleri';
+
+        let targetEl = step.target ? document.getElementById(step.target) : null;
+        if (targetEl && targetEl.offsetParent !== null && window.getComputedStyle(targetEl).display !== 'none') {
+            const rect = targetEl.getBoundingClientRect();
+            mask.style.opacity = '1';
+            mask.style.width = (rect.width + 12) + 'px';
+            mask.style.height = (rect.height + 12) + 'px';
+            mask.style.left = (rect.left - 6) + 'px';
+            mask.style.top = (rect.top - 6) + 'px';
+            card.style.transform = 'none';
+            if (rect.bottom + 220 < window.innerHeight) {
+                card.style.top = (rect.bottom + 15) + 'px';
+                card.style.left = Math.max(10, Math.min(rect.left, window.innerWidth - 300)) + 'px';
+            } else {
+                card.style.top = Math.max(10, (rect.top - 180)) + 'px';
+                card.style.left = Math.max(10, Math.min(rect.left, window.innerWidth - 300)) + 'px';
+            }
+        } else {
+            mask.style.opacity = '0';
+            card.style.left = '50%';
+            card.style.top = '50%';
+            card.style.transform = 'translate(-50%, -50%)';
+        }
+    }
 
     function openFz19Editor() {
         const prefs = fz19LoadUiPrefs();
@@ -12136,6 +12226,11 @@ window.addEventListener('DOMContentLoaded', async () => {
     document.addEventListener('DOMContentLoaded', () => {
         loadCustomProfessions();
         initCustomPersonaDropdown();
+
+        // Faz 19: Keşfet Turu — ilk açılışta bir kez otomatik başlat
+        if (!localStorage.getItem('fz19_tour_seen')) {
+            setTimeout(() => { if (typeof fz19StartTour === 'function') fz19StartTour(); }, 1500);
+        }
         
         // If current saved draft uses a custom profession, inject it into selects so select element values match
         setTimeout(() => {
@@ -12170,6 +12265,21 @@ window.addEventListener('DOMContentLoaded', async () => {
             <div style="display:flex; gap:10px; justify-content:center;">
                 <button onclick="captureCameraPhoto()" style="background:#a6e3a1; color:#11111b; font-weight:bold; border:none; padding:10px 20px; border-radius:8px; cursor:pointer;">Fotoğraf Çek</button>
                 <button onclick="closeCameraModal()" style="background:#45475a; color:#cdd6f4; border:none; padding:10px 20px; border-radius:8px; cursor:pointer;">Kapat</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- FAZ 19: Keşfet Turu Overlay -->
+    <div id="fz19TourOverlay">
+        <div id="fz19TourMask"></div>
+        <div id="fz19TourCard">
+            <button onclick="fz19EndTour()" style="position:absolute; top:12px; right:15px; background:none; border:none; color:#f38ba8; cursor:pointer; font-size:18px; padding:0; line-height:1;">×</button>
+            <h3 id="fz19TourTitle"></h3>
+            <p id="fz19TourDesc"></p>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <button id="fz19TourPrevBtn" class="fz19-tour-btn" onclick="fz19PrevTourStep()">Geri</button>
+                <span id="fz19TourProgress" style="font-size:11px; color:#6c7086; font-weight:bold;"></span>
+                <button id="fz19TourNextBtn" class="fz19-tour-btn primary" onclick="fz19NextTourStep()">İleri</button>
             </div>
         </div>
     </div>
