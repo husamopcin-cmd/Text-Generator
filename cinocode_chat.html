@@ -84,6 +84,19 @@
         * { box-sizing: border-box; }
         /* FAZ 19 — UI kişiselleştirme gizleme sınıfı */
         .fz19-hidden { display: none !important; }
+
+        /* FAZ 19 — Arayüzü Düzenle: tema kartı + toggle switch stilleri */
+        .fz19-theme-card { transition: border-color 0.2s, background 0.2s; }
+        .fz19-theme-card:hover { border-color: #89b4fa !important; background: #1e1e2e !important; }
+        .fz19-theme-card.fz19-selected { border-color: #a6e3a1 !important; background: rgba(166,227,161,0.08) !important; box-shadow: 0 0 12px rgba(166,227,161,0.2); }
+        .fz19-toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 4px 0; }
+        .fz19-toggle-label { color: #cdd6f4; font-size: 13px; display: flex; align-items: center; gap: 8px; }
+        .fz19-toggle { position: relative; display: inline-block; width: 44px; height: 24px; flex-shrink: 0; }
+        .fz19-toggle input { opacity: 0; width: 0; height: 0; }
+        .fz19-slider { position: absolute; cursor: pointer; inset: 0; background: #45475a; border-radius: 24px; transition: background 0.2s; }
+        .fz19-slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background: #cdd6f4; border-radius: 50%; transition: transform 0.2s; }
+        .fz19-toggle input:checked + .fz19-slider { background: #a6e3a1; }
+        .fz19-toggle input:checked + .fz19-slider:before { transform: translateX(20px); background: #11111b; }
         html {
             min-height: 100dvh;
             height: 100dvh;
@@ -2422,7 +2435,50 @@
         </select>
         <div style="color:#a6adc8; font-size:11px; margin-bottom:15px; line-height:1.4; text-align:left;">* Klasik mod, mesaj aksiyon butonlarını ve bazı yeni bileşenleri sade gösterir. Gerçek kod sürümünü geri almaz.</div>
 
+        <div style="height:1px; background:#313244; margin:14px 0;"></div>
+        <button onclick="openFz19Editor()" style="width:100%; padding:11px; border-radius:8px; border:1px solid #89b4fa; background:rgba(137,180,250,0.1); color:#89b4fa; font-size:13px; font-weight:600; cursor:pointer; transition:all 0.2s; display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:10px;" onmouseover="this.style.background='rgba(137,180,250,0.2)'" onmouseout="this.style.background='rgba(137,180,250,0.1)'">🎨 Arayüzü Düzenle</button>
         <button class="send-btn" style="width: 100%; border-radius: 8px; padding: 10px;" onclick="saveSettings()">Kaydet</button>
+    </div>
+
+    <!-- FAZ 19 — Arayüzü Düzenle Overlay -->
+    <div class="attach-menu-overlay" id="fz19UiEditOverlay" onclick="closeFz19Editor()"></div>
+    <div class="attach-menu" id="fz19UiEditMenu" style="bottom:50%; transform:translate(-50%,50%); display:none; opacity:0; pointer-events:auto; max-height:90vh; width:92%; max-width:460px; overflow-y:auto;" onclick="event.stopPropagation()">
+        <button class="attach-menu-close" onclick="closeFz19Editor()">×</button>
+        <div class="attach-menu-title">🎨 Arayüzü Düzenle</div>
+
+        <!-- Tema Kartları -->
+        <div style="margin-bottom:14px;">
+            <div style="color:#a6adc8; font-size:10px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:10px;">Hazır Temalar</div>
+            <div style="display:flex; gap:8px;">
+                <div id="fz19CardSade" class="fz19-theme-card" onclick="fz19SelectTheme('sade')" style="flex:1; padding:12px 6px; border-radius:12px; border:2px solid #45475a; background:#181825; cursor:pointer; text-align:center;">
+                    <div style="font-size:20px; margin-bottom:5px;">🔘</div>
+                    <div style="font-weight:700; color:#cdd6f4; font-size:12px;">Sade</div>
+                    <div style="font-size:9px; color:#a6adc8; margin-top:3px; line-height:1.4;">Sadece sohbet,<br>minimalist</div>
+                </div>
+                <div id="fz19CardDengeli" class="fz19-theme-card" onclick="fz19SelectTheme('dengeli')" style="flex:1; padding:12px 6px; border-radius:12px; border:2px solid #45475a; background:#181825; cursor:pointer; text-align:center;">
+                    <div style="font-size:20px; margin-bottom:5px;">⚖️</div>
+                    <div style="font-weight:700; color:#cdd6f4; font-size:12px;">Dengeli</div>
+                    <div style="font-size:9px; color:#a6adc8; margin-top:3px; line-height:1.4;">Persona + Mikrofon<br>+ TTS açık</div>
+                </div>
+                <div id="fz19CardTam" class="fz19-theme-card" onclick="fz19SelectTheme('tam')" style="flex:1; padding:12px 6px; border-radius:12px; border:2px solid #45475a; background:#181825; cursor:pointer; text-align:center;">
+                    <div style="font-size:20px; margin-bottom:5px;">🔲</div>
+                    <div style="font-weight:700; color:#cdd6f4; font-size:12px;">Tam</div>
+                    <div style="font-size:9px; color:#a6adc8; margin-top:3px; line-height:1.4;">Her şey açık<br>(varsayılan)</div>
+                </div>
+            </div>
+        </div>
+
+        <div style="height:1px; background:#313244; margin:10px 0 14px;"></div>
+
+        <!-- Toggle Switch Listesi -->
+        <div style="color:#a6adc8; font-size:10px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:12px;">Özellikler</div>
+        <div id="fz19ToggleList" style="display:flex; flex-direction:column; gap:14px; margin-bottom:20px;"></div>
+
+        <!-- Alt Butonlar -->
+        <div style="display:flex; gap:10px;">
+            <button onclick="fz19ResetToDefault()" style="flex:1; padding:10px; border-radius:8px; border:1px solid #45475a; background:transparent; color:#f38ba8; font-size:13px; font-weight:600; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.borderColor='#f38ba8'" onmouseout="this.style.borderColor='#45475a'">↩ Varsayılana Dön</button>
+            <button onclick="fz19SaveAndClose()" style="flex:1; padding:10px; border-radius:8px; border:none; background:linear-gradient(135deg,#a6e3a1,#89b4fa); color:#11111b; font-weight:700; font-size:13px; cursor:pointer; transition:all 0.2s;">💾 Kaydet</button>
+        </div>
     </div>
 
     <!-- Profession Selection Modal -->
@@ -4574,6 +4630,101 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
             document.getElementById('settingsOverlay').classList.remove('active');
         }, 300);
     }
+
+    // ===== FAZ 19 — ARAYÜZÜ DÜZENLE OVERLAY =====
+    const FZ19_EDITOR_LABELS = {
+        styleMode:      { label: 'Üslup Modu Seçimi', emoji: '🎭' },
+        personaSelect:  { label: 'Persona / Karakter', emoji: '🤖' },
+        voiceSelect:    { label: 'Ses Kontrolleri',    emoji: '🔊' },
+        microphone:     { label: 'Mikrofon Butonu',    emoji: '🎤' },
+        ttsButton:      { label: 'Sesli Okuma (TTS)',  emoji: '📢' },
+        historySidebar: { label: 'Sohbet Geçmişi',    emoji: '📚' },
+        profileButton:  { label: 'Profil Butonu',      emoji: '👤' }
+    };
+
+    function openFz19Editor() {
+        const prefs = fz19LoadUiPrefs();
+        fz19RenderToggles(prefs);
+        fz19HighlightThemeCard(prefs.theme);
+        document.getElementById('fz19UiEditOverlay').classList.add('active');
+        const menu = document.getElementById('fz19UiEditMenu');
+        menu.style.display = 'flex';
+        setTimeout(() => menu.style.opacity = '1', 50);
+    }
+
+    function closeFz19Editor() {
+        const menu = document.getElementById('fz19UiEditMenu');
+        menu.style.opacity = '0';
+        setTimeout(() => {
+            menu.style.display = 'none';
+            document.getElementById('fz19UiEditOverlay').classList.remove('active');
+        }, 300);
+    }
+
+    function fz19RenderToggles(prefs) {
+        const container = document.getElementById('fz19ToggleList');
+        if (!container) return;
+        container.innerHTML = '';
+        Object.keys(FZ19_EDITOR_LABELS).forEach(k => {
+            const checked = prefs.visibility[k] !== false;
+            const info = FZ19_EDITOR_LABELS[k];
+            const row = document.createElement('div');
+            row.className = 'fz19-toggle-row';
+            row.innerHTML = `<span class="fz19-toggle-label">${info.emoji} ${info.label}</span>
+                <label class="fz19-toggle">
+                    <input type="checkbox" id="fz19Toggle_${k}" ${checked ? 'checked' : ''} onchange="fz19ToggleChanged()">
+                    <span class="fz19-slider"></span>
+                </label>`;
+            container.appendChild(row);
+        });
+    }
+
+    function fz19ToggleChanged() {
+        fz19HighlightThemeCard('custom');
+    }
+
+    function fz19SelectTheme(theme) {
+        const presets = FZ19_THEME_PRESETS[theme];
+        if (!presets) return;
+        Object.keys(presets).forEach(k => {
+            const el = document.getElementById('fz19Toggle_' + k);
+            if (el) el.checked = presets[k];
+        });
+        fz19HighlightThemeCard(theme);
+    }
+
+    function fz19HighlightThemeCard(theme) {
+        ['sade', 'dengeli', 'tam'].forEach(t => {
+            const card = document.getElementById('fz19Card' + t.charAt(0).toUpperCase() + t.slice(1));
+            if (card) card.classList.toggle('fz19-selected', t === theme);
+        });
+    }
+
+    function fz19SaveAndClose() {
+        const visibility = {};
+        Object.keys(FZ19_EDITOR_LABELS).forEach(k => {
+            const el = document.getElementById('fz19Toggle_' + k);
+            visibility[k] = el ? el.checked : true;
+        });
+        const selectedCard = document.querySelector('.fz19-theme-card.fz19-selected');
+        let theme = 'custom';
+        if (selectedCard) {
+            theme = selectedCard.id.replace('fz19Card', '').toLowerCase();
+        }
+        fz19SaveUiPrefs({ theme, visibility });
+        fz19ApplyUiPrefs();
+        closeFz19Editor();
+        if (typeof showNonBlockingToast === 'function') showNonBlockingToast('Arayüz tercihleri kaydedildi! ✓');
+    }
+
+    function fz19ResetToDefault() {
+        if (!confirm('Tüm arayüz tercihleri sıfırlanacak (Tam tema — her şey açık). Devam edilsin mi?')) return;
+        fz19SaveUiPrefs({ theme: 'tam', visibility: { ...FZ19_THEME_PRESETS.tam } });
+        fz19ApplyUiPrefs();
+        closeFz19Editor();
+        if (typeof showNonBlockingToast === 'function') showNonBlockingToast('Arayüz varsayılana döndürüldü! ✓');
+    }
+    // ===== FAZ 19 — ARAYÜZÜ DÜZENLE OVERLAY SONU =====
 
     function getRandomApiKey(keyStr) {
         if (!keyStr) return "";
