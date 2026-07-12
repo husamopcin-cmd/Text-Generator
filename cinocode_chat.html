@@ -1669,6 +1669,7 @@
                 <button class="new-chat-btn lib-sidebar-btn" id="libNavImage" onclick="openLibrary('image')" style="flex:1; border-color:#a6e3a1; background:rgba(166,227,161,0.1); justify-content:center; padding: 6px; font-size:16px; transition:0.2s;" title="Resimler">🎨</button>
                 <button class="new-chat-btn lib-sidebar-btn" id="libNavVideo" onclick="openLibrary('video')" style="flex:1; border-color:#cba6f7; background:rgba(203,166,247,0.1); justify-content:center; padding: 6px; font-size:16px; transition:0.2s;" title="Videolar">🎬</button>
                 <button class="new-chat-btn lib-sidebar-btn" id="libNavDoc" onclick="openLibrary('doc')" style="flex:1; border-color:#89b4fa; background:rgba(137,180,250,0.1); justify-content:center; padding: 6px; font-size:16px; transition:0.2s;" title="Belgeler">📄</button>
+                <button class="new-chat-btn lib-sidebar-btn" id="libNavGame" onclick="openLibrary('game')" style="flex:1; border-color:#f9e2af; background:rgba(249,226,175,0.1); justify-content:center; padding: 6px; font-size:16px; transition:0.2s;" title="Kod & Oyun">💻</button>
             </div>
         </details>
 
@@ -8470,12 +8471,14 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
         const titleEl = document.getElementById('libraryTitle');
         if(tab === 'image') titleEl.innerHTML = "🖼️ Resim Arşivi";
         else if(tab === 'video') titleEl.innerHTML = "🎥 Video Arşivi";
+        else if(tab === 'game') titleEl.innerHTML = "💻 Kod & Oyun Arşivi";
         else titleEl.innerHTML = "📄 Belgeler";
 
         document.querySelectorAll('.lib-sidebar-btn').forEach(b => b.classList.remove('active-lib'));
         if(tab === 'image') document.getElementById('libNavImage').classList.add('active-lib');
         if(tab === 'video') document.getElementById('libNavVideo').classList.add('active-lib');
         if(tab === 'doc') document.getElementById('libNavDoc').classList.add('active-lib');
+        if(tab === 'game') document.getElementById('libNavGame').classList.add('active-lib');
 
         document.getElementById('libraryScreen').style.display = 'flex';
         renderLibrary(tab);
@@ -8502,7 +8505,10 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
         let library = [];
         try { library = JSON.parse(localStorage.getItem('cinocode_library')) || []; } catch(e) {}
 
-        let filtered = library.filter(item => item.type === tab);
+        let filtered = library.filter(item => {
+            if (tab === 'game') return item.type === 'code';
+            return item.type === tab;
+        });
         if (searchTerm) {
             filtered = filtered.filter(item => item.title.toLowerCase().includes(searchTerm) || formatDateHeader(item.date).toLowerCase().includes(searchTerm));
         }
@@ -8522,9 +8528,9 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
                 currentHeader = dateHeader;
             }
 
-            let icon = item.type === 'image' ? 'Görsel' : (item.type === 'video' ? 'Video' : 'Dosya');
+            let icon = item.type === 'image' ? 'Görsel' : (item.type === 'video' ? 'Video' : (item.type === 'code' ? 'Kod' : 'Dosya'));
             let action = item.type === 'image' ? `downloadImage('${item.content}', 'CinoCode_Gorsel.jpg')` : `openArtifactOverlay('${item.content}')`;
-            let btnText = item.type === 'image' ? 'İndir' : (item.type === 'video' ? 'İndir' : 'Önizle');
+            let btnText = item.type === 'image' ? 'İndir' : (item.type === 'video' ? 'İndir' : (item.type === 'code' ? 'Çalıştır' : 'Önizle'));
             let dataAction = '';
             let dataUrl = '';
 
@@ -8539,6 +8545,8 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
                 previewHtml = `<img src="${item.content}" style="width:100%; height:140px; object-fit:cover; border-radius:8px; margin-bottom:10px; border:1px solid #45475a;">`;
             } else if (item.type === 'video') {
                 previewHtml = `<video src="${item.content}" style="width:100%; height:140px; object-fit:cover; border-radius:8px; margin-bottom:10px; background:#11111b; border:1px solid #45475a;" controls></video>`;
+            } else if (item.type === 'code') {
+                previewHtml = `<div style="width:100%; height:140px; background:#11111b; border-radius:8px; margin-bottom:10px; border:1px solid #f9e2af; display:flex; align-items:center; justify-content:center; font-size:40px;">💻</div>`;
             } else {
                 previewHtml = `<div style="width:100%; height:140px; background:#11111b; border-radius:8px; margin-bottom:10px; border:1px solid #45475a; display:flex; align-items:center; justify-content:center; font-size:40px;">📄</div>`;
             }
