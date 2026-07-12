@@ -109,6 +109,25 @@
         .fz19-tour-btn.primary { background:rgba(166,227,161,0.15); border-color:#a6e3a1; color:#a6e3a1; font-weight:bold; }
         .fz19-tour-btn.primary:hover { background:rgba(166,227,161,0.25); }
 
+        /* FAZ 20 — Kod Bloğu Göster/Gizle */
+        .fz19-code-toggle-btn {
+            background: none; border: none; color: #a6adc8; font-size: 11px; cursor: pointer; padding: 4px 8px; font-weight: bold;
+        }
+        .fz19-code-toggle-btn:hover { color: #89b4fa; }
+        
+        /* Varsayılan olarak kod gövdesi gizli (innerText kopyalamayı bozmamak için clip/height yöntemi) */
+        .code-wrapper:not(.fz19-expanded) .fz19-code-body {
+            max-height: 0 !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            border: none !important;
+            overflow: hidden !important;
+            opacity: 0 !important;
+        }
+        .code-wrapper:not(.fz19-expanded) .fz19-code-body code {
+            padding: 0 !important;
+        }
+
         /* Persona dropdown — seçili item vurgusu */
         .custom-persona-opt.active, .custom-persona-opt-mobile.active {
             background: rgba(137,180,250,0.18) !important;
@@ -8356,6 +8375,9 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
         }
 
         let runBtn = "";
+        let toggleBtn = `<button class="fz19-code-toggle-btn" onclick="this.closest('.code-wrapper').classList.toggle('fz19-expanded'); this.innerText = this.closest('.code-wrapper').classList.contains('fz19-expanded') ? 'Kodu Gizle ⌃' : 'Kodu Göster ⌄'">Kodu Göster ⌄</button>`;
+        let topBarContent = toggleBtn;
+
         if (language === 'html' || language === 'javascript' || language === 'css') {
             let fullHtml = code;
             if (language === 'javascript') fullHtml = `<script>${code}<\\/script>`;
@@ -8363,7 +8385,7 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
 
             // URL-encode single quotes to prevent breaking the onclick attribute
             const encodedCode = encodeURIComponent(fullHtml).replace(/'/g, "%27");
-            runBtn = `<div class="fz19-sticky-code-bar"><button class="run-code-btn" onclick="openArtifactOverlay('${encodedCode}')" style="margin-bottom: 0;">▶️ Kodu Çalıştır / Önizle</button></div>`;
+            topBarContent = toggleBtn + `<button class="run-code-btn" onclick="openArtifactOverlay('${encodedCode}')" style="margin-bottom: 0;">▶️ Kodu Çalıştır / Önizle</button>`;
             // Hack to only add to sidebar once per render
             if(!window.artifactRenderedSet) window.artifactRenderedSet = new Set();
             if(!window.artifactRenderedSet.has(encodedCode)) {
@@ -8371,7 +8393,7 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
                 setTimeout(() => addArtifactToList('code', 'Oluşturulan Kod', encodedCode), 100);
             }
         }
-        return `<div class="code-wrapper" style="position:relative;">${runBtn}<pre><code class="hljs ${language || ''}">${highlighted}</code></pre></div>`;
+        return `<div class="code-wrapper" style="position:relative;"><div class="fz19-sticky-code-bar" style="display:flex; justify-content:flex-end; gap:8px; align-items:center;">${topBarContent}</div><pre class="fz19-code-body"><code class="hljs ${language || ''}">${highlighted}</code></pre></div>`;
     };
     marked.setOptions({ renderer: renderer, breaks: true });
 
