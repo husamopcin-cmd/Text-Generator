@@ -8400,6 +8400,16 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
 
 
     // ----- KÜTÜPHANE (LIBRARY) SİSTEMİ -----
+    // FAZ 20: Kütüphane kotalarını her tür (type) için 50'yle sınırla (resimlerin kodlarla ezilmesini önler)
+    function fz19EnforcePerTypeQuota(library) {
+        const counts = {};
+        return library.filter(item => {
+            const t = item.type;
+            counts[t] = (counts[t] || 0) + 1;
+            return counts[t] <= 50;
+        });
+    }
+
     function saveToLibrary(type, title, encodedContent) {
         let library = [];
         try { library = JSON.parse(localStorage.getItem('cinocode_library')) || []; } catch(e) {}
@@ -8416,7 +8426,7 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
             content: encodedContent,
             date: new Date().toISOString()
         });
-        if (library.length > 50) library = library.slice(0, 50); // Kota koruması
+        library = fz19EnforcePerTypeQuota(library); // Kota koruması
         try { localStorage.setItem('cinocode_library', JSON.stringify(library)); } catch(e) { console.error("Kütüphane kayıt hatası."); }
     }
 
@@ -8444,7 +8454,7 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
         let library = [];
         try { library = JSON.parse(localStorage.getItem('cinocode_library')) || []; } catch(e) {}
         library.unshift(libraryItem);
-        if (library.length > 50) library = library.slice(0, 50);
+        library = fz19EnforcePerTypeQuota(library);
         try { localStorage.setItem('cinocode_library', JSON.stringify(library)); } catch(e) { console.error("Kütüphane kayıt hatası."); }
 
         const libScreen = document.getElementById('libraryScreen');
