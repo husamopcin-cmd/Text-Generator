@@ -867,7 +867,7 @@
             flex: 1 1 auto;
             justify-content: flex-end;
             flex-wrap: wrap;
-            overflow: hidden;
+            overflow: visible; /* fz19-fix: dropdown list position:absolute, hidden klipliyordu */
         }
 
         select {
@@ -4633,13 +4633,13 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
 
     // ===== FAZ 19 — ARAYÜZÜ DÜZENLE OVERLAY =====
     const FZ19_EDITOR_LABELS = {
-        styleMode:      { label: 'Üslup Modu Seçimi', emoji: '🎭' },
-        personaSelect:  { label: 'Persona / Karakter', emoji: '🤖' },
-        voiceSelect:    { label: 'Ses Kontrolleri',    emoji: '🔊' },
-        microphone:     { label: 'Mikrofon Butonu',    emoji: '🎤' },
-        ttsButton:      { label: 'Sesli Okuma (TTS)',  emoji: '📢' },
-        historySidebar: { label: 'Sohbet Geçmişi',    emoji: '📚' },
-        profileButton:  { label: 'Profil Butonu',      emoji: '👤' }
+        styleMode:      { label: 'Üslup Modu Seçimi', desc: 'Güvenli / Dengeli / Serbest mod seçici',  emoji: '🎭', color: '#cba6f7' },
+        personaSelect:  { label: 'Persona / Karakter', desc: 'Kanka, Yazılımcı, Meslekler dropdown\u2019ı', emoji: '🤖', color: '#89b4fa' },
+        voiceSelect:    { label: 'Ses Kontrolleri',    desc: 'TTS ses seçimi ve hız/perde ayarları',    emoji: '🔊', color: '#89dceb' },
+        microphone:     { label: 'Mikrofon Butonu',    desc: 'Sesli mesaj kaydı ve dikte',              emoji: '🎤', color: '#a6e3a1' },
+        ttsButton:      { label: 'Sesli Okuma (TTS)',  desc: 'Yanıtı sesli okutma butonu',              emoji: '📢', color: '#f9e2af' },
+        historySidebar: { label: 'Sohbet Geçmişi',    desc: 'Sol panel — geçmiş sohbet listesi',       emoji: '📚', color: '#fab387' },
+        profileButton:  { label: 'Profil Butonu',      desc: 'Kullanıcı adı ve hesap yönetimi',         emoji: '👤', color: '#f38ba8' }
     };
 
     function openFz19Editor() {
@@ -4670,8 +4670,16 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
             const info = FZ19_EDITOR_LABELS[k];
             const row = document.createElement('div');
             row.className = 'fz19-toggle-row';
-            row.innerHTML = `<span class="fz19-toggle-label">${info.emoji} ${info.label}</span>
-                <label class="fz19-toggle">
+            row.style.cssText = 'padding:8px 10px; border-radius:10px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.05);';
+            row.innerHTML = `
+                <span class="fz19-toggle-label" style="flex-direction:column; align-items:flex-start; gap:2px;">
+                    <span style="display:flex; align-items:center; gap:7px; font-weight:600;">
+                        <span style="font-size:16px; width:22px; text-align:center;">${info.emoji}</span>
+                        <span style="color:${info.color};">${info.label}</span>
+                    </span>
+                    <span style="font-size:10px; color:#6c7086; padding-left:29px;">${info.desc}</span>
+                </span>
+                <label class="fz19-toggle" style="--fz19-accent:${info.color};">
                     <input type="checkbox" id="fz19Toggle_${k}" ${checked ? 'checked' : ''} onchange="fz19ToggleChanged()">
                     <span class="fz19-slider"></span>
                 </label>`;
