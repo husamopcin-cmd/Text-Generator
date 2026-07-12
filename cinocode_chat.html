@@ -2071,7 +2071,7 @@
         <div id="suggestionChipsContainer"></div>
 
         <div class="input-box">
-            <button class="icon-btn" onclick="openAttachMenu()" title="Eklentiler" style="font-size:22px; margin-bottom:2px;">+</button>
+            <button id="fz19AttachBtn" class="icon-btn" onclick="openAttachMenu()" title="Eklentiler" style="font-size:22px; margin-bottom:2px;">+</button>
             <button class="icon-btn web-search-btn" id="webSearchBtn" onclick="toggleWebSearch()" title="İnternette Ara (Wikipedia)">🔍</button>
             <button class="icon-btn mic-btn" id="micBtn" onclick="toggleMic()" title="Sesle Yaz">🎙️</button>
             <textarea id="userInput" rows="1" placeholder="CinoCode'a bir şeyler sor..." oninput="autoResize(this)" onkeydown="handleKey(event)"></textarea>
@@ -4684,13 +4684,14 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
 
     // --- FAZ 19: Keşfet Turu ---
     const FZ19_TOUR_STEPS = [
-        { target: null, title: 'Hoş Geldin! 👋', desc: 'CinoCode Keşfet Turu\'na hoş geldin. Sana arayüzdeki en önemli araçları kısaca tanıtacağım.' },
+        { target: null, title: 'Hoş Geldin! 👋', desc: 'CinoCode Keşfet Turu\'na hoş geldin. Kod yazma, görsel/video/oyun üretme, sesli sohbet ve internetten arama — hepsi burada. Sana en önemli araçları kısaca tanıtacağım.' },
         { target: 'modelSelect', title: 'Üslup Modları', desc: 'Buradan modelin zeka seviyesini ve yazım tarzını değiştirebilirsin.', pref: 'styleMode' },
         { target: 'customPersonaDropdownBtn', title: 'Özel Meslekler', desc: 'CinoCode\'u öğretmen veya doktor gibi farklı rollere büründürebilirsin.', pref: 'personaSelect' },
         { target: 'micBtn', title: 'Sesle Yaz', desc: 'Yazmak yerine mikrofonu kullanarak konuşabilirsin.', pref: 'microphone' },
         { target: 'speakerBtn', title: 'Sesli Okuma (TTS)', desc: 'Cevapların otomatik olarak sesli okunmasını sağlar.', pref: 'ttsButton' },
         { target: 'voiceControlsContainer', title: 'Ses Kontrolleri', desc: 'Hangi sesin kullanılacağını ve okuma hızını buradan ayarlayabilirsin.', pref: 'voiceSelect' },
-        { target: null, title: 'Dosya Ekle', desc: 'Mesaj kutusunun yanındaki (+) butonuna basarak resim veya belge ekleyebilirsin.' },
+        { target: 'fz19AttachBtn', title: 'Görsel, Video ve Oyun Stüdyosu', desc: 'Buradaki (+) butonuna basarak görsel, video veya oyun stüdyosunu açabilirsin. İstersen mesaj kutusuna "resim çiz", "video oluştur" veya "oyun yap" yazarak da doğrudan başlatabilirsin.' },
+        { target: 'webSearchBtn', title: 'İnternette Ara', desc: 'Bu butonu açarsan CinoCode, cevap vermeden önce internetten güncel bilgi arar.' },
         { target: 'sidebarCollapseBtn', title: 'Sohbet Geçmişi', desc: 'Eski sohbetlerine dönmek için bu menüyü kullan.', pref: 'historySidebar' },
         { target: null, title: 'Arayüzü Düzenle', desc: 'Ayarlar menüsündeki "Arayüzü Düzenle" ile kullanmadığın butonları gizleyebilirsin.' },
         { target: null, title: 'Harika! 🎉', desc: 'Tur bitti. İstediğin zaman "Ayarlar"daki "Keşfet" butonuyla tekrar edebilirsin.' }
