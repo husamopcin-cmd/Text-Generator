@@ -2231,7 +2231,7 @@
                     </div>
                     <div id="customProfessionsPanelMobile" style="display:none; flex-direction:column; gap:4px; padding:4px 0 4px 6px;">
                         <input type="text" id="personaSearchMobile" placeholder="🔍 Persona ara..." style="width:100%; background:#181825; color:#cdd6f4; border:1px solid #45475a; padding:6px; border-radius:4px; font-size:11px; outline:none; box-sizing:border-box; margin-bottom:4px;">
-                        <div id="customProfessionsListMobile" style="display:flex; flex-direction:column; gap:2px; max-height:200px; overflow-y:auto; padding-right:2px; padding-bottom:6px;"></div></div>
+                        <div id="customProfessionsListMobile" style="display:flex; flex-direction:column; gap:2px; max-height:200px; overflow-y:auto; padding-right:2px; padding-bottom:6px;"></div>
                     </div>
                 </div>
             </div>
@@ -7710,7 +7710,7 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
                 return `http://${urlObj.hostname}:8001/api/tts`;
             } catch(e) {}
         }
-        return "http://127.0.0.1:8001/api/tts";
+        return "http://" + window.location.hostname + ":8001/api/tts";
     }
 
     // Dil Koçu: hedef dil adı → BCP-47 dil kodu haritası
