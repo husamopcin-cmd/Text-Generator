@@ -4285,6 +4285,7 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
         const combined = ((assistantText || "") + " " + (userText || "")).toLocaleLowerCase("tr-TR");
         const activePersona = document.getElementById('personaSelect') ? document.getElementById('personaSelect').value : 'kanka';
         const isProgrammer = (activePersona === 'usta_yazilimci');
+        const isTeacher = (activePersona === 'dil_kocu' || activePersona === 'akademik_koc');
         
         const addUnique = (items) => {
             const seen = new Set();
@@ -4306,6 +4307,12 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
 
         if (safetyContext) {
             return addUnique(["Kısalt", "Güvenli alternatif öner", "Riskleri açıkla", "Daha sakin yaz", "Uygun prompt yaz"]);
+        }
+        if (isTeacher && studyContext) {
+            return addUnique(["Kısalt", "5 maddede özetle", "Quiz hazırla", "Ezber kartı yap", "Zor yerleri açıkla", "Örnek soru üret"]);
+        }
+        if (isProgrammer && (bugContext || codeContext)) {
+            return addUnique(["Kısalt", "Hata nedenini açıkla", "Çözüm patch'i yaz", "Test adımlarını çıkar", "Codex prompt'una çevir", "Riskleri sırala"]);
         }
         if (bugContext || codeContext) {
             return addUnique(["Kısalt", "Hata nedenini açıkla", "Çözüm patch'i yaz", "Test adımlarını çıkar", "Codex prompt'una çevir", "Riskleri sırala"]);
