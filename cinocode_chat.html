@@ -1706,8 +1706,7 @@
             </div>
             <div style="display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:8px; width:100%;">
             <div style="display:inline-flex; align-items:center; gap:4px; position:relative;">
-                <input type="text" id="personaSearch" placeholder="🔍 Persona ara..." oninput="filterPersonas(this.value, false)" style="width:110px; background:#181825; color:#cdd6f4; border:1px solid #45475a; padding:5px; border-radius:5px; font-size:12px; outline:none;">
-                <select id="personaSelect" style="width:140px; font-weight:bold; background:rgba(166,227,161,0.2); color:#a6e3a1; border:1px solid #a6e3a1; padding:5px; border-radius:5px; font-size:12px;">
+                <select id="personaSelect" style="display:none;">
                     <optgroup label="Popüler Personalar">
                         <option value="kanka">🤖 Standart Zeka (Kanka)</option>
                         <option value="usta_yazilimci">💻 Usta Yazılımcı</option>
@@ -1738,6 +1737,31 @@
                         <option value="muzisyen">🎵 Müzisyen</option>
                     </optgroup>
                 </select>
+
+                <!-- Custom Persona Dropdown -->
+                <div id="customPersonaDropdownContainer" style="position:relative; display:inline-block; font-size:12px; z-index:101;">
+                    <button type="button" id="customPersonaDropdownBtn" style="min-width:140px; font-weight:bold; background:rgba(166,227,161,0.2); color:#a6e3a1; border:1px solid #a6e3a1; padding:5px 8px; border-radius:5px; cursor:pointer; text-align:left; display:flex; justify-content:space-between; align-items:center; gap:6px; outline:none; height:28px;">
+                        <span id="customPersonaDropdownLabel">🤖 Kanka</span>
+                        <span style="font-size:8px; opacity:0.8;">▼</span>
+                    </button>
+                    <div id="customPersonaDropdownList" style="display:none; position:absolute; top:calc(100% + 4px); left:0; min-width:220px; background:#1e1e2e; border:1px solid #45475a; border-radius:6px; box-shadow:0 8px 24px rgba(0,0,0,0.6); padding:6px; flex-direction:column; gap:2px; max-height:350px; overflow-y:auto; z-index:1001;">
+                        <div style="font-size:10px; color:#a6adc8; font-weight:bold; padding:4px 6px;">Ana Modlar</div>
+                        <div class="custom-persona-opt" data-val="kanka" style="padding:6px; border-radius:4px; cursor:pointer; color:#cdd6f4; display:flex; align-items:center; gap:6px;">🤖 Standart Zeka (Kanka)</div>
+                        <div class="custom-persona-opt" data-val="usta_yazilimci" style="padding:6px; border-radius:4px; cursor:pointer; color:#cdd6f4; display:flex; align-items:center; gap:6px;">💻 Usta Yazılımcı</div>
+                        <div class="custom-persona-opt" data-val="akademik_koc" style="padding:6px; border-radius:4px; cursor:pointer; color:#cdd6f4; display:flex; align-items:center; gap:6px;">📚 Sınav Koçu</div>
+                        <div class="custom-persona-opt" data-val="dil_kocu" style="padding:6px; border-radius:4px; cursor:pointer; color:#cdd6f4; display:flex; align-items:center; gap:6px;">🌍 Özel Dil Koçu</div>
+                        <div class="custom-persona-opt" data-val="derin_arastirma" style="padding:6px; border-radius:4px; cursor:pointer; color:#cdd6f4; display:flex; align-items:center; gap:6px;">🔍 Derin Araştırma</div>
+                        
+                        <div id="customProfessionsHeader" style="padding:6px; border-radius:4px; cursor:pointer; color:#cdd6f4; display:flex; justify-content:space-between; align-items:center; font-weight:bold; border-top:1px solid #313244; margin-top:4px;">
+                            <span style="display:flex; align-items:center; gap:6px;">💼 Meslekler</span>
+                            <span id="customProfessionsArrow" style="font-size:9px; transition:transform 0.2s;">▶</span>
+                        </div>
+                        <div id="customProfessionsPanel" style="display:none; flex-direction:column; gap:4px; padding:4px 0 4px 6px;">
+                            <input type="text" id="personaSearch" placeholder="🔍 Persona ara..." style="width:100%; background:#181825; color:#cdd6f4; border:1px solid #45475a; padding:5px; border-radius:4px; font-size:11px; outline:none; box-sizing:border-box; margin-bottom:4px;">
+                            <div id="customProfessionsList" style="display:flex; flex-direction:column; gap:2px; max-height:180px; overflow-y:auto; padding-right:2px;"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
                 <div style="display:inline-flex; align-items:center; gap:4px;">
                 <span style="color:#a6adc8; font-size:11px; white-space:nowrap;">Ton:</span>
@@ -2130,8 +2154,7 @@
             </select>
 
             <div style="color: #cdd6f4; font-size: 12px; margin-bottom: 4px; text-align: left;">Persona (Karakter):</div>
-            <input type="text" id="personaSearchMobile" placeholder="🔍 Persona ara..." oninput="filterPersonas(this.value, true)" style="width:100%; background:#181825; color:#cdd6f4; border:1px solid #45475a; padding:6px; border-radius:5px; font-size:12px; margin-bottom:6px; box-sizing:border-box; outline:none;">
-            <select id="personaSelectMobile" onchange="document.getElementById('personaSelect').value = this.value; document.getElementById('personaSelect').dispatchEvent(new Event('change'));">
+            <select id="personaSelectMobile" style="display:none;">
                 <optgroup label="Popüler Personalar">
                     <option value="kanka">🤖 Standart Zeka (Kanka)</option>
                     <option value="usta_yazilimci">💻 Usta Yazılımcı</option>
@@ -2162,6 +2185,31 @@
                     <option value="muzisyen">🎵 Müzisyen</option>
                 </optgroup>
             </select>
+            
+            <!-- Custom Mobile Persona Dropdown -->
+            <div id="customPersonaDropdownContainerMobile" style="position:relative; display:block; font-size:12px; width:100%; margin-bottom:10px;">
+                <button type="button" id="customPersonaDropdownBtnMobile" style="width:100%; font-weight:bold; background:rgba(166,227,161,0.2); color:#a6e3a1; border:1px solid #a6e3a1; padding:8px 12px; border-radius:6px; cursor:pointer; text-align:left; display:flex; justify-content:space-between; align-items:center; gap:6px; outline:none; box-sizing:border-box;">
+                    <span id="customPersonaDropdownLabelMobile">🤖 Kanka</span>
+                    <span style="font-size:8px; opacity:0.8;">▼</span>
+                </button>
+                <div id="customPersonaDropdownListMobile" style="display:none; position:absolute; top:calc(100% + 4px); left:0; width:100%; background:#1e1e2e; border:1px solid #45475a; border-radius:6px; box-shadow:0 8px 24px rgba(0,0,0,0.6); padding:6px; flex-direction:column; gap:2px; max-height:300px; overflow-y:auto; z-index:1001; box-sizing:border-box;">
+                    <div style="font-size:10px; color:#a6adc8; font-weight:bold; padding:4px 6px;">Ana Modlar</div>
+                    <div class="custom-persona-opt-mobile" data-val="kanka" style="padding:8px 6px; border-radius:4px; cursor:pointer; color:#cdd6f4; display:flex; align-items:center; gap:6px;">🤖 Standart Zeka (Kanka)</div>
+                    <div class="custom-persona-opt-mobile" data-val="usta_yazilimci" style="padding:8px 6px; border-radius:4px; cursor:pointer; color:#cdd6f4; display:flex; align-items:center; gap:6px;">💻 Usta Yazılımcı</div>
+                    <div class="custom-persona-opt-mobile" data-val="akademik_koc" style="padding:8px 6px; border-radius:4px; cursor:pointer; color:#cdd6f4; display:flex; align-items:center; gap:6px;">📚 Sınav Koçu</div>
+                    <div class="custom-persona-opt-mobile" data-val="dil_kocu" style="padding:8px 6px; border-radius:4px; cursor:pointer; color:#cdd6f4; display:flex; align-items:center; gap:6px;">🌍 Özel Dil Koçu</div>
+                    <div class="custom-persona-opt-mobile" data-val="derin_arastirma" style="padding:8px 6px; border-radius:4px; cursor:pointer; color:#cdd6f4; display:flex; align-items:center; gap:6px;">🔍 Derin Araştırma</div>
+                    
+                    <div id="customProfessionsHeaderMobile" style="padding:8px 6px; border-radius:4px; cursor:pointer; color:#cdd6f4; display:flex; justify-content:space-between; align-items:center; font-weight:bold; border-top:1px solid #313244; margin-top:4px;">
+                        <span style="display:flex; align-items:center; gap:6px;">💼 Meslekler</span>
+                        <span id="customProfessionsArrowMobile" style="font-size:9px; transition:transform 0.2s;">▶</span>
+                    </div>
+                    <div id="customProfessionsPanelMobile" style="display:none; flex-direction:column; gap:4px; padding:4px 0 4px 6px;">
+                        <input type="text" id="personaSearchMobile" placeholder="🔍 Persona ara..." style="width:100%; background:#181825; color:#cdd6f4; border:1px solid #45475a; padding:6px; border-radius:4px; font-size:11px; outline:none; box-sizing:border-box; margin-bottom:4px;">
+                        <div id="customProfessionsListMobile" style="display:flex; flex-direction:column; gap:2px; max-height:180px; overflow-y:auto; padding-right:2px;"></div>
+                    </div>
+                </div>
+            </div>
 
             <div style="color: #cdd6f4; font-size: 12px; margin-bottom: 4px; text-align: left;">Üslup Modu:</div>
             <select id="styleModeSelectMobile" onchange="document.getElementById('styleModeSelect').value = this.value; onStyleModeHeaderChange();">
@@ -7197,32 +7245,228 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
         localStorage.setItem("cinocode_voice_idx", voiceSelect.value);
     }
 
-    function filterPersonas(query, isMobile = false) {
-        const select = document.getElementById(isMobile ? 'personaSelectMobile' : 'personaSelect');
+    function initCustomPersonaDropdown() {
+        const select = document.getElementById('personaSelect');
+        const selectMobile = document.getElementById('personaSelectMobile');
         if (!select) return;
-        const lowercaseQuery = query.toLowerCase().trim();
-        const options = select.querySelectorAll('option');
-        options.forEach(opt => {
-            const text = opt.textContent.toLowerCase();
-            if (text.includes(lowercaseQuery)) {
-                opt.style.display = "";
-            } else {
-                opt.style.display = "none";
-            }
+
+        // Hide original selects
+        select.style.display = 'none';
+        if (selectMobile) selectMobile.style.display = 'none';
+
+        // Inject custom styles if not already present
+        if (!document.getElementById('customPersonaStyles')) {
+            const style = document.createElement('style');
+            style.id = 'customPersonaStyles';
+            style.textContent = `
+                .custom-persona-opt:hover, .custom-persona-opt-mobile:hover {
+                    background: #313244 !important;
+                }
+                .custom-persona-opt.active, .custom-persona-opt-mobile.active {
+                    background: rgba(166, 227, 161, 0.15) !important;
+                    color: #a6e3a1 !important;
+                    font-weight: bold !important;
+                }
+                #customProfessionsHeader:hover, #customProfessionsHeaderMobile:hover {
+                    background: #313244 !important;
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        const coreModes = {
+            "kanka": { label: "🤖 Standart Zeka (Kanka)", text: "🤖 Kanka" },
+            "usta_yazilimci": { label: "💻 Usta Yazılımcı", text: "💻 Yazılımcı" },
+            "akademik_koc": { label: "📚 Sınav Koçu", text: "📚 Sınav Koçu" },
+            "dil_kocu": { label: "🌍 Özel Dil Koçu", text: "🌍 Dil Koçu" },
+            "derin_arastirma": { label: "🔍 Derin Araştırma", text: "🔍 Araştırma" }
+        };
+
+        const professions = {
+            "profesor": { emoji: "🎓", name: "Profesör / Akademisyen" },
+            "doktor": { emoji: "🩺", name: "Doktor" },
+            "dis_hekimi": { emoji: "🦷", name: "Diş Hekimi" },
+            "psikolog": { emoji: "🧠", name: "Psikolog" },
+            "ogretmen": { emoji: "🏫", name: "Öğretmen" },
+            "mimar": { emoji: "📐", name: "Mimar" },
+            "avukat": { emoji: "⚖️", name: "Avukat" },
+            "muhasebeci": { emoji: "📊", name: "Muhasebeci" },
+            "yazilim_muhendisi": { emoji: "💻", name: "Yazılım Mühendisi" },
+            "makine_muhendisi": { emoji: "⚙️", name: "Makine Mühendisi" },
+            "sef": { emoji: "🍳", name: "Şef / Aşçı" },
+            "fitness_kocu": { emoji: "💪", name: "Fitness Koçu" },
+            "diyetisyen": { emoji: "🍎", name: "Diyetisyen" },
+            "veteriner": { emoji: "🐾", name: "Veteriner" },
+            "grafik_tasarimci": { emoji: "🎨", name: "Grafik Tasarımcı" },
+            "pazarlama_uzmani": { emoji: "📈", name: "Pazarlama Uzmanı" },
+            "finans_danismani": { emoji: "💰", name: "Finans Danışmanı" },
+            "emlak_danismani": { emoji: "🏠", name: "Emlak Danışmanı" },
+            "gazeteci": { emoji: "📰", name: "Gazeteci" },
+            "muzisyen": { emoji: "🎵", name: "Müzisyen" }
+        };
+
+        // Populate professions list in custom HTML
+        const listContainer = document.getElementById('customProfessionsList');
+        const listContainerMobile = document.getElementById('customProfessionsListMobile');
+        
+        let pListHtml = '';
+        Object.keys(professions).forEach(key => {
+            const p = professions[key];
+            pListHtml += `<div class="custom-persona-opt" data-val="${key}" style="padding:6px; border-radius:4px; cursor:pointer; color:#cdd6f4; display:flex; align-items:center; gap:6px;">${p.emoji} ${p.name}</div>`;
         });
-        const optgroups = select.querySelectorAll('optgroup');
-        optgroups.forEach(og => {
-            const children = og.querySelectorAll('option');
-            let hasVisible = false;
-            children.forEach(opt => {
-                if (opt.style.display !== "none") hasVisible = true;
+        if (listContainer) listContainer.innerHTML = pListHtml;
+
+        let pListMobileHtml = '';
+        Object.keys(professions).forEach(key => {
+            const p = professions[key];
+            pListMobileHtml += `<div class="custom-persona-opt-mobile" data-val="${key}" style="padding:8px 6px; border-radius:4px; cursor:pointer; color:#cdd6f4; display:flex; align-items:center; gap:6px;">${p.emoji} ${p.name}</div>`;
+        });
+        if (listContainerMobile) listContainerMobile.innerHTML = pListMobileHtml;
+
+        // Toggle dropdown panels on button click
+        const btn = document.getElementById('customPersonaDropdownBtn');
+        const dropdownList = document.getElementById('customPersonaDropdownList');
+        if (btn && dropdownList) {
+            btn.onclick = (e) => {
+                e.stopPropagation();
+                const isVisible = dropdownList.style.display === 'flex';
+                closeAllCustomDropdowns();
+                dropdownList.style.display = isVisible ? 'none' : 'flex';
+            };
+        }
+
+        const btnMobile = document.getElementById('customPersonaDropdownBtnMobile');
+        const dropdownListMobile = document.getElementById('customPersonaDropdownListMobile');
+        if (btnMobile && dropdownListMobile) {
+            btnMobile.onclick = (e) => {
+                e.stopPropagation();
+                const isVisible = dropdownListMobile.style.display === 'flex';
+                closeAllCustomDropdowns();
+                dropdownListMobile.style.display = isVisible ? 'none' : 'flex';
+            };
+        }
+
+        // Toggle professions nested panel inside dropdown on header click
+        const profHeader = document.getElementById('customProfessionsHeader');
+        const profPanel = document.getElementById('customProfessionsPanel');
+        const profArrow = document.getElementById('customProfessionsArrow');
+        if (profHeader && profPanel && profArrow) {
+            profHeader.onclick = (e) => {
+                e.stopPropagation();
+                const isVisible = profPanel.style.display === 'flex';
+                profPanel.style.display = isVisible ? 'none' : 'flex';
+                profArrow.style.transform = isVisible ? 'rotate(0deg)' : 'rotate(90deg)';
+                if (!isVisible) {
+                    document.getElementById('personaSearch').focus();
+                }
+            };
+        }
+
+        const profHeaderMobile = document.getElementById('customProfessionsHeaderMobile');
+        const profPanelMobile = document.getElementById('customProfessionsPanelMobile');
+        const profArrowMobile = document.getElementById('customProfessionsArrowMobile');
+        if (profHeaderMobile && profPanelMobile && profArrowMobile) {
+            profHeaderMobile.onclick = (e) => {
+                e.stopPropagation();
+                const isVisible = profPanelMobile.style.display === 'flex';
+                profPanelMobile.style.display = isVisible ? 'none' : 'flex';
+                profArrowMobile.style.transform = isVisible ? 'rotate(0deg)' : 'rotate(90deg)';
+                if (!isVisible) {
+                    document.getElementById('personaSearchMobile').focus();
+                }
+            };
+        }
+
+        // Handle item selection
+        function selectItem(val) {
+            select.value = val;
+            if (selectMobile) selectMobile.value = val;
+            select.dispatchEvent(new Event('change'));
+            closeAllCustomDropdowns();
+        }
+
+        document.addEventListener('click', (e) => {
+            const targets = [
+                '.custom-persona-opt',
+                '.custom-persona-opt-mobile'
+            ];
+            targets.forEach(selector => {
+                document.querySelectorAll(selector).forEach(opt => {
+                    if (opt.contains(e.target) || opt === e.target) {
+                        e.stopPropagation();
+                        selectItem(opt.dataset.val);
+                    }
+                });
             });
-            if (hasVisible) {
-                og.style.display = "";
-            } else {
-                og.style.display = "none";
-            }
         });
+
+        // Scoped Search functionality
+        const searchInput = document.getElementById('personaSearch');
+        if (searchInput) {
+            searchInput.onclick = (e) => e.stopPropagation();
+            searchInput.oninput = (e) => {
+                const query = e.target.value.toLowerCase().trim();
+                document.querySelectorAll('#customProfessionsList .custom-persona-opt').forEach(opt => {
+                    const txt = opt.textContent.toLowerCase();
+                    opt.style.display = txt.includes(query) ? 'flex' : 'none';
+                });
+            };
+        }
+
+        const searchInputMobile = document.getElementById('personaSearchMobile');
+        if (searchInputMobile) {
+            searchInputMobile.onclick = (e) => e.stopPropagation();
+            searchInputMobile.oninput = (e) => {
+                const query = e.target.value.toLowerCase().trim();
+                document.querySelectorAll('#customProfessionsListMobile .custom-persona-opt-mobile').forEach(opt => {
+                    const txt = opt.textContent.toLowerCase();
+                    opt.style.display = txt.includes(query) ? 'flex' : 'none';
+                });
+            };
+        }
+
+        // Global click to close panels
+        document.addEventListener('click', () => closeAllCustomDropdowns());
+
+        function closeAllCustomDropdowns() {
+            if (dropdownList) dropdownList.style.display = 'none';
+            if (dropdownListMobile) dropdownListMobile.style.display = 'none';
+        }
+
+        // Sync visual UI with model state
+        window.syncCustomPersonaUi = function() {
+            const currentVal = select.value;
+            let displayLabel = "🤖 Kanka";
+            if (coreModes[currentVal]) {
+                displayLabel = coreModes[currentVal].text;
+            } else if (professions[currentVal]) {
+                displayLabel = `${professions[currentVal].emoji} ${professions[currentVal].name}`;
+            }
+
+            const labelEl = document.getElementById('customPersonaDropdownLabel');
+            if (labelEl) labelEl.textContent = displayLabel;
+
+            const labelElMobile = document.getElementById('customPersonaDropdownLabelMobile');
+            if (labelElMobile) labelElMobile.textContent = displayLabel;
+
+            // Update active states
+            document.querySelectorAll('.custom-persona-opt').forEach(opt => {
+                opt.classList.toggle('active', opt.dataset.val === currentVal);
+            });
+            document.querySelectorAll('.custom-persona-opt-mobile').forEach(opt => {
+                opt.classList.toggle('active', opt.dataset.val === currentVal);
+            });
+        };
+
+        // Listen for original select changes to sync visual custom UI
+        select.addEventListener('change', window.syncCustomPersonaUi);
+        if (selectMobile) selectMobile.addEventListener('change', window.syncCustomPersonaUi);
+
+        // Periodically sync just in case select.value changes programmatically
+        setInterval(window.syncCustomPersonaUi, 250);
+
+        // Initial sync
+        window.syncCustomPersonaUi();
     }
 
     function toggleSpeaker() {
@@ -11614,6 +11858,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     // Auto-load custom professions on launch
     document.addEventListener('DOMContentLoaded', () => {
         loadCustomProfessions();
+        initCustomPersonaDropdown();
         
         // If current saved draft uses a custom profession, inject it into selects so select element values match
         setTimeout(() => {
