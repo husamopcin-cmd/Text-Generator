@@ -822,7 +822,7 @@
             min-width: 0;
             max-width: 100%;
             width: 100%;
-            overflow-x: hidden;
+            overflow: visible;
             border-bottom: 1px solid rgba(255,255,255,0.05);
             z-index: 5;
         }
@@ -7328,6 +7328,7 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
         const dropdownList = document.getElementById('customPersonaDropdownList');
         if (btn && dropdownList) {
             btn.onclick = (e) => {
+                e.preventDefault();
                 e.stopPropagation();
                 const isVisible = dropdownList.style.display === 'flex';
                 closeAllCustomDropdowns();
@@ -7339,6 +7340,7 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
         const dropdownListMobile = document.getElementById('customPersonaDropdownListMobile');
         if (btnMobile && dropdownListMobile) {
             btnMobile.onclick = (e) => {
+                e.preventDefault();
                 e.stopPropagation();
                 const isVisible = dropdownListMobile.style.display === 'flex';
                 closeAllCustomDropdowns();
@@ -7426,7 +7428,17 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
         }
 
         // Global click to close panels
-        document.addEventListener('click', () => closeAllCustomDropdowns());
+        document.addEventListener('click', (e) => {
+            const container = document.getElementById('customPersonaDropdownContainer');
+            const containerMobile = document.getElementById('customPersonaDropdownContainerMobile');
+            
+            // Eğer tıklanan yer dropdown butonları veya listelerinin içi DEĞİLSE kapat
+            const clickedInside = (container && container.contains(e.target)) || 
+                                 (containerMobile && containerMobile.contains(e.target));
+            if (!clickedInside) {
+                closeAllCustomDropdowns();
+            }
+        });
 
         function closeAllCustomDropdowns() {
             if (dropdownList) dropdownList.style.display = 'none';
