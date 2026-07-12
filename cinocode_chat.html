@@ -4283,6 +4283,9 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
 
     function getSmartSuggestions(assistantText, userText) {
         const combined = ((assistantText || "") + " " + (userText || "")).toLocaleLowerCase("tr-TR");
+        const activePersona = document.getElementById('personaSelect') ? document.getElementById('personaSelect').value : 'kanka';
+        const isProgrammer = (activePersona === 'usta_yazilimci');
+        
         const addUnique = (items) => {
             const seen = new Set();
             return items.map(x => String(x || "").trim()).filter(x => {
@@ -4296,8 +4299,8 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
         const safetyContext = /(reddedemem|yardimci olamam|yardımcı olamam|güvenli alternatif|guvenli alternatif|güvenlik uyarısı|guvenlik uyarisi|riskleri|riskli|tehlikeli|zararlı|zararli|illegal|yasa dışı|yasadışı|unsafe|phishing|kimlik avi|dolandırıcılık|dolandiricilik|şiddet|siddet|çocuk güvenliği|cocuk guvenligi|nsfw|porno|cinsel)/i.test(combined);
         const imageContext = /(\[generate_image|görsel|gorsel|resim|fotoğraf|fotograf|çizim|cizim|image|promptu kopyala|runware|pollinations)/i.test(combined);
         const videoContext = /(\[generate_video|video|klip|film|storyboard|slideshow|webm|sahne)/i.test(combined);
-        const codeContext = /(```|kod bloğu|html dosya|\.css|\.js|javascript kodu|python dosya|react component|function\s*\(|class\s+\w|terminal komutu|git commit|git push|diff --|\bsyntax error\b|script|html etiketi|css class)/i.test(combined);
-        const bugContext = /(hata|bug|çalışmıyor|calismiyor|bozuk|debug|fix|patch|stack trace|exception|network error|timeout|cors hatası|kırpılmış|kirpilmis|taşıyor|tasiyor|görünmüyor|gorunmuyor|kaymış|kaymis|düzelt|duzelt|sorun var|yanlış|yanlis)/i.test(combined);
+        const codeContext = isProgrammer || /(```|kod bloğu|html dosya|\.css|\.js|javascript kodu|python dosya|react component|function\s*\(|class\s+\w|terminal komutu|git commit|git push|diff --|\bsyntax error\b|script|html etiketi|css class)/i.test(combined);
+        const bugContext = /(hata kodu|hata mesajı|bug|çalışmıyor|calismiyor|bozuk|debug|fix|patch|stack trace|exception|network error|timeout|cors hatası|kırpılmış|kirpilmis|taşıyor|tasiyor|görünmüyor|gorunmuyor|kaymış|kaymis|düzelt|duzelt|sorun var|hatalı)/i.test(combined);
         const writingContext = /(hikaye|öykü|oyku|senaryo|rol|roleplay|karakter|şiir|siir|metin|makale|başlık|baslik|içerik|icerik)/i.test(combined);
         const studyContext = /(pdf|sınav|sinav|quiz|ders|özet|ozet|flashcard|ezber|konu anlat|akademik|kaynak)/i.test(combined);
 
@@ -7447,10 +7450,10 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
 
         const coreModes = {
             "kanka": { label: "🤖 Standart Zeka (Kanka)", text: "🤖 Kanka" },
-            "usta_yazilimci": { label: "💻 Usta Yazılımcı", text: "💻 Yazılımcı" },
+            "usta_yazilimci": { label: "💻 Usta Yazılımcı", text: "💻 Usta Yazılımcı" },
             "akademik_koc": { label: "📚 Sınav Koçu", text: "📚 Sınav Koçu" },
-            "dil_kocu": { label: "🌍 Özel Dil Koçu", text: "🌍 Dil Koçu" },
-            "derin_arastirma": { label: "🔍 Derin Araştırma", text: "🔍 Araştırma" }
+            "dil_kocu": { label: "🌍 Özel Dil Koçu", text: "🌍 Özel Dil Koçu" },
+            "derin_arastirma": { label: "🔍 Derin Araştırma", text: "🔍 Derin Araştırma" }
         };
 
         const professions = {
@@ -9456,7 +9459,7 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
         let actualModelForAuto = "";
 
         if (selectedModel === "auto") {
-            const hasCode = /\b(function|const|let|var|if|else|for|while|import|export|class|=>|#include|\bdef\b|import\s+pandas)\b/i.test(messageText);
+            const hasCode = /\b(function|const|let|var|if|else|for|while|import|export|class|=>|#include|\bdef\b|import\s+pandas)\b/i.test(text);
 
             if (hasImage) {
                 selectedModel = "meta-llama/llama-3.2-11b-vision-instruct:free-openrouter";
@@ -9678,7 +9681,7 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
 
         if (selectedModel === "auto") {
             const hasImage = !!selectedImageBase64;
-            const hasCode = /\b(function|const|let|var|if|else|for|while|import|export|class|=>|#include|\bdef\b|import\s+pandas)\b/i.test(messageText);
+            const hasCode = /\b(function|const|let|var|if|else|for|while|import|export|class|=>|#include|\bdef\b|import\s+pandas)\b/i.test(text);
 
             if (hasImage) {
                 selectedModel = "meta-llama/llama-3.2-11b-vision-instruct:free-openrouter";
