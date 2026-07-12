@@ -4,6 +4,10 @@ import os
 import io
 import base64
 import asyncio
+from dotenv import load_dotenv
+
+# .env dosyasını yükle
+load_dotenv()
 
 app = Flask(__name__)
 
