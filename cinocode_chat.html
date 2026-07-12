@@ -4296,8 +4296,8 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
         const safetyContext = /(reddedemem|yardimci olamam|yardımcı olamam|güvenli alternatif|guvenli alternatif|güvenlik uyarısı|guvenlik uyarisi|riskleri|riskli|tehlikeli|zararlı|zararli|illegal|yasa dışı|yasadışı|unsafe|phishing|kimlik avi|dolandırıcılık|dolandiricilik|şiddet|siddet|çocuk güvenliği|cocuk guvenligi|nsfw|porno|cinsel)/i.test(combined);
         const imageContext = /(\[generate_image|görsel|gorsel|resim|fotoğraf|fotograf|çizim|cizim|image|promptu kopyala|runware|pollinations)/i.test(combined);
         const videoContext = /(\[generate_video|video|klip|film|storyboard|slideshow|webm|sahne)/i.test(combined);
-        const codeContext = /(```|kod bloğu|html dosya|\.css|javascript kodu|js dosya|python dosya|react component|function\s*\(|class\s+\w|terminal komutu|git commit|git push|diff --|\bsyntax error\b)/i.test(combined);
-        const bugContext = /(hata|bug|çalışmıyor|calismiyor|bozuk|debug|fix|patch|stack trace|exception|network_error|timeout|cors hatası)/i.test(combined);
+        const codeContext = /(```|kod bloğu|html dosya|\.css|\.js|javascript kodu|python dosya|react component|function\s*\(|class\s+\w|terminal komutu|git commit|git push|diff --|\bsyntax error\b|script|html etiketi|css class)/i.test(combined);
+        const bugContext = /(hata|bug|çalışmıyor|calismiyor|bozuk|debug|fix|patch|stack trace|exception|network error|timeout|cors hatası|kırpılmış|kirpilmis|taşıyor|tasiyor|görünmüyor|gorunmuyor|kaymış|kaymis|düzelt|duzelt|sorun var|yanlış|yanlis)/i.test(combined);
         const writingContext = /(hikaye|öykü|oyku|senaryo|rol|roleplay|karakter|şiir|siir|metin|makale|başlık|baslik|içerik|icerik)/i.test(combined);
         const studyContext = /(pdf|sınav|sinav|quiz|ders|özet|ozet|flashcard|ezber|konu anlat|akademik|kaynak)/i.test(combined);
 
