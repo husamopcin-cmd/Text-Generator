@@ -12060,6 +12060,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
         select.value = id;
         selectMobile.value = id;
+        if (typeof syncCustomPersonaUi === 'function') syncCustomPersonaUi();
 
         closeProfessionModal();
         showNonBlockingToast(`Rol seçildi: ${chosen.name}`);
