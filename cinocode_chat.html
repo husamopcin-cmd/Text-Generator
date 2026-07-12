@@ -82,6 +82,8 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Fira+Code&display=swap');
 
         * { box-sizing: border-box; }
+        /* FAZ 19 — UI kişiselleştirme gizleme sınıfı */
+        .fz19-hidden { display: none !important; }
         html {
             min-height: 100dvh;
             height: 100dvh;
@@ -8334,6 +8336,66 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
         return "";
     }
 
+    // ===== FAZ 19 — UI KİŞİSELLEŞTİRME (v1: temiz-ID'li 7 özellik) =====
+    const FZ19_UI_PREFS_KEY = "ui_prefs";
+    const FZ19_FEATURE_MAP = {
+        styleMode:      "styleModeSelect",
+        personaSelect:  "customPersonaDropdownContainer",
+        voiceSelect:    "voiceControlsContainer",
+        microphone:     "micBtn",
+        ttsButton:      "speakerBtn",
+        historySidebar: "sidebar",
+        profileButton:  "userProfile"
+    };
+    const FZ19_THEME_PRESETS = {
+        sade:    { styleMode:false, personaSelect:false, voiceSelect:false, microphone:false, ttsButton:false, historySidebar:false, profileButton:false },
+        dengeli: { styleMode:false, personaSelect:true,  voiceSelect:false, microphone:true,  ttsButton:true,  historySidebar:false, profileButton:false },
+        tam:     { styleMode:true,  personaSelect:true,  voiceSelect:true,  microphone:true,  ttsButton:true,  historySidebar:true,  profileButton:true }
+    };
+    function fz19DefaultUiPrefs() {
+        return { version: 1, theme: "tam", visibility: { ...FZ19_THEME_PRESETS.tam }, lastUpdated: "" };
+    }
+    function fz19LoadUiPrefs() {
+        try {
+            const raw = localStorage.getItem(FZ19_UI_PREFS_KEY);
+            if (!raw) return fz19DefaultUiPrefs();
+            const parsed = JSON.parse(raw) || {};
+            const vis = parsed.visibility || {};
+            const visibility = {};
+            Object.keys(FZ19_FEATURE_MAP).forEach(k => {
+                visibility[k] = (typeof vis[k] === "boolean") ? vis[k] : true; // eksikse görünür
+            });
+            return { version: 1, theme: parsed.theme || "tam", visibility, lastUpdated: parsed.lastUpdated || "" };
+        } catch (e) {
+            return fz19DefaultUiPrefs();
+        }
+    }
+    function fz19SaveUiPrefs(prefs) {
+        try {
+            const clean = fz19LoadUiPrefs();
+            if (prefs && prefs.theme) clean.theme = prefs.theme;
+            if (prefs && prefs.visibility) {
+                Object.keys(FZ19_FEATURE_MAP).forEach(k => {
+                    if (typeof prefs.visibility[k] === "boolean") clean.visibility[k] = prefs.visibility[k];
+                });
+            }
+            clean.lastUpdated = new Date().toISOString();
+            localStorage.setItem(FZ19_UI_PREFS_KEY, JSON.stringify(clean));
+            return clean;
+        } catch (e) { return prefs; }
+    }
+    function fz19ApplyUiPrefs() {
+        try {
+            const prefs = fz19LoadUiPrefs();
+            Object.keys(FZ19_FEATURE_MAP).forEach(k => {
+                const el = document.getElementById(FZ19_FEATURE_MAP[k]);
+                if (!el) return;
+                if (prefs.visibility[k] === false) el.classList.add("fz19-hidden");
+                else el.classList.remove("fz19-hidden");
+            });
+        } catch (e) { console.warn("fz19ApplyUiPrefs error:", e); }
+    }
+
     window.onload = () => {
         if (document.getElementById('loggedInUser')) {
             if (loggedUser) {
@@ -8357,6 +8419,7 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
         isSidebarCollapsed = localStorage.getItem(SIDEBAR_STATE_KEY) === '1';
         applySidebarState(isSidebarCollapsed, false);
         applyFeatureUiState();
+        fz19ApplyUiPrefs();
         restoreComposerDraftIfNeeded();
         loadMediaSourceSelection();
         try { renderUsageRoleUI(localStorage.getItem(USAGE_ROLE_KEY) || 'general'); } catch (e) {}
