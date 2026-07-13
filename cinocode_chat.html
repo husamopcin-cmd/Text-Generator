@@ -101,13 +101,15 @@
         /* FAZ 19 — Keşfet Turu (Discovery Tour) */
         #fz19TourOverlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:99999; pointer-events:none; }
         #fz19TourMask { position:absolute; box-shadow:0 0 0 9999px rgba(0,0,0,0.65); border-radius:8px; transition:all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); pointer-events:none; }
-        #fz19TourCard { position:absolute; background:#1e1e2e; border:1px solid #a6e3a1; border-radius:12px; padding:20px; width:280px; color:#cdd6f4; pointer-events:auto; transition:all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); box-shadow:0 8px 32px rgba(0,0,0,0.5); z-index:100000; }
+        #fz19TourCard { position:absolute; background:#1e1e2e; border:1px solid #a6e3a1; border-radius:12px; padding:20px; width:280px; max-width: calc(100vw - 24px); box-sizing: border-box; color:#cdd6f4; pointer-events:auto; transition:all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); box-shadow:0 8px 32px rgba(0,0,0,0.5); z-index:100000; }
         #fz19TourCard h3 { margin-top:0; color:#a6e3a1; font-size:16px; margin-bottom:8px; }
         #fz19TourCard p { font-size:13px; line-height:1.5; color:#a6adc8; margin:0 0 15px 0; }
-        .fz19-tour-btn { background:#313244; border:1px solid #45475a; color:#cdd6f4; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:12px; transition:all 0.2s; }
+        .fz19-tour-btn { background:#313244; border:1px solid #45475a; color:#cdd6f4; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:12px; transition:all 0.2s; white-space: nowrap; }
         .fz19-tour-btn:hover { background:#45475a; color:#a6e3a1; }
         .fz19-tour-btn.primary { background:rgba(166,227,161,0.15); border-color:#a6e3a1; color:#a6e3a1; font-weight:bold; }
         .fz19-tour-btn.primary:hover { background:rgba(166,227,161,0.25); }
+        .fz19-tour-btn.skip { background:rgba(243,139,168,0.1); border-color:#f38ba8; color:#f38ba8; }
+        .fz19-tour-btn.skip:hover { background:rgba(243,139,168,0.2); }
 
         /* FAZ 20 — Kod Bloğu Göster/Gizle */
         .fz19-code-toggle-btn {
@@ -4720,54 +4722,80 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
     // --- FAZ 19: Keşfet Turu ---
     const FZ19_TOUR_STEPS = [
         { target: null, title: 'Hoş Geldin! 👋', desc: 'CinoCode Keşfet Turu\'na hoş geldin. Kod yazma, görsel/video/oyun üretme, sesli sohbet ve internetten arama — hepsi burada. Sana en önemli araçları kısaca tanıtacağım.' },
-        { target: 'modelSelect', title: 'Üslup Modları', desc: 'Buradan modelin zeka seviyesini ve yazım tarzını değiştirebilirsin.', pref: 'styleMode' },
-        { target: 'customPersonaDropdownBtn', title: 'Özel Meslekler', desc: 'CinoCode\'u öğretmen veya doktor gibi farklı rollere büründürebilirsin.', pref: 'personaSelect' },
+        { target: 'styleModeSelect', title: 'Üslup Modları', desc: 'Buradan modelin zeka seviyesini ve yazım tarzını (Güvenli, Dengeli, Serbest) değiştirebilirsin.', pref: 'styleMode' },
+        { target: 'personaSelect', title: 'Özel Meslekler', desc: 'CinoCode\'u öğretmen veya doktor gibi farklı rollere büründürebilirsin.', pref: 'personaSelect' },
         { target: 'micBtn', title: 'Sesle Yaz', desc: 'Yazmak yerine mikrofonu kullanarak konuşabilirsin.', pref: 'microphone' },
         { target: 'speakerBtn', title: 'Sesli Okuma (TTS)', desc: 'Cevapların otomatik olarak sesli okunmasını sağlar.', pref: 'ttsButton' },
         { target: 'voiceControlsContainer', title: 'Ses Kontrolleri', desc: 'Hangi sesin kullanılacağını ve okuma hızını buradan ayarlayabilirsin.', pref: 'voiceSelect' },
-        { target: 'fz19AttachBtn', title: 'Görsel, Video ve Oyun Stüdyosu', desc: 'Buradaki (+) butonuna basarak görsel, video veya oyun stüdyosunu açabilirsin. İstersen mesaj kutusuna "resim çiz", "video oluştur" veya "oyun yap" yazarak da doğrudan başlatabilirsin.' },
+        { target: 'fz19AttachBtn', title: 'Dosya Ekle & Stüdyolar', desc: 'Buradaki (+) butonuna basarak görsel/video stüdyosunu açabilir veya dosya/resim ekleyebilirsin.' },
         { target: 'webSearchBtn', title: 'İnternette Ara', desc: 'Bu butonu açarsan CinoCode, cevap vermeden önce internetten güncel bilgi arar.' },
         { target: 'sidebarCollapseBtn', title: 'Sohbet Geçmişi', desc: 'Eski sohbetlerine dönmek için bu menüyü kullan.', pref: 'historySidebar' },
-        { target: null, title: 'Arayüzü Düzenle', desc: 'Ayarlar menüsündeki "Arayüzü Düzenle" ile kullanmadığın butonları gizleyebilirsin.' },
+        { target: null, title: 'Arayüzü Düzenle', desc: 'Ayarlar menüsündeki "Arayüzü Düzenle" ile kullanmadığın butonları tamamen gizleyebilirsin.' },
         { target: null, title: 'Harika! 🎉', desc: 'Tur bitti. İstediğin zaman "Ayarlar"daki "Keşfet" butonuyla tekrar edebilirsin.' }
     ];
 
-    let fz19CurrentTourStep = 0;
+    let fz19VisibleSteps = [];
+    let fz19CurrentVisibleIndex = 0;
 
     function fz19StartTour() {
-        fz19CurrentTourStep = 0;
+        const prefs = typeof fz19LoadUiPrefs === 'function' ? fz19LoadUiPrefs() : null;
+        fz19VisibleSteps = FZ19_TOUR_STEPS.filter(step => {
+            if (step.pref && prefs && prefs.visibility && prefs.visibility[step.pref] === false) return false;
+            return true;
+        });
+        if (fz19VisibleSteps.length === 0) return;
+        
+        fz19CurrentVisibleIndex = 0;
         const overlay = document.getElementById('fz19TourOverlay');
         if (!overlay) return;
         overlay.style.display = 'block';
-        fz19RenderTourStep();
+        
+        window.addEventListener('resize', fz19RenderTourStep);
+        document.querySelector('.main-content').addEventListener('scroll', fz19RenderTourStep, true);
+        
+        fz19ScrollToCurrent();
     }
+    
     function fz19EndTour() {
         const overlay = document.getElementById('fz19TourOverlay');
         if (overlay) overlay.style.display = 'none';
         localStorage.setItem('fz19_tour_seen', '1');
+        window.removeEventListener('resize', fz19RenderTourStep);
+        document.querySelector('.main-content').removeEventListener('scroll', fz19RenderTourStep, true);
     }
-    function fz19NextTourStep() { fz19CurrentTourStep++; fz19RenderTourStep(); }
-    function fz19PrevTourStep() { fz19CurrentTourStep = Math.max(0, fz19CurrentTourStep - 1); fz19RenderTourStep(); }
+
+    function fz19NextTourStep() { fz19CurrentVisibleIndex++; fz19ScrollToCurrent(); }
+    function fz19PrevTourStep() { fz19CurrentVisibleIndex = Math.max(0, fz19CurrentVisibleIndex - 1); fz19ScrollToCurrent(); }
+
+    function fz19ScrollToCurrent() {
+        if (fz19CurrentVisibleIndex >= fz19VisibleSteps.length) return fz19EndTour();
+        const step = fz19VisibleSteps[fz19CurrentVisibleIndex];
+        let targetEl = step.target ? document.getElementById(step.target) : null;
+        
+        if (targetEl && targetEl.offsetParent !== null && window.getComputedStyle(targetEl).display !== 'none') {
+            const rect = targetEl.getBoundingClientRect();
+            if (rect.top < 60 || rect.bottom > window.innerHeight - 60) {
+                targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                setTimeout(fz19RenderTourStep, 300);
+                return;
+            }
+        }
+        fz19RenderTourStep();
+    }
 
     function fz19RenderTourStep() {
-        const prefs = typeof fz19LoadUiPrefs === 'function' ? fz19LoadUiPrefs() : null;
-        while (fz19CurrentTourStep >= 0 && fz19CurrentTourStep < FZ19_TOUR_STEPS.length) {
-            let step = FZ19_TOUR_STEPS[fz19CurrentTourStep];
-            if (step.pref && prefs && prefs.visibility && prefs.visibility[step.pref] === false) { fz19CurrentTourStep++; continue; }
-            break;
-        }
-        if (fz19CurrentTourStep >= FZ19_TOUR_STEPS.length) return fz19EndTour();
-
-        const step = FZ19_TOUR_STEPS[fz19CurrentTourStep];
+        if (fz19CurrentVisibleIndex >= fz19VisibleSteps.length) return fz19EndTour();
+        
+        const step = fz19VisibleSteps[fz19CurrentVisibleIndex];
         const mask = document.getElementById('fz19TourMask');
         const card = document.getElementById('fz19TourCard');
         if (!mask || !card) return;
 
         document.getElementById('fz19TourTitle').textContent = step.title;
         document.getElementById('fz19TourDesc').textContent = step.desc;
-        document.getElementById('fz19TourProgress').textContent = (fz19CurrentTourStep + 1) + ' / ' + FZ19_TOUR_STEPS.length;
-        document.getElementById('fz19TourPrevBtn').style.visibility = fz19CurrentTourStep === 0 ? 'hidden' : 'visible';
-        document.getElementById('fz19TourNextBtn').textContent = fz19CurrentTourStep === FZ19_TOUR_STEPS.length - 1 ? 'Bitir' : 'İleri';
+        document.getElementById('fz19TourProgress').textContent = (fz19CurrentVisibleIndex + 1) + ' / ' + fz19VisibleSteps.length;
+        document.getElementById('fz19TourPrevBtn').style.visibility = fz19CurrentVisibleIndex === 0 ? 'hidden' : 'visible';
+        document.getElementById('fz19TourNextBtn').textContent = fz19CurrentVisibleIndex === fz19VisibleSteps.length - 1 ? 'Bitir' : 'İleri';
 
         let targetEl = step.target ? document.getElementById(step.target) : null;
         if (targetEl && targetEl.offsetParent !== null && window.getComputedStyle(targetEl).display !== 'none') {
@@ -4778,13 +4806,18 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
             mask.style.left = (rect.left - 6) + 'px';
             mask.style.top = (rect.top - 6) + 'px';
             card.style.transform = 'none';
+            
+            // Kartı hedefin altına sığdır, sığmazsa üstüne koy
             if (rect.bottom + 220 < window.innerHeight) {
                 card.style.top = (rect.bottom + 15) + 'px';
-                card.style.left = Math.max(10, Math.min(rect.left, window.innerWidth - 300)) + 'px';
             } else {
-                card.style.top = Math.max(10, (rect.top - 180)) + 'px';
-                card.style.left = Math.max(10, Math.min(rect.left, window.innerWidth - 300)) + 'px';
+                card.style.top = Math.max(10, (rect.top - 200)) + 'px';
             }
+            
+            // Kartın sağa/sola taşmasını önle
+            let proposedLeft = rect.left + (rect.width / 2) - 140; // ortalamaya çalış
+            let maxLeft = window.innerWidth - 290;
+            card.style.left = Math.max(10, Math.min(proposedLeft, maxLeft)) + 'px';
         } else {
             mask.style.opacity = '0';
             card.style.left = '50%';
@@ -12425,7 +12458,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
         // Faz 19: Keşfet Turu — ilk açılışta bir kez otomatik başlat
         if (!localStorage.getItem('fz19_tour_seen')) {
-            setTimeout(() => { if (typeof fz19StartTour === 'function') fz19StartTour(); }, 1500);
+            setTimeout(() => { if (typeof fz19StartTour === 'function' && !localStorage.getItem('fz19_tour_seen')) fz19StartTour(); }, 1500);
         }
         
         // If current saved draft uses a custom profession, inject it into selects so select element values match
@@ -12472,9 +12505,10 @@ window.addEventListener('DOMContentLoaded', async () => {
             <button onclick="fz19EndTour()" style="position:absolute; top:12px; right:15px; background:none; border:none; color:#f38ba8; cursor:pointer; font-size:18px; padding:0; line-height:1;">×</button>
             <h3 id="fz19TourTitle"></h3>
             <p id="fz19TourDesc"></p>
-            <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div style="display:flex; justify-content:space-between; align-items:center; gap: 8px;">
+                <button id="fz19TourSkipBtn" class="fz19-tour-btn skip" onclick="fz19EndTour()">Atla</button>
                 <button id="fz19TourPrevBtn" class="fz19-tour-btn" onclick="fz19PrevTourStep()">Geri</button>
-                <span id="fz19TourProgress" style="font-size:11px; color:#6c7086; font-weight:bold;"></span>
+                <span id="fz19TourProgress" style="font-size:11px; color:#6c7086; font-weight:bold; flex-grow:1; text-align:center;"></span>
                 <button id="fz19TourNextBtn" class="fz19-tour-btn primary" onclick="fz19NextTourStep()">İleri</button>
             </div>
         </div>
