@@ -4352,7 +4352,7 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
         const safetyContext = /(reddedemem|yardimci olamam|yardımcı olamam|güvenli alternatif|guvenli alternatif|güvenlik uyarısı|guvenlik uyarisi|riskleri|riskli|tehlikeli|zararlı|zararli|illegal|yasa dışı|yasadışı|unsafe|phishing|kimlik avi|dolandırıcılık|dolandiricilik|şiddet|siddet|çocuk güvenliği|cocuk guvenligi|nsfw|porno|cinsel)/i.test(combined);
         const imageContext = /(\[generate_image|görsel|gorsel|resim|fotoğraf|fotograf|çizim|cizim|image|promptu kopyala|runware|pollinations)/i.test(combined);
         const videoContext = /(\[generate_video|video|klip|film|storyboard|slideshow|webm|sahne)/i.test(combined);
-        const codeContext = isProgrammer || /(```|kod bloğu|html dosya|\.css|\.js|javascript kodu|python dosya|react component|function\s*\(|class\s+\w|terminal komutu|git commit|git push|diff --|\bsyntax error\b|script|html etiketi|css class)/i.test(combined);
+        const codeContext = isProgrammer || combined.includes("```");
         const bugContext = /(hata kodu|hata mesajı|bug|çalışmıyor|calismiyor|bozuk|debug|fix|patch|stack trace|exception|network error|timeout|cors hatası|kırpılmış|kirpilmis|taşıyor|tasiyor|görünmüyor|gorunmuyor|kaymış|kaymis|düzelt|duzelt|sorun var|hatalı)/i.test(combined);
         const writingContext = /(hikaye|öykü|oyku|senaryo|rol|roleplay|karakter|şiir|siir|metin|makale|başlık|baslik|içerik|icerik)/i.test(combined);
         const studyContext = /(pdf|sınav|sinav|quiz|ders|özet|ozet|flashcard|ezber|konu anlat|akademik|kaynak)/i.test(combined);
@@ -9433,65 +9433,39 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
     // generator "kötü başlık" sayıp bir sonraki mesajı bekleyecek.
     const TITLE_GENERIC_WORDS = new Set(["normal", "soru", "devam", "tamam", "kanka", "yap", "oluştur", "olustur", "peki", "ok", "evet", "hayır", "hayir", "selam", "merhaba", "naber", "napıyorsun", "napiyorsun"]);
 
-            function generateChatTitleFromMessage(message, attachmentInfo) {
-        let clean = cleanTextForTitle(message);
-
-        // Lowercase for checking keywords
-        const lower = clean.toLowerCase();
-
-        // 1. Check for specific topic patterns to make it sound human-designed
-        if (lower.includes("netlify") && lower.includes("502")) return "Netlify 502 Hatası";
-        if (lower.includes("telegram") && (lower.includes("bot") || lower.includes("botu")) && (lower.includes("çalışmıyor") || lower.includes("calismiyor") || lower.includes("hata"))) return "Telegram Bot Sorunu";
-        if (lower.includes("sohbet") && (lower.includes("isim") || lower.includes("adlandır") || lower.includes("başlık") || lower.includes("baslik")) && (lower.includes("düzelt") || lower.includes("saçma") || lower.includes("sacma"))) return "Sohbet Başlıkları Düzeltmesi";
-        if (lower.includes("görsel") && lower.includes("toggle") && (lower.includes("kapanmıyor") || lower.includes("kapanmiyor") || lower.includes("sorun") || lower.includes("hata"))) return "Görsel Toggle Sorunu";
-        if (lower.includes("oyun stüdyosu") && (lower.includes("siyah") || lower.includes("siyah ekran") || lower.includes("hata"))) return "Oyun Stüdyosu Siyah Ekran";
-        if (lower.includes("projeler") && lower.includes("ekranı") && (lower.includes("yeni proje") || lower.includes("buton"))) return "Projeler Ekranı Geliştirmesi";
-        if (lower.includes("tts") || lower.includes("sesli okuma")) {
-            if (lower.includes("hata") || lower.includes("bozuldu") || lower.includes("çalışmıyor")) return "TTS Sesli Okuma Hatası";
+    function generateChatTitleFromMessage(message, attachmentInfo) {
+        let text = cleanTextForTitle(message);
+        
+        // Baştaki anlamsız hitapları temizle
+        text = text.replace(/^(knk|kanka|kanki|abi|hocam|selam|merhaba|hey|hi|naber|napıyorsun|ya|yaa)\b\s*/gi, "");
+        
+        // URL'leri ve markdown artıklarını temizle
+        text = text.replace(/https?:\/\/\S+/g, "").replace(/[#*`~]/g, "");
+        
+        text = text.replace(/\s+/g, " ").trim();
+        
+        if (!text || text.length < 3) {
+            return attachmentInfo ? "Dosya Analizi" : "Kısa Sohbet";
         }
-
-        // General rule-based semantic translation for common expressions
-        if (lower.includes("hata") || lower.includes("error") || lower.includes("çalışmıyor") || lower.includes("calismiyor")) {
-            let noun = "Hata";
-            if (lower.includes("netlify")) noun = "Netlify";
-            else if (lower.includes("telegram")) noun = "Telegram Bot";
-            else if (lower.includes("ses") || lower.includes("tts")) noun = "TTS Sesli Okuma";
-            else if (lower.includes("görsel") || lower.includes("resim")) noun = "Görsel Üretim";
-            else if (lower.includes("video")) noun = "Video Üretim";
-            else if (lower.includes("kod") || lower.includes("code")) noun = "Kod";
-            return `${noun} Sorunu`;
+        
+        // İlk 5 kelimeyi alarak doğal bir başlık oluştur
+        let words = text.split(" ");
+        let titleWords = [];
+        
+        for (let i = 0; i < Math.min(words.length, 5); i++) {
+            let w = words[i];
+            titleWords.push(w);
+            // Anlamlı bir duraklamada (nokta, ünlem, soru) kes
+            if (/[.!?]$/.test(w)) break;
         }
-
-        // 2. Fallback to generic sentence cleanups
-        // Remove bad words and fillers from the text while keeping original word order
-        const patterns = [
-            /\b(knk|kanka|ya+h?u?|abi|hocam|deli|misin|yaptın|naptın|lan|amına\s+koy(im|ayım)|amk|aq|orospu(\s+çocuğu)?|siktir(\s+lan)?|sik(tir)?|piç|göt|mal|yavşak|lütfen|şunu|bunu|şey|baksana|hadi)\b/gi,
-            /[.,\/#!$%\^&\*;:{}=\-_\\`~()?]/g
-        ];
-
-        patterns.forEach(pat => {
-            clean = clean.replace(pat, "");
-        });
-
-        // Collapse spaces
-        clean = clean.replace(/\s+/g, " ").trim();
-
-        if (clean.length < 4) {
-            // Check context for good fallbacks
-            if (lower.includes("kod") || lower.includes("function") || lower.includes("python") || lower.includes("javascript") || lower.includes("css") || lower.includes("html")) return "Kod Yardımı";
-            if (lower.includes("düzenle") || lower.includes("fix") || lower.includes("düzelt")) return "CinoCode Düzenlemesi";
-            return "Kısa Sohbet";
+        
+        let finalTitle = titleWords.join(" ").replace(/[.!?:,]+$/, "").trim();
+        
+        if(finalTitle.length > 0) {
+            finalTitle = finalTitle.charAt(0).toUpperCase() + finalTitle.slice(1);
         }
-
-        // Limit length and capitalize first letter
-        if (clean.length > 36) {
-            clean = clean.substring(0, 36).trim();
-        }
-
-        // Strip trailing dots
-        clean = clean.replace(/\.+$/, "").trim();
-
-        return clean.charAt(0).toUpperCase() + clean.slice(1);
+        
+        return finalTitle || "Kısa Sohbet";
     }
 
         function isBadAutoTitle(title) {
