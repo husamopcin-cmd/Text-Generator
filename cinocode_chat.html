@@ -7,6 +7,8 @@
     <meta name="theme-color" content="var(--cc-bg-elevated)">
     <link rel="manifest" href="manifest.json">
     <title>CinoCode V4.2 - Özel Sesler</title>
+    <!-- DOMPurify (XSS temizleme, yerel ve sabitlenmiş sürüm) -->
+    <script src="vendor/dompurify-3.4.7.min.js"></script>
     <!-- Marked.js (Markdown Ayrıştırıcı) -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <!-- Highlight.js (Kod Renklendirme) -->
@@ -2390,7 +2392,7 @@
         <input type="file" id="mediaUpload" accept="image/*,video/*" style="display:none;" onchange="handleMediaSelect(event)">
         <input type="file" id="cameraUpload" accept="image/*" capture="environment" style="display:none;" onchange="handleImageSelect(event)">
         <input type="file" id="audioUpload" accept="audio/*" style="display:none;" onchange="handleAudioSelect(event)">
-        <input type="file" id="docUpload" accept=".pdf,.txt,.js,.py,.ts,.html,.css,.md,.csv,.json,.zip,.docx,.xlsx,.pptx,text/*" style="display:none;" onchange="handleDocSelect(event)">
+        <input type="file" id="docUpload" accept=".pdf,.txt,.js,.py,.ts,.html,.css,.md,.csv,.json,.docx,text/*" style="display:none;" onchange="handleDocSelect(event)">
     </div>
 
     <!-- Settings Modal -->
@@ -2574,7 +2576,7 @@
         <div style="color: var(--cc-text-primary); font-size: 13px; margin-bottom: 5px; text-align: left;">
             NVIDIA NIM API Key <span style="color: #cba6f7; font-size: 11px;">(build.nvidia.com)</span>:
         </div>
-        <input type="text" id="nvidiaApiKeyInput" placeholder="API key girilirse yerel tarayıcıda saklanır" type="password" style="width:100%; background:var(--cc-bg-surface); border: 1px solid rgba(255, 255, 255, 0.08); color:var(--cc-text-primary); padding:8px; border-radius: var(--cc-radius); margin-bottom: 10px; box-sizing: border-box; outline: none; font-size: 13px;">
+        <input type="password" id="nvidiaApiKeyInput" placeholder="API key girilirse yerel tarayıcıda saklanır" autocomplete="off" style="width:100%; background:var(--cc-bg-surface); border: 1px solid rgba(255, 255, 255, 0.08); color:var(--cc-text-primary); padding:8px; border-radius: var(--cc-radius); margin-bottom: 10px; box-sizing: border-box; outline: none; font-size: 13px;">
 
 
 
@@ -4909,6 +4911,8 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
                 } catch (err) {
                     console.error("DOCX okuma hatası:", err);
                 }
+            } else {
+                showNonBlockingToast(`"${file.name}" desteklenmiyor. PDF, DOCX veya metin tabanlı bir dosya seçin.`);
             }
         }
         event.target.value = '';
@@ -5436,8 +5440,69 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
  // Projeler ekranında açık olan proje (null = proje grid'i)
 
     // ----- HAFIZA (LOCALSTORAGE) YÖNETİMİ -----
+    function escapeHtmlText(value) {
+        return String(value ?? "").replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+    }
+
     function escapeSidebarHtml(value) {
-        return String(value || "").replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+        return escapeHtmlText(value);
+    }
+
+    function getSafeMessageImageSrc(value) {
+        const raw = String(value || "").trim();
+        const safeDataImage = /^data:image\/(?:png|jpe?g|gif|webp);base64,[a-z0-9+/=\s]+$/i.test(raw);
+        const safeRemoteImage = /^https?:\/\/[^\s"'<>]+$/i.test(raw);
+        const safeBlobImage = /^blob:[^\s"'<>]+$/i.test(raw);
+        return safeDataImage || safeRemoteImage || safeBlobImage ? escapeHtmlText(raw) : "";
+    }
+
+    let activeTrustedRenderContext = null;
+
+    function createTrustedRenderContext() {
+        const randomId = window.crypto && typeof window.crypto.randomUUID === 'function'
+            ? window.crypto.randomUUID()
+            : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+        return { nonce: randomId.replace(/[^a-z0-9-]/gi, ''), fragments: [] };
+    }
+
+    function registerTrustedRenderFragment(html) {
+        if (!activeTrustedRenderContext) return html;
+        const index = activeTrustedRenderContext.fragments.push(String(html)) - 1;
+        return `<span data-cinocode-fragment="${activeTrustedRenderContext.nonce}-${index}"></span>`;
+    }
+
+    function sanitizeRenderedHtml(html, context) {
+        let cleanHtml;
+        if (window.DOMPurify && typeof window.DOMPurify.sanitize === 'function') {
+            cleanHtml = window.DOMPurify.sanitize(String(html || ""), {
+                USE_PROFILES: { html: true },
+                FORBID_TAGS: ['style', 'form', 'iframe', 'object', 'embed', 'svg', 'math'],
+                FORBID_ATTR: ['srcdoc'],
+                ALLOW_DATA_ATTR: true
+            });
+        } else {
+            console.error('DOMPurify yüklenemedi; güvenli metin görünümüne geçildi.');
+            cleanHtml = escapeHtmlText(html);
+        }
+
+        if (context) {
+            context.fragments.forEach((fragment, index) => {
+                const placeholder = `<span data-cinocode-fragment="${context.nonce}-${index}"></span>`;
+                cleanHtml = cleanHtml.split(placeholder).join(fragment);
+            });
+        }
+        return cleanHtml;
+    }
+
+    function renderMarkdownSafely(markdown) {
+        const context = createTrustedRenderContext();
+        const previousContext = activeTrustedRenderContext;
+        activeTrustedRenderContext = context;
+        try {
+            return sanitizeRenderedHtml(marked.parse(String(markdown || "")), context);
+        } finally {
+            activeTrustedRenderContext = previousContext;
+        }
     }
 
     function normalizeChatMetadata(chat, fallbackTime = Date.now()) {
@@ -6346,6 +6411,7 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
     }
 
     function renderContentWithImages(text, isLast = false) {
+        text = String(text || "");
         // Hafıza sistemini yakala (Kullanıcı arayüzünde BİLMEMESİ GEREKİYOR, TERTEMİZ GİZLİ KALMALI)
         text = text.replace(/\[REMEMBER:([\s\S]*?)\]/gi, (match, fact) => {
             let memory = localStorage.getItem('cinocode_memory_' + (loggedUser || "default")) || "";
@@ -6360,7 +6426,7 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
         // Sızıntıları UI'dan temizle
         let safeText = sanitizeAssistantOutput(text);
 
-        let html = marked.parse(safeText);
+        let html = renderMarkdownSafely(safeText);
         html = html.replace(/\[GENERATE_IMAGE:\s*(.*?)\]/gi, (match, promptText) => {
             if (isTechnicalText(promptText)) return '';
             let finalPrompt = buildCleanMediaPrompt(promptText, "image");
@@ -7492,14 +7558,17 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
             div.className = `message ${msg.role === "user" ? "user" : "bot"}`;
 
             if (msg.role === "user") {
-                let htmlContent = `<div>${msg.content}</div>`;
+                let htmlContent = `<div style="white-space:pre-wrap;">${escapeHtmlText(msg.content)}</div>`;
                 if (msg.images && msg.images.length > 0) {
-                    htmlContent += `<img src="${msg.images[0]}" style="max-height:200px; border-radius: var(--cc-radius); display:block; margin-top:8px; border: 2px solid var(--cc-accent-brand);">`;
+                    const safeImageSrc = getSafeMessageImageSrc(msg.images[0]);
+                    if (safeImageSrc) {
+                        htmlContent += `<img src="${safeImageSrc}" alt="Kullanıcı görseli" style="max-height:200px; border-radius: var(--cc-radius); display:block; margin-top:8px; border: 2px solid var(--cc-accent-brand);">`;
+                    }
                 }
                 if (msg.documentText) {
                     htmlContent += `<div style="margin-top:8px; padding:8px 12px; border-radius: var(--cc-radius); background:rgba(255,255,255,0.1); border:1px solid var(--cc-accent-brand); display:inline-flex; align-items:center; gap:8px;">
                         <span style="font-size:1.5em;">📄</span>
-                        <span><b>${msg.documentName || 'Ekli Belge'}</b></span>
+                        <span><b>${escapeHtmlText(msg.documentName || 'Ekli Belge')}</b></span>
                     </div>`;
                 }
 
@@ -8865,10 +8934,11 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
     // ----- DİĞER FONKSİYONLAR -----
     const renderer = new marked.Renderer();
     renderer.code = function(codeOrToken, maybeLang) {
-        let code = typeof codeOrToken === 'string' ? codeOrToken : codeOrToken.text;
-        let language = typeof codeOrToken === 'string' ? maybeLang : codeOrToken.lang;
+        const code = String(typeof codeOrToken === 'string' ? codeOrToken : codeOrToken.text || '');
+        const rawLanguage = typeof codeOrToken === 'string' ? maybeLang : codeOrToken.lang;
+        const language = String(rawLanguage || '').trim().split(/\s+/)[0].replace(/[^a-z0-9_+-]/gi, '').slice(0, 40);
 
-        let highlighted = code;
+        let highlighted = escapeHtmlText(code);
         if(language && window.hljs && window.hljs.getLanguage(language)) {
             highlighted = window.hljs.highlight(code, { language }).value;
         }
@@ -8892,7 +8962,8 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
                 setTimeout(() => addArtifactToList('code', 'Oluşturulan Kod', encodedCode), 100);
             }
         }
-        return `<div class="code-wrapper" style="position:relative;"><div class="fz19-sticky-code-bar" style="display:flex; justify-content:flex-end; gap:8px; align-items:center;">${topBarContent}</div><pre class="fz19-code-body"><code class="hljs ${language || ''}">${highlighted}</code></pre></div>`;
+        const trustedCodeBlock = `<div class="code-wrapper" style="position:relative;"><div class="fz19-sticky-code-bar" style="display:flex; justify-content:flex-end; gap:8px; align-items:center;">${topBarContent}</div><pre class="fz19-code-body"><code class="hljs ${language}">${highlighted}</code></pre></div>`;
+        return registerTrustedRenderFragment(trustedCodeBlock);
     };
     marked.setOptions({ renderer: renderer, breaks: true });
 
