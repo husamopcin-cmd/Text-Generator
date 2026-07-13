@@ -1846,6 +1846,10 @@
                 </div>
                 <div id="voiceControlsContainer" style="display:inline-flex; align-items:center; gap:4px;">
                 <select id="voiceSelect" style="max-width:180px; background:#181825; color:#cdd6f4; border:1px solid #45475a; padding:5px; border-radius:5px; font-size:12px;" onchange="saveVoicePref()"></select>
+                <div style="display:flex; align-items:center; gap:4px; margin-left:5px; border-left:1px solid #45475a; padding-left:5px;">
+                    <input type="range" id="fz19TtsSpeedSlider" min="1" max="3" step="0.1" value="1" style="width:60px; cursor:pointer;" oninput="window.fz19UpdateTtsSpeed()">
+                    <span id="fz19TtsSpeedLabel" style="font-size:11px; color:#cdd6f4; font-weight:bold; min-width:28px;">1.0x</span>
+                </div>
                 <button class="icon-btn" id="voiceQuickSettingsBtn" onclick="toggleVoiceQuickSettings(event)" title="Ses ayarları" aria-label="Ses ayarları" style="padding:4px 6px; border-radius:4px;">⚙️</button>
             </div>
             </div>
@@ -8102,6 +8106,28 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
         }
     }
 
+    // FAZ 21 GÖREV E: TTS Hız Kontrolü (Global)
+    window.fz19GetTtsSpeed = function() {
+        let speed = parseFloat(localStorage.getItem('fz19_tts_speed'));
+        if(isNaN(speed) || speed < 1 || speed > 3) speed = 1.0;
+        return speed;
+    };
+
+    window.fz19UpdateTtsSpeed = function() {
+        const slider = document.getElementById('fz19TtsSpeedSlider');
+        const label = document.getElementById('fz19TtsSpeedLabel');
+        if(!slider || !label) return;
+        
+        const speed = parseFloat(slider.value);
+        label.innerText = speed.toFixed(1) + "x";
+        localStorage.setItem('fz19_tts_speed', speed);
+        
+        if(window.sharedAudio && !window.sharedAudio.paused && window.sharedAudio.fz19BaseRate) {
+            let finalRate = window.sharedAudio.fz19BaseRate * speed;
+            finalRate = Math.min(3.5, Math.max(0.5, finalRate));
+            window.sharedAudio.playbackRate = finalRate;
+        }
+    };
 
     function speakWithServer(cleanText, expectedRunId, expectedVoiceId, langCode = "tr-TR", onDone = null) {
         if (!isSpeakerOn || speechRunId !== expectedRunId || voiceSelect.value !== expectedVoiceId) {
@@ -8147,11 +8173,15 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
             else if (expectedVoiceId === 'male_baris') rate = 0.90; // Barış (Sakin, yavaş)
         }
 
-        audio.defaultPlaybackRate = rate;
-        audio.playbackRate = rate;
+        audio.fz19BaseRate = rate;
+        let finalRate = rate * window.fz19GetTtsSpeed();
+        finalRate = Math.min(3.5, Math.max(0.5, finalRate));
+
+        audio.defaultPlaybackRate = finalRate;
+        audio.playbackRate = finalRate;
 
         audio.onplay = () => {
-            audio.playbackRate = rate;
+            audio.playbackRate = finalRate;
             setTtsRouteMeta(isAzureEnabled ? "server_azure_or_proxy" : "server_gtts_proxy", expectedVoiceId, { name: vName, lang: langCode }, "");
         };
 
@@ -12406,6 +12436,13 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     // Auto-load custom professions on launch
     document.addEventListener('DOMContentLoaded', () => {
+        // FAZ 21 GÖREV E: Slider Başlangıç Senkronu
+        const sp = window.fz19GetTtsSpeed();
+        const sl = document.getElementById('fz19TtsSpeedSlider');
+        const lb = document.getElementById('fz19TtsSpeedLabel');
+        if(sl) sl.value = sp;
+        if(lb) lb.innerText = sp.toFixed(1) + 'x';
+
         loadCustomProfessions();
         initCustomPersonaDropdown();
 
