@@ -1225,15 +1225,18 @@
             grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
             gap: 16px;
             align-items: start;
+            grid-auto-flow: row dense;
+            box-sizing: border-box;
         }
 
         .archive-card {
             width: 100%;
-            max-width: 260px;
-            margin: 0 auto; /* Center card in its grid cell */
+            max-width: 100%;
+            margin: 0;
             min-width: 0;
             box-sizing: border-box;
             overflow: hidden;
+            contain: content;
         }
 
         .library-screen {
