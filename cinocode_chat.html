@@ -1717,6 +1717,7 @@
                     <button class="new-chat-btn" id="sidebarGameStudioBtn" onclick="setAppMode('game'); triggerGameGeneration();" style="border-color:#a6e3a1; color:#a6e3a1; font-size:12px; padding: 6px; justify-content:center;">🎮 <span class="sidebar-text">Oyun</span></button>
                     <button class="new-chat-btn" id="sidebarProjectsBtn" onclick="openProjectsScreen()" style="border-color:#f9e2af; color:#f9e2af; font-size:12px; padding: 6px; justify-content:center;">📁 <span class="sidebar-text">Projeler</span></button>
                 </div>
+                <button class="new-chat-btn" id="sidebarMyAppsBtn" onclick="createNewChat();" style="background:rgba(243,139,168,0.1); border-color:#f38ba8; color:#f38ba8; font-weight:600; justify-content:center; font-size:12px; padding: 6px; margin-top:4px;">📱 <span class="sidebar-text">My Apps</span></button>
                 <button class="new-chat-btn" id="sidebarSkillsBtn" onclick="openSkillsScreen()" style="background:rgba(203,166,247,0.1); border-color:#cba6f7; color:#cba6f7; font-weight:600; justify-content:center; font-size:12px; padding: 6px; margin-top:4px;">🧩 <span class="sidebar-text">Beceriler ve Bağlayıcılar</span></button>
             </div>
         </details>
@@ -2055,15 +2056,8 @@
                     </select>
                 </label>
             </div>
-            <div class="new-project-grid">
-                <button class="new-project-card" onclick="startNewProject('webapp')"><strong>Web App Yap</strong><span>Arayuz, kod ve calisir HTML akisi.</span></button>
-                <button class="new-project-card" onclick="startNewProject('game')"><strong>Oyun Yap</strong><span>HTML5/Canvas oyun baslangici.</span></button>
-                <button class="new-project-card" onclick="startNewProject('video')"><strong>Video Studyosu</strong><span>Video prompt ve studio modu.</span></button>
-                <button class="new-project-card" onclick="startNewProject('image')"><strong>Gorsel Uret</strong><span>Gorsel prompt ve studio modu.</span></button>
-                <button class="new-project-card" onclick="startNewProject('fixcode')"><strong>Kod Duzelt</strong><span>Hata analizi ve patch odakli akis.</span></button>
-                <button class="new-project-card" onclick="startNewProject('pdf')"><strong>PDF / Dosya Analiz</strong><span>Dosya yukleme ve ozet/analiz.</span></button>
-                <button class="new-project-card" onclick="startNewProject('voice')"><strong>Sesli Asistan</strong><span>TTS ve mikrofon odakli sohbet.</span></button>
-                <button class="new-project-card" onclick="startNewProject('blank')"><strong>Bos Sohbet</strong><span>Klasik bos chat baslat.</span></button>
+            <div class="new-project-grid" id="myAppsGrid">
+                <!-- My Apps modülleri JS tarafından buraya dinamik olarak eklenecek -->
             </div>
         </div>
         <div class="usage-role-row" id="usageRoleRow"></div>
@@ -9362,7 +9356,55 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
         }
     });
 
+    // ===== V2 MY APPS ECOSYSTEM =====
+    const CINO_APPS = [
+        { id: "webapp", title: "Web App Yap", icon: "🌐", category: "Code", prompt: "Arayüz, kod ve çalışır HTML akışı hazırla." },
+        { id: "game", title: "Oyun Yap", icon: "🎮", category: "Game", prompt: "HTML5/Canvas oyun başlangıcı yap." },
+        { id: "cinovidyo", title: "CinoVidyo", icon: "🎬", category: "Video", prompt: "Sen CinoVidyo'sun, profesyonel bir AI Video Stüdyosu yöneticisisin. Video senaryosu, kamera açıları ve promptları üret." },
+        { id: "imagelab", title: "Görsel Üret", icon: "🖼️", category: "Design", prompt: "Görsel prompt ve stüdyo modu." },
+        { id: "textgenerator", title: "Text Generator", icon: "💬", category: "Writing", prompt: "Sen efsanevi bir Metin Yazarısın. Makale, blog yazısı veya her türlü metin içeriğinde destek olursun." },
+        { id: "pdfstudio", title: "PDF / Dosya Analiz", icon: "📄", category: "Document", prompt: "Dosya yükleme ve özet/analiz yap." },
+        { id: "voice", title: "Sesli Asistan", icon: "🎙️", category: "Voice", prompt: "TTS ve mikrofon odaklı sohbet." },
+        { id: "aiagents", title: "AI Agents", icon: "🤖", category: "Agents", prompt: "Sen AI Ajanlarının orkestrasyonunu yapan ana lidersin. İstenilen görevleri alt-ajanlara dağıtıp koordine edersin." }
+    ];
+
+    function renderMyApps() {
+        const container = document.getElementById("myAppsGrid");
+        if (!container) return;
+        container.innerHTML = "";
+        CINO_APPS.forEach(app => {
+            const btn = document.createElement("button");
+            btn.className = "new-project-card";
+            btn.innerHTML = `<strong>${app.icon} ${app.title}</strong><span>${app.category} Uygulaması</span>`;
+            btn.onclick = () => launchCinoApp(app.id);
+            container.appendChild(btn);
+        });
+    }
+
+    function launchCinoApp(appId) {
+        const app = CINO_APPS.find(a => a.id === appId);
+        if (!app) return;
+        
+        // Eski 'startNewProject' mantığına uyumluluk
+        if(appId === 'webapp' || appId === 'game' || appId === 'video' || appId === 'image' || appId === 'pdf' || appId === 'voice') {
+            startNewProject(appId);
+            return;
+        }
+
+        // Yeni mantık
+        const name = document.getElementById('newProjectName')?.value || app.title;
+        setQuickStart(`${name ? name + ': ' : ''}${app.prompt}`);
+        
+        // Stili serbest mod yap
+        const styleSel = document.getElementById('styleModeSelect');
+        if(styleSel) {
+            styleSel.value = 'free';
+            handleStyleModeChange('free');
+        }
+    }
+
     window.onload = async () => {
+        renderMyApps();
         if (window.location.protocol === 'file:') {
             const banner = document.createElement('div');
             banner.style = "background: #f38ba8; color: #11111b; text-align: center; padding: 10px; font-weight: bold; font-size: 13px; z-index: 9999; border-bottom: 2px solid #eba0ac;";
