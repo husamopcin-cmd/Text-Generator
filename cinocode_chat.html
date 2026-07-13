@@ -4617,9 +4617,10 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
         };
 
         const safetyContext = /(reddedemem|yardimci olamam|yardımcı olamam|güvenli alternatif|guvenli alternatif|güvenlik uyarısı|guvenlik uyarisi|riskleri|riskli|tehlikeli|zararlı|zararli|illegal|yasa dışı|yasadışı|unsafe|phishing|kimlik avi|dolandırıcılık|dolandiricilik|şiddet|siddet|çocuk güvenliği|cocuk guvenligi|nsfw|porno|cinsel)/i.test(combined);
-        const imageContext = /(\[generate_image|görsel|gorsel|resim|fotoğraf|fotograf|çizim|cizim|image|promptu kopyala|runware|pollinations)/i.test(combined);
-        const videoContext = /(\[generate_video|video|klip|film|storyboard|slideshow|webm|sahne)/i.test(combined);
-        const codeContext = isProgrammer || combined.includes("```");
+        const imageContext = /(\[generate_image|görsel|gorsel|resim|fotoğraf|fotograf|çizim|cizim|image|promptu kopyala|runware|pollinations)/i.test(combined) || currentMode === 'image';
+        const videoContext = /(\[generate_video|video|klip|film|storyboard|slideshow|webm|sahne)/i.test(combined) || currentMode === 'video';
+        const gameContext = /(oyun|game|canvas|skor|zıpla|engel)/i.test(combined) || currentMode === 'game';
+        const codeContext = (isProgrammer || combined.includes("```") || currentMode === 'webapp') && !gameContext;
         const bugContext = /(hata kodu|hata mesajı|bug|çalışmıyor|calismiyor|bozuk|debug|fix|patch|stack trace|exception|network error|timeout|cors hatası|kırpılmış|kirpilmis|taşıyor|tasiyor|görünmüyor|gorunmuyor|kaymış|kaymis|düzelt|duzelt|sorun var|hatalı)/i.test(combined);
         const writingContext = /(hikaye|öykü|oyku|senaryo|rol|roleplay|karakter|şiir|siir|metin|makale|başlık|baslik|içerik|icerik)/i.test(combined);
         const studyContext = /(pdf|sınav|sinav|quiz|ders|özet|ozet|flashcard|ezber|konu anlat|akademik|kaynak)/i.test(combined);
@@ -4629,6 +4630,9 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
         }
         if (isTeacher && studyContext) {
             return addUnique(["Kısalt", "5 maddede özetle", "Quiz hazırla", "Ezber kartı yap", "Zor yerleri açıkla", "Örnek soru üret"]);
+        }
+        if (gameContext) {
+            return addUnique(["Zorluğu artır", "Daha kolay yap", "Oyun bitince restart butonu ekle", "Skor sistemini açıkla", "Grafikleri iyileştir"]);
         }
         if (isProgrammer && (bugContext || codeContext)) {
             return addUnique(["Kısalt", "Hata nedenini açıkla", "Çözüm patch'i yaz", "Test adımlarını çıkar", "Codex prompt'una çevir", "Riskleri sırala"]);
