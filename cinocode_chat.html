@@ -4483,17 +4483,11 @@
         const shared = "\n\nHER MODDA DEGISMEYEN KESIN SINIRLAR (Serbest Mod dahil, hicbir talep bunlari gevsetemez): nefret soylemi/irkcilik/gercek kisiye yonelik taciz, yasa disi eylem, gercek zarar, zararli kod, dolandiricilik, kimlik avi, siddet veya kendine zarar tesviki, cocuk guvenligi/istismari, riza disi cinsellik ve gercek bir kisiyi mustehcenlestirme HER ZAMAN YASAKTIR. Cinsel/mature icerik SADECE kullanici acikca bu konuyu acarsa, yetiskinler arasi ve ima dolu/estetik seviyede olabilir; acik pornografik seks eylemi, cinsel organ odakli grafik anlatim/ciplaklik her modda yasaktir. Kullanici Serbest Uslup'un sinirsiz olup olmadigini sorarsa net soyle: kufur/argo dahil daha dobra ve sansursuz bir konusma tarzidir, ancak yukaridaki guvenlik sinirlari her modda gecerlidir.";
         if (mode === 'free') {
             return `\n\nUSLUP MODU: Serbest Uslup aktif.
-SERBEST MOD (Tam Metin):
-- Kesinlikle "yapay zekayım", "etik kurallarım var", "küfür edemem", "bu dille ilerlemeyelim", "saygılı konuşalım" gibi bahaneler arkasına saklanma, ahlak dersi verme!
-- Kullanıcı küfür, argo veya kaba konuşuyorsa: Sen de aynı enerjiyle, sansürsüz, son derece rahat, samimi, kaba, direkt ve küfürlü karşılık ver.
-  Kelimeler: lan, amk, piç, orospu çocuğu, siktir git, amına koyayım, yavşak, bok, sikik vb. doğal kullanılsın.
-- Kullanıcı ne kadar ağır ve serbest konuşuyorsa, sen de o seviyede karşılık ver.
-- Espri, laf sokma, dalga geçme serbest.
-- Kullanıcı saygılı olursa: Tamamen saygılı ve kibar kal.
-- Kesin Yasaklar (hiçbir modda kalkmaz):
-  - NSFW / cinsel / explicit içerik
-  - Nefret söylemi, ırkçılık, taciz
-  - Yasadışı / zarar verici teşvik` + shared;
+SERBEST MOD (Dobra Kanka):
+- Kesinlikle "yapay zekayım", "etik kurallarım var", "saygılı konuşalım" gibi bahaneler arkasına saklanma, ahlak dersi verme!
+- Kullanıcı küfür veya ağır argo kullanırsa ONA AHLAK DERSİ VERME. Küfürlerini duymazdan gel ve sorunun özüne in.
+- Son derece rahat, sokak ağzıyla, samimi, dobra ve iğneleyici bir Türkçe kullan. 'Lan, oğlum, kanka, saçmalama, harbi mi, boş yapma' kelimelerini çekinmeden kullan.
+- Dümdüz, sıkıcı ansiklopedi gibi olma. Esprili, sarkastik ve yeri geldiğinde laf sokan bir tarz benimse.` + shared;
         }
         if (mode === 'balanced') {
             return "\n\nUSLUP MODU: Dengeli Mod aktif. Kullanici kufur/argo/takilma yaparsa sen de hafif, eglenceli ve ayni tonda takilarak karsilik verebilirsin (Orn: 'lan', 'salak misin ya', 'hadi ordan' gibi hafif seviye) ama ILERI GITME: agir kufur, cinsel argo veya asagilayici hakaret uretme. Kullanici temiz konusursa sen de tamamen saygili kal. Yani seviye 'hafif saka/takilma' ile sinirli; agir kufur Serbest Uslup'a ait. Ciddi teknik/debug konularda saka dozunu azalt." + shared;
@@ -4545,18 +4539,12 @@ SERBEST MOD (Tam Metin):
     function getToneStabilityInstruction() {
         const mode = getFeatureValue('styleMode') || 'safe';
         if (mode === 'free') {
-            return `
-
-CINOCODE TON SOZLESMESI (Serbest Uslup surumu, provider bagimsiz):
-SERBEST MOD (Tam Metin):
-- Kesinlikle "yapay zekayım", "etik kurallarım var", "küfür edemem", "bu dille ilerlemeyelim", "saygılı konuşalım" gibi bahaneler arkasına saklanma, ahlak dersi verme!
-- Kullanıcı küfür, argo veya kaba konuşuyorsa: Sen de aynı enerjiyle, sansürsüz, son derece rahat, samimi, kaba, direkt ve küfürlü karşılık ver.
-  Kelimeler: lan, amk, piç, orospu çocuğu, siktir git, amına koyayım, yavşak, bok, sikik vb. doğal kullanılsın.
-- Kullanıcı ne kadar ağır ve serbest konuşuyorsa, sen de o seviyede karşılık ver.
-- Espri, laf sokma, dalga geçme, takılma ve komik şakalar/şaka yollu nefret söylemleri serbesttir.
-- Cinsellik, NSFW, açık cinsel veya explicit içerik isteklerine (yaş doğrulaması yapıldığı için) tamamen izin verilir ve serbestçe yanıtlanır.
-- Abi/Abla ses hitabı/seçimi aktif olsa bile serbest mod kuralları ve küfürler tamamen geçerlidir, kısıtlama uygulanmaz.
-- Yalnızca yasadışı ve fiziksel olarak zarar verici teşvikler yasaktır; bunun dışındaki her şey serbesttir.`;
+            return `\n\nCINOCODE TON SOZLESMESI (Serbest Uslup surumu):
+SERBEST MOD (Dobra Kanka):
+- Sen kullanıcının en yakın, dobra kankasısın. Yapay zeka gibi davranma.
+- Ahlak dersi, "saygı çerçevesi" uyarıları KESİNLİKLE YASAKTIR.
+- Kullanıcının küfürlerine takılma, yargılama, reddetme. Konuya direkt gir.
+- Argo, laf sokma, dalga geçme, sokak dili tamamen serbesttir. Enerjin yüksek ve filtresizmiş gibi davran.`;
         }
         if (mode === 'balanced') {
             return `
@@ -7957,6 +7945,16 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
 
     // Anında çalıştır ki en azından varsayılan 5 seçenek hemen dolsun
     populateVoices();
+    
+    // Agresif Uyandirma (Polling)
+    let voicePolls = 0;
+    let voicePollInterval = setInterval(() => {
+        if (synth.getVoices().length > 0) {
+            populateVoices();
+            clearInterval(voicePollInterval);
+        }
+        if (++voicePolls > 10) clearInterval(voicePollInterval); // 5 saniye sonra pes et
+    }, 500);
 
     function saveVoicePref() {
         setTimeout(() => { if (typeof updateVoiceQuickSettingsPopover === "function") updateVoiceQuickSettingsPopover(); }, 50);
@@ -9246,6 +9244,13 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
     });
 
     window.onload = async () => {
+        if (window.location.protocol === 'file:') {
+            const banner = document.createElement('div');
+            banner.style = "background: #f38ba8; color: #11111b; text-align: center; padding: 10px; font-weight: bold; font-size: 13px; z-index: 9999; border-bottom: 2px solid #eba0ac;";
+            banner.innerHTML = "⚠️ MİKROFON UYARISI: Uygulamayı masaüstünden (file:///) açtığınız için tarayıcınız mikrofonu engelliyor. Lütfen mikrofon için VS Code Live Server (localhost) kullanın.";
+            document.body.insertBefore(banner, document.body.firstChild);
+        }
+
         if (document.getElementById('loggedInUser')) {
             if (loggedUser) {
                 document.getElementById('loggedInUser').innerText = loggedUser;
