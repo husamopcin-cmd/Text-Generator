@@ -1,8 +1,8 @@
 {
   "scripts": {
-    "test": "node --test tests/style-mode.test.js tests/render-security.test.js tests/generate-image.test.js tests/ai-chat.test.js",
+    "test": "node --test tests/style-mode.test.js tests/render-security.test.js tests/generate-image.test.js tests/ai-chat.test.js tests/web-search.test.js",
     "test:smoke": "npm test",
-    "check:serverless": "node --check netlify/functions/ai-chat.js && node --check netlify/functions/generate-image.js"
+    "check:serverless": "node --check netlify/functions/ai-chat.js && node --check netlify/functions/generate-image.js && node --check netlify/functions/web-search.js"
   },
   "dependencies": {
     "dotenv": "^17.4.2"
