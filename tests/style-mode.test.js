@@ -5,7 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const htmlPath = path.join(__dirname, '..', 'cinocode_chat.html');
-const html = fs.readFileSync(htmlPath, 'utf8');
+const html = fs.readFileSync(htmlPath, 'utf8') + (fs.existsSync(path.join(__dirname, '..', 'assets', 'js')) ? fs.readdirSync(path.join(__dirname, '..', 'assets', 'js')).map(f => fs.readFileSync(path.join(__dirname, '..', 'assets', 'js', f), 'utf8')).join('\n') : '');
 
 function extractFunction(functionName) {
   const marker = `function ${functionName}(`;
