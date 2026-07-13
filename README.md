@@ -63,11 +63,20 @@ Then open `http://localhost:8888/cinocode_chat.html`.
 
 You'll need your own API keys for whichever providers you want active — set them as environment variables (see `.env.example` if present, or the in-app Settings panel for local-only keys like a personal Runware key).
 
+## Tests
+
+```bash
+npm test
+npm run check:serverless
+```
+
+The smoke suite uses Node's built-in test runner. It validates style-mode prompt composition, image-provider errors, and chat-provider fallback order without real API calls, API keys, or usage charges. The older root-level provider scripts remain manual integration probes and are not part of `npm test`.
+
 ## What I'd do differently / known limitations
 
 Being upfront about this, since it's more useful to a reviewer than pretending it's flawless:
 
-- No test suite — this was built fast, iterating directly against a running browser. A production version would need at minimum smoke tests around the provider-routing and prompt-composition logic.
+- The smoke suite covers prompt contracts and serverless provider routing, but browser-level end-to-end coverage is not implemented yet.
 - Single massive HTML file trades maintainability for zero-build-step simplicity. Past a certain size, this should be componentized (even without a framework, via ES modules).
 - XLSX/PPTX document support isn't implemented yet — only PDF, DOCX, and plain text.
 - The real "web search" integration is a placeholder, not a live search API, in the current version.

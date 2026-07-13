@@ -1,4 +1,9 @@
 {
+  "scripts": {
+    "test": "node --test tests/style-mode.test.js tests/generate-image.test.js tests/ai-chat.test.js",
+    "test:smoke": "npm test",
+    "check:serverless": "node --check netlify/functions/ai-chat.js && node --check netlify/functions/generate-image.js"
+  },
   "dependencies": {
     "dotenv": "^17.4.2"
   }
