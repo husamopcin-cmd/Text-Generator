@@ -58,6 +58,15 @@
     --cc-red: #f38ba8;
     --cc-peach: #fab387;
     --cc-white: #f8fafc;
+    
+    /* Legacy aliases for backward compatibility */
+    --cc-base: var(--cc-bg-main);
+    --cc-mantle: var(--cc-bg-surface);
+    --cc-crust: var(--cc-bg-elevated);
+    --cc-surface0: var(--cc-border);
+    --cc-subtext0: var(--cc-text-muted);
+    --cc-text: var(--cc-text-primary);
+    --cc-blue: var(--cc-accent-brand);
 }
 
 [data-theme="light"] {
@@ -1706,6 +1715,7 @@
                     <button class="new-chat-btn" id="sidebarGameStudioBtn" onclick="setAppMode('game'); triggerGameGeneration();" style="border-color:#a6e3a1; color:#a6e3a1; font-size:12px; padding: 6px; justify-content:center;">🎮 <span class="sidebar-text">Oyun</span></button>
                     <button class="new-chat-btn" id="sidebarProjectsBtn" onclick="openProjectsScreen()" style="border-color:#f9e2af; color:#f9e2af; font-size:12px; padding: 6px; justify-content:center;">📁 <span class="sidebar-text">Projeler</span></button>
                 </div>
+                <button class="new-chat-btn" id="sidebarSkillsBtn" onclick="openSkillsScreen()" style="background:rgba(203,166,247,0.1); border-color:#cba6f7; color:#cba6f7; font-weight:600; justify-content:center; font-size:12px; padding: 6px; margin-top:4px;">🧩 <span class="sidebar-text">Beceriler ve Bağlayıcılar</span></button>
             </div>
         </details>
     </div> <!-- Close sidebar-top-sections -->
@@ -2100,6 +2110,170 @@
             <!-- İçerik buraya dinamik yüklenecek -->
         </div>
     </div>
+
+    <!-- BECERİLER VE BAĞLAYICILAR EKRANI -->
+    <div class="library-screen" id="skillsScreen" style="display:none; flex: 1; padding: 30px; overflow-y: auto; background: linear-gradient(135deg, var(--cc-bg-elevated), var(--cc-bg-main)); z-index: 100;">
+        <style>
+            .skills-tabs { display: flex; gap: 10px; margin-top: 20px; margin-bottom: 25px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 10px; }
+            .skills-tab-btn { background: rgba(49, 50, 68, 0.4); border: 1px solid rgba(255,255,255,0.05); color: var(--cc-subtext0); padding: 10px 20px; border-radius: 999px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+            .skills-tab-btn:hover { background: rgba(203,166,247,0.1); color: var(--cc-mauve); }
+            .skills-tab-btn.active { background: rgba(203,166,247,0.2); color: var(--cc-mauve); border-color: var(--cc-mauve); }
+            .skills-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; }
+            .skill-card { background: rgba(49, 50, 68, 0.4); border: 1px solid rgba(255,255,255,0.08); border-radius: var(--cc-radius); padding: 20px; display: flex; flex-direction: column; gap: 12px; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); position: relative; overflow: hidden; }
+            .skill-card:hover { border-color: var(--cc-mauve); transform: translateY(-3px); box-shadow: 0 8px 24px rgba(203,166,247,0.15); background: rgba(49, 50, 68, 0.7); }
+            .skill-card-icon { font-size: 32px; margin-bottom: 5px; }
+            .skill-card-title { font-size: 16px; font-weight: 700; color: var(--cc-text-primary); margin: 0; }
+            .skill-card-desc { font-size: 13px; color: var(--cc-subtext0); line-height: 1.5; flex-grow: 1; margin: 0; }
+            .skill-card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.05); }
+            .skill-status-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; padding: 4px 8px; border-radius: 999px; }
+            .skill-status-badge.active { background: rgba(166,227,161,0.15); color: var(--cc-green); }
+            .skill-status-badge.inactive { background: rgba(243,139,168,0.15); color: var(--cc-red); }
+            .skill-action-btn { background: var(--cc-surface0); color: var(--cc-text-primary); border: none; padding: 6px 12px; border-radius: var(--cc-radius); font-size: 12px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+            .skill-action-btn:hover { background: var(--cc-mauve); color: var(--cc-bg-main); }
+            .skill-action-btn.primary { background: rgba(203,166,247,0.2); color: var(--cc-mauve); border: 1px solid rgba(203,166,247,0.4); }
+            .skill-action-btn.primary:hover { background: var(--cc-mauve); color: var(--cc-bg-main); }
+        </style>
+        <div class="library-screen-header">
+            <div>
+                <button onclick="closeSkillsScreen()" style="background:rgba(255,255,255,0.1); color:var(--cc-text-primary); border:none; border-radius: var(--cc-radius); padding:8px 12px; cursor:pointer; font-weight:bold; font-size:14px; transition:0.2s;">⬅️ Geri</button>
+                <h2 style="color: var(--cc-mauve); margin:0; font-size:24px; margin-top:15px;">🧩 Beceriler ve Bağlayıcılar</h2>
+                <p style="color: var(--cc-subtext0); font-size: 13px; margin-top: 5px;">Yapay zeka yeteneklerini yönet ve dış uygulamalarını CinoCode'a bağla.</p>
+            </div>
+            <button class="run-code-btn" onclick="promptNewIntegration()" style="background:var(--cc-mauve); color:var(--cc-bg-main); width:auto; padding:8px 16px;">+ Yeni Ekle</button>
+        </div>
+        
+        <div class="skills-tabs">
+            <button class="skills-tab-btn active" id="tabSkillsBtn" onclick="switchSkillsTab('skills')">🧠 Beceriler</button>
+            <button class="skills-tab-btn" id="tabIntegrationsBtn" onclick="switchSkillsTab('integrations')">🔗 Bağlayıcılar</button>
+        </div>
+
+        <div id="skillsContent" class="skills-grid">
+            <div class="skill-card">
+                <div class="skill-card-icon">💻</div>
+                <h3 class="skill-card-title">Gelişmiş Kod İşleme</h3>
+                <p class="skill-card-desc">Syntax renklendirme, kod kopyalama, satır numaralandırma ve render işlemlerini sağlar.</p>
+                <div class="skill-card-footer">
+                    <span class="skill-status-badge active">● Etkin</span>
+                    <button class="skill-action-btn">Ayarlar</button>
+                </div>
+            </div>
+            <div class="skill-card">
+                <div class="skill-card-icon">🎨</div>
+                <h3 class="skill-card-title">Tema Motoru</h3>
+                <p class="skill-card-desc">CinoCode'un görünümünü kişiselleştirir. Catppuccin ve özel renk paletlerini uygular.</p>
+                <div class="skill-card-footer">
+                    <span class="skill-status-badge active">● Etkin</span>
+                    <button class="skill-action-btn" onclick="closeSkillsScreen(); toggleTheme();">Aç</button>
+                </div>
+            </div>
+            <div class="skill-card">
+                <div class="skill-card-icon">📄</div>
+                <h3 class="skill-card-title">Belge Analisti</h3>
+                <p class="skill-card-desc">PDF, Word (docx) dosyalarındaki metinleri okur ve bağlama dahil eder.</p>
+                <div class="skill-card-footer">
+                    <span class="skill-status-badge active">● Etkin</span>
+                </div>
+            </div>
+            <div class="skill-card">
+                <div class="skill-card-icon">🔊</div>
+                <h3 class="skill-card-title">Sesli Asistan</h3>
+                <p class="skill-card-desc">Yapay zeka yanıtlarını doğal insan sesine dönüştürür (TTS).</p>
+                <div class="skill-card-footer">
+                    <span class="skill-status-badge active">● Etkin</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="integrationsContent" class="skills-grid" style="display:none;">
+            <div style="grid-column: 1 / -1; margin-top: 10px; margin-bottom: 5px;">
+                <h4 style="color: var(--cc-text-primary); font-size: 15px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 8px; margin: 0;">Senin Uygulamaların</h4>
+            </div>
+            <div class="skill-card" style="border-color: rgba(137,180,250,0.3);">
+                <div class="skill-card-icon">🎬</div>
+                <h3 class="skill-card-title" style="color: var(--cc-blue);">CinoVidyo</h3>
+                <p class="skill-card-desc">Yapay zeka destekli video üretim aracı. CinoCode'dan doğrudan video üret.</p>
+                <div class="skill-card-footer">
+                    <span class="skill-status-badge active">● Bağlı</span>
+                    <button class="skill-action-btn primary">Aç</button>
+                </div>
+            </div>
+            <div class="skill-card" style="border-color: rgba(249,226,175,0.3);">
+                <div class="skill-card-icon">📝</div>
+                <h3 class="skill-card-title" style="color: var(--cc-yellow);">Text-Generator</h3>
+                <p class="skill-card-desc">Özel promptlarla otomatik metin ve blog içerikleri oluşturan lokal araç.</p>
+                <div class="skill-card-footer">
+                    <span class="skill-status-badge active">● Bağlı</span>
+                    <button class="skill-action-btn primary">Aç</button>
+                </div>
+            </div>
+            <div class="skill-card" style="border-color: rgba(166,227,161,0.3);">
+                <div class="skill-card-icon">🤖</div>
+                <h3 class="skill-card-title" style="color: var(--cc-green);">Armin Bot</h3>
+                <p class="skill-card-desc">Discord / Telegram entegrasyonlu destek ve yönetim botu.</p>
+                <div class="skill-card-footer">
+                    <span class="skill-status-badge inactive">● Pasif</span>
+                    <button class="skill-action-btn primary">Bağla</button>
+                </div>
+            </div>
+
+            <div style="grid-column: 1 / -1; margin-top: 20px; margin-bottom: 5px;">
+                <h4 style="color: var(--cc-text-primary); font-size: 15px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 8px; margin: 0;">Popüler Entegrasyonlar</h4>
+            </div>
+            <div class="skill-card">
+                <div class="skill-card-icon">🐙</div>
+                <h3 class="skill-card-title">GitHub</h3>
+                <p class="skill-card-desc">Depoları oku, commitleri incele ve PR analizleri yap.</p>
+                <div class="skill-card-footer">
+                    <span class="skill-status-badge inactive">● Yakında</span>
+                    <button class="skill-action-btn" disabled>Bağla</button>
+                </div>
+            </div>
+            <div class="skill-card">
+                <div class="skill-card-icon">📁</div>
+                <h3 class="skill-card-title">Google Drive</h3>
+                <p class="skill-card-desc">Drive içindeki dokümanlara doğrudan erişim sağla.</p>
+                <div class="skill-card-footer">
+                    <span class="skill-status-badge inactive">● Yakında</span>
+                    <button class="skill-action-btn" disabled>Bağla</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        function openSkillsScreen() {
+            document.getElementById('skillsScreen').style.display = 'flex';
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarDrawerOverlay');
+            if(window.innerWidth <= 768) {
+                if (sidebar) sidebar.classList.remove('active');
+                if (overlay) overlay.classList.remove('active');
+            }
+        }
+        function closeSkillsScreen() {
+            document.getElementById('skillsScreen').style.display = 'none';
+        }
+        function switchSkillsTab(tabId) {
+            document.getElementById('tabSkillsBtn').classList.remove('active');
+            document.getElementById('tabIntegrationsBtn').classList.remove('active');
+            document.getElementById('skillsContent').style.display = 'none';
+            document.getElementById('integrationsContent').style.display = 'none';
+            
+            if (tabId === 'skills') {
+                document.getElementById('tabSkillsBtn').classList.add('active');
+                document.getElementById('skillsContent').style.display = 'grid';
+            } else {
+                document.getElementById('tabIntegrationsBtn').classList.add('active');
+                document.getElementById('integrationsContent').style.display = 'grid';
+            }
+        }
+        function promptNewIntegration() {
+            if(typeof showNonBlockingToast === 'function') {
+                showNonBlockingToast('Yeni Bağlayıcı Ekleme Modülü: Yakında eklenecek!');
+            } else {
+                alert('Yeni Bağlayıcı Ekleme Modülü: Yakında eklenecek!');
+            }
+        }
+    </script>
 
     <div class="messages" id="messages"></div>
 
@@ -2551,6 +2725,12 @@
             </div>
         </div>
 
+        <!-- YENI: Tema Stüdyosu Yönlendirme Köprüsü -->
+        <div style="margin-top:15px; margin-bottom:15px; padding:15px; background:rgba(137,180,250,0.1); border:1px solid var(--cc-blue); border-radius:var(--cc-radius); text-align:center;">
+            <div style="font-size:12px; color:var(--cc-text-primary); margin-bottom:10px;">Renkleri ve arayüz temasını (Catppuccin Mocha vb.) değiştirmek mi istiyorsun?</div>
+            <button onclick="closeFz19Editor(); openThemeStudio();" style="width:100%; padding:10px; border-radius:var(--cc-radius); background:var(--cc-blue); color:var(--cc-base); border:none; font-weight:bold; cursor:pointer; box-shadow: 0 4px 15px rgba(137,180,250,0.3); transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">🎨 Gelişmiş Tema Stüdyosu'nu Aç</button>
+        </div>
+
         <div style="height:1px; background:var(--cc-border); margin:10px 0 14px;"></div>
 
         <!-- Toggle Switch Listesi -->
@@ -2826,6 +3006,76 @@
     }
 
     const SIDEBAR_STATE_KEY = 'cinocode_sidebar_collapsed';
+
+    const CinoDB = {
+        dbName: 'CinoCodeDB',
+        dbVersion: 1,
+        db: null,
+        
+        init: function() {
+            return new Promise((resolve, reject) => {
+                if (this.db) return resolve();
+                const request = indexedDB.open(this.dbName, this.dbVersion);
+                
+                request.onupgradeneeded = (event) => {
+                    const db = event.target.result;
+                    if (!db.objectStoreNames.contains('workspaces')) {
+                        db.createObjectStore('workspaces');
+                    }
+                };
+                
+                request.onsuccess = (event) => {
+                    this.db = event.target.result;
+                    resolve();
+                };
+                
+                request.onerror = (event) => {
+                    console.error("IndexedDB init error:", event.target.error);
+                    reject(event.target.error);
+                };
+            });
+        },
+
+        get: function(storeName, key) {
+            return new Promise((resolve, reject) => {
+                if (!this.db) return resolve(null);
+                try {
+                    const transaction = this.db.transaction([storeName], 'readonly');
+                    const store = transaction.objectStore(storeName);
+                    const request = store.get(key);
+                    request.onsuccess = () => resolve(request.result);
+                    request.onerror = () => reject(request.error);
+                } catch(e) { reject(e); }
+            });
+        },
+
+        put: function(storeName, key, value) {
+            return new Promise((resolve, reject) => {
+                if (!this.db) return resolve(false);
+                try {
+                    const transaction = this.db.transaction([storeName], 'readwrite');
+                    const store = transaction.objectStore(storeName);
+                    const request = store.put(value, key);
+                    request.onsuccess = () => resolve(true);
+                    request.onerror = () => reject(request.error);
+                } catch(e) { reject(e); }
+            });
+        },
+        
+        delete: function(storeName, key) {
+            return new Promise((resolve, reject) => {
+                if (!this.db) return resolve(false);
+                try {
+                    const transaction = this.db.transaction([storeName], 'readwrite');
+                    const store = transaction.objectStore(storeName);
+                    const request = store.delete(key);
+                    request.onsuccess = () => resolve(true);
+                    request.onerror = () => reject(request.error);
+                } catch(e) { reject(e); }
+            });
+        }
+    };
+
     let isSidebarCollapsed = false;
     let isMobileSidebarOpen = false;
 
@@ -4770,7 +5020,8 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
         overlay.style.display = 'block';
         
         window.addEventListener('resize', fz19RenderTourStep);
-        document.querySelector('.main-content').addEventListener('scroll', fz19RenderTourStep, true);
+        const mc = document.querySelector('.main-content') || document.querySelector('.chat-area') || document.getElementById('messages');
+        if (mc) mc.addEventListener('scroll', fz19RenderTourStep, true);
         
         fz19ScrollToCurrent();
     }
@@ -4780,7 +5031,8 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
         if (overlay) overlay.style.display = 'none';
         localStorage.setItem('fz19_tour_seen', '1');
         window.removeEventListener('resize', fz19RenderTourStep);
-        document.querySelector('.main-content').removeEventListener('scroll', fz19RenderTourStep, true);
+        const mc = document.querySelector('.main-content') || document.querySelector('.chat-area') || document.getElementById('messages');
+        if (mc) mc.removeEventListener('scroll', fz19RenderTourStep, true);
     }
 
     function fz19NextTourStep() { fz19CurrentVisibleIndex++; fz19ScrollToCurrent(); }
@@ -5146,7 +5398,13 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
     let sessions = {}; // Tüm sohbetleri tutan obje
     let currentChatId = null;
     let projects = {}; // Projeler (sohbet gruplama) objesi
-    let activeProjectId = null; // Projeler ekranında açık olan proje (null = proje grid'i)
+    let activeProjectId = null;
+    let currentProjectTab = 'sohbetler';
+    window.switchProjectTab = function(tab) {
+        currentProjectTab = tab;
+        if (typeof renderProjectsScreen === 'function') renderProjectsScreen();
+    };
+ // Projeler ekranında açık olan proje (null = proje grid'i)
 
     // ----- HAFIZA (LOCALSTORAGE) YÖNETİMİ -----
     function escapeSidebarHtml(value) {
@@ -5205,46 +5463,83 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
         return changed;
     }
 
-    function saveDatabase() {
-        normalizeAllChatMetadata();
-        let clonedSessions = JSON.parse(JSON.stringify(sessions));
-        for(let id in clonedSessions) {
-            for(let msg of clonedSessions[id].messages) {
-                // Not: Images are now stored as full data URLs.
-            }
+    let isSavingDB = false;
+    let pendingSave = false;
+
+    async function doSaveToIDB() {
+        if (isSavingDB) {
+            pendingSave = true;
+            return;
         }
+        isSavingDB = true;
         try {
             const dbKey = "cinocode_db_" + (loggedUser || "default");
-            localStorage.setItem(dbKey, JSON.stringify({ sessions: clonedSessions, currentChatId, projects }));
+            let clonedSessions = JSON.parse(JSON.stringify(sessions));
+            if (window.useLocalStorageFallback) {
+                localStorage.setItem(dbKey, JSON.stringify({ sessions: clonedSessions, currentChatId, projects }));
+            } else {
+                await CinoDB.put('workspaces', dbKey, { sessions: clonedSessions, currentChatId, projects });
+            }
         } catch (e) {
-            console.error("Localstorage save error", e);
+            console.error("IDB save error", e);
+            window.useLocalStorageFallback = true;
+            try {
+                const dbKey = "cinocode_db_" + (loggedUser || "default");
+                localStorage.setItem(dbKey, JSON.stringify({ sessions, currentChatId, projects }));
+            } catch(fallbackErr) {
+                console.error("IDB and LocalStorage save both failed", fallbackErr);
+            }
+        } finally {
+            isSavingDB = false;
+            if (pendingSave) {
+                pendingSave = false;
+                doSaveToIDB();
+            }
         }
+    }
+
+    function saveDatabase() {
+        normalizeAllChatMetadata();
+        doSaveToIDB();
         renderSidebar();
     }
 
-    function loadDatabase() {
+    async function loadDatabase() {
         const dbKey = "cinocode_db_" + (loggedUser || "default");
-        let saved = localStorage.getItem(dbKey);
+        let rawLocal = localStorage.getItem(dbKey);
+        let dbData = null;
         let migrated = false;
 
-        if (saved) {
-            try {
-                const db = JSON.parse(saved);
-                sessions = (db && db.sessions && typeof db.sessions === "object") ? db.sessions : {};
-                currentChatId = db ? db.currentChatId : null;
-                projects = (db && db.projects && typeof db.projects === "object") ? db.projects : {};
-                migrated = normalizeAllChatMetadata();
-            } catch (e) {
-                console.warn("CinoCode database parse failed; starting with a safe empty session list.", e);
-                try {
-                    localStorage.setItem(dbKey + "_corrupt_backup_" + Date.now(), saved);
-                } catch (backupError) {
-                    console.warn("CinoCode database backup failed.", backupError);
-                }
-                sessions = {};
-                currentChatId = null;
-                projects = {};
+        try {
+            await CinoDB.init();
+            let idbData = await CinoDB.get('workspaces', dbKey);
+            
+            if (idbData) {
+                dbData = idbData;
+            } else if (rawLocal) {
+                // Migration
+                dbData = JSON.parse(rawLocal);
+                await CinoDB.put('workspaces', dbKey, dbData);
+                console.log("[CinoCode] Veritabanı IndexedDB'ye taşındı!");
+                // localStorage.removeItem(dbKey); // Gelecekte silinebilir. Şimdilik yedek amaçlı tutuyoruz.
             }
+        } catch(e) {
+            console.error("IndexedDB load failed, falling back to localStorage", e);
+            window.useLocalStorageFallback = true;
+            if (rawLocal) {
+                try { dbData = JSON.parse(rawLocal); } catch(e) {}
+            }
+        }
+
+        if (dbData) {
+            sessions = (dbData.sessions && typeof dbData.sessions === "object") ? dbData.sessions : {};
+            currentChatId = dbData.currentChatId || null;
+            projects = (dbData.projects && typeof dbData.projects === "object") ? dbData.projects : {};
+            migrated = normalizeAllChatMetadata();
+        } else {
+            sessions = {};
+            currentChatId = null;
+            projects = {};
         }
 
         // Eğer hiç sohbet yoksa yeni oluştur
@@ -5670,31 +5965,90 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
         createNewChat({ projectId: projectId });
     }
 
+    function promptAddNote(projectId) {
+        const note = prompt("Yeni notunuzu girin:");
+        if (note && note.trim()) {
+            if (projects[projectId]) {
+                if (!projects[projectId].notes) projects[projectId].notes = [];
+                projects[projectId].notes.push({
+                    content: note.trim(),
+                    createdAt: new Date().toISOString()
+                });
+                saveDatabase();
+                renderProjectsScreen();
+            }
+        }
+    }
+
+    function deleteNote(projectId, index) {
+        if (confirm("Bu notu silmek istediğinize emin misiniz?")) {
+            if (projects[projectId] && projects[projectId].notes) {
+                projects[projectId].notes.splice(index, 1);
+                saveDatabase();
+                renderProjectsScreen();
+            }
+        }
+    }
+
     function renderProjectsScreen() {
         const titleEl = document.getElementById('projectsScreenTitle');
         const content = document.getElementById('projectsScreenContent');
         const newProjectBtn = document.getElementById('newProjectScreenBtn');
         if (!titleEl || !content) return;
 
-        if (activeProjectId && projects[activeProjectId]) {
+                if (activeProjectId && projects[activeProjectId]) {
             const project = projects[activeProjectId];
-            titleEl.textContent = "📁 " + project.name;
+            if (!project.notes) project.notes = [];
+            titleEl.textContent = "💻 " + project.name;
             if (newProjectBtn) newProjectBtn.style.display = 'none';
-            const chatIds = getSortedChatIds(Object.keys(sessions).filter(id => sessions[id]?.projectId === activeProjectId));
+            
             let html = `<div style="grid-column:1/-1; margin-bottom:15px;">
                 ${project.description ? `<div style="color:var(--cc-text-muted); margin-bottom:12px;">${escapeSidebarHtml(project.description)}</div>` : ""}
-                <button class="run-code-btn" style="background:#a6e3a1; color:var(--cc-bg-main); width:auto; padding:8px 16px;" onclick="startNewChatInProject('${activeProjectId}')">+ Yeni Sohbet</button>
-            </div>`;
-            if (chatIds.length === 0) {
-                html += `<div style="grid-column:1/-1; text-align:center; padding:40px; color:var(--cc-text-muted);">Bu projede henüz sohbet yok.</div>`;
-            } else {
-                chatIds.forEach(id => {
-                    const chat = sessions[id];
-                    html += `<div class="archive-card" style="background:var(--cc-bg-surface); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: var(--cc-radius); padding:14px; cursor:pointer;" onclick="openChatFromProject('${id}')">
-                        <div style="color:var(--cc-text-primary); font-weight:600; margin-bottom:6px;">${escapeSidebarHtml(chat.title || "Yeni Sohbet")}</div>
-                        <div style="color:#6c7086; font-size:12px;">${formatDateHeader(new Date(chat.updatedAt).toISOString())}</div>
-                    </div>`;
-                });
+                
+                <div style="display:flex; gap:15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom:10px; margin-bottom:15px; margin-top:5px;">
+                    <button onclick="window.switchProjectTab('sohbetler')" style="background:none; border:none; color:${currentProjectTab === 'sohbetler' ? 'var(--cc-accent-brand)' : 'var(--cc-text-muted)'}; font-weight:${currentProjectTab === 'sohbetler' ? 'bold' : 'normal'}; font-size:14px; cursor:pointer; transition: color 0.2s;">💬 Sohbetler</button>
+                    <button onclick="window.switchProjectTab('notlar')" style="background:none; border:none; color:${currentProjectTab === 'notlar' ? 'var(--cc-accent-brand)' : 'var(--cc-text-muted)'}; font-weight:${currentProjectTab === 'notlar' ? 'bold' : 'normal'}; font-size:14px; cursor:pointer; transition: color 0.2s;">📝 Notlar</button>
+                    <button onclick="window.switchProjectTab('dosyalar')" style="background:none; border:none; color:${currentProjectTab === 'dosyalar' ? 'var(--cc-accent-brand)' : 'var(--cc-text-muted)'}; font-weight:${currentProjectTab === 'dosyalar' ? 'bold' : 'normal'}; font-size:14px; cursor:pointer; transition: color 0.2s;">📎 Dosyalar</button>
+                </div>`;
+            
+            if (currentProjectTab === 'sohbetler') {
+                html += `<button class="run-code-btn" style="background:#a6e3a1; color:var(--cc-bg-main); width:auto; padding:8px 16px; margin-bottom:15px;" onclick="startNewChatInProject('${activeProjectId}')">+ Yeni Sohbet</button></div>`;
+                const chatIds = getSortedChatIds(Object.keys(sessions).filter(id => sessions[id]?.projectId === activeProjectId));
+                if (chatIds.length === 0) {
+                    html += `<div style="grid-column:1/-1; text-align:center; padding:40px; color:var(--cc-text-muted);">Bu projede henüz sohbet yok.</div>`;
+                } else {
+                    chatIds.forEach(id => {
+                        const chat = sessions[id];
+                        html += `<div class="archive-card" style="background:var(--cc-bg-surface); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: var(--cc-radius); padding:14px; cursor:pointer; transition: all 0.2s;" onclick="openChatFromProject('${id}')" onmouseover="this.style.borderColor='var(--cc-border)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.08)'">
+                            <div style="color:var(--cc-text-primary); font-weight:600; margin-bottom:6px;">${escapeSidebarHtml(chat.title || "Yeni Sohbet")}</div>
+                            <div style="color:#6c7086; font-size:12px;">${formatDateHeader(new Date(chat.updatedAt).toISOString())}</div>
+                        </div>`;
+                    });
+                }
+            } else if (currentProjectTab === 'notlar') {
+                html += `<div style="margin-bottom:15px;"><button onclick="promptAddNote('${activeProjectId}')" class="action-btn" style="padding:8px 16px; border-radius:var(--cc-radius); border:none; background:var(--cc-accent-brand); color:var(--cc-bg-main); font-weight:bold; cursor:pointer;">+ Yeni Not Ekle</button></div>`;
+                if (project.notes.length === 0) {
+                    html += `<div style="grid-column:1/-1; text-align:center; padding:40px; color:var(--cc-text-muted);">Henüz not eklenmemiş.</div>`;
+                } else {
+                    html += `<div style="grid-column:1/-1; display:flex; flex-direction:column; gap:10px;">`;
+                    project.notes.forEach((note, idx) => {
+                        html += `<div class="archive-card" style="background:var(--cc-bg-surface); padding:14px; border: 1px solid rgba(255,255,255,0.08); border-radius:var(--cc-radius); position:relative;">
+                                    <div style="font-size:14px; color:var(--cc-text-primary); white-space:pre-wrap;">${escapeSidebarHtml(note.content)}</div>
+                                    <button onclick="deleteNote('${activeProjectId}', ${idx})" style="position:absolute; top:10px; right:10px; background:none; border:none; color:var(--cc-red); cursor:pointer; font-size:16px;" title="Notu Sil">🗑</button>
+                                 </div>`;
+                    });
+                    html += `</div>`;
+                }
+            } else if (currentProjectTab === 'dosyalar') {
+                html += `<div style="margin-bottom:15px; display:flex; justify-content:space-between; align-items:center;">
+                            <div style="font-weight:600; color:var(--cc-text-primary);">Dosyalar</div>
+                            <button onclick="alert('Dosya yükleme yakında eklenecek!')" class="action-btn" style="padding:6px 12px; border-radius:var(--cc-radius); border:none; background:var(--cc-accent-brand); color:var(--cc-bg-main); font-weight:bold; cursor:pointer;">+ Dosya Yükle</button>
+                         </div>`;
+                html += `<div style="grid-column:1/-1; text-align:center; padding:40px; color:var(--cc-text-muted); border: 2px dashed rgba(255,255,255,0.1); border-radius: var(--cc-radius);">
+                            <div style="font-size:30px; margin-bottom:10px;">📄</div>
+                            <div>PDF, TXT veya Kod dosyalarınızı sürükleyip bırakın</div>
+                            <div style="font-size:12px; margin-top:5px; color:#6c7086;">(RAG entegrasyonu Faz 21.2'de aktif olacak)</div>
+                         </div>`;
             }
             content.innerHTML = html;
         } else {
@@ -8840,7 +9194,7 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
         tam:     { styleMode:true,  personaSelect:true,  voiceSelect:true,  microphone:true,  ttsButton:true,  historySidebar:true,  profileButton:true }
     };
     function fz19DefaultUiPrefs() {
-        return { version: 1, theme: "tam", visibility: { ...FZ19_THEME_PRESETS.tam }, lastUpdated: "" };
+        return { version: 1, theme: "dengeli", visibility: { ...FZ19_THEME_PRESETS.dengeli }, lastUpdated: "" };
     }
     function fz19LoadUiPrefs() {
         try {
@@ -8852,7 +9206,7 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
             Object.keys(FZ19_FEATURE_MAP).forEach(k => {
                 visibility[k] = (typeof vis[k] === "boolean") ? vis[k] : true; // eksikse görünür
             });
-            return { version: 1, theme: parsed.theme || "tam", visibility, lastUpdated: parsed.lastUpdated || "" };
+            return { version: 1, theme: parsed.theme || "dengeli", visibility, lastUpdated: parsed.lastUpdated || "" };
         } catch (e) {
             return fz19DefaultUiPrefs();
         }
@@ -8883,7 +9237,15 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
         } catch (e) { console.warn("fz19ApplyUiPrefs error:", e); }
     }
 
-    window.onload = () => {
+    window.addEventListener('beforeunload', (e) => {
+        if (typeof isSavingDB !== 'undefined' && (isSavingDB || (typeof pendingSave !== 'undefined' && pendingSave))) {
+            e.preventDefault();
+            e.returnValue = "Değişiklikleriniz henüz kaydedilmedi. Lütfen bekleyin.";
+            return e.returnValue;
+        }
+    });
+
+    window.onload = async () => {
         if (document.getElementById('loggedInUser')) {
             if (loggedUser) {
                 document.getElementById('loggedInUser').innerText = loggedUser;
@@ -8892,24 +9254,36 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
                 document.getElementById('loggedInUserWrapper').style.display = "none";
             }
         }
-        loadDatabase();
-        setupPlaceholderImageObserver();
-        scrubPlaceholderErrorImages(messagesDiv || document);
-        setTimeout(() => scrubPlaceholderErrorImages(messagesDiv || document), 300);
-        bindComposerDraftPreservation();
-        restoreComposerDraftIfNeeded();
-        repairBadChatTitles();
-        checkOllamaStatus();
-        setInterval(checkOllamaStatus, 5000);
-        setTimeout(populateVoices, 500); // Safari/Firefox fallback
+        Promise.allSettled([
+            (async () => {
+                try {
+                    await loadDatabase();
+                } catch(e) {
+                    console.error("Critical DB error during load", e);
+                }
+            })(),
+            (async () => {
+                setupPlaceholderImageObserver();
+                scrubPlaceholderErrorImages(messagesDiv || document);
+                setTimeout(() => scrubPlaceholderErrorImages(messagesDiv || document), 300);
+                bindComposerDraftPreservation();
+                restoreComposerDraftIfNeeded();
+                repairBadChatTitles();
+                checkOllamaStatus();
+                setInterval(checkOllamaStatus, 5000);
+                setTimeout(populateVoices, 500); // Safari/Firefox fallback
 
-        isSidebarCollapsed = localStorage.getItem(SIDEBAR_STATE_KEY) === '1';
-        applySidebarState(isSidebarCollapsed, false);
-        applyFeatureUiState();
-        fz19ApplyUiPrefs();
-        restoreComposerDraftIfNeeded();
-        loadMediaSourceSelection();
-        try { renderUsageRoleUI(localStorage.getItem(USAGE_ROLE_KEY) || 'general'); } catch (e) {}
+                isSidebarCollapsed = localStorage.getItem(SIDEBAR_STATE_KEY) === '1';
+                applySidebarState(isSidebarCollapsed, false);
+                applyFeatureUiState();
+                fz19ApplyUiPrefs();
+                restoreComposerDraftIfNeeded();
+                loadMediaSourceSelection();
+                try { renderUsageRoleUI(localStorage.getItem(USAGE_ROLE_KEY) || 'general'); } catch (e) {}
+            })()
+        ]).then(() => {
+            console.log("[CinoCode] Tüm asenkron başlatma süreçleri tamamlandı veya bypass edildi.");
+        });
 
         // Paste (CTRL+V) olayını dinle ve kopyalanan resimleri yakala
         document.addEventListener('paste', function(e) {
@@ -12149,17 +12523,20 @@ function buildExamCoachSuffix() {
     }
 
     function deleteLocalAccount() {
-        const typed = prompt('Bu işlem geri alınamaz. Tüm yerel sohbetleriniz ve hafızanız silinecek.\nOnaylamak için SİL yazın:');
-        if (typed !== 'SİL') { showNonBlockingToast('İptal edildi.'); return; }
+        const typed = prompt('Bu islem geri alinamaz. Tüm yerel sohbetleriniz ve hafizaniz silinecek.\nOnaylamak için SIL yazin:');
+        if (typed !== 'SIL') { showNonBlockingToast('Iptal edildi.'); return; }
         try {
             const keys = getUserScopedKeys(loggedUser);
             localStorage.removeItem(keys.memory);
             localStorage.removeItem(keys.db);
             localStorage.removeItem('cinocode_user');
+            CinoDB.delete('workspaces', keys.db).finally(() => {
+                location.reload();
+            });
         } catch (e) {
             console.error('Account deletion failed', e);
+            location.reload();
         }
-        location.reload();
     }
 
     function openLocalProfileModal() {
