@@ -38,7 +38,7 @@ localStorage — chat history, favorites, per-voice custom names, preferences
 ```
 
 **Why this shape:**
-- **No framework, one file.** The entire client is `cinocode_chat.html` (~9,000+ lines: HTML skeleton, CSS, and JS in one place). No build step — open the file, it runs. Deliberate tradeoff for a solo project: fast iteration, zero tooling overhead, at the cost of file size and no component isolation.
+- **Frameworkless, modular structure.** The application uses `cinocode_chat.html` for the UI skeleton and loads styles from `assets/css/main.css` and logic from `assets/js/` (e.g., `main.js`, `sinavkocu.js`, `professions.js`). This provides clean separation of concerns while keeping the build step at zero.
 - **Serverless proxy for every external call.** API keys never touch the browser. All third-party requests go through Netlify Functions, which read keys from environment variables server-side.
 - **Fallback chains everywhere that can fail.** Both the LLM provider selection and the image generation pipeline are designed so that a single provider's outage or exhausted credits degrades service quality rather than breaking the feature.
 
@@ -77,8 +77,6 @@ The smoke suite uses Node's built-in test runner. It validates style-mode prompt
 Being upfront about this, since it's more useful to a reviewer than pretending it's flawless:
 
 - The smoke suite covers prompt contracts and serverless provider routing, but browser-level end-to-end coverage is not implemented yet.
-- Single massive HTML file trades maintainability for zero-build-step simplicity. Past a certain size, this should be componentized (even without a framework, via ES modules).
-- XLSX/PPTX document support isn't implemented yet — only PDF, DOCX, and plain text.
 - The real "web search" integration is a placeholder, not a live search API, in the current version.
 
 ## Why I built this
