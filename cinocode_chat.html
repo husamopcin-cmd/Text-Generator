@@ -4740,7 +4740,7 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
             if (!contFetchOptions.body) return;
             let bodyObj = JSON.parse(contFetchOptions.body);
             const sliced = (bodyObj.messages || []).slice(-3);
-            sliced.push({ role: 'user', content: 'Bu konuşmaya göre kullanıcının sorabileceği 3-4 kısa takip sorusu/konusu öner. Her biri en fazla 5-6 kelime olsun. Sadece listeyi ver, madde madde, başka açıklama yazma.' });
+            sliced.push({ role: 'user', content: 'Bu sohbetin son kullanıcı mesajı ve AI cevabına göre kullanıcının sorabileceği 3-4 kısa, doğal, bağlamsal Türkçe takip sorusu üret. Genel değil, tamamen konuya özel olsun. Sadece ["Soru 1", "Soru 2", "Soru 3"] formatında geçerli bir JSON array döndür. Örnek: kullanıcı "Mars\'a gitmek istiyorum" dediyse öneriler Mars yolculuğu, bilet fiyatı, Elon Musk projeleri gibi olsun.' });
             bodyObj.messages = sliced;
             bodyObj.stream = false;
             bodyObj.max_tokens = 80;
@@ -4755,23 +4755,52 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
                 else if (data.message && data.message.content) raw = data.message.content;
                 if (isDebugMode()) console.log('CINOCODE_DEBUG_CONT_RAW:', raw);
                 if (!raw) return;
-                const lines = raw.split('\n').map(l => l.replace(/^[\d\-\.\*\u2022\u21AA\s]+/, '').trim()).filter(l => l.length > 4 && l.length < 80).slice(0, 4);
+                
+                let lines = [];
+                try {
+                    let cleanedRaw = raw.trim();
+                    if(cleanedRaw.startsWith("```json")) cleanedRaw = cleanedRaw.replace(/```json/g, "").replace(/```/g, "").trim();
+                    if(cleanedRaw.startsWith("```")) cleanedRaw = cleanedRaw.replace(/```/g, "").trim();
+                    const parsed = JSON.parse(cleanedRaw);
+                    if (Array.isArray(parsed)) {
+                        lines = parsed.map(String).filter(l => l.length > 2 && l.length < 80).slice(0, 4);
+                    }
+                } catch(e) {}
+                
+                if(!lines.length) {
+                    lines = raw.split('\n').map(l => l.replace(/^[\d\-\.\*\u2022\u21AA\s]+/, '').trim()).filter(l => l.length > 4 && l.length < 80).slice(0, 4);
+                }
+                
                 if (!lines.length) return;
                 const liveEl = typeof target === 'string' ? document.getElementById(target) : target;
                 if (!liveEl || liveEl.querySelector('.' + CONT_CLASS)) return;
-                const row = document.createElement('div');
-                row.className = CONT_CLASS;
-                row.style.cssText = 'display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; padding-top:8px; border-top:1px solid var(--cc-border);';
+                
+                let row = liveEl.querySelector('.smart-suggestion-row');
+                if(!row) {
+                    row = document.createElement('div');
+                    row.className = 'smart-suggestion-row ' + CONT_CLASS;
+                    liveEl.appendChild(row);
+                } else {
+                    row.classList.add(CONT_CLASS);
+                }
+                
                 lines.forEach(text => {
                     const btn = document.createElement('button');
                     btn.type = 'button';
                     btn.className = 'smart-suggestion-chip';
-                    btn.style.cssText = 'font-size:11px; opacity:0.85;';
-                    btn.textContent = '\u21AA ' + text;
-                    btn.onclick = () => submitSmartSuggestion(text);
+                    btn.style.cssText = 'background:rgba(166,227,161,0.15); border:1px solid rgba(166,227,161,0.4); color:#a6e3a1; font-weight:500; font-size:13px; margin:4px; transition:all 0.2s;';
+                    btn.textContent = '✨ ' + text;
+                    btn.onclick = () => {
+                        const input = document.getElementById('userInput');
+                        if (input) {
+                            input.value = text;
+                            sendMessage();
+                        } else if (typeof submitSmartSuggestion === "function") {
+                            submitSmartSuggestion(text);
+                        }
+                    };
                     row.appendChild(btn);
                 });
-                liveEl.appendChild(row);
             }).catch(e => console.warn('AI continuation suggestions error:', e));
         } catch(e) { console.warn('appendDynamicContinuations logic error:', e); }
     }
@@ -8720,7 +8749,8 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
         const utterance = new SpeechSynthesisUtterance(cleanText);
         utterance.lang = langCode;
         // Not: Yerel TTS motoru (SpeechSynthesis) çalma esnasında canlı hız
-        // değişimini desteklemez; slider yalnızca sunucu tabanlı TTS'yi etkiler.
+        // değişimini desteklemez (pause/resume yapsan bile cümleyi baştan okumaz),
+        // ancak slider'dan ayarlanan hız YENİ başlayan her cümle için Web Speech API'ye uygulanacaktır.
         const resolvedVoice = resolveTtsVoiceForSegment(voices, expectedVoiceId, langCode);
         let fallbackReason = resolvedVoice.fallbackReason || "";
         if (resolvedVoice.voice) utterance.voice = resolvedVoice.voice;
@@ -8762,6 +8792,12 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
                 utterance.rate = 1.0;
             }
         }
+        
+        // Kullanıcının ayarladığı dinamik hızı Web Speech API'ye (yerel ses) uygula
+        try {
+            const userSpeed = parseFloat(localStorage.getItem('fz19_tts_speed')) || 1.0;
+            utterance.rate = Math.min(3.5, Math.max(0.5, utterance.rate * userSpeed));
+        } catch(e) {}
         setTtsRouteMeta("web_speech_api", expectedVoiceId, utterance.voice, fallbackReason);
 
         utterance.onend = () => {
