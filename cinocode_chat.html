@@ -2044,7 +2044,15 @@
                 <button onclick="closeLibrary()" style="background:rgba(255,255,255,0.1); color:#cdd6f4; border:none; border-radius:8px; padding:8px 12px; cursor:pointer; font-weight:bold; font-size:14px; transition:0.2s;">⬅️ Geri</button>
                 <h2 id="libraryTitle" style="color: #a6e3a1; margin:0; font-size:24px;">Arşiv</h2>
             </div>
-            <input type="text" id="librarySearch" placeholder="🔍 Başlık veya tarihe göre ara..." oninput="renderLibrary(currentLibraryTab)" style="background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px 15px; border-radius:20px; font-size:13px; outline:none;">
+            <div style="display:flex; gap:10px; align-items:center;">
+                <select id="fz19LibrarySort" onchange="renderLibrary(currentLibraryTab)" style="background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px 10px; border-radius:20px; font-size:12px; outline:none; cursor:pointer;">
+                    <option value="newest">En Yeni</option>
+                    <option value="oldest">En Eski</option>
+                    <option value="az">İsme Göre (A-Z)</option>
+                    <option value="size">Boyuta Göre</option>
+                </select>
+                <input type="text" id="librarySearch" placeholder="🔍 Başlık veya tarihe göre ara..." oninput="renderLibrary(currentLibraryTab)" style="background:#181825; border:1px solid #45475a; color:#cdd6f4; padding:8px 15px; border-radius:20px; font-size:13px; outline:none;">
+            </div>
         </div>
         <div id="libraryContent" class="archive-grid">
             <!-- İçerik buraya dinamik yüklenecek -->
@@ -8534,6 +8542,22 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
         }
     });
 
+    // FAZ 20 D3: Yeniden adlandırma işlemi
+    window.fz19RenameLibraryItem = function(id) {
+        let library = [];
+        try { library = JSON.parse(localStorage.getItem('cinocode_library')) || []; } catch(err) {}
+        const itemIndex = library.findIndex(x => x.id === id);
+        if(itemIndex > -1) {
+            const currentName = library[itemIndex].title;
+            const newName = prompt("Yeni isim girin:", currentName);
+            if(newName !== null && newName.trim() !== "") {
+                library[itemIndex].title = newName.trim();
+                try { localStorage.setItem('cinocode_library', JSON.stringify(library)); } catch(e) {}
+                renderLibrary(currentLibraryTab);
+            }
+        }
+    };
+
     function renderLibrary(tab) {
         const content = document.getElementById('libraryContent');
         const searchTerm = document.getElementById('librarySearch').value.toLowerCase();
@@ -8556,9 +8580,19 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
         let html = '';
         let currentHeader = '';
 
-        filtered.forEach(item => {
+        const sortVal = document.getElementById('fz19LibrarySort') ? document.getElementById('fz19LibrarySort').value : 'newest';
+        let displayList = [...filtered];
+        if (sortVal === 'oldest') {
+            displayList.sort((a,b) => new Date(a.date) - new Date(b.date));
+        } else if (sortVal === 'az') {
+            displayList.sort((a,b) => (a.title || '').localeCompare(b.title || '', 'tr'));
+        } else if (sortVal === 'size') {
+            displayList.sort((a,b) => (b.content ? b.content.length : 0) - (a.content ? a.content.length : 0));
+        }
+
+        displayList.forEach(item => {
             const dateHeader = formatDateHeader(item.date);
-            if(dateHeader !== currentHeader) {
+            if((sortVal === 'newest' || sortVal === 'oldest') && dateHeader !== currentHeader) {
                 html += `<div style="grid-column: 1 / -1; margin-top:10px; font-weight:bold; color:#89b4fa; border-bottom:1px solid #313244; padding-bottom:5px;">📅 ${dateHeader}</div>`;
                 currentHeader = dateHeader;
             }
@@ -8604,13 +8638,26 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
 
             let escapedTitle = fz19EscapeHtml(item.title);
 
+            // D2: Tarih gösterimi
+            let cardDateStr = "";
+            if (item.date) {
+                const d = new Date(item.date);
+                if (!isNaN(d)) {
+                    cardDateStr = d.toLocaleDateString('tr-TR', { day:'numeric', month:'short', year:'numeric' }) + ", " + d.toLocaleTimeString('tr-TR', { hour:'2-digit', minute:'2-digit' });
+                }
+            }
+            
+            let renameBtn = `<button class="artifact-dl-btn" style="background:#89dceb; color:#11111b; padding:8px; border-radius:6px;" onclick="fz19RenameLibraryItem('${item.id}')" title="Yeniden Adlandır">✏️</button>`;
+
             html += `
                 <div class="artifact-card archive-card" style="position:relative; display:flex; flex-direction:column;">
                     ${previewHtml}
-                    <div class="artifact-card-title" style="font-size:13px; margin-bottom:10px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${icon} <span title="${escapedTitle}">${escapedTitle}</span></div>
+                    <div class="artifact-card-title" style="font-size:13px; margin-bottom:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${icon} <span title="${escapedTitle}">${escapedTitle}</span></div>
+                    ${cardDateStr ? `<div style="font-size:11px; color:#6c7086; margin-bottom:10px;">${cardDateStr}</div>` : '<div style="margin-bottom:10px;"></div>'}
                     <div style="display:flex; gap:5px; margin-top:auto; flex-wrap:wrap;">
                         <button class="artifact-dl-btn ${extraClass}" style="flex:1; text-align:center; padding:8px; font-weight:bold;" ${dataAction} ${dataUrl} ${dataLibId} ${action ? `onclick="${action}"` : ''}>${btnText}</button>
                         ${extraButtons}
+                        ${renameBtn}
                         <button class="artifact-dl-btn" style="background:#f38ba8; color:#11111b; padding:8px; border-radius:6px;" onclick="deleteFromLibrary('${item.id}')" title="Sil">🗑️</button>
                     </div>
                 </div>
