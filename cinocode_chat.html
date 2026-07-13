@@ -1650,6 +1650,12 @@
         ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
 
+
+        /* FAZ 20: Tema Stüdyosu */
+        #fz20ThemeStudioMenu .fz19-theme-card { transition: all 0.2s; }
+        #fz20ThemeStudioMenu .fz19-theme-card:hover { transform: translateY(-2px); border-color: #cba6f7 !important; }
+        #fz20ThemeStudioMenu .fz19-theme-card.active { border-color: #a6e3a1 !important; box-shadow: 0 0 15px rgba(166,227,161,0.2); }
+
 </style>
 
 
@@ -11953,17 +11959,141 @@ function buildExamCoachSuffix() {
         } catch (e) {}
     }
     function toggleTheme() {
-        try {
-            const current = localStorage.getItem('cinocode_theme') || 'dark';
-            const next = current === 'light' ? 'dark' : 'light';
-            localStorage.setItem('cinocode_theme', next);
-            document.documentElement.setAttribute('data-theme', next);
-            showNonBlockingToast(next === 'light' ? 'Açık tema uygulandı.' : 'Koyu tema uygulandı.');
-        } catch (e) {
-            showNonBlockingToast('Tema değiştirilemedi.');
-        }
+        openThemeStudio();
     }
     applyStoredTheme();
+
+    
+    // ===== FAZ 20: GELİŞMİŞ TEMA VE DÜZEN MOTORU =====
+    const FZ20_PRESETS = {
+        mocha: {
+            '--cc-bg-main': '#11111b',
+            '--cc-bg-surface': '#181825',
+            '--cc-bg-elevated': '#1e1e2e',
+            '--cc-border': '#313244',
+            '--cc-text-primary': '#cdd6f4',
+            '--cc-accent-brand': '#89b4fa'
+        },
+        latte: {
+            '--cc-bg-main': '#eff1f5',
+            '--cc-bg-surface': '#e6e9ef',
+            '--cc-bg-elevated': '#dce0e8',
+            '--cc-border': '#ccd0da',
+            '--cc-text-primary': '#4c4f69',
+            '--cc-accent-brand': '#1e66f5'
+        },
+        saas: {
+            '--cc-bg-main': '#0B0C10',
+            '--cc-bg-surface': '#1C1E26',
+            '--cc-bg-elevated': '#282A36',
+            '--cc-border': '#2D303E',
+            '--cc-text-primary': '#E2E8F0',
+            '--cc-accent-brand': '#6366F1'
+        }
+    };
+
+    function openThemeStudio() {
+        document.getElementById('fz20ThemeStudioOverlay').style.display = 'block';
+        const menu = document.getElementById('fz20ThemeStudioMenu');
+        menu.style.display = 'block';
+        setTimeout(() => menu.style.opacity = '1', 50);
+        
+        // Load current custom colors into pickers
+        const rootStyles = getComputedStyle(document.documentElement);
+        document.getElementById('fz20ColorMain').value = rgbToHex(rootStyles.getPropertyValue('--cc-bg-main').trim());
+        document.getElementById('fz20ColorSurface').value = rgbToHex(rootStyles.getPropertyValue('--cc-bg-surface').trim());
+        document.getElementById('fz20ColorText').value = rgbToHex(rootStyles.getPropertyValue('--cc-text-primary').trim());
+        document.getElementById('fz20ColorAccent').value = rgbToHex(rootStyles.getPropertyValue('--cc-accent-brand').trim());
+        document.getElementById('fz20ColorBorder').value = rgbToHex(rootStyles.getPropertyValue('--cc-border').trim());
+    }
+
+    function closeThemeStudio() {
+        document.getElementById('fz20ThemeStudioMenu').style.opacity = '0';
+        setTimeout(() => {
+            document.getElementById('fz20ThemeStudioOverlay').style.display = 'none';
+            document.getElementById('fz20ThemeStudioMenu').style.display = 'none';
+        }, 300);
+    }
+
+    function fz20SwitchTab(tab) {
+        document.getElementById('fz20TabContentTheme').style.display = tab === 'theme' ? 'block' : 'none';
+        document.getElementById('fz20TabContentLayout').style.display = tab === 'layout' ? 'block' : 'none';
+        
+        document.getElementById('fz20TabTheme').style.borderColor = tab === 'theme' ? '#cba6f7' : 'transparent';
+        document.getElementById('fz20TabTheme').style.color = tab === 'theme' ? '#cdd6f4' : '#6c7086';
+        
+        document.getElementById('fz20TabLayout').style.borderColor = tab === 'layout' ? '#cba6f7' : 'transparent';
+        document.getElementById('fz20TabLayout').style.color = tab === 'layout' ? '#cdd6f4' : '#6c7086';
+    }
+
+    function fz20ApplyPreset(presetName) {
+        const preset = FZ20_PRESETS[presetName];
+        if(!preset) return;
+        Object.keys(preset).forEach(key => {
+            document.documentElement.style.setProperty(key, preset[key]);
+        });
+        // Update color pickers to reflect preset
+        document.getElementById('fz20ColorMain').value = preset['--cc-bg-main'];
+        document.getElementById('fz20ColorSurface').value = preset['--cc-bg-surface'];
+        document.getElementById('fz20ColorText').value = preset['--cc-text-primary'];
+        document.getElementById('fz20ColorAccent').value = preset['--cc-accent-brand'];
+        document.getElementById('fz20ColorBorder').value = preset['--cc-border'];
+    }
+
+    function fz20PreviewCustomColor() {
+        document.documentElement.style.setProperty('--cc-bg-main', document.getElementById('fz20ColorMain').value);
+        document.documentElement.style.setProperty('--cc-bg-surface', document.getElementById('fz20ColorSurface').value);
+        document.documentElement.style.setProperty('--cc-text-primary', document.getElementById('fz20ColorText').value);
+        document.documentElement.style.setProperty('--cc-accent-brand', document.getElementById('fz20ColorAccent').value);
+        document.documentElement.style.setProperty('--cc-border', document.getElementById('fz20ColorBorder').value);
+    }
+
+    function fz20SaveTheme() {
+        const customTheme = {
+            '--cc-bg-main': document.getElementById('fz20ColorMain').value,
+            '--cc-bg-surface': document.getElementById('fz20ColorSurface').value,
+            '--cc-text-primary': document.getElementById('fz20ColorText').value,
+            '--cc-accent-brand': document.getElementById('fz20ColorAccent').value,
+            '--cc-border': document.getElementById('fz20ColorBorder').value
+        };
+        localStorage.setItem('cinocode_custom_theme', JSON.stringify(customTheme));
+        showNonBlockingToast("🎨 Özel tema kaydedildi ve uygulandı!");
+        closeThemeStudio();
+    }
+
+    function fz20ResetToDefault() {
+        localStorage.removeItem('cinocode_custom_theme');
+        fz20ApplyPreset('mocha');
+        showNonBlockingToast("↩ Varsayılan temaya dönüldü.");
+        closeThemeStudio();
+    }
+
+    function fz20LoadSavedTheme() {
+        const saved = localStorage.getItem('cinocode_custom_theme');
+        if(saved) {
+            try {
+                const customTheme = JSON.parse(saved);
+                Object.keys(customTheme).forEach(key => {
+                    document.documentElement.style.setProperty(key, customTheme[key]);
+                });
+            } catch(e) {}
+        }
+    }
+
+    // Yardımcı fonksiyon: hex'e çevirme
+    function rgbToHex(color) {
+        if (!color || color.indexOf("rgb") !== 0) return color.startsWith("#") ? color : "#11111b";
+        let a = color.split("(")[1].split(")")[0].split(",");
+        let b = a.map(x => {
+            x = parseInt(x).toString(16);
+            return (x.length === 1) ? "0"+x : x;
+        });
+        return "#" + b.join("");
+    }
+    
+    // Uygulama başlangıcında temayı yükle
+    fz20LoadSavedTheme();
+
 
     // ===== YEREL PROFİL / HESAP YÖNETİMİ =====
     function getUserScopedKeys(name) {
@@ -12197,7 +12327,7 @@ function buildExamCoachSuffix() {
                     </div>
                     <div class="profile-menu-section">
                         <div style="font-weight:bold; padding:0 8px 8px; color:var(--cc-accent-brand);">Tercihler</div>
-                        <div class="profile-menu-item" onclick="toggleTheme()">Tema Seçimi (Açık/Koyu)</div>
+                        <div class="profile-menu-item" onclick="toggleTheme()">🎨 Arayüz & Tema Stüdyosu</div>
                         <div class="profile-menu-item" onclick="const vPop = document.getElementById('voiceQuickSettingsPopover'); if(vPop) { if(vPop.style.display==='none'||!vPop.style.display){if(typeof updateVoiceQuickSettingsPopover==='function')updateVoiceQuickSettingsPopover();vPop.style.display='block';}else{vPop.style.display='none';} }">Ses Ayarları</div>
                     </div>
                     <div class="profile-menu-section">
@@ -12513,6 +12643,81 @@ window.addEventListener('DOMContentLoaded', async () => {
                 <button onclick="captureCameraPhoto()" style="background:#a6e3a1; color:var(--cc-bg-main); font-weight:bold; border:none; padding:10px 20px; border-radius: var(--cc-radius); cursor:pointer;">Fotoğraf Çek</button>
                 <button onclick="closeCameraModal()" style="background:var(--cc-border); color:var(--cc-text-primary); border:none; padding:10px 20px; border-radius: var(--cc-radius); cursor:pointer;">Kapat</button>
             </div>
+        </div>
+    </div>
+
+    
+    <!-- FAZ 20: Arayüz ve Tema Stüdyosu Overlay -->
+    <div class="attach-menu-overlay" id="fz20ThemeStudioOverlay" onclick="closeThemeStudio()"></div>
+    <div class="attach-menu" id="fz20ThemeStudioMenu" style="bottom: 50%; transform: translate(-50%, 50%); display: none; opacity: 0; pointer-events: auto; max-height: 90vh; width: 95%; max-width: 600px; overflow-y: auto;" onclick="event.stopPropagation()">
+        <button class="attach-menu-close" onclick="closeThemeStudio()" style="top:15px; right:15px;">×</button>
+        <div class="attach-menu-title" style="display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:20px; color:#cba6f7;">
+            🎨 Arayüz ve Tema Stüdyosu
+        </div>
+
+        <!-- Sekmeler -->
+        <div style="display:flex; border-bottom:1px solid #313244; margin-bottom:15px;">
+            <button id="fz20TabTheme" onclick="fz20SwitchTab('theme')" style="flex:1; background:none; border:none; color:#cdd6f4; padding:10px; font-weight:bold; cursor:pointer; border-bottom:2px solid #cba6f7;">Tema ve Renkler</button>
+            <button id="fz20TabLayout" onclick="fz20SwitchTab('layout')" style="flex:1; background:none; border:none; color:#6c7086; padding:10px; font-weight:bold; cursor:pointer; border-bottom:2px solid transparent;">Arayüz Düzeni (Layout)</button>
+        </div>
+
+        <!-- TEMA SEKME İÇERİĞİ -->
+        <div id="fz20TabContentTheme">
+            <div style="font-size:11px; color:#a6adc8; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:10px;">Hazır Şablonlar</div>
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:20px;">
+                <div onclick="fz20ApplyPreset('mocha')" class="fz19-theme-card" style="background:#1e1e2e; border:2px solid #313244; border-radius:8px; padding:15px; cursor:pointer; text-align:center;">
+                    <div style="width:24px; height:24px; border-radius:50%; background:#11111b; margin:0 auto 8px; border:1px solid #cba6f7;"></div>
+                    <div style="color:#cdd6f4; font-size:12px; font-weight:bold;">Catppuccin Mocha</div>
+                    <div style="color:#a6adc8; font-size:10px;">(Orijinal Koyu)</div>
+                </div>
+                <div onclick="fz20ApplyPreset('latte')" class="fz19-theme-card" style="background:#eff1f5; border:2px solid #ccd0da; border-radius:8px; padding:15px; cursor:pointer; text-align:center;">
+                    <div style="width:24px; height:24px; border-radius:50%; background:#e6e9ef; margin:0 auto 8px; border:1px solid #1e66f5;"></div>
+                    <div style="color:#4c4f69; font-size:12px; font-weight:bold;">Catppuccin Latte</div>
+                    <div style="color:#8c8fa1; font-size:10px;">(Orijinal Açık)</div>
+                </div>
+                <div onclick="fz20ApplyPreset('saas')" class="fz19-theme-card" style="background:#1C1E26; border:2px solid #2D303E; border-radius:8px; padding:15px; cursor:pointer; text-align:center;">
+                    <div style="width:24px; height:24px; border-radius:50%; background:#0B0C10; margin:0 auto 8px; border:1px solid #6366F1;"></div>
+                    <div style="color:#E2E8F0; font-size:12px; font-weight:bold;">Premium SaaS</div>
+                    <div style="color:#848D97; font-size:10px;">(Gece Mavisi)</div>
+                </div>
+            </div>
+
+            <div style="font-size:11px; color:#a6adc8; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:10px;">Özel Renk Paleti (Custom)</div>
+            <div style="background:#181825; border:1px solid #313244; border-radius:8px; padding:15px; display:flex; flex-direction:column; gap:12px;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span style="color:#cdd6f4; font-size:13px;">Ana Arka Plan (--cc-bg-main)</span>
+                    <input type="color" id="fz20ColorMain" value="#11111b" onchange="fz20PreviewCustomColor()" style="cursor:pointer; background:none; border:none; padding:0; width:30px; height:30px;">
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span style="color:#cdd6f4; font-size:13px;">Yüzey Rengi (--cc-bg-surface)</span>
+                    <input type="color" id="fz20ColorSurface" value="#181825" onchange="fz20PreviewCustomColor()" style="cursor:pointer; background:none; border:none; padding:0; width:30px; height:30px;">
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span style="color:#cdd6f4; font-size:13px;">Ana Metin (--cc-text-primary)</span>
+                    <input type="color" id="fz20ColorText" value="#cdd6f4" onchange="fz20PreviewCustomColor()" style="cursor:pointer; background:none; border:none; padding:0; width:30px; height:30px;">
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span style="color:#cdd6f4; font-size:13px;">Vurgu / Marka Rengi (--cc-accent-brand)</span>
+                    <input type="color" id="fz20ColorAccent" value="#89b4fa" onchange="fz20PreviewCustomColor()" style="cursor:pointer; background:none; border:none; padding:0; width:30px; height:30px;">
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span style="color:#cdd6f4; font-size:13px;">Kenarlıklar (--cc-border)</span>
+                    <input type="color" id="fz20ColorBorder" value="#313244" onchange="fz20PreviewCustomColor()" style="cursor:pointer; background:none; border:none; padding:0; width:30px; height:30px;">
+                </div>
+            </div>
+        </div>
+
+        <!-- DÜZEN SEKME İÇERİĞİ -->
+        <div id="fz20TabContentLayout" style="display:none;">
+            <div style="background:rgba(243,139,168,0.1); border:1px solid #f38ba8; border-radius:8px; padding:10px; margin-bottom:15px; color:#f38ba8; font-size:12px; display:flex; align-items:center; gap:8px;">
+                <span>⚠️</span> <span>Arayüz elemanlarını buradan gizleyebilir veya mevcut arayüz düzenleyiciye (Faz 19) gidebilirsiniz. Gelişmiş sürükle-bırak yakında eklenecektir.</span>
+            </div>
+            <button onclick="closeThemeStudio(); openFz19Editor();" class="run-code-btn" style="width:100%; padding:12px; background:#45475a; color:#cdd6f4; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">🛠️ Faz 19: Buton/Panel Gizleme Seçenekleri'ne Git</button>
+        </div>
+
+        <div style="margin-top:20px; border-top:1px solid #313244; padding-top:15px; display:flex; justify-content:flex-end; gap:10px;">
+            <button onclick="fz20ResetToDefault()" style="padding:10px 15px; border-radius:8px; border:1px solid #45475a; background:transparent; color:#f38ba8; font-size:13px; font-weight:600; cursor:pointer;">↩ Sıfırla</button>
+            <button onclick="fz20SaveTheme()" style="padding:10px 15px; border-radius:8px; border:none; background:linear-gradient(135deg,#a6e3a1,#89b4fa); color:#11111b; font-weight:700; font-size:13px; cursor:pointer;">💾 Kaydet ve Çık</button>
         </div>
     </div>
 
