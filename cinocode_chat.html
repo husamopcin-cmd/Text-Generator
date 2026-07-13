@@ -8509,6 +8509,31 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
         return d.toLocaleDateString('tr-TR', { day:'numeric', month:'long', year:'numeric' });
     }
 
+    // FAZ 20 D1: HTML Kaçış (Escape) fonksiyonu ve Kütüphane Event Delegation
+    function fz19EscapeHtml(str) {
+        if (!str) return '';
+        return str.toString()
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#39;");
+    }
+
+    document.addEventListener('click', function(e) {
+        if(e.target && e.target.classList.contains('fz19-open-artifact-btn')) {
+            const libId = e.target.getAttribute('data-lib-id');
+            if(libId) {
+                let library = [];
+                try { library = JSON.parse(localStorage.getItem('cinocode_library')) || []; } catch(err) {}
+                const item = library.find(x => x.id === libId);
+                if(item && item.content) {
+                    openArtifactOverlay(item.content);
+                }
+            }
+        }
+    });
+
     function renderLibrary(tab) {
         const content = document.getElementById('libraryContent');
         const searchTerm = document.getElementById('librarySearch').value.toLowerCase();
@@ -8539,15 +8564,22 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
             }
 
             let icon = item.type === 'image' ? 'Görsel' : (item.type === 'video' ? 'Video' : (item.type === 'code' ? 'Kod' : 'Dosya'));
-            let action = item.type === 'image' ? `downloadImage('${item.content}', 'CinoCode_Gorsel.jpg')` : `openArtifactOverlay('${item.content}')`;
+            
+            // D1: Inline injection yerine data attribute
+            let action = item.type === 'image' ? `downloadImage('${item.content}', 'CinoCode_Gorsel.jpg')` : '';
             let btnText = item.type === 'image' ? 'İndir' : (item.type === 'video' ? 'İndir' : (item.type === 'code' ? 'Çalıştır' : 'Önizle'));
             let dataAction = '';
             let dataUrl = '';
+            let extraClass = '';
+            let dataLibId = '';
 
             if (item.type === 'video') {
                 dataAction = 'data-video-action="download"';
                 dataUrl = `data-video-url="${item.content}"`;
                 action = ''; // Video için onclick kullanma, event delegation kullan
+            } else if (item.type !== 'image') {
+                extraClass = 'fz19-open-artifact-btn';
+                dataLibId = `data-lib-id="${item.id}"`;
             }
 
             let previewHtml = '';
@@ -8563,18 +8595,21 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
 
             let extraButtons = '';
             if(item.type === 'video' && item.prompt) {
+                let escapedPrompt = fz19EscapeHtml(item.prompt);
                 extraButtons = `
-                    <button class="artifact-dl-btn" style="background:#cba6f7; color:#11111b; padding:8px; border-radius:6px; font-size:11px;" data-video-action="regenerate" data-video-prompt="${item.prompt}" data-video-container="archive-${item.id}" title="Yeniden Oluştur">🔄</button>
-                    <button class="artifact-dl-btn" style="background:#89b4fa; color:#11111b; padding:8px; border-radius:6px; font-size:11px;" data-video-action="edit" data-video-prompt="${item.prompt}" title="Düzenle">✏️</button>
+                    <button class="artifact-dl-btn" style="background:#cba6f7; color:#11111b; padding:8px; border-radius:6px; font-size:11px;" data-video-action="regenerate" data-video-prompt="${escapedPrompt}" data-video-container="archive-${item.id}" title="Yeniden Oluştur">🔄</button>
+                    <button class="artifact-dl-btn" style="background:#89b4fa; color:#11111b; padding:8px; border-radius:6px; font-size:11px;" data-video-action="edit" data-video-prompt="${escapedPrompt}" title="Düzenle">✏️</button>
                 `;
             }
+
+            let escapedTitle = fz19EscapeHtml(item.title);
 
             html += `
                 <div class="artifact-card archive-card" style="position:relative; display:flex; flex-direction:column;">
                     ${previewHtml}
-                    <div class="artifact-card-title" style="font-size:13px; margin-bottom:10px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${icon} <span title="${item.title}">${item.title}</span></div>
+                    <div class="artifact-card-title" style="font-size:13px; margin-bottom:10px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${icon} <span title="${escapedTitle}">${escapedTitle}</span></div>
                     <div style="display:flex; gap:5px; margin-top:auto; flex-wrap:wrap;">
-                        <button class="artifact-dl-btn" style="flex:1; text-align:center; padding:8px; font-weight:bold;" ${dataAction} ${dataUrl} ${action ? `onclick="${action}"` : ''}>${btnText}</button>
+                        <button class="artifact-dl-btn ${extraClass}" style="flex:1; text-align:center; padding:8px; font-weight:bold;" ${dataAction} ${dataUrl} ${dataLibId} ${action ? `onclick="${action}"` : ''}>${btnText}</button>
                         ${extraButtons}
                         <button class="artifact-dl-btn" style="background:#f38ba8; color:#11111b; padding:8px; border-radius:6px;" onclick="deleteFromLibrary('${item.id}')" title="Sil">🗑️</button>
                     </div>
