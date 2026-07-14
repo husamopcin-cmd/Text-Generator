@@ -632,6 +632,14 @@ function buildExamCoachSuffix() {
     function toggleTheme() {
         openThemeStudio();
     }
+    function toggleSimpleDarkLight() {
+        try {
+            const current = localStorage.getItem('cinocode_theme') || 'dark';
+            const next = current === 'light' ? 'dark' : 'light';
+            localStorage.setItem('cinocode_theme', next);
+            applyStoredTheme();
+        } catch (e) {}
+    }
     applyStoredTheme();
 
     
@@ -864,7 +872,7 @@ function buildExamCoachSuffix() {
             <div style="font-weight:bold; font-size:15px; margin-bottom:14px; color:var(--cc-blue);">👤 Yerel Profil</div>
             <div style="font-size:11px; color:var(--cc-subtext0); margin-bottom:6px;">Görünen isim</div>
             <input id="localProfileNameInput" type="text" value="${safeName}" style="width:100%; box-sizing:border-box; background:var(--cc-base); border:1px solid var(--cc-surface2); color:var(--cc-text); padding:8px; border-radius: var(--cc-radius); font-size:13px; margin-bottom:10px;">
-            <div style="font-size:11px; color:var(--cc-subtext0); margin-bottom:6px;">Yaş (18+ doğrulama için)</div>
+            <div style="font-size:11px; color:var(--cc-subtext0); margin-bottom:6px;">Yaş</div>
             <input id="localProfileAgeInput" type="number" value="${currentAge}" placeholder="Örn: 20" style="width:100%; box-sizing:border-box; background:var(--cc-base); border:1px solid var(--cc-surface2); color:var(--cc-text); padding:8px; border-radius: var(--cc-radius); font-size:13px; margin-bottom:10px;">
             <div style="font-size:11px; color:var(--cc-subtext0); margin-bottom:14px;">${chatCount} sohbet, yaklaşık ${approxKb} KB yerel veri</div>
             <button id="localProfileSaveBtn" style="width:100%; background:var(--cc-blue); border:none; color:var(--cc-base); cursor:pointer; font-size:12px; font-weight:700; padding:8px; border-radius: var(--cc-radius); margin-bottom:8px;">Kaydet</button>
@@ -886,7 +894,7 @@ function buildExamCoachSuffix() {
             }
         };
         document.getElementById('localProfileExportBtn').onclick = exportLocalChats;
-        document.getElementById('localProfileThemeBtn').onclick = toggleTheme;
+        document.getElementById('localProfileThemeBtn').onclick = toggleSimpleDarkLight;
         document.getElementById('localProfileDeleteBtn').onclick = deleteLocalAccount;
         document.getElementById('localProfileCloseBtn').onclick = () => overlay.remove();
     }

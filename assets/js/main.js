@@ -1937,14 +1937,14 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
             <button class="msg-action-btn" onclick="speakMessage(${index})" title="Sesli Oku">🔊</button>
             <button class="msg-action-btn ${msg.liked ? 'active' : ''}" onclick="toggleLikeMessage(${index}, this)" title="Beğendim" style="${msg.liked ? 'color:#a6e3a1;' : ''}">👍</button>
             <button class="msg-action-btn ${msg.disliked ? 'active' : ''}" onclick="toggleDislikeMessage(${index}, this)" title="Beğenmedim" style="${msg.disliked ? 'color:#f38ba8;' : ''}">👎</button>
-            <button class="msg-action-btn" onclick="shareMessage(${index})" title="Paylaş">↗</button>
             ${isLast ? `<button class="msg-action-btn" onclick="regenerateMessage()" title="Bu cevabı yeniden oluştur">🔄</button>` : ''}
-            <button class="msg-action-btn" onclick="shortenMessage(${index})" title="Kısalt" style="white-space:nowrap; word-break:keep-all; flex-shrink:0;">✂️ Kısalt</button>
-            <button class="msg-action-btn" onclick="continueFromMessage(${index})" title="Bu mesaja kadar olan konuşmayı yeni sohbete kopyala ve buradan devam et" style="white-space:nowrap; word-break:keep-all; flex-shrink:0;">↳ Buradan Devam Et</button>
 
             <div style="position:relative; display:inline-block;">
                 <button class="msg-action-btn" onclick="toggleMsgMoreMenu(${index}, event)" title="Daha Fazla">⋯</button>
                 <div class="chat-action-menu" id="msg-more-menu-${index}" style="right:0; top:100%; min-width:180px;">
+                    <button class="chat-menu-item" onclick="shareMessage(${index})">↗ Paylaş</button>
+                    <button class="chat-menu-item" onclick="shortenMessage(${index})">✂️ Kısalt</button>
+                    <button class="chat-menu-item" onclick="continueFromMessage(${index})">↳ Buradan Devam Et</button>
                     <button class="chat-menu-item" onclick="copyMessageMarkdown(${index})">📋 Markdown olarak kopyala</button>
                 </div>
             </div>
@@ -4818,12 +4818,12 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
                     htmlContent += `<div class="msg-actions" style="position:relative;">
                         <button class="msg-action-btn" onclick="editMessage(${index}, event)" title="Mesajı düzenle">✏️</button>
                         <button class="msg-action-btn" onclick="copyUserMessage(${index}, this)" title="Mesajı kopyala">📋</button>
-                        <button class="msg-action-btn" onclick="shareUserMessage(${index})" title="Paylaş">↗</button>
-                        <button class="msg-action-btn" onclick="speakMessage(${index})" title="Sesli Oku">🔊</button>
 
                         <div style="position:relative; display:inline-block;">
                             <button class="msg-action-btn" onclick="toggleMsgMoreMenu(${index}, event)" title="Daha Fazla">⋯</button>
                             <div class="chat-action-menu" id="msg-more-menu-${index}" style="right:0; top:100%; min-width:180px;">
+                                <button class="chat-menu-item" onclick="shareUserMessage(${index})">↗ Paylaş</button>
+                                <button class="chat-menu-item" onclick="speakMessage(${index})">🔊 Sesli Oku</button>
                                 <button class="chat-menu-item" onclick="continueFromMessage(${index})">↳ Buradan Devam Et</button>
                                 <button class="chat-menu-item" onclick="resendUserMessage(${index})">🔄 Tekrar Gönder</button>
                                 <button class="chat-menu-item" onclick="improveUserPrompt(${index})">✨ Promptu İyileştir</button>
