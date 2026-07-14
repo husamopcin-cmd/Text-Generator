@@ -6586,6 +6586,73 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
             });
         } catch (e) { console.warn("fz19ApplyUiPrefs error:", e); }
     }
+    
+    // ===== EVRENSEL SAĞ-TIK BAĞLAM MENÜSÜ (FAZ 22) =====
+    document.addEventListener('contextmenu', function(e) {
+        let el = e.target.closest('[id]');
+        let matchedKey = null;
+        while (el && !matchedKey) {
+            matchedKey = Object.keys(FZ19_FEATURE_MAP).find(
+                k => FZ19_FEATURE_MAP[k] === el.id
+            );
+            if (!matchedKey) el = el.parentElement ? el.parentElement.closest('[id]') : null;
+        }
+        if (!matchedKey) return;
+        
+        e.preventDefault();
+        
+        const menu = document.getElementById('ccContextMenu');
+        if (menu) {
+            menu.style.display = 'block';
+            
+            // Viewport boundary clamp logic
+            let x = e.clientX;
+            let y = e.clientY;
+            const menuWidth = menu.offsetWidth || 160;
+            const menuHeight = menu.offsetHeight || 40;
+            const windowWidth = window.innerWidth;
+            const windowHeight = window.innerHeight;
+            
+            if (x + menuWidth > windowWidth) {
+                x = windowWidth - menuWidth - 5;
+            }
+            if (y + menuHeight > windowHeight) {
+                y = windowHeight - menuHeight - 5;
+            }
+            
+            menu.style.left = x + 'px';
+            menu.style.top = y + 'px';
+            menu.dataset.targetKey = matchedKey;
+        }
+    });
+
+    // Event delegation for clicks (hide button action & click outside to close)
+    document.addEventListener('click', function(e) {
+        const menu = document.getElementById('ccContextMenu');
+        if (!menu) return;
+        
+        if (e.target && e.target.id === 'ccContextHideBtn') {
+            const targetKey = menu.dataset.targetKey;
+            if (targetKey) {
+                const prefs = fz19LoadUiPrefs();
+                if (!prefs.visibility) prefs.visibility = {};
+                prefs.visibility[targetKey] = false;
+                fz19SaveUiPrefs(prefs);
+                fz19ApplyUiPrefs();
+            }
+            menu.style.display = 'none';
+        } else if (!menu.contains(e.target)) {
+            menu.style.display = 'none';
+        }
+    });
+
+    // Close menu on Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            const menu = document.getElementById('ccContextMenu');
+            if (menu) menu.style.display = 'none';
+        }
+    });
 
     window.addEventListener('beforeunload', (e) => {
         if (typeof isSavingDB !== 'undefined' && (isSavingDB || (typeof pendingSave !== 'undefined' && pendingSave))) {
