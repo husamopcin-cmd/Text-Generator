@@ -6604,6 +6604,7 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
         const menu = document.getElementById('ccContextMenu');
         if (menu) {
             menu.style.display = 'block';
+            menu.setAttribute('aria-hidden', 'false');
             
             // Viewport boundary clamp logic
             let x = e.clientX;
@@ -6641,8 +6642,10 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
                 fz19ApplyUiPrefs();
             }
             menu.style.display = 'none';
+            menu.setAttribute('aria-hidden', 'true');
         } else if (!menu.contains(e.target)) {
             menu.style.display = 'none';
+            menu.setAttribute('aria-hidden', 'true');
         }
     });
 
@@ -6650,7 +6653,10 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
             const menu = document.getElementById('ccContextMenu');
-            if (menu) menu.style.display = 'none';
+            if (menu) {
+                menu.style.display = 'none';
+                menu.setAttribute('aria-hidden', 'true');
+            }
         }
     });
 
@@ -6701,12 +6707,7 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
         const name = document.getElementById('newProjectName')?.value || app.title;
         setQuickStart(`${name ? name + ': ' : ''}${app.prompt}`);
         
-        // Stili serbest mod yap
-        const styleSel = document.getElementById('styleModeSelect');
-        if(styleSel) {
-            styleSel.value = 'free';
-            onStyleModeHeaderChange();
-        }
+
     }
 
     window.onload = async () => {
