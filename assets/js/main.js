@@ -380,6 +380,12 @@
         bindComposerDraftPreservation();
     }
 
+    window.resetAgeGate = function() {
+        localStorage.removeItem('cinocode_user_age');
+        if (typeof showNonBlockingToast === 'function')
+            showNonBlockingToast('Yaş doğrulaması sıfırlandı. Serbest Üslup seçildiğinde yaş tekrar sorulacak.');
+    };
+
     async function checkAgeGate() {
         const storedAge = localStorage.getItem('cinocode_user_age');
         if (storedAge) {
