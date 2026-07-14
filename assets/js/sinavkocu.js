@@ -664,6 +664,7 @@ function buildExamCoachSuffix() {
     };
 
     function openThemeStudio() {
+        if (typeof closeSettings === 'function') closeSettings();
         document.getElementById('fz20ThemeStudioOverlay').style.display = 'block';
         const menu = document.getElementById('fz20ThemeStudioMenu');
         menu.style.display = 'block';

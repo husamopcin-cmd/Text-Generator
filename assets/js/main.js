@@ -2353,6 +2353,7 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
     }
 
     function openFz19Editor() {
+        if (typeof closeSettings === 'function') closeSettings();
         const prefs = fz19LoadUiPrefs();
         fz19RenderToggles(prefs);
         fz19HighlightThemeCard(prefs.theme);
