@@ -6592,6 +6592,40 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
             });
         } catch (e) { console.warn("fz19ApplyUiPrefs error:", e); }
     }
+
+    // ===== FAZ 22: ÖZEL RENK KALICILIĞI =====
+    const FZ22_COLOR_PREFS_KEY = 'fz22_color_prefs';
+    function fz22LoadColorPrefs() {
+        try {
+            const raw = localStorage.getItem(FZ22_COLOR_PREFS_KEY);
+            if (!raw) return {};
+            const parsed = JSON.parse(raw);
+            return (parsed && typeof parsed === 'object') ? parsed : {};
+        } catch (e) { return {}; }
+    }
+    function fz22SaveColorPref(targetKey, color) {
+        if (!targetKey || !color) return;
+        try {
+            const prefs = fz22LoadColorPrefs();
+            prefs[targetKey] = color;
+            localStorage.setItem(FZ22_COLOR_PREFS_KEY, JSON.stringify(prefs));
+        } catch (e) { console.warn("fz22SaveColorPref error:", e); }
+    }
+    function fz22ApplyColorPref(targetKey, color) {
+        if (!targetKey || !color) return;
+        const elId = FZ19_FEATURE_MAP[targetKey];
+        const el = elId ? document.getElementById(elId) : null;
+        if (!el) return;
+        el.style.setProperty('--fz22-accent', color);
+        el.style.borderColor = color;
+        el.style.boxShadow = `inset 0 0 0 1px ${color}55`;
+    }
+    function fz22ApplyColorPrefs() {
+        try {
+            const prefs = fz22LoadColorPrefs();
+            Object.keys(prefs).forEach(k => fz22ApplyColorPref(k, prefs[k]));
+        } catch (e) { console.warn("fz22ApplyColorPrefs error:", e); }
+    }
     
     // ===== EVRENSEL SAĞ-TIK BAĞLAM MENÜSÜ (FAZ 22) =====
     document.addEventListener('contextmenu', function(e) {
@@ -6633,11 +6667,22 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
         }
     });
 
-    // Event delegation for clicks (hide button action & click outside to close)
+    // Event delegation for clicks (hide button action, color picks & click outside to close)
     document.addEventListener('click', function(e) {
         const menu = document.getElementById('ccContextMenu');
         if (!menu) return;
-        
+
+        if (e.target && e.target.classList && e.target.classList.contains('cc-color-dot') && e.target.dataset.color) {
+            const targetKey = menu.dataset.targetKey;
+            if (targetKey) {
+                fz22SaveColorPref(targetKey, e.target.dataset.color);
+                fz22ApplyColorPref(targetKey, e.target.dataset.color);
+            }
+            menu.style.display = 'none';
+            menu.setAttribute('aria-hidden', 'true');
+            return;
+        }
+
         if (e.target && e.target.id === 'ccContextHideBtn') {
             const targetKey = menu.dataset.targetKey;
             if (targetKey) {
@@ -6654,6 +6699,28 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
             menu.setAttribute('aria-hidden', 'true');
         }
     });
+
+    // Custom color-picker input: live preview on 'input', persist on 'change'
+    (function fz22WireColorPicker() {
+        const picker = document.getElementById('ccContextColorPicker');
+        if (!picker) return;
+        const getTargetKey = () => {
+            const menu = document.getElementById('ccContextMenu');
+            return menu ? menu.dataset.targetKey : null;
+        };
+        picker.addEventListener('input', function() {
+            const targetKey = getTargetKey();
+            if (targetKey) fz22ApplyColorPref(targetKey, picker.value);
+        });
+        picker.addEventListener('change', function() {
+            const targetKey = getTargetKey();
+            if (targetKey) {
+                fz22SaveColorPref(targetKey, picker.value);
+                const menu = document.getElementById('ccContextMenu');
+                if (menu) { menu.style.display = 'none'; menu.setAttribute('aria-hidden', 'true'); }
+            }
+        });
+    })();
 
     // Close menu on Escape key
     document.addEventListener('keydown', function(e) {
@@ -6718,6 +6785,7 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
 
     window.onload = async () => {
         renderMyApps();
+        fz22ApplyColorPrefs();
         if (window.location.protocol === 'file:') {
             const banner = document.createElement('div');
             banner.style = "background: #f38ba8; color: #11111b; text-align: center; padding: 10px; font-weight: bold; font-size: 13px; z-index: 9999; border-bottom: 2px solid #eba0ac;";
