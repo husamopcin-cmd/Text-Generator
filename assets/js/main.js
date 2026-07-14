@@ -810,7 +810,7 @@
             .trim();
 
         // Temel İngilizce kaçınma/negatif kurallarını prompta yedir
-        let avoidanceParts = ["no extra limbs", "no deformed anatomy", "no text", "no watermark", "high quality", "cinematic"];
+        let avoidanceParts = ["high quality", "cinematic"];
 
         if (type === 'video') {
             const savedVideoMode = localStorage.getItem('video_mode') || 'fast_clip';
@@ -1021,7 +1021,7 @@
                 const errType = result ? (result.error || 'unknown') : 'unknown';
                 el.setAttribute('data-runware-error', errType);
                 const seed = Math.floor(Math.random() * 999999);
-                img.src = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1024&nologo=true&seed=${seed}`;
+                img.src = `https://image.pollinations.ai/prompt/${encodeURIComponent(String(prompt).substring(0, 400))}?width=1024&height=1024&nologo=true&seed=${seed}`;
                 if (spinner) spinner.remove();
                 // Kullanıcıya bakiye hatası veya diğer hatalar durumunda fallback bilgilendirme kartı bas
                 const container = el.closest('[data-generated-image-card="true"]') || el;
@@ -1041,14 +1041,14 @@
         const width = options.width || 512;
         const height = options.height || 512;
         const seed = options.seed || Math.floor(Math.random() * 999999);
-        const encoded = encodeURIComponent(prompt.trim());
+        const encoded = encodeURIComponent(String(prompt).trim().substring(0, 400));
         return `https://image.pollinations.ai/prompt/${encoded}?width=${width}&height=${height}&nologo=true&seed=${seed}`;
     }
 
     function buildVideoSceneCandidates(prompt, seed) {
         const primary512 = buildImageUrl(prompt, { width: 512, height: 512, seed });
         const primary384 = buildImageUrl(prompt, { width: 384, height: 384, seed: seed + 1 });
-        const proxyUrl = `https://wsrv.nl/?url=https://image.pollinations.ai/prompt/${encodeURIComponent(prompt.trim())}?width=384&height=384&nologo=true&seed=${seed+2}`;
+        const proxyUrl = `https://wsrv.nl/?url=https://image.pollinations.ai/prompt/${encodeURIComponent(String(prompt).trim().substring(0, 400))}?width=384&height=384&nologo=true&seed=${seed+2}`;
         return [ primary512, primary384, proxyUrl ];
     }
 
@@ -3551,15 +3551,19 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
             } catch(e){}
 
             const title = card.dataset.imageTitle || "Görsel";
+            let backendError = card.getAttribute('data-runware-error') || 'network_error';
+            let errReasonStr = backendError === 'missing_env' ? 'missing_env (API Anahtarları Eksik)' : backendError;
+            let providerStr = backendError !== 'network_error' && backendError !== 'unknown' ? 'Backend API / Runware' : 'Pollinations Fallback';
+
             card.outerHTML = `
                 <div class="media-error-message" style="text-align:left; margin: 12px 0; background:var(--cc-bg-surface); border:1px solid #f38ba8; border-radius: var(--cc-radius); padding:12px; color:var(--cc-text-primary);">
-                    <div style="color:#f38ba8; font-weight:700; margin-bottom:6px;">${title} Üretilemedi</div>
-                    <div style="font-size:13px; line-height:1.5; margin-bottom: 8px;">Ağ bağlantısı veya sağlayıcı zaman aşımına uğradı. (Provider: Pollinations Fallback)</div>
+                    <div style="color:#f38ba8; font-weight:700; margin-bottom:6px;">${title} üretilemedi</div>
+                    <div style="font-size:13px; line-height:1.5; margin-bottom: 8px;">Sağlayıcı reddetti veya bağlantı koptu. (Asıl Hata: ${errReasonStr})</div>
                     <details style="font-size:11px; color:var(--cc-text-muted); border-top: 1px solid var(--cc-border); padding-top: 6px; margin-bottom:10px; cursor: pointer;">
                         <summary style="outline:none; user-select:none; color:#f9e2af; font-weight:600;">Teknik detayları göster</summary>
                         <div style="margin-top:6px; font-family:monospace; background:var(--cc-bg-main); padding:8px; border-radius: var(--cc-radius); border: 1px solid rgba(255, 255, 255, 0.08); word-wrap:break-word;">
-                            Reason: network_error<br>
-                            Endpoint: image.pollinations.ai
+                            Reason: ${backendError}<br>
+                            Endpoint: ${providerStr}
                         </div>
                     </details>
                     <div style="display:flex; flex-wrap:wrap; gap:8px;">
@@ -3671,7 +3675,7 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
             }
 
             // Runware yoksa Pollinations (direkt HTTPS)
-            const encodedPrompt = encodeURIComponent(finalPrompt);
+            const encodedPrompt = encodeURIComponent(String(finalPrompt).substring(0, 400));
             const randomSeed = Math.floor(Math.random() * 1000000);
             const imgUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&nologo=true&seed=${randomSeed}`;
 
@@ -4283,8 +4287,8 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
                     <video controls autoplay style="max-width:100%; border-radius: var(--cc-radius); border: 2px solid var(--cc-accent-brand); box-shadow: 0 4px 12px rgba(0,0,0,0.5);" src="${videoUrl}"></video>
                     <div class="artifact-card-actions" style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 12px;">
                         <button class="artifact-dl-btn" data-video-action="download" data-video-url="${videoUrl}">⬇️ İndir</button>
-                        <button class="artifact-dl-btn" style="background:#cba6f7; color:var(--cc-bg-main);" data-video-action="regenerate" data-video-prompt="${encodeURIComponent(prompt)}" data-video-container="${containerId}">🔄 Yeniden Oluştur</button>
-                        <button class="artifact-dl-btn" style="background:var(--cc-accent-brand); color:var(--cc-bg-main);" data-video-action="edit" data-video-prompt="${encodeURIComponent(prompt)}">✏️ Düzenle</button>
+                        <button class="artifact-dl-btn" style="background:#cba6f7; color:var(--cc-bg-main);" data-video-action="regenerate" data-video-prompt="${encodeURIComponent(String(prompt).substring(0, 400))}" data-video-container="${containerId}">🔄 Yeniden Oluştur</button>
+                        <button class="artifact-dl-btn" style="background:var(--cc-accent-brand); color:var(--cc-bg-main);" data-video-action="edit" data-video-prompt="${encodeURIComponent(String(prompt).substring(0, 400))}">✏️ Düzenle</button>
                         <button class="artifact-dl-btn" style="background:#f38ba8; color:var(--cc-bg-main);" data-video-action="delete" data-video-container="${containerId}">🗑️ Sil</button>
                     </div>
                 </div>
@@ -4440,7 +4444,8 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
         }
         const mediaType = type || lastMediaType || 'image';
         setAppMode(mediaType === 'video' ? 'video' : 'image');
-        setComposerValue(mediaType === 'video' ? `Video oluştur: ${prompt}` : `Resim çiz: ${prompt}`, { focus: false });
+        const cleanPrompt = String(prompt).replace(/^(?:\s*(?:Resim\s*çiz|Resim|Video\s*oluştur|Video\s*olustur)\s*:\s*)+/i, '').trim();
+        setComposerValue(mediaType === 'video' ? `Video oluştur: ${cleanPrompt}` : `Resim çiz: ${cleanPrompt}`, { focus: false });
         sendMessage();
     }
     function copyPromptToClipboard(prompt) {
