@@ -680,10 +680,10 @@
     </div>
 </div>
 
-    <div class="sidebar-drawer-overlay" id="sidebarOverlay" onclick="closeMobileSidebar()"></div>
+    <div class="cc-backdrop" id="sidebarOverlay" onclick="closeMobileSidebar()"></div>
 
     <!-- Attachment Menu Overlay & Bottom Sheet -->
-    <div class="attach-menu-overlay" id="attachMenuOverlay" onclick="closeAttachMenu()" style="background:transparent;"></div>
+    <div class="cc-backdrop" id="attachMenuOverlay" onclick="closeAttachMenu()" style="background:transparent; z-index: var(--z-modal);"></div>
     <div class="attach-menu" id="attachMenu" style="background:var(--cc-bg-main); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: var(--cc-radius); padding:20px; max-width:420px; width:92%; box-sizing:border-box;">
         <button class="attach-menu-close" onclick="closeAttachMenu()" style="top:10px; right:15px;">×</button>
         <div class="attach-menu-title" style="text-align:left; padding-left:5px; margin-bottom:15px; color:var(--cc-accent-brand);">Ekle &amp; Oluştur</div>
@@ -762,7 +762,7 @@
     </div>
 
     <!-- Settings Modal -->
-    <div class="attach-menu-overlay" id="settingsOverlay" onclick="closeSettings()"></div>
+    <div class="cc-backdrop" id="settingsOverlay" onclick="closeSettings()"></div>
     <div class="attach-menu" id="settingsMenu" style="bottom: 50%; transform: translate(-50%, 50%); display: none; opacity: 0; pointer-events: auto; max-height: 85vh; overflow-y: auto;" onclick="event.stopPropagation()">
         <button class="attach-menu-close" onclick="closeSettings()">×</button>
         <div class="attach-menu-title">Ayarlar &amp; API</div>
@@ -1066,7 +1066,7 @@
     </div>
 
     <!-- FAZ 19 — Arayüzü Düzenle Overlay -->
-    <div class="attach-menu-overlay" id="fz19UiEditOverlay" onclick="closeFz19Editor()"></div>
+    <div class="cc-backdrop" id="fz19UiEditOverlay" onclick="closeFz19Editor()"></div>
     <div class="attach-menu" id="fz19UiEditMenu" style="bottom:50%; transform:translate(-50%,50%); display:none; opacity:0; pointer-events:auto; max-height:90vh; width:92%; max-width:460px; overflow-y:auto;" onclick="event.stopPropagation()">
         <button class="attach-menu-close" onclick="closeFz19Editor()">×</button>
         <div class="attach-menu-title">🎨 Arayüzü Düzenle</div>
@@ -1113,7 +1113,7 @@
     </div>
 
     <!-- Profession Selection Modal -->
-    <div class="attach-menu-overlay" id="professionOverlay" onclick="closeProfessionModal()"></div>
+    <div class="cc-backdrop" id="professionOverlay" onclick="closeProfessionModal()"></div>
     <div class="attach-menu" id="professionMenu" style="bottom: 50%; transform: translate(-50%, 50%); display: none; opacity: 0; pointer-events: auto; max-height: 85vh; width: 90%; max-width: 500px; overflow-y: auto;" onclick="event.stopPropagation()">
         <button class="attach-menu-close" onclick="closeProfessionModal()">×</button>
         <div class="attach-menu-title" style="display: flex; align-items: center; justify-content: center; gap: 8px;">
@@ -1134,7 +1134,7 @@
     </div>
 
     <!-- Artifact Modal -->
-    <div class="artifact-overlay" id="artifactOverlay">
+    <div class="cc-backdrop" id="artifactOverlay">
         <div class="artifact-modal">
             <div class="artifact-header">
                 <div class="artifact-title">🖼️ CinoCode Önizleme</div>
@@ -1149,7 +1149,7 @@
 <script src="assets/js/main.js"></script>
 
 <!-- ===== SINAV KOÇU MOD SEÇİM MODALI ===== -->
-<div class="sk-overlay" id="sinavKocuOverlay" onclick="skOverlayClick(event)">
+<div class="cc-backdrop" id="sinavKocuOverlay" onclick="skOverlayClick(event)">
   <div class="sk-modal" id="sinavKocuModal">
     <div class="sk-modal-header">
       <span class="sk-icon">🎓</span>
@@ -1497,7 +1497,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     
     <!-- FAZ 20: Arayüz ve Tema Stüdyosu Overlay -->
-    <div class="attach-menu-overlay" id="fz20ThemeStudioOverlay" onclick="closeThemeStudio()"></div>
+    <div class="cc-backdrop" id="fz20ThemeStudioOverlay" onclick="closeThemeStudio()"></div>
     <div class="attach-menu" id="fz20ThemeStudioMenu" style="bottom: 50%; transform: translate(-50%, 50%); display: none; opacity: 0; pointer-events: auto; max-height: 90vh; width: 95%; max-width: 600px; overflow-y: auto;" onclick="event.stopPropagation()">
         <button class="attach-menu-close" onclick="closeThemeStudio()" style="top:15px; right:15px;">×</button>
         <div class="attach-menu-title" style="display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:20px; color:#cba6f7;">
