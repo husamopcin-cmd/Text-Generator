@@ -1699,3 +1699,39 @@
     box-shadow: 0 0 0 9999px rgba(0,0,0,0.7);
     border: 2px solid rgba(166, 227, 161, 0.8);
 }
+
+/* ========================================= */
+/* EVRENSEL BAĞLAM (CONTEXT) MENÜSÜ */
+/* ========================================= */
+#ccContextMenu {
+    background: rgba(25, 25, 35, 0.75);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--cc-radius);
+    padding: 6px;
+    box-shadow: var(--shadow-lg);
+    min-width: 160px;
+}
+
+.cc-context-item {
+    width: 100%;
+    background: transparent;
+    border: none;
+    color: var(--cc-text-primary);
+    padding: 8px 12px;
+    text-align: left;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border-radius: calc(var(--cc-radius) - 2px);
+    transition: background 0.2s ease, color 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.cc-context-item:hover {
+    background: var(--cc-accent-brand);
+    color: var(--cc-bg-main);
+}
