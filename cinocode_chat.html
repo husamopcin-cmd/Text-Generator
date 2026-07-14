@@ -1590,8 +1590,23 @@ window.addEventListener('DOMContentLoaded', async () => {
     </div>
 
     <!-- Evrensel Sağ-Tık Düzenleme Menüsü -->
-    <div id="ccContextMenu" style="display: none; position: fixed; z-index: var(--z-popover);">
-        <button class="cc-context-item" id="ccContextHideBtn">👁️ Seçili Elemanı Gizle</button>
+    <div id="ccContextMenu" style="display: none; position: fixed; z-index: var(--z-popover);" role="menu" aria-hidden="true">
+        <button type="button" class="cc-context-item" id="ccContextHideBtn" role="menuitem">👁️ Seçili Elemanı Gizle</button>
+        <div class="cc-context-separator"></div>
+        <div class="cc-context-color-section">
+            <span class="cc-context-color-title">🎨 Renk Değiştir</span>
+            <div class="cc-context-colors-grid">
+                <button type="button" class="cc-color-dot" data-color="#f5e0dc" style="background:#f5e0dc;" title="Rosewater" role="menuitem"></button>
+                <button type="button" class="cc-color-dot" data-color="#b4befe" style="background:#b4befe;" title="Lavender" role="menuitem"></button>
+                <button type="button" class="cc-color-dot" data-color="#a6e3a1" style="background:#a6e3a1;" title="Green" role="menuitem"></button>
+                <button type="button" class="cc-color-dot" data-color="#89b4fa" style="background:#89b4fa;" title="Blue" role="menuitem"></button>
+                <button type="button" class="cc-color-dot" data-color="#fab387" style="background:#fab387;" title="Peach" role="menuitem"></button>
+                <label class="cc-color-dot custom-color-picker-label" title="Özel Renk Seç" role="menuitem">
+                    🌈
+                    <input type="color" id="ccContextColorPicker" style="position:absolute; opacity:0; width:0; height:0; border:0;">
+                </label>
+            </div>
+        </div>
     </div>
 
 </body></html>
