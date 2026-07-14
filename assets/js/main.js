@@ -6632,7 +6632,7 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
         const styleSel = document.getElementById('styleModeSelect');
         if(styleSel) {
             styleSel.value = 'free';
-            handleStyleModeChange('free');
+            onStyleModeHeaderChange();
         }
     }
 
