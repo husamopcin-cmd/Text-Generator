@@ -401,7 +401,7 @@
             overlay.style.height = '100%';
             overlay.style.background = 'rgba(0, 0, 0, 0.7)';
             overlay.style.backdropFilter = 'blur(6px)';
-            overlay.style.zIndex = '999999';
+            overlay.style.zIndex = 'var(--z-modal)';
             overlay.style.display = 'flex';
             overlay.style.alignItems = 'center';
             overlay.style.justifyContent = 'center';
@@ -832,18 +832,19 @@
         }
 
         // Sayı kurallarını güçlendir:
+        let extraParts = [];
         if (clean.match(/\b(bir|1)\b/i)) {
-            clean += ", exactly one subject, single focal subject";
+            extraParts.push("exactly one subject", "single focal subject");
         } else if (clean.match(/\b(iki|2)\b/i)) {
-            clean += ", exactly two subjects, two separate characters";
+            extraParts.push("exactly two subjects", "two separate characters");
         } else if (clean.match(/\b(altı|6)\b/i)) {
-            clean += ", exactly six separate full-body subjects, six independent characters";
+            extraParts.push("exactly six separate full-body subjects", "six independent characters");
         } else if (clean.match(/\b(üç|3)\b/i)) {
-            clean += ", exactly three subjects, three independent characters";
+            extraParts.push("exactly three subjects", "three independent characters");
         } else if (clean.match(/\b(dört|4)\b/i)) {
-            clean += ", exactly four subjects, four independent characters";
+            extraParts.push("exactly four subjects", "four independent characters");
         } else if (clean.match(/\b(beş|5)\b/i)) {
-            clean += ", exactly five subjects, five independent characters";
+            extraParts.push("exactly five subjects", "five independent characters");
         }
 
         // İnsan istenmediğini belirten veya negatif ekler ekle
@@ -851,7 +852,7 @@
             avoidanceParts.push("no humans", "no people", "no man", "no woman");
         }
 
-        return appendUniquePromptParts(clean, avoidanceParts.concat(getContentModePromptSuffix(type, rawPrompt)));
+        return appendUniquePromptParts(clean, extraParts.concat(avoidanceParts).concat(getContentModePromptSuffix(type, rawPrompt)));
     }
 
     function getCoreVideoPrompt(rawPrompt) {
@@ -5507,6 +5508,9 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
                 displayLabel = coreModes[currentVal].text;
             } else if (professions[currentVal]) {
                 displayLabel = `${professions[currentVal].emoji} ${professions[currentVal].name}`;
+            } else if (window.professionsList) {
+                const found = window.professionsList.find(p => p.id === currentVal);
+                if (found) displayLabel = `${found.emoji} ${found.name}`;
             }
 
             const labelEl = document.getElementById('customPersonaDropdownLabel');
@@ -5938,6 +5942,7 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
             if (fallbackStarted) return;
             fallbackStarted = true;
             console.warn(`TTS fallback tetiklendi: ${reason}`, error);
+            showNonBlockingToast("Sunucuya ulaşılamadı, tarayıcı sesine geçildi.", "warning");
             
             audio.onended = null;
             audio.onerror = null;
@@ -6475,7 +6480,7 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
 
             const toast = document.createElement("div");
             toast.textContent = "Canlı arama sağlayıcısı bağlı değil. Ayarlar > API & Sunucu Yapılandırması bölümünden sağlayıcı ekleyebilirsin.";
-            toast.style.cssText = "position:fixed; bottom:20px; right:20px; background:#f38ba8; color:var(--cc-bg-main); padding:12px 20px; border-radius: var(--cc-radius); z-index:999999; font-size:13px; font-weight:bold; box-shadow:0 4px 15px rgba(0,0,0,0.5); font-family:sans-serif; animation: fadeIn 0.3s ease;";
+            toast.style.cssText = "position:fixed; bottom:20px; right:20px; background:#f38ba8; color:var(--cc-bg-main); padding:12px 20px; border-radius: var(--cc-radius); z-index:var(--z-tooltip); font-size:13px; font-weight:bold; box-shadow:0 4px 15px rgba(0,0,0,0.5); font-family:sans-serif; animation: fadeIn 0.3s ease;";
             document.body.appendChild(toast);
             setTimeout(() => {
                 toast.style.opacity = '0';

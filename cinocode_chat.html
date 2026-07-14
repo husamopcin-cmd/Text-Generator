@@ -22,7 +22,7 @@
     function showNonBlockingToast(msg) {
         const toast = document.createElement("div");
         toast.textContent = msg;
-        toast.style.cssText = "position:fixed; bottom:20px; right:20px; background:#f38ba8; color:var(--cc-bg-main); padding:12px 20px; border-radius: var(--cc-radius); z-index:999999; font-size:13px; font-weight:bold; box-shadow:0 4px 15px rgba(0,0,0,0.5); font-family:sans-serif; animation: fadeIn 0.3s ease;";
+        toast.style.cssText = "position:fixed; bottom:20px; right:20px; background:#f38ba8; color:var(--cc-bg-main); padding:12px 20px; border-radius: var(--cc-radius); z-index:var(--z-tooltip); font-size:13px; font-weight:bold; box-shadow:0 4px 15px rgba(0,0,0,0.5); font-family:sans-serif; animation: fadeIn 0.3s ease;";
         document.body.appendChild(toast);
         setTimeout(() => {
             toast.style.opacity = '0';
@@ -1330,7 +1330,7 @@
 
 
 <!-- CUSTOM PROMPT MODAL -->
-<div id="cinocodeCustomPromptModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); backdrop-filter:blur(4px); z-index:99999; align-items:center; justify-content:center;">
+<div id="cinocodeCustomPromptModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); backdrop-filter:blur(4px); z-index:var(--z-modal); align-items:center; justify-content:center;">
     <div style="background:var(--cc-bg-surface); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: var(--cc-radius); padding:20px; width:320px; max-width:90%; box-shadow:0 10px 30px rgba(0,0,0,0.5); font-family:sans-serif;">
         <div id="customPromptTitle" style="color:var(--cc-text-primary); font-size:14px; font-weight:600; margin-bottom:12px;"></div>
         <input type="text" id="customPromptInput" style="width:100%; background:var(--cc-border); border: 1px solid rgba(255, 255, 255, 0.08); color:var(--cc-text-primary); padding:10px; border-radius: var(--cc-radius); font-size:13px; margin-bottom:15px; outline:none;">
