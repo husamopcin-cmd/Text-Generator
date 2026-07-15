@@ -313,7 +313,7 @@
         smartSuggestions: '1',
         newProject: '1',
         providerView: '1',
-        liveSearch: '0'
+        liveSearch: '1'
     };
 
 
@@ -1024,7 +1024,7 @@
                 const dlBtn = el.querySelector('button');
                 if (dlBtn) dlBtn.style.display = '';
             } else {
-                // Runware başarısız → hata nedenini karta ata, sonra pollinations'a düş (direkt HTTPS)
+                // Sunucu sağlayıcı zinciri başarısızsa ücretsiz yedeği doğrudan dene.
                 const errType = result ? (result.error || 'unknown') : 'unknown';
                 el.setAttribute('data-runware-error', errType);
                 const seed = Math.floor(Math.random() * 999999);
@@ -1033,8 +1033,8 @@
                 // Kullanıcıya bakiye hatası veya diğer hatalar durumunda fallback bilgilendirme kartı bas
                 const container = el.closest('[data-generated-image-card="true"]') || el;
                 const note = errType === 'runware_insufficient_credits'
-                    ? '⚠️ Runware kredisi yetersiz olduğu için ücretsiz yedek (Pollinations) kullanıldı.'
-                    : `⚠️ Runware hatası (${errType}) nedeniyle ücretsiz yedek (Pollinations) kullanıldı.`;
+                    ? '⚠️ Yapay zekâ sağlayıcı kredisi yetersiz; ücretsiz yedek deneniyor.'
+                    : `⚠️ Yapay zekâ sağlayıcı zinciri (${errType}) yanıt vermedi; ücretsiz yedek deneniyor.`;
 
                 const infoDiv = document.createElement('div');
                 infoDiv.style.cssText = 'color:#f9e2af; font-size:11px; margin-top:8px; text-align:center; font-style:italic;';
@@ -1452,28 +1452,66 @@
         return selected;
     }
 
+    function getRecentStudioSubject(type) {
+        const draftSubject = getMediaCommandSubject(getComposerText());
+        if (draftSubject && draftSubject.length >= 3) return draftSubject.slice(0, 180);
+        const current = sessions[currentChatId];
+        const messages = current && Array.isArray(current.messages) ? current.messages : [];
+        const recentUser = [...messages].reverse().find(message => message && message.role === 'user' && message.content);
+        if (!recentUser) return '';
+        const subject = getMediaCommandSubject(recentUser.content);
+        return subject && subject.length >= 3 ? subject.slice(0, 180) : '';
+    }
+
+    function getContextualStudioSuggestions(type, count) {
+        const subject = getRecentStudioSubject(type);
+        if (!subject) return getRandomSuggestions(type, count);
+        const variants = type === 'video'
+            ? [
+                `${subject}, sinematik kamera hareketi ve net sahne akışı`,
+                `${subject}, 8 saniyelik güçlü açılış ve yumuşak geçişler`,
+                `${subject}, yakın plan detaylar ve dramatik ışık`
+              ]
+            : type === 'game'
+                ? [
+                    `${subject}, başlangıç ekranı, skor ve yeniden başlatma akışıyla`,
+                    `${subject}, mobil uyumlu kontroller ve kademeli zorlukla`,
+                    `${subject}, temiz arayüz, ses kontrolü ve oyun sonu ekranıyla`
+                  ]
+                : [
+                    `${subject}, sinematik ışık, güçlü kompozisyon ve yüksek detay`,
+                    `${subject}, farklı kamera açısı, doğal renkler ve net odak`,
+                    `${subject}, profesyonel konsept art, dengeli ışık ve atmosfer`
+                  ];
+        return variants.slice(0, count);
+    }
+
     function renderSuggestions(type) {
         const container = document.getElementById("suggestionChipsContainer");
+        if (!container) return;
         const suggestionCount = window.innerWidth <= 768 ? 1 : 2;
-        const suggestions = getRandomSuggestions(type, suggestionCount);
+        const suggestions = getContextualStudioSuggestions(type, suggestionCount);
+        const icon = type === 'video' ? '🎬' : (type === 'game' ? '🎮' : '🎨');
+        const prefix = type === 'video'
+            ? 'Bana şu videoyu oluştur: '
+            : (type === 'game' ? 'Bana şu oyunu kodla: ' : 'Bana şu resmi çiz: ');
 
-        let html = '';
-        suggestions.forEach(s => {
-            let icon = '\u{1F3A8}';
-            let prefix = 'Bana \u015fu resmi \u00e7iz: ';
-            if (type === 'video') {
-                icon = '\u{1F3AC}';
-                prefix = 'Bana \u015fu videoyu olu\u015ftur: ';
-            } else if (type === 'game') {
-                icon = '\u{1F3AE}';
-                prefix = 'Bana \u015fu oyunu kodla: ';
-            }
-            const escaped = s.replace(/'/g, "\\'");
-            html += `<button class="suggestion-chip" onclick="applySuggestion('${prefix}', '${escaped}')">${icon} ${s}</button>`;
+        container.replaceChildren();
+        suggestions.forEach((suggestion) => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'suggestion-chip';
+            button.textContent = `${icon} ${suggestion}`;
+            button.onclick = () => applySuggestion(prefix, suggestion);
+            container.appendChild(button);
         });
 
-        html += `<button class="suggestion-refresh-btn" onclick="renderSuggestions('${type}')">\u{1F504} Yenile</button>`;
-        container.innerHTML = html;
+        const refresh = document.createElement('button');
+        refresh.type = 'button';
+        refresh.className = 'suggestion-refresh-btn';
+        refresh.textContent = '🔄 Yenile';
+        refresh.onclick = () => renderSuggestions(type);
+        container.appendChild(refresh);
         container.style.display = "flex";
     }
 
@@ -1855,6 +1893,7 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
         const bugContext = /(hata kodu|hata mesajı|bug|çalışmıyor|calismiyor|bozuk|debug|fix|patch|stack trace|exception|network error|timeout|cors hatası|kırpılmış|kirpilmis|taşıyor|tasiyor|görünmüyor|gorunmuyor|kaymış|kaymis|düzelt|duzelt|sorun var|hatalı)/i.test(combined);
         const writingContext = /(hikaye|öykü|oyku|senaryo|rol|roleplay|karakter|şiir|siir|metin|makale|başlık|baslik|içerik|icerik)/i.test(combined);
         const studyContext = /(pdf|sınav|sinav|quiz|ders|özet|ozet|flashcard|ezber|konu anlat|akademik|kaynak)/i.test(combined);
+        const mediaFailureContext = /(üretilemedi|uret[iı]lemedi|network_error|network error|all_providers_failed|missing_env|sağlayıcı reddetti|saglayici reddetti)/i.test(combined);
 
         if (safetyContext) {
             return addUnique(["Kısalt", "Güvenli alternatif öner", "Riskleri açıkla", "Daha sakin yaz", "Uygun prompt yaz"]);
@@ -1871,17 +1910,20 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
         if (codeContext) {
             return addUnique(["Kısalt", "Kodu açıkla", "Çözüm patch'i yaz", "Optimize et", "Riskleri sırala"]);
         }
-        if (writingContext) {
-            return addUnique(["Devam et", "Daha vurucu yaz", "Başka bir son yaz", "Karakteri derinleştir", "Diyalog ekle", "Sadeleştir"]);
+        if (imageContext && !videoContext && mediaFailureContext) {
+            return addUnique(["İnternetten benzerini bul", "Aynı promptla tekrar dene", "Promptu sadeleştir", "Kare formatta üret", "Sağlayıcı durumunu açıkla"]);
+        }
+        if (imageContext && !videoContext) {
+            return addUnique(["Promptu profesyonelleştir", "Sinematik hale getir", "Farklı kompozisyon dene", "Doğal ışık kullan", "Kare formatta üret", "İnternetten benzerini bul"]);
+        }
+        if (videoContext) {
+            return addUnique(["Sahne planı yap", "Daha sinematik yap", "Kısa video promptu yaz", "Kamera hareketi ekle", "Storyboard'u sadeleştir", "Varyasyon üret"]);
         }
         if (bugContext) {
             return addUnique(["Kısalt", "Hata nedenini açıkla", "Çözüm yolları öner", "Adım adım düzelt", "Neden kaynaklanıyor?"]);
         }
-        if (imageContext && !videoContext) {
-            return addUnique(["Promptu iyileştir", "Daha gerçekçi yap", "Başka açı dene", "Işığı değiştir", "Varyasyon üret", "Negatif prompt ekle"]);
-        }
-        if (videoContext) {
-            return addUnique(["Sahne planı yap", "Daha sinematik yap", "Kısa video promptu yaz", "Kamera hareketi ekle", "Storyboard'u sadeleştir", "Varyasyon üret"]);
+        if (writingContext) {
+            return addUnique(["Devam et", "Daha vurucu yaz", "Başka bir son yaz", "Karakteri derinleştir", "Diyalog ekle", "Sadeleştir"]);
         }
         if (studyContext) {
             return addUnique(["Kısalt", "5 maddede özetle", "Quiz hazırla", "Ezber kartı yap", "Zor yerleri açıkla", "Örnek soru üret"]);
@@ -1911,8 +1953,12 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
             
             if (text === "Kısalt" && msgIndex >= 0 && typeof shortenMessage === "function") {
                 btn.onclick = () => shortenMessage(msgIndex);
+            } else if (text === "İnternetten benzerini bul") {
+                btn.onclick = () => searchSimilarImagesFromPrompt(getMediaCommandSubject(userText) || userText || lastMediaPrompt);
+            } else if (text === "Aynı promptla tekrar dene") {
+                btn.onclick = () => retryLastMediaPrompt('image', getMediaCommandSubject(userText) || lastMediaPrompt);
             } else {
-                btn.onclick = () => submitSmartSuggestion(text);
+                btn.onclick = () => submitSmartSuggestion(text, userText, assistantText);
             }
             
             row.appendChild(btn);
@@ -1961,12 +2007,31 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
         el.appendChild(actionDiv);
     }
 
-    function submitSmartSuggestion(text) {
+    function buildContextualSuggestionPrompt(action, userText, assistantText) {
+        const original = String(userText || '').trim();
+        const subject = getMediaCommandSubject(original) || original;
+        const mediaActions = {
+            'Promptu profesyonelleştir': `Şu görsel isteğini profesyonel bir üretim promptuna dönüştür ve görseli üret: ${subject}`,
+            'Sinematik hale getir': `Şu görseli sinematik ışık, güçlü kompozisyon ve yüksek detayla üret: ${subject}`,
+            'Farklı kompozisyon dene': `Aynı konuyu farklı kamera açısı ve yeni bir kompozisyonla üret: ${subject}`,
+            'Doğal ışık kullan': `Şu görseli doğal ışık ve gerçekçi renklerle üret: ${subject}`,
+            'Kare formatta üret': `Şu görseli kare kompozisyonda, merkez odağı güçlü olacak şekilde üret: ${subject}`,
+            'Promptu sadeleştir': `Şu görsel isteğini kısa, net ve sağlayıcı uyumlu hale getirip üret: ${subject}`
+        };
+        if (mediaActions[action] && subject) return mediaActions[action];
+        if (original) return `${action}. Bunu şu bağlama göre yap:
+
+${original}`;
+        const answer = String(assistantText || '').trim().slice(0, 1600);
+        return answer ? `${action}. Şu cevabı temel al:
+
+${answer}` : action;
+    }
+
+    function submitSmartSuggestion(text, userText = '', assistantText = '') {
         const input = document.getElementById('userInput');
         if (!input) return;
-        input.value = text;
-        autoResize(input);
-        input.focus();
+        setComposerValue(buildContextualSuggestionPrompt(text, userText, assistantText));
         sendMessage();
     }
 
@@ -3408,6 +3473,97 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
         }
     }
 
+    function getSafeExternalHttpUrl(value) {
+        try {
+            const parsed = new URL(String(value || ''), window.location.href);
+            return parsed.protocol === 'https:' || parsed.protocol === 'http:' ? parsed.href : '';
+        } catch (error) {
+            return '';
+        }
+    }
+
+    async function searchInternetImages(query) {
+        const cleanQuery = String(query || '').replace(/\s+/g, ' ').trim().slice(0, 200);
+        if (!cleanQuery) throw new Error('missing_query');
+        const response = await fetch('/.netlify/functions/image-search', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query: cleanQuery })
+        });
+        const data = await response.json();
+        if (!response.ok || !data.ok) throw new Error(data.error || 'image_search_failed');
+        return Array.isArray(data.images) ? data.images : [];
+    }
+
+    function appendInternetImageResults(target, message) {
+        const images = message && Array.isArray(message.webImages) ? message.webImages : [];
+        if (!target || !images.length || target.querySelector('.web-image-results')) return;
+
+        const section = document.createElement('section');
+        section.className = 'web-image-results';
+        section.style.cssText = 'margin-top:12px; width:100%;';
+
+        const meta = document.createElement('div');
+        meta.style.cssText = 'color:var(--cc-text-muted); font-size:12px; margin-bottom:8px;';
+        meta.textContent = `${images.length} açık lisanslı sonuç · Openverse`;
+        section.appendChild(meta);
+
+        const grid = document.createElement('div');
+        grid.style.cssText = 'display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:10px; width:100%;';
+        images.forEach((item) => {
+            const thumbnail = getSafeExternalHttpUrl(item.thumbnail || item.imageUrl);
+            const landingUrl = getSafeExternalHttpUrl(item.landingUrl);
+            if (!thumbnail || !landingUrl) return;
+
+            const card = document.createElement('article');
+            card.style.cssText = 'min-width:0; background:var(--cc-bg-surface); border:1px solid var(--cc-border); border-radius:var(--cc-radius); overflow:hidden;';
+
+            const link = document.createElement('a');
+            link.href = landingUrl;
+            link.target = '_blank';
+            link.rel = 'noopener noreferrer';
+            link.title = 'Kaynak sayfasını aç';
+
+            const image = document.createElement('img');
+            image.src = thumbnail;
+            image.alt = String(item.title || 'İnternet görseli').slice(0, 240);
+            image.loading = 'lazy';
+            image.referrerPolicy = 'no-referrer';
+            image.style.cssText = 'display:block; width:100%; aspect-ratio:4/3; object-fit:cover; background:var(--cc-bg-main);';
+            link.appendChild(image);
+            card.appendChild(link);
+
+            const detail = document.createElement('div');
+            detail.style.cssText = 'padding:9px;';
+            const title = document.createElement('div');
+            title.style.cssText = 'font-size:12px; font-weight:700; color:var(--cc-text-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;';
+            title.textContent = String(item.title || 'İsimsiz görsel');
+            const credit = document.createElement('div');
+            credit.style.cssText = 'font-size:10px; color:var(--cc-text-muted); margin-top:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;';
+            const license = item.license ? ` · ${String(item.license).toUpperCase()}` : '';
+            credit.textContent = `${item.creator || 'Bilinmeyen üretici'}${license}`;
+            detail.append(title, credit);
+            card.appendChild(detail);
+            grid.appendChild(card);
+        });
+        section.appendChild(grid);
+        target.appendChild(section);
+    }
+
+    function searchSimilarImagesFromPrompt(prompt) {
+        const cleanPrompt = String(prompt || lastMediaPrompt || '').trim();
+        if (!cleanPrompt) {
+            showNonBlockingToast('Aranacak görsel konusu bulunamadı.');
+            return;
+        }
+        setAppMode('image');
+        const webRadio = document.getElementById('mediaSourceWeb');
+        if (webRadio) webRadio.checked = true;
+        saveMediaSourceSelection('web');
+        setComposerValue(`Bana şu resmi oluştur: ${cleanPrompt}`);
+        sendMessage();
+    }
+
     function hasValidImageUrl(url) {
         const value = String(url || "").trim();
         if (!value) return false;
@@ -3489,7 +3645,7 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
             .replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 
         // Safe Diagnostics
-        const providerName = kind === 'video' ? 'Video provider not configured' : (reason.startsWith('runware_') ? 'Runware Proxy' : 'Pollinations Fallback');
+        const providerName = kind === 'video' ? 'Video provider not configured' : (reason.startsWith('runware_') ? 'Runware Proxy' : 'AI image provider chain');
         const nextSteps = {
             runware_missing_env: 'Netlify Dashboard > Site settings > Environment variables bölümüne RUNWARE_API_KEY ekle.',
             runware_unauthorized: 'Ayarlardan girilen yerel API keyi kontrol edin veya Netlify environment variable değerinin doğruluğunu teyit edin.',
@@ -3515,6 +3671,7 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
                     <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:10px;">
                         <button type="button" onclick="retryLastMediaPrompt('image', lastMediaPrompt)" style="background:var(--cc-border); color:var(--cc-text-primary); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: var(--cc-radius); padding:6px 12px; font-size:11px; cursor:pointer;">Tekrar Dene</button>
                         <button type="button" onclick="copyPromptTextFallback(lastMediaPrompt || '', this)" style="background:var(--cc-border); color:var(--cc-text-primary); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: var(--cc-radius); padding:6px 12px; font-size:11px; cursor:pointer;">Promptu Kopyala</button>
+                        <button type="button" onclick="searchSimilarImagesFromPrompt(lastMediaPrompt)" style="background:var(--cc-border); color:var(--cc-text-primary); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: var(--cc-radius); padding:6px 12px; font-size:11px; cursor:pointer;">İnternetten Benzerini Bul</button>
                     </div>
                 </div>`;
     }
@@ -3561,7 +3718,7 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
             const title = card.dataset.imageTitle || "Görsel";
             let backendError = card.getAttribute('data-runware-error') || 'network_error';
             let errReasonStr = backendError === 'missing_env' ? 'missing_env (API Anahtarları Eksik)' : backendError;
-            let providerStr = backendError !== 'network_error' && backendError !== 'unknown' ? 'Backend API / Runware' : 'Pollinations Fallback';
+            let providerStr = backendError !== 'network_error' && backendError !== 'unknown' ? 'AI image backend' : 'AI provider fallback';
 
             card.outerHTML = `
                 <div class="media-error-message" style="text-align:left; margin: 12px 0; background:var(--cc-bg-surface); border:1px solid #f38ba8; border-radius: var(--cc-radius); padding:12px; color:var(--cc-text-primary);">
@@ -3577,6 +3734,7 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
                     <div style="display:flex; flex-wrap:wrap; gap:8px;">
                         <button type="button" onclick="retryLastMediaPrompt('image', decodeURIComponent('${encodeURIComponent(promptText)}'))" style="background:var(--cc-border); color:var(--cc-text-primary); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: var(--cc-radius); padding:6px 12px; font-size:11px; cursor:pointer;">Tekrar Dene</button>
                         <button type="button" onclick="copyPromptTextFallback(decodeURIComponent('${encodeURIComponent(promptText)}'), this)" style="background:var(--cc-border); color:var(--cc-text-primary); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: var(--cc-radius); padding:6px 12px; font-size:11px; cursor:pointer;">Promptu Kopyala</button>
+                        <button type="button" onclick="searchSimilarImagesFromPrompt(decodeURIComponent('${encodeURIComponent(promptText)}'))" style="background:var(--cc-border); color:var(--cc-text-primary); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: var(--cc-radius); padding:6px 12px; font-size:11px; cursor:pointer;">İnternetten Benzerini Bul</button>
                     </div>
                 </div>`;
         }
@@ -4835,6 +4993,7 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
                 div.innerHTML = htmlContent;
             } else {
                 div.innerHTML = renderContentWithImages(msg.content, index === history.length - 1);
+                appendInternetImageResults(div, msg);
                 addCopyButtons(div);
 
                 const actionDiv = document.createElement("div");
@@ -6486,59 +6645,55 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
     }
 
     let isWebSearchEnabled = false;
-    function toggleWebSearch() {
-        if (!isFeatureEnabled('liveSearch')) {
-            isWebSearchEnabled = false;
-            const btn = document.getElementById("webSearchBtn");
-            if (btn) btn.classList.remove("active");
-
-            const toast = document.createElement("div");
-            toast.textContent = "Canlı arama sağlayıcısı bağlı değil. Ayarlar > API & Sunucu Yapılandırması bölümünden sağlayıcı ekleyebilirsin.";
-            toast.style.cssText = "position:fixed; bottom:20px; right:20px; background:#f38ba8; color:var(--cc-bg-main); padding:12px 20px; border-radius: var(--cc-radius); z-index:var(--z-tooltip); font-size:13px; font-weight:bold; box-shadow:0 4px 15px rgba(0,0,0,0.5); font-family:sans-serif; animation: fadeIn 0.3s ease;";
-            document.body.appendChild(toast);
-            setTimeout(() => {
-                toast.style.opacity = '0';
-                toast.style.transition = 'opacity 0.3s ease';
-                setTimeout(() => toast.remove(), 300);
-            }, 4000);
-            return;
-        }
-        isWebSearchEnabled = !isWebSearchEnabled;
+    function updateWebSearchVisualState() {
         const btn = document.getElementById("webSearchBtn");
         const menuText = document.getElementById("menuWebSearchText");
         const menuIcon = document.getElementById("menuWebSearchIcon");
-
-        if(isWebSearchEnabled) {
-            if (btn) btn.classList.add("active");
-            userInput.placeholder = "\u{1F50D} Web destekli sorun...";
-            if (menuText) menuText.textContent = "Derin Araştırma (Açık)";
-            if (menuIcon) menuIcon.textContent = "\u{1F50D}";
-        } else {
-            if (btn) btn.classList.remove("active");
-            userInput.placeholder = "CinoCode'a bir şeyler sor...";
-            if (menuText) menuText.textContent = "Derin Araştırma (Kapalı)";
-            if (menuIcon) menuIcon.textContent = "\u{1F50D}";
+        const menuBadge = document.getElementById("menuWebSearchBadge");
+        if (btn) btn.classList.toggle("active", isWebSearchEnabled);
+        if (userInput) userInput.placeholder = isWebSearchEnabled ? "🔍 Web destekli sorun..." : "CinoCode'a bir şeyler sor...";
+        if (menuText) menuText.textContent = "Web destekli sohbet";
+        if (menuIcon) menuIcon.textContent = "🔍";
+        if (menuBadge) {
+            menuBadge.textContent = isWebSearchEnabled ? "Açık" : "Kapalı";
+            menuBadge.style.color = isWebSearchEnabled ? "#a6e3a1" : "#f9e2af";
         }
+    }
+
+    function toggleWebSearch() {
+        if (!isFeatureEnabled('liveSearch')) {
+            setFeatureValue('liveSearch', '1');
+            applyFeatureUiState();
+        }
+        isWebSearchEnabled = !isWebSearchEnabled;
+        updateWebSearchVisualState();
+        showNonBlockingToast(isWebSearchEnabled ? 'Web destekli sohbet açıldı.' : 'Web destekli sohbet kapatıldı.');
     }
 
     function toggleWebSearchInMenu() {
         closeAttachMenu();
         toggleWebSearch();
     }
+
     async function doWebSearch(query) {
-        if (!isFeatureEnabled('liveSearch')) {
+        if (!isWebSearchEnabled || !isFeatureEnabled('liveSearch')) return "";
+        try {
+            const response = await fetch('/.netlify/functions/web-search', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ query: String(query || '').slice(0, 500) })
+            });
+            const data = await response.json();
+            if (!response.ok || !Array.isArray(data.results)) return "";
+            const useful = data.results
+                .filter(item => item && item.title && item.snippet && item.title !== 'Uyarı')
+                .slice(0, 4);
+            if (!useful.length) return "";
+            return useful.map((item, index) => `${index + 1}. ${item.title}: ${item.snippet}`).join("\n");
+        } catch(e) {
+            console.warn("Web arama hatası", e);
             return "";
         }
-        try {
-            const url = `https://tr.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query)}&utf8=&format=json&origin=*`;
-            const res = await fetch(url);
-            const data = await res.json();
-            if(data.query && data.query.search && data.query.search.length > 0) {
-                let snippets = data.query.search.slice(0, 3).map(s => s.snippet.replace(/<\/?[^>]+(>|$)/g, "")).join(" ... ");
-                return `İnternet Arama Sonucu (${query}): ` + snippets;
-            }
-        } catch(e) { console.warn("Arama hatası", e); }
-        return "";
     }
 
     // ===== FAZ 19 — UI KİŞİSELLEŞTİRME (v1: temiz-ID'li 7 özellik) =====
@@ -7856,15 +8011,39 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
         const selectedMediaSource = document.querySelector('input[name="mediaSource"]:checked')?.value || 'ai';
         const isMediaRequest = wantsImageGeneration || wantsVideoGeneration || (currentMode === "video" && isVideoModeCreationRequest(text));
 
-        if (selectedMediaSource === 'web' && isMediaRequest) {
+        if (selectedMediaSource === 'web' && wantsImageGeneration) {
             delete typingDiv.dataset.typingIndicator;
-            const noticeText = "🌐 Bu özellik henüz aktif değil. Gerçek internet görsel/medya araması için ayrı arama API entegrasyonu gerekir. Şimdilik 'Yapay Zeka ile Üret' seçeneğini kullanabilirsiniz.";
-            typingDiv.innerHTML = renderContentWithImages(noticeText, true);
-            chat.messages.push({ role: "assistant", content: noticeText });
-            attachMsgActionsToBotDiv(botId, chat.messages.length - 1, chat.messages[chat.messages.length - 1]);
+            const searchQuery = (getMediaCommandSubject(text) || buildCleanMediaPrompt(text, 'image') || text).slice(0, 200);
+            typingDiv.textContent = `🔍 İnternette “${searchQuery}” aranıyor...`;
+            try {
+                const webImages = await searchInternetImages(searchQuery);
+                const noticeText = webImages.length
+                    ? `İnternetten bulunan açık lisanslı görseller: ${searchQuery}`
+                    : `“${searchQuery}” için uygun açık lisanslı görsel bulunamadı.`;
+                const assistantMessage = { role: 'assistant', content: noticeText, webImageQuery: searchQuery, webImages };
+                typingDiv.innerHTML = renderContentWithImages(noticeText, true);
+                appendInternetImageResults(typingDiv, assistantMessage);
+                chat.messages.push(assistantMessage);
+                attachMsgActionsToBotDiv(botId, chat.messages.length - 1, assistantMessage);
+            } catch (error) {
+                const noticeText = 'İnternet görsel aramasına şu anda ulaşılamadı. Yapay zekâ ile üretmeyi deneyebilir veya biraz sonra tekrar arayabilirsin.';
+                typingDiv.innerHTML = renderContentWithImages(noticeText, true);
+                chat.messages.push({ role: 'assistant', content: noticeText, meta: { ui: true } });
+            }
             chat.updatedAt = Date.now();
             saveDatabase();
             scrollToBottom();
+            cleanupGenerationUi();
+            return;
+        }
+
+        if (selectedMediaSource === 'web' && isMediaRequest) {
+            delete typingDiv.dataset.typingIndicator;
+            const noticeText = 'İnternetten Bul şu anda açık lisanslı görsel aramasını destekliyor. Video için Yapay Zekâ ile Üret kaynağını seç.';
+            typingDiv.innerHTML = renderContentWithImages(noticeText, true);
+            chat.messages.push({ role: 'assistant', content: noticeText, meta: { ui: true } });
+            chat.updatedAt = Date.now();
+            saveDatabase();
             cleanupGenerationUi();
             return;
         }
@@ -8079,6 +8258,15 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
                     hmClone.content = hmClone.content.substring(0, maxTruncateLen);
                 }
                 reqMessages.push(hmClone);
+            }
+            if (isWebSearchEnabled && taskType === 'chat') {
+                const webContext = await doWebSearch(text);
+                if (webContext) {
+                    reqMessages.splice(1, 0, {
+                        role: 'system',
+                        content: 'WEB ARAMA BAĞLAMI (yalnızca aşağıdaki sonuçlara dayan; bilinmeyen ayrıntıları uydurma):\n' + webContext
+                    });
+                }
             }
             if (clearedInternalInstructions) saveDatabase();
             console.log("[CinoCode] reqMessages dolduruldu:", reqMessages.length, "mesaj");

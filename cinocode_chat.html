@@ -674,7 +674,7 @@
 
         <div class="input-box">
             <button id="fz19AttachBtn" class="icon-btn" onclick="openAttachMenu()" title="Eklentiler" style="font-size:22px; margin-bottom:2px;">+</button>
-            <button class="icon-btn web-search-btn" id="webSearchBtn" onclick="toggleWebSearch()" title="İnternette Ara (Wikipedia)">🔍</button>
+            <button class="icon-btn web-search-btn" id="webSearchBtn" onclick="toggleWebSearch()" title="Web destekli sohbet">🔍</button>
             <button class="icon-btn mic-btn" id="micBtn" onclick="toggleMic()" title="Sesle Yaz">🎙️</button>
             <textarea id="userInput" rows="1" placeholder="CinoCode'a bir şeyler sor..." oninput="autoResize(this)" onkeydown="handleKey(event)"></textarea>
             <button class="send-btn" id="sendBtn" onclick="handleSendButtonClick()" title="Gönder" aria-label="Gönder">
@@ -737,17 +737,10 @@
         <!-- GRUP 3: Araştır / Proje -->
         <div style="display:flex; flex-direction:column; gap:6px;">
             <div style="font-size:11px; color:#6c7086; text-transform:uppercase; letter-spacing:0.5px; padding-left:5px; margin-bottom:4px;">Araştır / Proje</div>
-            <div class="attach-menu-item" style="background:var(--cc-bg-surface); opacity:0.6; cursor:not-allowed; display:flex; align-items:center; gap:12px; padding:8px 12px; border-radius: var(--cc-radius);" onclick="showNonBlockingToast('Web Arama yakında aktif.')">
-                <span style="font-size:20px;">🔎</span>
-                <div style="display:flex; align-items:center; justify-content:space-between; width:100%;">
-                    <div><div style="font-weight:600; font-size:13px; color:var(--cc-text-primary);">Web arama</div><div style="font-size:10px; color:var(--cc-text-muted);">İnternette derinlemesine ara</div></div>
-                    <span style="background:var(--cc-border); color:#f9e2af; font-size:10px; padding:2px 6px; border-radius: var(--cc-radius); font-weight:bold;">Yakında</span>
-                </div>
-            </div>
             <div class="attach-menu-item" onclick="toggleWebSearchInMenu()" style="background:var(--cc-bg-surface); display:flex; align-items:center; gap:12px; padding:8px 12px; border-radius: var(--cc-radius);">
-                <span style="font-size:20px;" id="menuWebSearchIcon">🧠</span>
+                <span style="font-size:20px;" id="menuWebSearchIcon">🔍</span>
                 <div style="display:flex; align-items:center; justify-content:space-between; width:100%;">
-                    <div><div style="font-weight:600; font-size:13px; color:var(--cc-text-primary);" id="menuWebSearchText">Derin araştırma</div><div style="font-size:10px; color:var(--cc-text-muted);">Rapor ve derin araştırma modu</div></div>
+                    <div><div style="font-weight:600; font-size:13px; color:var(--cc-text-primary);" id="menuWebSearchText">Web destekli sohbet</div><div style="font-size:10px; color:var(--cc-text-muted);">Güncel web sonuçlarını sohbete bağla</div></div>
                     <span id="menuWebSearchBadge" style="background:var(--cc-border); color:#f9e2af; font-size:9px; padding:2px 5px; border-radius: var(--cc-radius); font-weight:bold; margin-right:15px;">Kapalı</span>
                 </div>
             </div>

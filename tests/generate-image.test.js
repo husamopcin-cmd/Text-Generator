@@ -4,6 +4,7 @@ const assert = require('node:assert/strict');
 const { handler } = require('../netlify/functions/generate-image');
 
 const PROVIDER_ENV_KEYS = [
+  'OPENAI_API_KEY',
   'RUNWARE_API_KEY',
   'FAL_KEY',
   'REPLICATE_API_TOKEN',
@@ -66,7 +67,7 @@ test('reports missing provider configuration without touching the network', asyn
 
     assert.equal(response.statusCode, 502);
     assert.equal(body.error, 'missing_env');
-    assert.equal(JSON.parse(body.details).length, 5);
+    assert.equal(JSON.parse(body.details).length, 6);
   });
 });
 
@@ -117,5 +118,34 @@ test('routes a forced provider success into the public response shape', async ()
     assert.equal(body.ok, true);
     assert.equal(body.provider, 'runware');
     assert.deepEqual(body.images, ['https://example.test/generated.jpg']);
+  });
+});
+
+test('uses OpenAI image generation with a supported size and returns base64 data', async () => {
+  await withProviderEnvironment({ OPENAI_API_KEY: 'openai-test-key' }, async () => {
+    let request;
+    global.fetch = async (url, options) => {
+      request = { url, options, body: JSON.parse(options.body) };
+      return {
+        ok: true,
+        status: 200,
+        text: async () => JSON.stringify({ data: [{ b64_json: 'ZmFrZS1qcGVn' }] })
+      };
+    };
+
+    const response = await handler({
+      httpMethod: 'POST',
+      body: JSON.stringify({ prompt: 'wide city skyline', width: 1600, height: 900, forceProvider: 'openai' })
+    });
+    const body = parseBody(response);
+
+    assert.equal(response.statusCode, 200);
+    assert.equal(body.provider, 'openai');
+    assert.deepEqual(body.images, ['data:image/jpeg;base64,ZmFrZS1qcGVn']);
+    assert.equal(request.url, 'https://api.openai.com/v1/images/generations');
+    assert.equal(request.options.headers.Authorization, 'Bearer openai-test-key');
+    assert.equal(request.body.model, 'gpt-image-1-mini');
+    assert.equal(request.body.size, '1536x1024');
+    assert.equal(request.body.quality, 'low');
   });
 });

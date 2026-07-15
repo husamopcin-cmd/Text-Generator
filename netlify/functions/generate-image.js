@@ -3,6 +3,7 @@
 const { buildSecurityHeaders, guardRequest } = require('./_security');
 
 const PROVIDER_TIMEOUT_MS = 18000;
+const OPENAI_IMAGE_TIMEOUT_MS = 60000;
 
 function corsJson(event, statusCode, bodyObj) {
   return {
@@ -20,6 +21,51 @@ async function fetchWithTimeout(url, options, timeoutMs) {
   } finally {
     clearTimeout(timeoutId);
   }
+}
+
+function pickOpenAIImageSize(width, height) {
+  const ratio = width / height;
+  if (ratio > 1.15) return '1536x1024';
+  if (ratio < 0.87) return '1024x1536';
+  return '1024x1024';
+}
+
+async function tryOpenAI(prompt, width, height) {
+  const key = (process.env.OPENAI_API_KEY || '').trim();
+  if (!key) return { ok: false, error: 'missing_env' };
+
+  let resp;
+  try {
+    resp = await fetchWithTimeout('https://api.openai.com/v1/images/generations', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + key
+      },
+      body: JSON.stringify({
+        model: 'gpt-image-1-mini',
+        prompt,
+        size: pickOpenAIImageSize(width, height),
+        quality: 'low',
+        output_format: 'jpeg',
+        n: 1
+      })
+    }, OPENAI_IMAGE_TIMEOUT_MS);
+  } catch (err) {
+    return { ok: false, error: err.name === 'AbortError' ? 'timeout' : 'network' };
+  }
+
+  const text = await resp.text();
+  if (!resp.ok) {
+    return { ok: false, error: 'provider_error', status: resp.status, details: text.slice(0, 500) };
+  }
+
+  let data;
+  try { data = JSON.parse(text); } catch (e) { data = null; }
+  const image = data && data.data && data.data[0];
+  if (image && image.b64_json) return { ok: true, url: 'data:image/jpeg;base64,' + image.b64_json };
+  if (image && image.url) return { ok: true, url: image.url };
+  return { ok: false, error: 'empty_response', details: text.slice(0, 300) };
 }
 
 // Genişlik/yükseklikten sağlayıcıların kabul ettiği en yakın oranı seç
@@ -223,6 +269,7 @@ async function tryHuggingFace(prompt) {
 }
 
 const PROVIDERS = [
+  { name: 'openai', fn: tryOpenAI },
   { name: 'stability', fn: tryStability },
   { name: 'runware', fn: tryRunware },
   { name: 'fal', fn: tryFal },
