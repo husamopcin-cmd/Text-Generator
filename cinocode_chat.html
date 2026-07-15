@@ -750,7 +750,7 @@
                     <span id="menuWebSearchBadge" style="background:var(--cc-border); color:#f9e2af; font-size:9px; padding:2px 5px; border-radius: var(--cc-radius); font-weight:bold; margin-right:15px;">Kapalı</span>
                 </div>
             </div>
-            <div class="attach-menu-item" onclick="closeAttachMenu(); showProjectsModal();" style="background:var(--cc-bg-surface); display:flex; align-items:center; gap:12px; padding:8px 12px; border-radius: var(--cc-radius);">
+            <div class="attach-menu-item" onclick="closeAttachMenu(); openProjectsScreen();" style="background:var(--cc-bg-surface); display:flex; align-items:center; gap:12px; padding:8px 12px; border-radius: var(--cc-radius);">
                 <span style="font-size:20px;">📁</span>
                 <div><div style="font-weight:600; font-size:13px; color:var(--cc-text-primary);">Projeye ekle / Projeler</div><div style="font-size:10px; color:var(--cc-text-muted);">Projeleri yönet veya proje seç</div></div>
             </div>
@@ -921,17 +921,9 @@
             </div>
         </div>
 
-        <div style="background:var(--cc-border); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: var(--cc-radius); padding:10px; margin-bottom:12px; font-size:12px; color:var(--cc-text-muted); text-align:left; line-height:1.5;">
-            <strong>Bulut API Durumları (Netlify üzerinden otomatik bağlanır):</strong><br>
-            • Runware: Netlify env ile bağlı / eksik (Eksikse tarayıcı lokal keyine veya Pollinations fallback'ine düşer)<br>
-            • Gemini: Netlify env ile bağlı / eksik<br>
-            • Groq/xAI: Netlify env gerekli / eksik<br>
-            <span style="color:#f9e2af; display:block; margin-top:5px;">⚠️ Kendi bulut anahtarlarınız için: <i>Netlify Dashboard &gt; Site settings &gt; Environment variables</i> bölümüne RUNWARE_API_KEY ekleyin.</span>
-        </div>
-
-
-        <div style="background:rgba(166, 227, 161, 0.1); color:#a6e3a1; padding:10px; border-radius: var(--cc-radius); margin-bottom:15px; font-size:12px; text-align:center;">
-            ℹ️ Groq, Gemini, OpenRouter API anahtarları Netlify Environment üzerinden otomatik bağlanır.
+        <div role="note" style="display:flex; align-items:flex-start; gap:8px; background:rgba(166, 227, 161, 0.1); color:var(--cc-text-primary); border:1px solid rgba(166, 227, 161, 0.28); padding:10px; border-radius:var(--cc-radius); margin-bottom:15px; font-size:12px; line-height:1.5; text-align:left;">
+            <span aria-hidden="true" style="color:#a6e3a1; font-weight:700;">ℹ️</span>
+            <span><strong>Bulut sağlayıcıları Netlify üzerinden otomatik kullanılır.</strong> Kendi anahtarınızı kullanmak isterseniz aşağıdaki alanları doldurun; boş alanlarda yapılandırılmış sunucu anahtarı ve mevcut fallback zinciri kullanılır.</span>
         </div>
         <div style="color: var(--cc-text-primary); font-size: 13px; margin-bottom: 5px; text-align: left;">
             Runware API Key <span style="color: #6c7086; font-size: 11px;">(Lokal kullanacaksanız elle girin - boş bırakılırsa Netlify Env kullanılır)</span>:
