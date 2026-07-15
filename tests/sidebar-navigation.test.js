@@ -55,6 +55,33 @@ test('projects is a unique full-width action before existing app and skills acti
   assert.match(main, /function openProjectsScreen\(\)/);
 });
 
+test('My Apps opens its hub without creating a disposable chat', () => {
+  const button = getButton('sidebarMyAppsBtn');
+  assert.match(button, /onclick="openMyAppsHub\(\);"/);
+  assert.doesNotMatch(button, /createNewChat/);
+  assert.match(main, /function openMyAppsHub\(\)/);
+  assert.match(main, /document\.getElementById\('myAppsGrid'\)/);
+  assert.match(main, /renderMyApps\(\)/);
+});
+
+test('project document upload uses the existing document picker and current project context', () => {
+  assert.match(main, /function uploadDocumentToProject\(projectId\)/);
+  assert.match(main, /triggerFileInput\('docUpload'\)/);
+  assert.match(main, /createNewChat\(\{ projectId \}\)/);
+  assert.match(main, /onclick="uploadDocumentToProject\('\$\{activeProjectId\}'\)"/);
+  assert.doesNotMatch(main, /Dosya yükleme yakında eklenecek/);
+  assert.doesNotMatch(main, /RAG entegrasyonu Faz 21\.2'de aktif olacak/);
+  assert.match(main, /Belge aktif proje sohbetine eklenir ve analiz bağlamında kullanılır/);
+});
+
+test('skills screen labels preview and unavailable integrations honestly', () => {
+  assert.match(html, /CinoVidyo[\s\S]*?● Önizleme/);
+  assert.match(html, /● Entegrasyon gerekli/);
+  assert.doesNotMatch(html, /● Yakında/);
+  assert.match(html, /OAuth\/backend entegrasyonu gerekir/);
+  assert.match(html, /launchCinoApp\('textgenerator'\)/);
+});
+
 test('contextual projects entry remains available in the attach menu', () => {
   assert.match(html, /onclick="closeAttachMenu\(\); openProjectsScreen\(\);"/);
 });

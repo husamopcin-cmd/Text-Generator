@@ -3354,6 +3354,23 @@ ${answer}` : action;
         createNewChat({ projectId: projectId });
     }
 
+    function uploadDocumentToProject(projectId) {
+        if (!projectId || !projects[projectId]) {
+            showNonBlockingToast('Belgenin ekleneceği proje bulunamadı.');
+            return;
+        }
+        const activeChat = sessions[currentChatId];
+        document.getElementById('projectsScreen').style.display = 'none';
+        if (!activeChat || activeChat.projectId !== projectId) {
+            createNewChat({ projectId });
+        } else {
+            renderCurrentChat();
+        }
+        setTimeout(() => {
+            triggerFileInput('docUpload');
+        }, 0);
+    }
+
     function promptAddNote(projectId) {
         const note = prompt("Yeni notunuzu girin:");
         if (note && note.trim()) {
@@ -3431,12 +3448,12 @@ ${answer}` : action;
             } else if (currentProjectTab === 'dosyalar') {
                 html += `<div style="margin-bottom:15px; display:flex; justify-content:space-between; align-items:center;">
                             <div style="font-weight:600; color:var(--cc-text-primary);">Dosyalar</div>
-                            <button onclick="alert('Dosya yükleme yakında eklenecek!')" class="action-btn" style="padding:6px 12px; border-radius:var(--cc-radius); border:none; background:var(--cc-accent-brand); color:var(--cc-bg-main); font-weight:bold; cursor:pointer;">+ Dosya Yükle</button>
+                            <button onclick="uploadDocumentToProject('${activeProjectId}')" class="action-btn" style="padding:6px 12px; border-radius:var(--cc-radius); border:none; background:var(--cc-accent-brand); color:var(--cc-bg-main); font-weight:bold; cursor:pointer;">+ Dosya Yükle</button>
                          </div>`;
                 html += `<div style="grid-column:1/-1; text-align:center; padding:40px; color:var(--cc-text-muted); border: 2px dashed rgba(255,255,255,0.1); border-radius: var(--cc-radius);">
                             <div style="font-size:30px; margin-bottom:10px;">📄</div>
-                            <div>PDF, TXT veya Kod dosyalarınızı sürükleyip bırakın</div>
-                            <div style="font-size:12px; margin-top:5px; color:#6c7086;">(RAG entegrasyonu Faz 21.2'de aktif olacak)</div>
+                            <div>PDF, TXT, DOCX veya kod dosyası yükleyin</div>
+                            <div style="font-size:12px; margin-top:5px; color:#6c7086;">Belge aktif proje sohbetine eklenir ve analiz bağlamında kullanılır.</div>
                          </div>`;
             }
             content.innerHTML = html;
@@ -6915,6 +6932,27 @@ ${answer}` : action;
         { id: "voice", title: "Sesli Asistan", icon: "🎙️", category: "Voice", prompt: "TTS ve mikrofon odaklı sohbet." },
         { id: "aiagents", title: "AI Agents", icon: "🤖", category: "Agents", prompt: "Sen AI Ajanlarının orkestrasyonunu yapan ana lidersin. İstenilen görevleri alt-ajanlara dağıtıp koordine edersin." }
     ];
+
+    function openMyAppsHub() {
+        closeMobileSidebar();
+        const screensToHide = ['libraryScreen', 'projectsScreen', 'skillsScreen'];
+        screensToHide.forEach(id => {
+            const screen = document.getElementById(id);
+            if (screen) screen.style.display = 'none';
+        });
+        const messages = document.getElementById('messages');
+        const welcome = document.getElementById('welcomeScreen');
+        if (messages) messages.style.display = 'none';
+        if (welcome) welcome.style.display = 'flex';
+        renderMyApps();
+        requestAnimationFrame(() => {
+            const grid = document.getElementById('myAppsGrid');
+            if (!grid) return;
+            grid.setAttribute('tabindex', '-1');
+            grid.focus({ preventScroll: true });
+            grid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
+    }
 
     function renderMyApps() {
         const container = document.getElementById("myAppsGrid");

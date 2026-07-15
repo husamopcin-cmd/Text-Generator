@@ -90,7 +90,7 @@
                     <button class="new-chat-btn" id="sidebarDocStudioBtn" onclick="closeMobileSidebar(); triggerFileInput('docUpload')" style="border-color:var(--cc-accent-brand); color:var(--cc-accent-brand); font-size:12px; padding: 6px; justify-content:center;">📄 <span class="sidebar-text">Belge</span></button>
                 </div>
                 <button class="new-chat-btn" id="sidebarProjectsBtn" onclick="closeMobileSidebar(); openProjectsScreen()" style="background:rgba(249,226,175,0.1); border-color:#f9e2af; color:#f9e2af; font-weight:600; justify-content:center; font-size:12px; padding: 6px; margin-top:4px;">📁 <span class="sidebar-text">Projeler</span></button>
-                <button class="new-chat-btn" id="sidebarMyAppsBtn" onclick="createNewChat();" style="background:rgba(243,139,168,0.1); border-color:#f38ba8; color:#f38ba8; font-weight:600; justify-content:center; font-size:12px; padding: 6px; margin-top:4px;">📱 <span class="sidebar-text">My Apps</span></button>
+                <button class="new-chat-btn" id="sidebarMyAppsBtn" onclick="openMyAppsHub();" style="background:rgba(243,139,168,0.1); border-color:#f38ba8; color:#f38ba8; font-weight:600; justify-content:center; font-size:12px; padding: 6px; margin-top:4px;">📱 <span class="sidebar-text">My Apps</span></button>
                 <button class="new-chat-btn" id="sidebarSkillsBtn" onclick="openSkillsScreen()" style="background:rgba(203,166,247,0.1); border-color:#cba6f7; color:#cba6f7; font-weight:600; justify-content:center; font-size:12px; padding: 6px; margin-top:4px;">🧩 <span class="sidebar-text">Beceriler ve Bağlayıcılar</span></button>
             </div>
         </details>
@@ -504,6 +504,7 @@
             .skill-action-btn:hover { background: var(--cc-mauve); color: var(--cc-bg-main); }
             .skill-action-btn.primary { background: rgba(203,166,247,0.2); color: var(--cc-mauve); border: 1px solid rgba(203,166,247,0.4); }
             .skill-action-btn.primary:hover { background: var(--cc-mauve); color: var(--cc-bg-main); }
+            .skill-action-btn:disabled { opacity:0.55; cursor:not-allowed; background:var(--cc-surface0); color:var(--cc-subtext0); }
         </style>
         <div class="library-screen-header">
             <div>
@@ -511,7 +512,7 @@
                 <h2 style="color: var(--cc-mauve); margin:0; font-size:24px; margin-top:15px;">🧩 Beceriler ve Bağlayıcılar</h2>
                 <p style="color: var(--cc-subtext0); font-size: 13px; margin-top: 5px;">Yapay zeka yeteneklerini yönet ve dış uygulamalarını CinoCode'a bağla.</p>
             </div>
-            <button class="run-code-btn" onclick="promptNewIntegration()" style="background:var(--cc-mauve); color:var(--cc-bg-main); width:auto; padding:8px 16px;">+ Yeni Ekle</button>
+            <button class="run-code-btn" onclick="promptNewIntegration()" style="background:var(--cc-mauve); color:var(--cc-bg-main); width:auto; padding:8px 16px;">Entegrasyon Bilgisi</button>
         </div>
         
         <div class="skills-tabs">
@@ -526,7 +527,7 @@
                 <p class="skill-card-desc">Syntax renklendirme, kod kopyalama, satır numaralandırma ve render işlemlerini sağlar.</p>
                 <div class="skill-card-footer">
                     <span class="skill-status-badge active">● Etkin</span>
-                    <button class="skill-action-btn">Ayarlar</button>
+                    <button class="skill-action-btn" disabled="">Hazır</button>
                 </div>
             </div>
             <div class="skill-card">
@@ -563,19 +564,19 @@
             <div class="skill-card" style="border-color: rgba(137,180,250,0.3);">
                 <div class="skill-card-icon">🎬</div>
                 <h3 class="skill-card-title" style="color: var(--cc-blue);">CinoVidyo</h3>
-                <p class="skill-card-desc">Yapay zeka destekli video üretim aracı. CinoCode'dan doğrudan video üret.</p>
+                <p class="skill-card-desc">Görsel sahnelerden storyboard/slideshow video taslağı hazırlar. Gerçek video sağlayıcısı bağlı değildir.</p>
                 <div class="skill-card-footer">
-                    <span class="skill-status-badge active">● Bağlı</span>
-                    <button class="skill-action-btn primary">Aç</button>
+                    <span class="skill-status-badge active">● Önizleme</span>
+                    <button class="skill-action-btn primary" onclick="closeSkillsScreen(); triggerVideoGeneration();">Aç</button>
                 </div>
             </div>
             <div class="skill-card" style="border-color: rgba(249,226,175,0.3);">
                 <div class="skill-card-icon">📝</div>
                 <h3 class="skill-card-title" style="color: var(--cc-yellow);">Text-Generator</h3>
-                <p class="skill-card-desc">Özel promptlarla otomatik metin ve blog içerikleri oluşturan lokal araç.</p>
+                <p class="skill-card-desc">Özel promptlarla metin, blog ve yazı taslakları oluşturan CinoCode uygulaması.</p>
                 <div class="skill-card-footer">
-                    <span class="skill-status-badge active">● Bağlı</span>
-                    <button class="skill-action-btn primary">Aç</button>
+                    <span class="skill-status-badge active">● Etkin</span>
+                    <button class="skill-action-btn primary" onclick="closeSkillsScreen(); launchCinoApp('textgenerator');">Aç</button>
                 </div>
             </div>
             <div class="skill-card" style="border-color: rgba(166,227,161,0.3);">
@@ -583,8 +584,8 @@
                 <h3 class="skill-card-title" style="color: var(--cc-green);">Armin Bot</h3>
                 <p class="skill-card-desc">Discord / Telegram entegrasyonlu destek ve yönetim botu.</p>
                 <div class="skill-card-footer">
-                    <span class="skill-status-badge inactive">● Pasif</span>
-                    <button class="skill-action-btn primary">Bağla</button>
+                    <span class="skill-status-badge inactive">● Entegrasyon gerekli</span>
+                    <button class="skill-action-btn primary" disabled="">Bağla</button>
                 </div>
             </div>
 
@@ -596,7 +597,7 @@
                 <h3 class="skill-card-title">GitHub</h3>
                 <p class="skill-card-desc">Depoları oku, commitleri incele ve PR analizleri yap.</p>
                 <div class="skill-card-footer">
-                    <span class="skill-status-badge inactive">● Yakında</span>
+                    <span class="skill-status-badge inactive">● Entegrasyon gerekli</span>
                     <button class="skill-action-btn" disabled="">Bağla</button>
                 </div>
             </div>
@@ -605,7 +606,7 @@
                 <h3 class="skill-card-title">Google Drive</h3>
                 <p class="skill-card-desc">Drive içindeki dokümanlara doğrudan erişim sağla.</p>
                 <div class="skill-card-footer">
-                    <span class="skill-status-badge inactive">● Yakında</span>
+                    <span class="skill-status-badge inactive">● Entegrasyon gerekli</span>
                     <button class="skill-action-btn" disabled="">Bağla</button>
                 </div>
             </div>
@@ -640,9 +641,9 @@
         }
         function promptNewIntegration() {
             if(typeof showNonBlockingToast === 'function') {
-                showNonBlockingToast('Yeni Bağlayıcı Ekleme Modülü: Yakında eklenecek!');
+                showNonBlockingToast('Yeni bağlayıcılar için OAuth/backend entegrasyonu gerekir; bu sürümde yapılandırılmamıştır.');
             } else {
-                alert('Yeni Bağlayıcı Ekleme Modülü: Yakında eklenecek!');
+                alert('Yeni bağlayıcılar için OAuth/backend entegrasyonu gerekir; bu sürümde yapılandırılmamıştır.');
             }
         }
     </script>
