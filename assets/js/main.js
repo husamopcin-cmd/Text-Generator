@@ -3,30 +3,20 @@
 
 
 
-    function getSafeUserName() {
-        // Bu fonksiyon ASLA fırlatmamalı: sayfa yüklenirken top-level'da
-        // çağrılıyor; fırlatırsa ana script bloğunun tüm init kodu ölür
-        // (prompt() bazı ortamlarda — iframe, webview, otomasyon — desteklenmez ve throw eder).
+    function getStoredUserName() {
         let name = null;
         try { name = localStorage.getItem('cinocode_user'); } catch (e) {}
-        if (!name || name.trim().toLowerCase() === "ahmet") {
-            if (name && name.trim().toLowerCase() === "ahmet") {
-                try { localStorage.removeItem('cinocode_user'); } catch (e) {}
-            }
-            try {
-                name = prompt("Sana nasıl hitap etmeliyim? (İsmini gir):", "Kanka");
-            } catch (e) {
-                name = null;
-            }
-            if (!name || !name.trim()) name = "Kanka";
-            try { localStorage.setItem('cinocode_user', name.trim()); } catch (e) {}
-            return name.trim();
-        }
-        return name.trim();
+        const normalized = String(name || '')
+            .replace(/[\u0000-\u001f\u007f<>]/g, '')
+            .replace(/\s+/g, ' ').trim().slice(0, 40);
+        return normalized || null;
     }
-    const loggedUser = getSafeUserName();
+    let loggedUser = getStoredUserName();
 
     function logout() {
+        if (loggedUser && typeof rememberLocalProfile === 'function') {
+            rememberLocalProfile(loggedUser);
+        }
         localStorage.removeItem('cinocode_user');
         window.location.reload();
     }
@@ -1181,6 +1171,14 @@
     }
 
     window.selectedFiles = window.selectedFiles || [];
+    const DOCUMENT_UPLOAD_MAX_BYTES = 25 * 1024 * 1024;
+    const DOCUMENT_CONTEXT_MAX_CHARS = 1000000;
+    const ARCHIVE_MAX_FILES = 180;
+    const ARCHIVE_ENTRY_MAX_BYTES = 1024 * 1024;
+    const ARCHIVE_TOTAL_MAX_BYTES = 20 * 1024 * 1024;
+    const ARCHIVE_TEXT_EXTENSIONS = ['.txt', '.md', '.js', '.jsx', '.ts', '.tsx', '.py', '.html', '.css', '.scss', '.json', '.csv', '.xml', '.yml', '.yaml', '.sql', '.java', '.c', '.h', '.cpp', '.cs', '.go', '.rs', '.php', '.rb', '.swift', '.kt', '.sh', '.ps1', '.toml', '.ini', '.cfg'];
+    const ARCHIVE_IGNORED_PATH = /(^|\/)(node_modules|\.git|dist|build|coverage|\.next|vendor|__MACOSX)(\/|$)/i;
+    const ARCHIVE_SECRET_PATH = /(^|\/)(\.env(?:\.|$)|id_rsa(?:\.|$)|[^/]+\.(?:pem|key|p12|pfx))(\/|$)?/i;
 
     function addSelectedFile(fileObj) {
         if (window.selectedFiles.length >= 30) {
@@ -2132,6 +2130,105 @@ ${answer}` : action;
         renderSuggestions('game');
     }
 
+    function getRemainingDocumentContextChars() {
+        const used = (window.selectedFiles || [])
+            .filter(file => file.rawType === 'document')
+            .reduce((total, file) => total + String(file.content || '').length, 0);
+        return Math.max(0, DOCUMENT_CONTEXT_MAX_CHARS - used);
+    }
+
+    function addDocumentTextFile(file, extractedText, meta = {}) {
+        const text = String(extractedText || '').replace(/\u0000/g, '').trim();
+        if (!text) {
+            showNonBlockingToast(`"${file.name}" içinde okunabilir metin bulunamadı.`);
+            return false;
+        }
+
+        const prefix = `\n[${file.name} İÇERİĞİ]:\n`;
+        const suffix = '\n';
+        const remaining = getRemainingDocumentContextChars();
+        const available = Math.max(0, remaining - prefix.length - suffix.length - 60);
+        if (!available) {
+            showNonBlockingToast('Belge bağlamı doldu. Önce mevcut belgeyi gönderin veya kaldırın.');
+            return false;
+        }
+
+        const wasTruncated = text.length > available;
+        const truncationNote = wasTruncated ? '\n[İçerik güvenli bağlam sınırında kısaltıldı.]' : '';
+        addSelectedFile({
+            id: 'file_' + Date.now() + '_' + Math.random().toString(36).slice(2, 11),
+            name: file.name,
+            type: file.type || meta.type || 'text/plain',
+            size: file.size,
+            content: prefix + text.slice(0, available) + truncationNote + suffix,
+            rawType: 'document',
+            sourceType: meta.sourceType || 'document'
+        });
+        if (wasTruncated) showNonBlockingToast(`"${file.name}" yüklendi; metin AI bağlam sınırına göre kısaltıldı.`);
+        return true;
+    }
+
+    function isZipDocument(file) {
+        const type = String(file.type || '').toLowerCase();
+        return type === 'application/zip' || type === 'application/x-zip-compressed' || String(file.name || '').toLowerCase().endsWith('.zip');
+    }
+
+    function isSafeArchiveTextPath(path) {
+        const normalized = String(path || '').replace(/\\/g, '/');
+        if (!normalized || ARCHIVE_IGNORED_PATH.test(normalized) || ARCHIVE_SECRET_PATH.test(normalized)) return false;
+        const lower = normalized.toLowerCase();
+        return ARCHIVE_TEXT_EXTENSIONS.some(extension => lower.endsWith(extension));
+    }
+
+    async function extractZipDocument(file) {
+        if (typeof window.JSZip === 'undefined') {
+            showNonBlockingToast('ZIP okuyucu yüklenemedi. İnternet bağlantısını kontrol edin.');
+            return false;
+        }
+
+        const archive = await window.JSZip.loadAsync(file);
+        const allEntries = Object.values(archive.files || {}).filter(entry => entry && !entry.dir);
+        const candidates = allEntries.filter(entry => isSafeArchiveTextPath(entry.name)).slice(0, ARCHIVE_MAX_FILES);
+        const sections = [];
+        let included = 0;
+        let skipped = allEntries.length - candidates.length;
+        let expandedBytes = 0;
+        let collectedChars = 0;
+        const availableChars = Math.max(0, getRemainingDocumentContextChars() - file.name.length - 80);
+
+        for (const entry of candidates) {
+            const declaredBytes = Number(entry && entry._data && entry._data.uncompressedSize) || 0;
+            if (declaredBytes > ARCHIVE_ENTRY_MAX_BYTES || expandedBytes + declaredBytes > ARCHIVE_TOTAL_MAX_BYTES) {
+                skipped++;
+                continue;
+            }
+            const text = String(await entry.async('string')).replace(/\u0000/g, '').trim();
+            const measuredBytes = declaredBytes || new Blob([text]).size;
+            if (!text || measuredBytes > ARCHIVE_ENTRY_MAX_BYTES || expandedBytes + measuredBytes > ARCHIVE_TOTAL_MAX_BYTES) {
+                skipped++;
+                continue;
+            }
+            const header = `\n--- ${entry.name} ---\n`;
+            const room = Math.max(0, availableChars - collectedChars - header.length);
+            if (!room) break;
+            const sectionText = text.slice(0, room);
+            sections.push(header + sectionText);
+            collectedChars += header.length + sectionText.length;
+            expandedBytes += measuredBytes;
+            included++;
+            if (sectionText.length < text.length) break;
+        }
+
+        if (!sections.length) {
+            showNonBlockingToast(`"${file.name}" içinde desteklenen ve güvenli bir metin/kod dosyası bulunamadı.`);
+            return false;
+        }
+
+        const added = addDocumentTextFile(file, sections.join('\n'), { sourceType: 'zip', type: 'application/zip' });
+        if (added) showNonBlockingToast(`ZIP hazır: ${included} dosya eklendi${skipped ? `, ${skipped} dosya atlandı` : ''}.`);
+        return added;
+    }
+
     async function handleDocSelect(event) {
         const files = Array.from(event.target.files);
         if (!files.length) return;
@@ -2139,12 +2236,19 @@ ${answer}` : action;
         showNonBlockingToast(`${files.length} belge yükleniyor...`);
 
         for (const file of files) {
-            if (file.size > 5 * 1024 * 1024) {
-                alert(`"${file.name}" çok büyük! Lütfen 5MB'dan küçük belgeler yükleyin.`);
+            if (file.size > DOCUMENT_UPLOAD_MAX_BYTES) {
+                showNonBlockingToast(`"${file.name}" çok büyük. En fazla 25 MB yükleyebilirsiniz.`);
                 continue;
             }
 
-            if (file.type === "application/pdf") {
+            if (isZipDocument(file)) {
+                try {
+                    await extractZipDocument(file);
+                } catch (err) {
+                    console.error('ZIP okuma hatası:', err);
+                    showNonBlockingToast(`"${file.name}" açılamadı veya geçerli bir ZIP değil.`);
+                }
+            } else if (file.type === "application/pdf") {
                 try {
                     if (!window.pdfjsLib.GlobalWorkerOptions.workerSrc) {
                         window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
@@ -2160,30 +2264,18 @@ ${answer}` : action;
                         fullText += pageText + "\n";
                     }
 
-                    addSelectedFile({
-                        id: "file_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9),
-                        name: file.name,
-                        type: file.type,
-                        size: file.size,
-                        content: `\n[${file.name} İÇERİĞİ]:\n${fullText}\n`,
-                        rawType: "document"
-                    });
+                    addDocumentTextFile(file, fullText, { sourceType: 'pdf' });
                 } catch (err) {
                     console.error("PDF okuma hatası:", err);
+                    showNonBlockingToast(`"${file.name}" PDF olarak okunamadı.`);
                 }
             } else if (isPlainTextDocument(file)) {
                 try {
                     const text = await file.text();
-                    addSelectedFile({
-                        id: "file_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9),
-                        name: file.name,
-                        type: file.type,
-                        size: file.size,
-                        content: `\n[${file.name} İÇERİĞİ]:\n${text}\n`,
-                        rawType: "document"
-                    });
+                    addDocumentTextFile(file, text, { sourceType: 'text' });
                 } catch (err) {
                     console.error("Belge okuma hatası:", err);
+                    showNonBlockingToast(`"${file.name}" metin olarak okunamadı.`);
                 }
             } else if (isDocxDocument(file)) {
                 try {
@@ -2194,19 +2286,13 @@ ${answer}` : action;
                     const arrayBuffer = await file.arrayBuffer();
                     const result = await mammoth.extractRawText({ arrayBuffer });
                     const text = (result && result.value || "").trim();
-                    addSelectedFile({
-                        id: "file_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9),
-                        name: file.name,
-                        type: file.type,
-                        size: file.size,
-                        content: `\n[${file.name} İÇERİĞİ]:\n${text}\n`,
-                        rawType: "document"
-                    });
+                    addDocumentTextFile(file, text, { sourceType: 'docx' });
                 } catch (err) {
                     console.error("DOCX okuma hatası:", err);
+                    showNonBlockingToast(`"${file.name}" Word belgesi olarak okunamadı.`);
                 }
             } else {
-                showNonBlockingToast(`"${file.name}" desteklenmiyor. PDF, DOCX veya metin tabanlı bir dosya seçin.`);
+                showNonBlockingToast(`"${file.name}" desteklenmiyor. PDF, DOCX, ZIP veya metin/kod dosyası seçin.`);
             }
         }
         event.target.value = '';
@@ -2214,7 +2300,7 @@ ${answer}` : action;
 
     function isPlainTextDocument(file) {
         if (file.type && file.type.startsWith('text/')) return true;
-        const plainTextExtensions = ['.txt', '.js', '.py', '.ts', '.html', '.css', '.md', '.csv', '.json'];
+        const plainTextExtensions = ARCHIVE_TEXT_EXTENSIONS;
         const name = (file.name || '').toLowerCase();
         return plainTextExtensions.some(ext => name.endsWith(ext));
     }
@@ -2317,17 +2403,24 @@ ${answer}` : action;
 
     // --- FAZ 19: Keşfet Turu ---
     const FZ19_TOUR_STEPS = [
-        { target: null, title: 'Hoş Geldin! 👋', desc: 'CinoCode Keşfet Turu\'na hoş geldin. Kod yazma, görsel/video/oyun üretme, sesli sohbet ve internetten arama — hepsi burada. Sana en önemli araçları kısaca tanıtacağım.' },
-        { target: 'styleModeSelect', title: 'Üslup Modları', desc: 'Buradan modelin zeka seviyesini ve yazım tarzını (Güvenli, Dengeli, Serbest) değiştirebilirsin.', pref: 'styleMode' },
-        { target: 'personaSelect', title: 'Özel Meslekler', desc: 'CinoCode\'u öğretmen veya doktor gibi farklı rollere büründürebilirsin.', pref: 'personaSelect' },
-        { target: 'micBtn', title: 'Sesle Yaz', desc: 'Yazmak yerine mikrofonu kullanarak konuşabilirsin.', pref: 'microphone' },
-        { target: 'speakerBtn', title: 'Sesli Okuma (TTS)', desc: 'Cevapların otomatik olarak sesli okunmasını sağlar.', pref: 'ttsButton' },
-        { target: 'voiceControlsContainer', title: 'Ses Kontrolleri', desc: 'Hangi sesin kullanılacağını ve okuma hızını buradan ayarlayabilirsin.', pref: 'voiceSelect' },
-        { target: 'fz19AttachBtn', title: 'Dosya Ekle & Stüdyolar', desc: 'Buradaki (+) butonuna basarak görsel/video stüdyosunu açabilir veya dosya/resim ekleyebilirsin.' },
-        { target: 'webSearchBtn', title: 'İnternette Ara', desc: 'Bu butonu açarsan CinoCode, cevap vermeden önce internetten güncel bilgi arar.' },
-        { target: 'sidebarCollapseBtn', title: 'Sohbet Geçmişi', desc: 'Eski sohbetlerine dönmek için bu menüyü kullan.', pref: 'historySidebar' },
-        { target: null, title: 'Arayüzü Düzenle', desc: 'Ayarlar menüsündeki "Arayüzü Düzenle" ile kullanmadığın butonları tamamen gizleyebilirsin.' },
-        { target: null, title: 'Harika! 🎉', desc: 'Tur bitti. İstediğin zaman "Ayarlar"daki "Keşfet" butonuyla tekrar edebilirsin.' }
+        { target: null, title: 'CinoCode\'a Hoş Geldin', desc: 'Sohbetten üretim stüdyolarına, projelerden ses araçlarına kadar ana çalışma alanlarını birlikte gezeceğiz.' },
+        { target: 'sidebarImageStudioBtn', title: 'Görsel Stüdyosu', desc: 'Metinden görsel üretir veya üretim başarısız olduğunda internette açık lisanslı benzerlerini ararsın.', pref: 'historySidebar' },
+        { target: 'sidebarVideoStudioBtn', title: 'Video Stüdyosu', desc: 'Video fikrini sahnelere ayırır ve storyboard/slideshow önizlemesi hazırlar. Gerçek AI video sağlayıcısı henüz bağlı değildir.', pref: 'historySidebar' },
+        { target: 'sidebarGameStudioBtn', title: 'Oyun ve Kod', desc: 'Mini oyun, web aracı veya uygulama fikrini çalıştırılabilir HTML çıktısına dönüştürür.', pref: 'historySidebar' },
+        { target: 'sidebarDocStudioBtn', title: 'Belge ve ZIP Analizi', desc: 'PDF, DOCX, metin, kod ve güvenli ZIP arşivlerini sohbet bağlamına ekleyebilirsin.', pref: 'historySidebar' },
+        { target: 'sidebarProjectsBtn', title: 'Projeler', desc: 'Sohbetleri ve belgeleri çalışma alanlarına ayırır, aynı iş üzerindeki içeriği birlikte tutarsın.', pref: 'historySidebar' },
+        { target: 'sidebarMyAppsBtn', title: 'My Apps', desc: 'Hazır üretim akışlarını ve CinoCode içindeki mini uygulamaları tek merkezden açarsın.', pref: 'historySidebar' },
+        { target: 'sidebarSkillsBtn', title: 'Beceriler ve Bağlayıcılar', desc: 'Etkin araçları ve OAuth/backend gerektiren bağlantıları dürüst durum etiketleriyle görürsün.', pref: 'historySidebar' },
+        { target: 'styleModeSelect', title: 'Üslup Modları', desc: 'Güvenli, Dengeli ve Serbest seçenekleri yanıt tonunu ve içerik sınırlarını belirler.', pref: 'styleMode' },
+        { target: 'personaSelect', title: 'Persona ve Meslekler', desc: 'Öğretmen, yazılımcı veya alan uzmanı gibi farklı çalışma rollerini buradan seçersin.', pref: 'personaSelect' },
+        { target: 'fz19AttachBtn', title: 'Ekle Menüsü', desc: 'Dosya, fotoğraf, kamera, ses, stüdyo ve proje araçlarının hızlı menüsüdür.' },
+        { target: 'webSearchBtn', title: 'İnternette Ara', desc: 'Güncel bilgi gerektiğinde web destekli sohbeti açar; görsel arama ise Openverse üzerinden çalışır.' },
+        { target: 'micBtn', title: 'Mikrofon', desc: 'Desteklenen tarayıcılarda konuşmanı metne çevirerek mesaj alanına aktarır.', pref: 'microphone' },
+        { target: 'speakerBtn', title: 'Sesli Okuma', desc: 'Asistan yanıtlarını TTS ile dinlersin; otomatik okuma davranışını da buradan yönetirsin.', pref: 'ttsButton' },
+        { target: 'voiceControlsContainer', title: 'Ses Kontrolleri', desc: 'Ses karakteri, hız ve perde ayarlarını çalışma biçimine göre özelleştirirsin.', pref: 'voiceSelect' },
+        { target: 'userProfile', title: 'Yerel Profil', desc: 'Bu cihazdaki profilini, sohbet dışa aktarımını ve yerel verilerini yönetirsin. Bulut senkronizasyonu henüz yoktur.', pref: 'profileButton' },
+        { target: 'settingsBtn', title: 'Ayarlar ve Tema Stüdyosu', desc: 'Sağlayıcı, medya, görünüm ve deneysel özellik ayarlarına; ayrıca Tema Stüdyosu ve bu tura buradan ulaşırsın.' },
+        { target: null, title: 'Hazırsın', desc: 'Tur tamamlandı. Ayarlar içindeki “CinoCode\'u Keşfet” düğmesiyle istediğin zaman yeniden başlatabilirsin.' }
     ];
 
     let fz19VisibleSteps = [];
@@ -6730,7 +6823,7 @@ ${answer}` : action;
         tam:     { styleMode:true,  personaSelect:true,  voiceSelect:true,  microphone:true,  ttsButton:true,  historySidebar:true,  profileButton:true }
     };
     function fz19DefaultUiPrefs() {
-        return { version: 1, theme: "dengeli", visibility: { ...FZ19_THEME_PRESETS.dengeli }, lastUpdated: "" };
+        return { version: 2, theme: "tam", visibility: { ...FZ19_THEME_PRESETS.tam }, lastUpdated: "" };
     }
     function fz19LoadUiPrefs() {
         try {
@@ -6742,7 +6835,10 @@ ${answer}` : action;
             Object.keys(FZ19_FEATURE_MAP).forEach(k => {
                 visibility[k] = (typeof vis[k] === "boolean") ? vis[k] : true; // eksikse görünür
             });
-            return { version: 1, theme: parsed.theme || "dengeli", visibility, lastUpdated: parsed.lastUpdated || "" };
+            if ((Number(parsed.version) || 1) < 2 && !parsed.lastUpdated && parsed.theme === "dengeli") {
+                return fz19DefaultUiPrefs();
+            }
+            return { version: 2, theme: parsed.theme || "tam", visibility, lastUpdated: parsed.lastUpdated || "" };
         } catch (e) {
             return fz19DefaultUiPrefs();
         }
@@ -6995,6 +7091,13 @@ ${answer}` : action;
         }
 
         if (document.getElementById('loggedInUser')) {
+            if (loggedUser && typeof rememberLocalProfile === 'function') {
+                rememberLocalProfile(loggedUser);
+            }
+            if (!loggedUser && typeof openLocalAuthModal === 'function') {
+                setTimeout(() => openLocalAuthModal(), 0);
+            }
+
             if (loggedUser) {
                 document.getElementById('loggedInUser').innerText = loggedUser;
                 document.getElementById('loggedInUserWrapper').style.display = "inline";
@@ -7903,7 +8006,9 @@ ${answer}` : action;
         let docTextToUse = null;
         let docNameToUse = "Belge";
         if (documents.length > 0) {
-            docTextToUse = documents.map(d => d.content).join("\n");
+            docTextToUse = documents
+                .map(d => String(d.content || ''))
+                .join("\n").slice(0, DOCUMENT_CONTEXT_MAX_CHARS);
             docNameToUse = documents.map(d => d.name).join(", ");
         }
 

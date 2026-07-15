@@ -781,10 +781,182 @@ function buildExamCoachSuffix() {
         return { memory: 'cinocode_memory_' + n, db: 'cinocode_db_' + n };
     }
 
+    const LOCAL_PROFILE_REGISTRY_KEY = 'cinocode_local_profiles_v1';
+
+    function normalizeLocalProfileName(value) {
+        return String(value || '')
+            .replace(/[\u0000-\u001f\u007f<>]/g, '')
+            .replace(/\s+/g, ' ')
+            .trim()
+            .slice(0, 40);
+    }
+
+    function getLocalProfiles() {
+        try {
+            const parsed = JSON.parse(localStorage.getItem(LOCAL_PROFILE_REGISTRY_KEY) || '[]');
+            if (!Array.isArray(parsed)) return [];
+            const seen = new Set();
+            return parsed.map(normalizeLocalProfileName).filter(name => {
+                const key = name.toLocaleLowerCase('tr-TR');
+                if (!name || seen.has(key)) return false;
+                seen.add(key);
+                return true;
+            });
+        } catch (e) {
+            return [];
+        }
+    }
+
+    function saveLocalProfiles(profiles) {
+        try {
+            localStorage.setItem(LOCAL_PROFILE_REGISTRY_KEY, JSON.stringify(profiles.slice(0, 12)));
+        } catch (e) {
+            console.warn('Local profile registry could not be saved', e);
+        }
+    }
+
+    function rememberLocalProfile(name) {
+        const normalized = normalizeLocalProfileName(name);
+        if (!normalized) return;
+        const profiles = getLocalProfiles().filter(item => item.toLocaleLowerCase('tr-TR') !== normalized.toLocaleLowerCase('tr-TR'));
+        profiles.unshift(normalized);
+        saveLocalProfiles(profiles);
+    }
+
+    function forgetLocalProfile(name) {
+        const normalized = normalizeLocalProfileName(name).toLocaleLowerCase('tr-TR');
+        saveLocalProfiles(getLocalProfiles().filter(item => item.toLocaleLowerCase('tr-TR') !== normalized));
+    }
+
+    function localProfileExists(name) {
+        const normalized = normalizeLocalProfileName(name);
+        if (!normalized) return false;
+        if (getLocalProfiles().some(item => item.toLocaleLowerCase('tr-TR') === normalized.toLocaleLowerCase('tr-TR'))) return true;
+        const keys = getUserScopedKeys(normalized);
+        try {
+            return localStorage.getItem(keys.db) !== null || localStorage.getItem(keys.memory) !== null;
+        } catch (e) {
+            return false;
+        }
+    }
+
+    function openLocalAuthModal(initialMode) {
+        const existing = document.getElementById('localAuthOverlay');
+        if (existing) existing.remove();
+        const profiles = getLocalProfiles();
+        let mode = initialMode === 'register' || initialMode === 'signin'
+            ? initialMode
+            : (profiles.length ? 'signin' : 'register');
+
+        const overlay = document.createElement('div');
+        overlay.id = 'localAuthOverlay';
+        overlay.className = 'cc-auth-overlay';
+        overlay.innerHTML = `
+            <section class="cc-auth-modal" role="dialog" aria-modal="true" aria-labelledby="localAuthTitle">
+                <div class="cc-auth-brand"><span class="cc-auth-brand-mark" aria-hidden="true">C</span><span>CinoCode</span><span class="cc-auth-local-badge">Yerel profil</span></div>
+                <h1 id="localAuthTitle">CinoCode'a Başla</h1>
+                <p id="localAuthLead" class="cc-auth-lead">Bu cihazdaki çalışma alanına giriş yap.</p>
+                <div class="cc-auth-tabs" role="tablist" aria-label="Profil işlemi">
+                    <button type="button" id="localAuthSigninTab" role="tab">Giriş Yap</button>
+                    <button type="button" id="localAuthRegisterTab" role="tab">Kayıt Ol</button>
+                </div>
+                <form id="localAuthForm" novalidate>
+                    <label for="localAuthName">Görünen isim</label>
+                    <input id="localAuthName" name="displayName" type="text" minlength="2" maxlength="40" autocomplete="name" placeholder="Örn: Hüsamettin" required>
+                    <div id="localAuthAgeGroup" class="cc-auth-field-group">
+                        <label for="localAuthAge">Yaş <span>(isteğe bağlı)</span></label>
+                        <input id="localAuthAge" name="age" type="number" min="1" max="120" inputmode="numeric" placeholder="Örn: 24">
+                    </div>
+                    <div id="localAuthProfiles" class="cc-auth-profiles" aria-label="Bu cihazdaki profiller"></div>
+                    <div id="localAuthError" class="cc-auth-error" role="alert" aria-live="polite"></div>
+                    <button id="localAuthSubmit" class="cc-auth-submit" type="submit">Devam Et</button>
+                </form>
+                <div class="cc-auth-privacy"><strong>Bu sürüm yereldir.</strong> Şifre, e-posta doğrulaması ve bulut senkronizasyonu yoktur. Veriler bu tarayıcıda saklanır.</div>
+            </section>
+        `;
+        document.body.appendChild(overlay);
+        document.body.classList.add('cc-auth-open');
+
+        const title = document.getElementById('localAuthTitle');
+        const lead = document.getElementById('localAuthLead');
+        const signinTab = document.getElementById('localAuthSigninTab');
+        const registerTab = document.getElementById('localAuthRegisterTab');
+        const ageGroup = document.getElementById('localAuthAgeGroup');
+        const profileList = document.getElementById('localAuthProfiles');
+        const nameInput = document.getElementById('localAuthName');
+        const error = document.getElementById('localAuthError');
+        const submit = document.getElementById('localAuthSubmit');
+
+        function setMode(nextMode) {
+            mode = nextMode;
+            const signingIn = mode === 'signin';
+            signinTab.classList.toggle('active', signingIn);
+            registerTab.classList.toggle('active', !signingIn);
+            signinTab.setAttribute('aria-selected', String(signingIn));
+            registerTab.setAttribute('aria-selected', String(!signingIn));
+            title.textContent = signingIn ? 'Tekrar Hoş Geldin' : 'Yerel Profil Oluştur';
+            lead.textContent = signingIn ? 'Bu cihazdaki profilini seç veya görünen ismini yaz.' : 'CinoCode çalışma alanın için bir görünen isim belirle.';
+            ageGroup.hidden = signingIn;
+            profileList.hidden = !signingIn || profiles.length === 0;
+            submit.textContent = signingIn ? 'Giriş Yap' : 'Kayıt Ol ve Başla';
+            error.textContent = '';
+            nameInput.focus();
+        }
+
+        profileList.innerHTML = profiles.length
+            ? '<span>Bu cihazdaki profiller</span>' + profiles.map((name, index) => `<button type="button" data-profile-index="${index}">${name.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</button>`).join('')
+            : '';
+        profileList.addEventListener('click', event => {
+            const button = event.target.closest('[data-profile-index]');
+            if (!button) return;
+            nameInput.value = profiles[Number(button.dataset.profileIndex)] || '';
+            nameInput.focus();
+        });
+        signinTab.onclick = () => setMode('signin');
+        registerTab.onclick = () => setMode('register');
+
+        document.getElementById('localAuthForm').onsubmit = event => {
+            event.preventDefault();
+            const name = normalizeLocalProfileName(nameInput.value);
+            if (name.length < 2) {
+                error.textContent = 'Görünen isim en az 2 karakter olmalı.';
+                return;
+            }
+            const exists = localProfileExists(name);
+            if (mode === 'signin' && !exists) {
+                error.textContent = 'Bu cihazda bu isimle kayıtlı profil yok. Kayıt Ol sekmesini kullan.';
+                return;
+            }
+            if (mode === 'register' && exists) {
+                error.textContent = 'Bu isimle yerel profil zaten var. Giriş Yap sekmesini kullan.';
+                return;
+            }
+            const age = document.getElementById('localAuthAge').value;
+            if (mode === 'register' && age && (Number(age) < 1 || Number(age) > 120)) {
+                error.textContent = 'Yaş 1 ile 120 arasında olmalı.';
+                return;
+            }
+            try {
+                localStorage.setItem('cinocode_user', name);
+                if (mode === 'register' && age) localStorage.setItem('cinocode_user_age', String(Number(age)));
+                rememberLocalProfile(name);
+                window.location.reload();
+            } catch (storageError) {
+                console.error('Local auth failed', storageError);
+                error.textContent = 'Tarayıcı yerel depolamaya izin vermedi. Site verisi izinlerini kontrol et.';
+            }
+        };
+
+        setMode(mode);
+    }
+
     function renameLocalProfile(newNameRaw) {
-        const newName = (newNameRaw || "").trim();
+        const newName = normalizeLocalProfileName(newNameRaw);
         if (!newName) { showNonBlockingToast('İsim boş olamaz.'); return false; }
-        if (newName.toLowerCase() === (loggedUser || "").trim().toLowerCase()) { return true; }
+        if (newName.toLocaleLowerCase('tr-TR') === (loggedUser || "").trim().toLocaleLowerCase('tr-TR')) {
+            rememberLocalProfile(newName);
+            return true;
+        }
         const oldKeys = getUserScopedKeys(loggedUser);
         const newKeys = getUserScopedKeys(newName);
         try {
@@ -793,6 +965,8 @@ function buildExamCoachSuffix() {
             if (oldMemory !== null) { localStorage.setItem(newKeys.memory, oldMemory); localStorage.removeItem(oldKeys.memory); }
             if (oldDb !== null) { localStorage.setItem(newKeys.db, oldDb); localStorage.removeItem(oldKeys.db); }
             localStorage.setItem('cinocode_user', newName);
+            forgetLocalProfile(loggedUser);
+            rememberLocalProfile(newName);
             return true;
         } catch (e) {
             console.error('Profile rename failed', e);
@@ -836,6 +1010,7 @@ function buildExamCoachSuffix() {
             localStorage.removeItem(keys.memory);
             localStorage.removeItem(keys.db);
             localStorage.removeItem('cinocode_user');
+            forgetLocalProfile(loggedUser);
             CinoDB.delete('workspaces', keys.db).finally(() => {
                 location.reload();
             });
@@ -864,7 +1039,11 @@ function buildExamCoachSuffix() {
         overlay.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:20000; display:flex; align-items:center; justify-content:center;';
         overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
 
-        const safeName = (loggedUser || '').replace(/"/g, '&quot;');
+        const safeName = String(loggedUser || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
         const box = document.createElement('div');
         box.style.cssText = 'background:var(--cc-mantle); border:1px solid var(--cc-surface2); border-radius: var(--cc-radius); padding:20px; width:320px; max-width:90vw; color:var(--cc-text);';
         const currentAge = localStorage.getItem('cinocode_user_age') || '';
@@ -875,6 +1054,7 @@ function buildExamCoachSuffix() {
             <div style="font-size:11px; color:var(--cc-subtext0); margin-bottom:6px;">Yaş</div>
             <input id="localProfileAgeInput" type="number" value="${currentAge}" placeholder="Örn: 20" style="width:100%; box-sizing:border-box; background:var(--cc-base); border:1px solid var(--cc-surface2); color:var(--cc-text); padding:8px; border-radius: var(--cc-radius); font-size:13px; margin-bottom:10px;">
             <div style="font-size:11px; color:var(--cc-subtext0); margin-bottom:14px;">${chatCount} sohbet, yaklaşık ${approxKb} KB yerel veri</div>
+            <div style="font-size:11px; color:var(--cc-subtext0); margin-bottom:14px; line-height:1.45;">Bu profil yalnızca bu tarayıcıda saklanır; parola veya bulut senkronizasyonu içermez.</div>
             <button id="localProfileSaveBtn" style="width:100%; background:var(--cc-blue); border:none; color:var(--cc-base); cursor:pointer; font-size:12px; font-weight:700; padding:8px; border-radius: var(--cc-radius); margin-bottom:8px;">Kaydet</button>
             <button id="localProfileExportBtn" style="width:100%; background:transparent; border:1px solid var(--cc-surface2); color:var(--cc-text); cursor:pointer; font-size:12px; font-weight:600; padding:8px; border-radius: var(--cc-radius); margin-bottom:8px;">⬇️ Sohbetleri Dışa Aktar</button>
             <button id="localProfileThemeBtn" style="width:100%; background:transparent; border:1px solid var(--cc-surface2); color:var(--cc-text); cursor:pointer; font-size:12px; font-weight:600; padding:8px; border-radius: var(--cc-radius); margin-bottom:8px;">🎨 Açık/Koyu Tema</button>

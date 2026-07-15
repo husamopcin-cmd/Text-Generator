@@ -31,11 +31,16 @@ test('code fences escape raw code and constrain language class names', () => {
   assert.match(html, /registerTrustedRenderFragment\(trustedCodeBlock\)/);
 });
 
-test('unsupported document types are not advertised by the file picker', () => {
+test('document picker advertises ZIP only with bounded local parsing', () => {
   const input = html.match(/<input type="file" id="docUpload"[^>]+>/)?.[0] || '';
   assert.ok(input, 'document input should exist');
-  assert.doesNotMatch(input, /\.(?:zip|xlsx|pptx)/);
-  assert.match(html, /desteklenmiyor\. PDF, DOCX veya metin tabanlı bir dosya seçin/);
+  assert.match(input, /\.zip/);
+  assert.doesNotMatch(input, /\.(?:xlsx|pptx)/);
+  assert.match(html, /async function extractZipDocument\(file\)/);
+  assert.match(html, /ARCHIVE_ENTRY_MAX_BYTES/);
+  assert.match(html, /ARCHIVE_TOTAL_MAX_BYTES/);
+  assert.match(html, /ARCHIVE_SECRET_PATH/);
+  assert.match(html, /desteklenmiyor\. PDF, DOCX, ZIP veya metin\/kod dosyası seçin/);
 });
 
 test('NVIDIA key input is masked', () => {

@@ -15,6 +15,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
     <!-- Mammoth.js (Word/.docx Metin Çıkarma) -->
     <script src="https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js"></script>
+    <!-- JSZip (ZIP içindeki güvenli metin/kod dosyalarını yerelde çıkarma) -->
+    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 
     <!-- PWA Cache Busting -->
     <script>
@@ -142,7 +144,7 @@
                 <button class="icon-btn speaker-btn active" id="speakerBtn" onclick="toggleSpeaker()" title="Sesli Okuma">🔊</button>
                 <button class="icon-btn" onclick="printChat()" title="Sohbeti PDF Yap (Yazdır)">📄 PDF</button>
                 <button class="icon-btn" onclick="exportChat()" title="Sohbeti .txt Kaydet">💾</button>
-                <button class="icon-btn" onclick="openSettings()" title="Genel Ayarlar">⚙️</button>
+                <button class="icon-btn" id="settingsBtn" onclick="openSettings()" title="Genel Ayarlar">⚙️</button>
             </div>
         </div>
 
@@ -756,7 +758,7 @@
         <input type="file" id="mediaUpload" accept="image/*,video/*" style="display:none;" onchange="handleMediaSelect(event)">
         <input type="file" id="cameraUpload" accept="image/*" capture="environment" style="display:none;" onchange="handleImageSelect(event)">
         <input type="file" id="audioUpload" accept="audio/*" style="display:none;" onchange="handleAudioSelect(event)">
-        <input type="file" id="docUpload" accept=".pdf,.txt,.js,.py,.ts,.html,.css,.md,.csv,.json,.docx,text/*" style="display:none;" onchange="handleDocSelect(event)">
+        <input type="file" id="docUpload" accept=".pdf,.txt,.js,.jsx,.ts,.tsx,.py,.html,.css,.md,.csv,.json,.docx,.zip,application/zip,text/*" style="display:none;" onchange="handleDocSelect(event)">
     </div>
 
     <!-- Settings Modal -->

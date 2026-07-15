@@ -6,6 +6,8 @@ const path = require('node:path');
 const root = path.join(__dirname, '..');
 const html = fs.readFileSync(path.join(root, 'cinocode_chat.html'), 'utf8');
 const main = fs.readFileSync(path.join(root, 'assets', 'js', 'main.js'), 'utf8');
+const coach = fs.readFileSync(path.join(root, 'assets', 'js', 'sinavkocu.js'), 'utf8');
+const css = fs.readFileSync(path.join(root, 'assets', 'css', 'main.css'), 'utf8');
 
 function countId(id) {
   return (html.match(new RegExp(`id=["']${id}["']`, 'g')) || []).length;
@@ -84,4 +86,80 @@ test('skills screen labels preview and unavailable integrations honestly', () =>
 
 test('contextual projects entry remains available in the attach menu', () => {
   assert.match(html, /onclick="closeAttachMenu\(\); openProjectsScreen\(\);"/);
+});
+
+test('startup profile flow uses the professional modal instead of native prompt', () => {
+  const startup = main.match(/function getStoredUserName\(\)[\s\S]*?let loggedUser = getStoredUserName\(\);/);
+  assert.ok(startup, 'Missing safe stored-user bootstrap');
+  assert.doesNotMatch(startup[0], /prompt\(/);
+  assert.match(main, /setTimeout\(\(\) => openLocalAuthModal\(\), 0\)/);
+  assert.match(main, /function logout\(\)[\s\S]*?rememberLocalProfile\(loggedUser\)/);
+  assert.doesNotMatch(startup[0], /ahmet/i, 'real names must not be treated as migration sentinels');
+});
+
+test('local sign-in and registration are explicit about their backend boundary', () => {
+  const auth = coach.match(/function openLocalAuthModal\(initialMode\)[\s\S]*?\n    function renameLocalProfile/);
+  assert.ok(auth, 'Missing local auth modal');
+  assert.match(auth[0], /Giriş Yap/);
+  assert.match(auth[0], /Kayıt Ol/);
+  assert.match(auth[0], /Bu sürüm yereldir/);
+  assert.match(auth[0], /Şifre, e-posta doğrulaması ve bulut senkronizasyonu yoktur/);
+  assert.doesNotMatch(auth[0], /type="password"/);
+  assert.doesNotMatch(auth[0], /localStorage\.setItem\([^\n]*(password|parola|şifre)/i);
+  assert.match(css, /\.cc-auth-overlay/);
+  assert.match(css, /@media \(max-width: 520px\)/);
+});
+
+test('document picker supports bounded local ZIP analysis', () => {
+  assert.match(html, /jszip@3\.10\.1/);
+  assert.match(html, /id="docUpload"[^>]*\.zip/);
+  assert.match(main, /DOCUMENT_UPLOAD_MAX_BYTES = 25 \* 1024 \* 1024/);
+  assert.match(main, /DOCUMENT_CONTEXT_MAX_CHARS = 1000000/);
+  assert.match(main, /ARCHIVE_MAX_FILES = 180/);
+  assert.match(main, /ARCHIVE_ENTRY_MAX_BYTES = 1024 \* 1024/);
+  assert.match(main, /ARCHIVE_TOTAL_MAX_BYTES = 20 \* 1024 \* 1024/);
+  assert.match(main, /function isZipDocument\(file\)/);
+  assert.match(main, /async function extractZipDocument\(file\)/);
+  assert.match(main, /ARCHIVE_IGNORED_PATH/);
+  assert.match(main, /ARCHIVE_SECRET_PATH/);
+  assert.doesNotMatch(main, /Lütfen 5MB'dan küçük belgeler/);
+});
+
+test('document text sent to AI remains below the serverless payload ceiling', () => {
+  assert.match(main, /getRemainingDocumentContextChars\(\)/);
+  assert.match(main, /Belge bağlamı doldu/);
+  assert.match(main, /join\("\\n"\)\.slice\(0, DOCUMENT_CONTEXT_MAX_CHARS\)/);
+  assert.match(main, /İçerik güvenli bağlam sınırında kısaltıldı/);
+});
+
+test('full interface is the v2 default without overwriting explicit preferences', () => {
+  assert.match(main, /return \{ version: 2, theme: "tam", visibility: \{ \.\.\.FZ19_THEME_PRESETS\.tam \}/);
+  assert.match(main, /parsed\.theme \|\| "tam"/);
+  assert.match(main, /Number\(parsed\.version\)[\s\S]*?!parsed\.lastUpdated[\s\S]*?parsed\.theme === "dengeli"/);
+  assert.match(html, /<div[^>]*>Tam<\/div>[\s\S]*?Her şey açık<br>\(varsayılan\)/);
+});
+
+test('discovery tour covers the complete primary workflow', () => {
+  const tour = main.match(/const FZ19_TOUR_STEPS = \[[\s\S]*?\n    \];/);
+  assert.ok(tour, 'Missing discovery tour steps');
+  const requiredTargets = [
+    'sidebarImageStudioBtn',
+    'sidebarVideoStudioBtn',
+    'sidebarGameStudioBtn',
+    'sidebarDocStudioBtn',
+    'sidebarProjectsBtn',
+    'sidebarMyAppsBtn',
+    'sidebarSkillsBtn',
+    'styleModeSelect',
+    'personaSelect',
+    'fz19AttachBtn',
+    'webSearchBtn',
+    'micBtn',
+    'speakerBtn',
+    'voiceControlsContainer',
+    'userProfile',
+    'settingsBtn'
+  ];
+  for (const target of requiredTargets) assert.match(tour[0], new RegExp(`target: '${target}'`));
+  assert.equal(countId('settingsBtn'), 1);
 });
