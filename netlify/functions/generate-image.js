@@ -1,11 +1,13 @@
 
 
+const { buildSecurityHeaders, guardRequest } = require('./_security');
+
 const PROVIDER_TIMEOUT_MS = 18000;
 
-function corsJson(statusCode, bodyObj) {
+function corsJson(event, statusCode, bodyObj) {
   return {
     statusCode,
-    headers: { 'Access-Control-Allow-Origin': '*' },
+    headers: buildSecurityHeaders(event),
     body: JSON.stringify(bodyObj)
   };
 }
@@ -229,44 +231,44 @@ const PROVIDERS = [
 ];
 
 exports.handler = async function(event) {
+  const securityResponse = guardRequest(event, {
+    namespace: 'generate-image',
+    maxBodyBytes: 64 * 1024,
+    rateLimit: 15,
+    windowMs: 60 * 1000
+  });
+  if (securityResponse) return securityResponse;
+
   if (typeof fetch === 'undefined') {
-    return corsJson(500, {
+    return corsJson(event, 500, {
       ok: false,
       error: 'runtime_fetch_missing',
       message: 'Netlify runtime fetch desteği bulunamadı.'
     });
   }
 
-  if (event.httpMethod === 'OPTIONS') {
-    return {
-      statusCode: 200,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type'
-      },
-      body: 'OK'
-    };
-  }
 
   if (event.httpMethod !== 'POST') {
-    return corsJson(405, { ok: false, error: 'Sadece POST desteklenir.' });
+    return corsJson(event, 405, { ok: false, error: 'Sadece POST desteklenir.' });
   }
 
   let body;
   try {
     body = JSON.parse(event.body || '{}');
   } catch (err) {
-    return corsJson(400, { ok: false, error: 'bad_json', message: 'Geçersiz istek gövdesi.' });
+    return corsJson(event, 400, { ok: false, error: 'bad_json', message: 'Geçersiz istek gövdesi.' });
   }
 
-  const prompt = body.prompt;
-  const width = parseInt(body.width, 10) || 1024;
-  const height = parseInt(body.height, 10) || 1024;
+  const prompt = String(body.prompt || '').trim();
+  const width = Math.min(2048, Math.max(256, parseInt(body.width, 10) || 1024));
+  const height = Math.min(2048, Math.max(256, parseInt(body.height, 10) || 1024));
   const forceProvider = String(body.forceProvider || '').trim().toLowerCase();
 
   if (!prompt) {
-    return corsJson(400, { ok: false, error: 'missing_prompt', message: 'Prompt alanı zorunludur.' });
+    return corsJson(event, 400, { ok: false, error: 'missing_prompt', message: 'Prompt alanı zorunludur.' });
+  }
+  if (prompt.length > 8000) {
+    return corsJson(event, 413, { ok: false, error: 'prompt_too_long', message: 'Prompt en fazla 8000 karakter olabilir.' });
   }
 
   const chain = forceProvider
@@ -274,7 +276,7 @@ exports.handler = async function(event) {
     : PROVIDERS;
 
   if (!chain.length) {
-    return corsJson(400, { ok: false, error: 'unknown_provider', message: 'Bilinmeyen sağlayıcı: ' + forceProvider });
+    return corsJson(event, 400, { ok: false, error: 'unknown_provider', message: 'Bilinmeyen sağlayıcı: ' + forceProvider });
   }
 
   const attempts = [];
@@ -287,7 +289,7 @@ exports.handler = async function(event) {
     }
 
     if (result.ok) {
-      return corsJson(200, {
+      return corsJson(event, 200, {
         ok: true,
         provider: provider.name,
         images: [result.url],
@@ -308,7 +310,7 @@ exports.handler = async function(event) {
     ? 'Hiçbir görsel sağlayıcısı yapılandırılmamış (env anahtarları eksik).'
     : 'Tüm görsel sağlayıcıları başarısız oldu: ' + attempts.map(a => `${a.provider}=${a.error}`).join(', ');
 
-  return corsJson(502, {
+  return corsJson(event, 502, {
     ok: false,
     error: configured.length === 0 ? 'missing_env' : 'all_providers_failed',
     message,

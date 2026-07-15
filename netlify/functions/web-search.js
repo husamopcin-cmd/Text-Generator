@@ -1,20 +1,18 @@
+const { buildSecurityHeaders, guardRequest } = require('./_security');
+
 exports.handler = async function(event) {
-  if (event.httpMethod === 'OPTIONS') {
-    return {
-      statusCode: 200,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type'
-      },
-      body: 'OK'
-    };
-  }
+  const securityResponse = guardRequest(event, {
+    namespace: 'web-search',
+    maxBodyBytes: 16 * 1024,
+    rateLimit: 30,
+    windowMs: 60 * 1000
+  });
+  if (securityResponse) return securityResponse;
 
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
-      headers: { 'Access-Control-Allow-Origin': '*' },
+      headers: buildSecurityHeaders(event),
       body: JSON.stringify({ error: 'Sadece POST desteklenir.' })
     };
   }
@@ -25,17 +23,24 @@ exports.handler = async function(event) {
   } catch (err) {
     return {
       statusCode: 400,
-      headers: { 'Access-Control-Allow-Origin': '*' },
+      headers: buildSecurityHeaders(event),
       body: JSON.stringify({ error: 'Geçersiz JSON.' })
     };
   }
 
-  const query = body.query;
-  if (!query || typeof query !== 'string') {
+  const query = String(body.query || '').trim();
+  if (!query) {
     return {
       statusCode: 400,
-      headers: { 'Access-Control-Allow-Origin': '*' },
+      headers: buildSecurityHeaders(event),
       body: JSON.stringify({ error: 'Arama sorgusu (query) gerekli.' })
+    };
+  }
+  if (query.length > 500) {
+    return {
+      statusCode: 413,
+      headers: buildSecurityHeaders(event),
+      body: JSON.stringify({ error: 'Arama sorgusu en fazla 500 karakter olabilir.' })
     };
   }
 
@@ -52,7 +57,7 @@ exports.handler = async function(event) {
     if (!res.ok) {
       return {
         statusCode: 502,
-        headers: { 'Access-Control-Allow-Origin': '*' },
+        headers: buildSecurityHeaders(event),
         body: JSON.stringify({ error: 'Arama motoruna erişilemedi.' })
       };
     }
@@ -76,21 +81,21 @@ exports.handler = async function(event) {
     if (snippets.length === 0) {
       return {
         statusCode: 200,
-        headers: { 'Access-Control-Allow-Origin': '*' },
+        headers: buildSecurityHeaders(event),
         body: JSON.stringify({ results: [{ title: "Uyarı", snippet: "Arama sonucu bulunamadı veya DDG tarafından geçici olarak engellendi." }] })
       };
     }
 
     return {
       statusCode: 200,
-      headers: { 'Access-Control-Allow-Origin': '*' },
+      headers: buildSecurityHeaders(event),
       body: JSON.stringify({ results: snippets })
     };
 
   } catch (err) {
     return {
       statusCode: 500,
-      headers: { 'Access-Control-Allow-Origin': '*' },
+      headers: buildSecurityHeaders(event),
       body: JSON.stringify({ error: 'Arama sırasında bir sunucu hatası oluştu.' })
     };
   }

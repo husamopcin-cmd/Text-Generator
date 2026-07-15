@@ -5902,23 +5902,13 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
         if (expectedVoiceId === 'male_baris') vName = 'male_wavenet_d';
         if (expectedVoiceId === 'male_local') vName = 'male_local';
 
-        const azureKey = localStorage.getItem("azure_speech_key") || "";
-        const azureRegion = localStorage.getItem("azure_speech_region") || "";
-
-        let url = getTtsUrl() + "?voice=" + vName + "&lang=" + encodeURIComponent(langCode) + "&text=" + encodeURIComponent(cleanText);
-        if (azureKey && azureRegion) {
-            url += "&azure_key=" + encodeURIComponent(azureKey) + "&azure_region=" + encodeURIComponent(azureRegion);
-        }
-
         if (!window.sharedAudio) window.sharedAudio = new Audio();
         const audio = window.sharedAudio;
-        audio.src = url;
         window.currentAudio = audio;
 
-        // Google TTS (gTTS) fallback durumunda sesleri değiştirmek için rate kullanıyoruz,
-        // ama eğer Azure kullanılıyorsa sesler zaten sunucu tarafında (Ahmet, Emel vb.) farklı üretildiği için rate = 1.0 olmalı.
+        // Sunucu seslerinde karakter farkını istemci oynatma hızıyla koruyoruz.
         let rate = 1.0;
-        const isAzureEnabled = azureKey.trim() !== "" && azureRegion.trim() !== "";
+        const isAzureEnabled = false;
 
         if (!isAzureEnabled) {
             if (expectedVoiceId === 'female_edge') rate = 1.18;      // Cino (Tiz/Hızlı)
@@ -5971,8 +5961,22 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
             fallbackToLocalOnce("Sunucu hatası (onerror)", err);
         };
 
-        audio.play().catch(e => {
-            fallbackToLocalOnce("Oynatılamadı (play catch)", e);
+        fetch(getTtsUrl(), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: cleanText, voice: vName, lang: langCode })
+        }).then(response => {
+            if (!response.ok) throw new Error(`TTS sunucusu ${response.status} döndürdü.`);
+            return response.blob();
+        }).then(blob => {
+            if (!isSpeakerOn || speechRunId !== expectedRunId || voiceSelect.value !== expectedVoiceId) return;
+            if (!blob || !String(blob.type || '').startsWith('audio/')) throw new Error('Geçersiz TTS ses yanıtı.');
+            if (window.currentTtsObjectUrl) URL.revokeObjectURL(window.currentTtsObjectUrl);
+            window.currentTtsObjectUrl = URL.createObjectURL(blob);
+            audio.src = window.currentTtsObjectUrl;
+            return audio.play();
+        }).catch(e => {
+            fallbackToLocalOnce("Sunucu isteği veya oynatma başarısız", e);
         });
     }
 
@@ -6160,6 +6164,10 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
                 window.currentAudio.src = "";
             } catch(e) {}
             window.currentAudio = null;
+        }
+        if (window.currentTtsObjectUrl) {
+            try { URL.revokeObjectURL(window.currentTtsObjectUrl); } catch(e) {}
+            window.currentTtsObjectUrl = null;
         }
     }
 

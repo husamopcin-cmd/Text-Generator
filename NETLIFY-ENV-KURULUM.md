@@ -48,9 +48,11 @@ Kurulum notları:
 **Yol:** Render -> TTS servisi (`server.py`) -> Environment -> Add Environment Variable
 
 - [ ] `GOOGLE_TTS_KEY`
+- [ ] `CINOCODE_ALLOWED_ORIGINS` - Netlify site origin'i; örnek: `https://poetic-sfogliatella-4a9202.netlify.app`
 
 Kurulum notları:
 
+- `CINOCODE_ALLOWED_ORIGINS` gizli değildir; TTS çağrısına izin verilecek frontend origin'lerini virgülle ayırır.
 - `PORT` değerini elle ekleme; Render web servisine çalışma zamanında sağlar.
 - Kaydederken **Save and deploy** veya **Save, rebuild, and deploy** seç. **Save only** seçersen değer sonraki deploy'a kadar kullanılmaz.
 

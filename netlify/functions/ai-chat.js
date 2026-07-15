@@ -1,3 +1,5 @@
+const { buildSecurityHeaders, guardRequest } = require('./_security');
+
 const PROXY_PROVIDERS = [
   'openai',
   'cerebras',
@@ -411,22 +413,18 @@ function getFallbackOrder(taskType) {
 }
 
 exports.handler = async function(event) {
-  if (event.httpMethod === 'OPTIONS') {
-    return {
-      statusCode: 200,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type'
-      },
-      body: 'OK'
-    };
-  }
+  const securityResponse = guardRequest(event, {
+    namespace: 'ai-chat',
+    maxBodyBytes: 6 * 1024 * 1024,
+    rateLimit: 60,
+    windowMs: 60 * 1000
+  });
+  if (securityResponse) return securityResponse;
 
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
-      headers: { 'Access-Control-Allow-Origin': '*' },
+      headers: buildSecurityHeaders(event),
       body: JSON.stringify(makeError(405, 'Sadece POST desteklenir.'))
     };
   }
@@ -437,7 +435,7 @@ exports.handler = async function(event) {
   } catch (err) {
     return {
       statusCode: 400,
-      headers: { 'Access-Control-Allow-Origin': '*' },
+      headers: buildSecurityHeaders(event),
       body: JSON.stringify(makeError(400, 'Geçersiz JSON.'))
     };
   }
@@ -451,7 +449,7 @@ exports.handler = async function(event) {
   if (!messages.length) {
     return {
       statusCode: 400,
-      headers: { 'Access-Control-Allow-Origin': '*' },
+      headers: buildSecurityHeaders(event),
       body: JSON.stringify(makeError(400, 'Messages boş olamaz.'))
     };
   }
@@ -469,7 +467,7 @@ exports.handler = async function(event) {
   if (!candidates.length) {
     return {
       statusCode: 503,
-      headers: { 'Access-Control-Allow-Origin': '*' },
+      headers: buildSecurityHeaders(event),
       body: JSON.stringify(makeError(503, 'Hiçbir bulut sağlayıcı yapılandırılmamış.'))
     };
   }
@@ -522,7 +520,7 @@ exports.handler = async function(event) {
     if (result.ok) {
       return {
         statusCode: 200,
-        headers: { 'Access-Control-Allow-Origin': '*' },
+        headers: buildSecurityHeaders(event),
         body: JSON.stringify({
           ok: true,
           provider: result.provider,
@@ -551,7 +549,7 @@ exports.handler = async function(event) {
 
   return {
     statusCode: 502,
-    headers: { 'Access-Control-Allow-Origin': '*' },
+    headers: buildSecurityHeaders(event),
     body: JSON.stringify(makeError(lastError?.status || 502, genericMessage, {
       provider: lastError?.provider,
       model: lastError?.model,
