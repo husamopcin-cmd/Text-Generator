@@ -8,3 +8,7 @@
 node_modules
 *.mp3
 users.db
+__pycache__/
+*.pyc
+.claude/settings.local.json
+deno.lock

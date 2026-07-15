@@ -1,11 +1,14 @@
 
 
-const PROVIDER_TIMEOUT_MS = 18000;
+const { buildSecurityHeaders, guardRequest } = require('./_security');
 
-function corsJson(statusCode, bodyObj) {
+const PROVIDER_TIMEOUT_MS = 18000;
+const OPENAI_IMAGE_TIMEOUT_MS = 60000;
+
+function corsJson(event, statusCode, bodyObj) {
   return {
     statusCode,
-    headers: { 'Access-Control-Allow-Origin': '*' },
+    headers: buildSecurityHeaders(event),
     body: JSON.stringify(bodyObj)
   };
 }
@@ -18,6 +21,51 @@ async function fetchWithTimeout(url, options, timeoutMs) {
   } finally {
     clearTimeout(timeoutId);
   }
+}
+
+function pickOpenAIImageSize(width, height) {
+  const ratio = width / height;
+  if (ratio > 1.15) return '1536x1024';
+  if (ratio < 0.87) return '1024x1536';
+  return '1024x1024';
+}
+
+async function tryOpenAI(prompt, width, height) {
+  const key = (process.env.OPENAI_API_KEY || '').trim();
+  if (!key) return { ok: false, error: 'missing_env' };
+
+  let resp;
+  try {
+    resp = await fetchWithTimeout('https://api.openai.com/v1/images/generations', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + key
+      },
+      body: JSON.stringify({
+        model: 'gpt-image-1-mini',
+        prompt,
+        size: pickOpenAIImageSize(width, height),
+        quality: 'low',
+        output_format: 'jpeg',
+        n: 1
+      })
+    }, OPENAI_IMAGE_TIMEOUT_MS);
+  } catch (err) {
+    return { ok: false, error: err.name === 'AbortError' ? 'timeout' : 'network' };
+  }
+
+  const text = await resp.text();
+  if (!resp.ok) {
+    return { ok: false, error: 'provider_error', status: resp.status, details: text.slice(0, 500) };
+  }
+
+  let data;
+  try { data = JSON.parse(text); } catch (e) { data = null; }
+  const image = data && data.data && data.data[0];
+  if (image && image.b64_json) return { ok: true, url: 'data:image/jpeg;base64,' + image.b64_json };
+  if (image && image.url) return { ok: true, url: image.url };
+  return { ok: false, error: 'empty_response', details: text.slice(0, 300) };
 }
 
 // Genişlik/yükseklikten sağlayıcıların kabul ettiği en yakın oranı seç
@@ -221,6 +269,7 @@ async function tryHuggingFace(prompt) {
 }
 
 const PROVIDERS = [
+  { name: 'openai', fn: tryOpenAI },
   { name: 'stability', fn: tryStability },
   { name: 'runware', fn: tryRunware },
   { name: 'fal', fn: tryFal },
@@ -229,44 +278,44 @@ const PROVIDERS = [
 ];
 
 exports.handler = async function(event) {
+  const securityResponse = guardRequest(event, {
+    namespace: 'generate-image',
+    maxBodyBytes: 64 * 1024,
+    rateLimit: 15,
+    windowMs: 60 * 1000
+  });
+  if (securityResponse) return securityResponse;
+
   if (typeof fetch === 'undefined') {
-    return corsJson(500, {
+    return corsJson(event, 500, {
       ok: false,
       error: 'runtime_fetch_missing',
       message: 'Netlify runtime fetch desteği bulunamadı.'
     });
   }
 
-  if (event.httpMethod === 'OPTIONS') {
-    return {
-      statusCode: 200,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type'
-      },
-      body: 'OK'
-    };
-  }
 
   if (event.httpMethod !== 'POST') {
-    return corsJson(405, { ok: false, error: 'Sadece POST desteklenir.' });
+    return corsJson(event, 405, { ok: false, error: 'Sadece POST desteklenir.' });
   }
 
   let body;
   try {
     body = JSON.parse(event.body || '{}');
   } catch (err) {
-    return corsJson(400, { ok: false, error: 'bad_json', message: 'Geçersiz istek gövdesi.' });
+    return corsJson(event, 400, { ok: false, error: 'bad_json', message: 'Geçersiz istek gövdesi.' });
   }
 
-  const prompt = body.prompt;
-  const width = parseInt(body.width, 10) || 1024;
-  const height = parseInt(body.height, 10) || 1024;
+  const prompt = String(body.prompt || '').trim();
+  const width = Math.min(2048, Math.max(256, parseInt(body.width, 10) || 1024));
+  const height = Math.min(2048, Math.max(256, parseInt(body.height, 10) || 1024));
   const forceProvider = String(body.forceProvider || '').trim().toLowerCase();
 
   if (!prompt) {
-    return corsJson(400, { ok: false, error: 'missing_prompt', message: 'Prompt alanı zorunludur.' });
+    return corsJson(event, 400, { ok: false, error: 'missing_prompt', message: 'Prompt alanı zorunludur.' });
+  }
+  if (prompt.length > 8000) {
+    return corsJson(event, 413, { ok: false, error: 'prompt_too_long', message: 'Prompt en fazla 8000 karakter olabilir.' });
   }
 
   const chain = forceProvider
@@ -274,7 +323,7 @@ exports.handler = async function(event) {
     : PROVIDERS;
 
   if (!chain.length) {
-    return corsJson(400, { ok: false, error: 'unknown_provider', message: 'Bilinmeyen sağlayıcı: ' + forceProvider });
+    return corsJson(event, 400, { ok: false, error: 'unknown_provider', message: 'Bilinmeyen sağlayıcı: ' + forceProvider });
   }
 
   const attempts = [];
@@ -287,7 +336,7 @@ exports.handler = async function(event) {
     }
 
     if (result.ok) {
-      return corsJson(200, {
+      return corsJson(event, 200, {
         ok: true,
         provider: provider.name,
         images: [result.url],
@@ -308,7 +357,7 @@ exports.handler = async function(event) {
     ? 'Hiçbir görsel sağlayıcısı yapılandırılmamış (env anahtarları eksik).'
     : 'Tüm görsel sağlayıcıları başarısız oldu: ' + attempts.map(a => `${a.provider}=${a.error}`).join(', ');
 
-  return corsJson(502, {
+  return corsJson(event, 502, {
     ok: false,
     error: configured.length === 0 ? 'missing_env' : 'all_providers_failed',
     message,
