@@ -22,19 +22,33 @@ RATE_LIMIT_REQUESTS = 60
 RATE_LIMIT_WINDOW_SECONDS = 60
 
 EDGE_VOICE_MAP = {
+    'female_edge': ('tr-TR-EmelNeural', '+4Hz', '+8%'),
+    'male_edge_tolga': ('tr-TR-AhmetNeural', '-3Hz', '-8%'),
     'edge_female': ('tr-TR-EmelNeural', '+0Hz', '+0%'),
     'edge_male': ('tr-TR-AhmetNeural', '+0Hz', '+0%'),
     'edge_tolga': ('tr-TR-AhmetNeural', '-4Hz', '-10%'),
 }
 
 EDGE_TO_GOOGLE_FALLBACK = {
+    'female_edge': 'female_gtts',
+    'male_edge_tolga': 'male_gtts',
     'edge_female': 'female_gtts',
     'edge_male': 'male_gtts',
-    'edge_tolga': 'male_wavenet_d',
+    'edge_tolga': 'male_emre',
 }
 
 GOOGLE_VOICE_CONFIG = {
     'female_gtts': {
+        'languageCode': 'tr-TR',
+        'name': 'tr-TR-Wavenet-A',
+        'ssmlGender': 'FEMALE'
+    },
+    'female_melis': {
+        'languageCode': 'tr-TR',
+        'name': 'tr-TR-Wavenet-C',
+        'ssmlGender': 'FEMALE'
+    },
+    'female_zeynep': {
         'languageCode': 'tr-TR',
         'name': 'tr-TR-Wavenet-D',
         'ssmlGender': 'FEMALE'
@@ -42,6 +56,16 @@ GOOGLE_VOICE_CONFIG = {
     'male_gtts': {
         'languageCode': 'tr-TR',
         'name': 'tr-TR-Wavenet-B',
+        'ssmlGender': 'MALE'
+    },
+    'male_emre': {
+        'languageCode': 'tr-TR',
+        'name': 'tr-TR-Wavenet-E',
+        'ssmlGender': 'MALE'
+    },
+    'male_baris': {
+        'languageCode': 'tr-TR',
+        'name': 'tr-TR-Standard-B',
         'ssmlGender': 'MALE'
     },
     'male_local': {
@@ -62,15 +86,24 @@ GOOGLE_VOICE_CONFIG = {
 }
 
 VOICE_AUDIO_CONFIG = {
+    'female_gtts': {"audioEncoding": "MP3", "speakingRate": 0.96, "pitch": -1.0},
+    'female_melis': {"audioEncoding": "MP3", "speakingRate": 1.12, "pitch": 3.0},
+    'female_zeynep': {"audioEncoding": "MP3", "speakingRate": 0.85, "pitch": -2.0},
+    'male_gtts': {"audioEncoding": "MP3", "speakingRate": 0.88, "pitch": -4.0},
+    'male_emre': {"audioEncoding": "MP3", "speakingRate": 1.12, "pitch": 1.0},
+    'male_baris': {"audioEncoding": "MP3", "speakingRate": 0.82, "pitch": -6.0},
     'male_wavenet_d': {"audioEncoding": "MP3", "speakingRate": 0.9, "pitch": -4.0},
     'female_gtts2': {"audioEncoding": "MP3", "speakingRate": 1.0, "pitch": 4.0},
-    'female_gtts': {"audioEncoding": "MP3", "speakingRate": 1.0, "pitch": 0.0}
 }
 
 ALLOWED_VOICES = set(EDGE_VOICE_MAP) | set(GOOGLE_VOICE_CONFIG)
 LOCAL_ALLOWED_ORIGINS = {
     'http://localhost:8000',
     'http://127.0.0.1:8000',
+    'http://localhost:8888',
+    'http://127.0.0.1:8888',
+    'http://localhost:8899',
+    'http://127.0.0.1:8899',
 }
 
 _rate_buckets = {}

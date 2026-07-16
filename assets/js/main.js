@@ -6181,42 +6181,35 @@ ${answer}` : action;
         }
     };
 
+    const SERVER_TTS_VOICE_IDS = Object.freeze({
+        female_gtts: 'female_gtts',
+        female_edge: 'female_edge',
+        female_melis: 'female_melis',
+        female_zeynep: 'female_zeynep',
+        male_gtts: 'male_gtts',
+        male_edge_tolga: 'male_edge_tolga',
+        male_emre: 'male_emre',
+        male_baris: 'male_baris'
+    });
+
+    function getServerTtsVoiceId(expectedVoiceId) {
+        return SERVER_TTS_VOICE_IDS[expectedVoiceId] || 'male_gtts';
+    }
+
     function speakWithServer(cleanText, expectedRunId, expectedVoiceId, langCode = "tr-TR", onDone = null) {
         if (!isSpeakerOn || speechRunId !== expectedRunId || voiceSelect.value !== expectedVoiceId) {
             isPlayingTTS = false;
             return;
         }
-        let vName = 'male_gtts';
-        if (expectedVoiceId === 'female_edge') vName = 'female_gtts';
-        if (expectedVoiceId === 'female_gtts') vName = 'female_gtts2';
-        if (expectedVoiceId === 'female_melis') vName = 'female_gtts2';
-        if (expectedVoiceId === 'female_zeynep') vName = 'female_gtts';
-        if (expectedVoiceId === 'male_edge_tolga') vName = 'male_wavenet_d';
-        if (expectedVoiceId === 'male_gtts') vName = 'male_gtts';
-        if (expectedVoiceId === 'male_emre') vName = 'male_gtts';
-        if (expectedVoiceId === 'male_baris') vName = 'male_wavenet_d';
-        if (expectedVoiceId === 'male_local') vName = 'male_local';
+        const vName = getServerTtsVoiceId(expectedVoiceId);
 
         if (!window.sharedAudio) window.sharedAudio = new Audio();
         const audio = window.sharedAudio;
         window.currentAudio = audio;
 
-        // Sunucu seslerinde karakter farkını istemci oynatma hızıyla koruyoruz.
-        let rate = 1.0;
-        const isAzureEnabled = false;
-
-        if (!isAzureEnabled) {
-            if (expectedVoiceId === 'female_edge') rate = 1.18;      // Cino (Tiz/Hızlı)
-            else if (expectedVoiceId === 'male_gtts') rate = 0.82;    // Cüneyt (Bas/Yavaş)
-            else if (expectedVoiceId === 'male_edge_tolga') rate = 0.92; // Tolga (Hafif kalın)
-            else if (expectedVoiceId === 'female_melis') rate = 1.15; // Melis (Enerjik, hızlı)
-            else if (expectedVoiceId === 'female_zeynep') rate = 0.95; // Zeynep (Sakin, yavaş)
-            else if (expectedVoiceId === 'male_emre') rate = 1.10; // Emre (Samimi, hızlı)
-            else if (expectedVoiceId === 'male_baris') rate = 0.90; // Barış (Sakin, yavaş)
-        }
-
-        audio.fz19BaseRate = rate;
-        let finalRate = rate * window.fz19GetTtsSpeed();
+        // Karakter pitch/rate ayarı sunucuda uygulanır. İstemci yalnız kullanıcı hızını uygular.
+        audio.fz19BaseRate = 1.0;
+        let finalRate = window.fz19GetTtsSpeed();
         finalRate = Math.min(3.5, Math.max(0.5, finalRate));
 
         audio.defaultPlaybackRate = finalRate;
@@ -6225,7 +6218,7 @@ ${answer}` : action;
         audio.onplay = () => {
             const liveRate = Math.min(3.5, Math.max(0.5, (audio.fz19BaseRate || 1) * window.fz19GetTtsSpeed()));
             audio.playbackRate = liveRate;
-            setTtsRouteMeta(isAzureEnabled ? "server_azure_or_proxy" : "server_gtts_proxy", expectedVoiceId, { name: vName, lang: langCode }, "");
+            setTtsRouteMeta("server_character_voice", expectedVoiceId, { name: vName, lang: langCode }, "");
         };
 
         let fallbackStarted = false;
