@@ -17,3 +17,4 @@ deno.lock
 .vs/
 .vercel
 .env*
+CinoCode-Netlify-deploy-*.zip
