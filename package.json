@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "test": "node --test tests/style-mode.test.js tests/render-security.test.js tests/deployment-config.test.js tests/sidebar-navigation.test.js tests/serverless-security.test.js tests/runtime-security.test.js tests/generate-image.test.js tests/image-search.test.js tests/media-search-ui.test.js tests/ai-chat.test.js tests/web-search.test.js tests/auth-config.test.js tests/dil-kocu.test.js tests/tts-voices.test.js tests/media-upload.test.js",
+    "test": "node --test tests/style-mode.test.js tests/render-security.test.js tests/deployment-config.test.js tests/sidebar-navigation.test.js tests/serverless-security.test.js tests/runtime-security.test.js tests/generate-image.test.js tests/image-search.test.js tests/media-search-ui.test.js tests/ai-chat.test.js tests/web-search.test.js tests/auth-config.test.js tests/dil-kocu.test.js tests/tts-voices.test.js tests/media-upload.test.js tests/repo-hygiene.test.js",
     "test:smoke": "npm test",
     "check:serverless": "node --check netlify/functions/_security.js && node --check netlify/functions/auth-config.js && node --check netlify/functions/ai-chat.js && node --check netlify/functions/generate-image.js && node --check netlify/functions/image-search.js && node --check netlify/functions/web-search.js"
   },

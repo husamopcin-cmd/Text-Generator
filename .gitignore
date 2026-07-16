@@ -12,3 +12,6 @@ __pycache__/
 *.pyc
 .claude/settings.local.json
 deno.lock
+# IDE workspace data
+.idea/
+.vs/
