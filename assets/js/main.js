@@ -1692,14 +1692,35 @@
         return RESPONSE_LENGTH_TOKEN_LIMITS[mode] ? mode : 'normal';
     }
 
+    function isDilKocuPersonaActive() {
+        const persona = document.getElementById('personaSelect');
+        return Boolean(persona && persona.value === 'dil_kocu');
+    }
+
+    function getDilKocuResponseMaxTokens() {
+        if (!window.DilKocuCore) return RESPONSE_LENGTH_TOKEN_LIMITS.detailed;
+        const state = getDilKocuProgressState();
+        return window.DilKocuCore.getResponseTokenBudget({
+            goal: state.goal,
+            remaining: state.remaining,
+            quizActive: dilKocuQuizActive
+        });
+    }
+
     function getResponseMaxTokens(text, taskType) {
         if (isLegacyBehaviorMode()) {
             return isShortResponseRequest(text) ? 512 : (taskType === 'pdf' ? 4096 : 1024);
         }
         if (taskType === 'pdf') return 4096;
         if (isShortResponseRequest(text)) return RESPONSE_LENGTH_TOKEN_LIMITS.short;
-        if (isDetailedResponseRequest(text)) return RESPONSE_LENGTH_TOKEN_LIMITS.detailed;
-        return RESPONSE_LENGTH_TOKEN_LIMITS[getResponseLengthMode()];
+
+        const selectedBudget = isDetailedResponseRequest(text)
+            ? RESPONSE_LENGTH_TOKEN_LIMITS.detailed
+            : RESPONSE_LENGTH_TOKEN_LIMITS[getResponseLengthMode()];
+        if (taskType === 'chat' && isDilKocuPersonaActive()) {
+            return Math.max(selectedBudget, getDilKocuResponseMaxTokens());
+        }
+        return selectedBudget;
     }
 
     function getResponseControlInstruction(text) {
@@ -7231,13 +7252,12 @@ ${answer}` : action;
     }
     function getDilKocuGoal() {
         const el = document.getElementById('dk-goal');
-        if (!el) return 10;
-        if (el.value === 'custom') {
-            const custom = document.getElementById('dk-goal-custom');
-            const val = custom ? parseInt(custom.value) : 10;
-            return (val && val > 0) ? val : 10;
-        }
-        return parseInt(el.value) || 10;
+        const rawValue = el && el.value === 'custom'
+            ? document.getElementById('dk-goal-custom')?.value
+            : el?.value;
+        return window.DilKocuCore
+            ? window.DilKocuCore.normalizeGoal(rawValue)
+            : Math.max(1, Math.min(parseInt(rawValue, 10) || 10, 500));
     }
 
     function updateDilKocuGoalCustom() {
@@ -7248,15 +7268,23 @@ ${answer}` : action;
     function getDilKocuInjection() {
         const lang = getDilKocuLang();
         const level = getDilKocuLevel();
-        const goal = getDilKocuGoal();
+        const progress = getDilKocuProgressState();
+        const goal = progress.goal;
+        const lessonBatch = window.DilKocuCore
+            ? window.DilKocuCore.getLessonBatchSize(goal, progress.remaining)
+            : Math.min(progress.remaining, 10);
+        const quizQuestionCount = window.DilKocuCore
+            ? window.DilKocuCore.getQuizQuestionCount(goal)
+            : Math.min(goal, 20, Math.max(5, Math.ceil(goal / 3)));
 
-        // Quiz soru sayısını hedefe göre biraz dinamik yapalım (Maksimum 10 soru)
-        const quizQuestionCount = Math.min(goal, 10);
-
+        const lessonNote = progress.remaining > 0
+            ? `Bu öğretim yanıtında ${lessonBatch} yeni kelime/kalıp öğret. Günlük hedefin tamamını tek cevaba sıkıştırma; kalan ${progress.remaining} kelimeyi ${lessonBatch}'lik veya daha küçük gruplarla tamamla.`
+            : 'Bugünkü günlük hedef tamamlandı. Yeni kelime sayacını artırmadan tekrar, konuşma pratiği veya pekiştirme sun.';
         const quizNote = dilKocuQuizActive
-            ? `\n\n🎯 QUIZ MODU AKTİF: zu anda kullanıcı quiz modunda. Ona daha önce öğrettiğin ${lang} kelimelerden seçerek ${quizQuestionCount} adet soru sor. Format: "Türkçesi '...' olan ${lang} kelimesi nedir?" veya "${lang}'de '...' ne anlama gelir?". Her doğru cevabı tebrik et, yanlışı nazikçe düzelt. Quiz bittikten sonra skoru Türkçe olarak söyle.`
+            ? `\n\n🎯 QUIZ MODU AKTİF: Şu anda kullanıcı quiz modunda. Daha önce öğrettiğin ${lang} kelimelerden ${quizQuestionCount} soruluk bir quiz yürüt. Soruları birer birer sor, cevapları değerlendir ve quiz bitince skoru Türkçe söyle. Quiz cevaplarında [KELİME ÖĞRENİLDİ ✅] etiketi kullanma; quiz günlük öğrenme sayacını artırmaz.`
             : '';
-        return `\n\n===== DİL KOÇU MODU AKTİF =====\nHedef Dil: ${lang} | Seviye: ${level} | Günlük Hedef: ${goal} kelime\n\n⚠️ KRİTİK KURAL: Cevaplarına kesinlikle başka dil karıştırma! Hedef dil ${lang}, açıklamalar Türkçe. Çince, Japonca, Endonezce, Arapça vb. hiçbir dilde harf veya kelime kullanma. SADECE ${lang} + Türkçe.\n\nBu modda MUTLAKA şu formatta öğret:\n\n**[HEDEF DİLDEKİ KELİME / CÜMLE]**\n*(Okunuşu: fonetik/IPA)*\n🇹🇷 Türkçe anlamı: ...\n💡 Örnek cümle:\n  → ${lang}: [örnek cümle]\n  → Türkçe: [çevirisi]\n📚 Dilbilgisi/Mantık notu: [Türkçe açıklama]\n\n- Seviye ${level} için uygun kelime ve yapılar kullan.\n- Eğer ${level} Başlangıç/A0/A1/A2 ise: selamlama, sayılar, renkler, günlük eylemler, temel kalıplar.\n- Eğer ${level} Orta/B1/B2 ise: zaman kalıpları, alışveriş/iş/seyahat diyalogları, yaygın deyimler.\n- Eğer ${level} İleri/C1/C2 ise: deyimler, atasözleri, resmi/edebi dil, nüanslar.\n- Kullanıcının seçtiği Günlük Hedef: ${goal} kelime! Dersi ve vereceğin kelimeleri bu hedefe (veya kullanıcının istediği miktara) uygun şekilde gruplara ayırarak öğret. Örneğin 90 kelime istediyse, 15'li gruplar halinde ver.\n- Açıklamaları HER ZAMAN Türkçe yap (kullanıcı o dilde konuşmanı istemediği sürece).\n- Her cevapta en az 1 yeni kelime/kalıp öğret ve '[KELİME ÖĞRENİLDİ ✅]' etiketini cevabın sonuna ekle.\n- Motivasyon cümleleri kullan: 'Harika!', 'Çok doğru!', 'Neredeyse!', 'Bu kelimeyi artık unutmazsın!'${quizNote}`;
+
+        return `\n\n===== DİL KOÇU MODU AKTİF =====\nHedef Dil: ${lang} | Seviye: ${level} | Günlük Hedef: ${goal} kelime | Bugün: ${progress.count}/${goal}\n\n⚠️ KRİTİK KURAL: Cevaplarına kesinlikle başka dil karıştırma! Hedef dil ${lang}, açıklamalar Türkçe. Çince, Japonca, Endonezce, Arapça vb. hiçbir dilde harf veya kelime kullanma. SADECE ${lang} + Türkçe.\n\nBu modda MUTLAKA şu formatta öğret:\n\n**[HEDEF DİLDEKİ KELİME / CÜMLE]**\n*(Okunuşu: fonetik/IPA)*\n🇹🇷 Türkçe anlamı: ...\n💡 Örnek cümle:\n  → ${lang}: [örnek cümle]\n  → Türkçe: [çevirisi]\n📚 Dilbilgisi/Mantık notu: [Türkçe açıklama]\n[KELİME ÖĞRENİLDİ ✅]\n\n- Seviye ${level} için uygun kelime ve yapılar kullan.\n- Eğer ${level} Başlangıç/A0/A1/A2 ise: selamlama, sayılar, renkler, günlük eylemler, temel kalıplar.\n- Eğer ${level} Orta/B1/B2 ise: zaman kalıpları, alışveriş/iş/seyahat diyalogları, yaygın deyimler.\n- Eğer ${level} İleri/C1/C2 ise: deyimler, atasözleri, resmi/edebi dil, nüanslar.\n- ${lessonNote}\n- Öğrettiğin HER yeni kelime veya kalıp için tam bir kez '[KELİME ÖĞRENİLDİ ✅]' etiketi ekle.\n- Açıklamaları HER ZAMAN Türkçe yap (kullanıcı o dilde konuşmanı istemediği sürece).\n- Motivasyon cümleleri kullan: 'Harika!', 'Çok doğru!', 'Neredeyse!', 'Bu kelimeyi artık unutmazsın!'${quizNote}`;
     }
 
     function updateDilKocuPrompt() {
@@ -7280,43 +7308,65 @@ ${answer}` : action;
         updateDilKocuProgress();
     }
 
-    // Günlük öğrenilen kelime sayısını localStorage'dan oku ve ilerleme barını güncelle
-    function updateDilKocuProgress() {
-        const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
-        const lang = getDilKocuLang();
-        const key = 'dk_progress_' + lang + '_' + today;
-        const count = parseInt(localStorage.getItem(key) || '0');
+    function getDilKocuProgressKey() {
+        const today = new Date().toISOString().slice(0, 10);
+        return 'dk_progress_' + getDilKocuLang() + '_' + today;
+    }
+
+    function getDilKocuProgressState() {
         const goal = getDilKocuGoal();
-        const pct = Math.min((count / goal) * 100, 100);
+        const key = getDilKocuProgressKey();
+        const rawCount = Math.max(0, parseInt(localStorage.getItem(key) || '0', 10) || 0);
+        const count = Math.min(rawCount, goal);
+        return { key, goal, count, remaining: Math.max(0, goal - count) };
+    }
+
+    function updateDilKocuProgress() {
+        const state = getDilKocuProgressState();
+        const pct = Math.min((state.count / state.goal) * 100, 100);
         const bar = document.getElementById('dk-progress-bar');
         const txt = document.getElementById('dk-word-count-text');
         if (bar) bar.style.width = pct + '%';
-        if (txt) txt.textContent = count + ' / ' + goal + ' kelime';
+        if (txt) txt.textContent = state.count + ' / ' + state.goal + ' kelime';
+        return state;
     }
 
-    function incrementDilKocuProgress() {
-        const today = new Date().toISOString().slice(0, 10);
-        const lang = getDilKocuLang();
-        const key = 'dk_progress_' + lang + '_' + today;
-        const count = parseInt(localStorage.getItem(key) || '0') + 1;
-        localStorage.setItem(key, count);
+    function showDilKocuGoalCelebration(goal) {
+        setTimeout(() => {
+            setQuickStart('');
+            const msgs = document.getElementById('messages');
+            if (msgs) {
+                const div = document.createElement('div');
+                div.className = 'message bot';
+                div.innerHTML = '<div style="background:linear-gradient(135deg,rgba(166,227,161,0.15),rgba(249,226,175,0.1));border:1px solid rgba(166,227,161,0.4);border-radius: var(--cc-radius);padding:14px;text-align:center;font-size:15px;">📖 <b>Tebrikler!</b> Bugünkü ' + goal + ' kelime hedefine ulaştın! Harika bir çalışma günüydü. Yarın da devam et! 🎉</div>';
+                msgs.appendChild(div);
+                msgs.scrollTop = msgs.scrollHeight;
+            }
+            updateDilKocuStreak();
+        }, 500);
+    }
+
+    function incrementDilKocuProgress(amount = 1) {
+        const state = getDilKocuProgressState();
+        const result = window.DilKocuCore
+            ? window.DilKocuCore.applyProgressDelta(state.count, amount, state.goal)
+            : { count: Math.min(state.goal, state.count + Math.max(0, amount)), added: amount, reachedGoal: false };
+        localStorage.setItem(state.key, result.count);
         updateDilKocuProgress();
-        // Günlük hedef tamamlandıysa kutla
-        const goal = getDilKocuGoal();
-        if (count === goal) {
-            setTimeout(() => {
-                setQuickStart('');
-                const msgs = document.getElementById('messages');
-                if (msgs) {
-                    const div = document.createElement('div');
-                    div.className = 'message bot';
-                    div.innerHTML = '<div style="background:linear-gradient(135deg,rgba(166,227,161,0.15),rgba(249,226,175,0.1));border:1px solid rgba(166,227,161,0.4);border-radius: var(--cc-radius);padding:14px;text-align:center;font-size:15px;">📖 <b>Tebrikler!</b> Bugünkü ' + goal + ' kelime hedefine ulaştın! Harika bir çalışma günüydü. Yarın da devam et! 🎉</div>';
-                    msgs.appendChild(div);
-                    msgs.scrollTop = msgs.scrollHeight;
-                }
-                updateDilKocuStreak();
-            }, 500);
-        }
+        if (result.reachedGoal) showDilKocuGoalCelebration(state.goal);
+        return result;
+    }
+
+    function recordDilKocuProgressFromResponse(responseText) {
+        if (!isDilKocuPersonaActive() || dilKocuQuizActive) return 0;
+        if (!window.DilKocuCore) return 0;
+
+        const state = getDilKocuProgressState();
+        const markerCount = window.DilKocuCore.countLearnedMarkers(responseText);
+        const batchLimit = window.DilKocuCore.getLessonBatchSize(state.goal, state.remaining);
+        const learnedCount = Math.min(markerCount, batchLimit);
+        if (learnedCount < 1) return 0;
+        return incrementDilKocuProgress(learnedCount).added;
     }
 
     function updateDilKocuStreak() {
@@ -7342,14 +7392,20 @@ ${answer}` : action;
     function startDilKocuLesson() {
         const lang = getDilKocuLang();
         const level = getDilKocuLevel();
-        const goal = getDilKocuGoal();
+        const state = getDilKocuProgressState();
+        const lessonBatch = window.DilKocuCore
+            ? window.DilKocuCore.getLessonBatchSize(state.goal, state.remaining)
+            : Math.min(state.remaining, 10);
         const personaSel = document.getElementById('personaSelect');
         if (personaSel) personaSel.value = 'dil_kocu';
         document.getElementById('dilKocuPanel').classList.add('active');
-        // Gemini'ye geç
+        setDilKocuQuizMode(false);
+
         const modelSel = document.getElementById('modelSelect');
         if (modelSel && !isProxyCloudModel(modelSel.value)) modelSel.value = 'gemini';
-        const text = `Bugün ${lang} dersimize başlayalım! Seviyem: ${level}. Bugün ${goal} yeni kelime öğrenmek istiyorum. Lütfen o dili hiç bilmiyormuşum gibi en temel ve günlük hayatta en çok kullanılan kelime ve kalıplardan başla. Tablolar ve örneklerle anlat.`;
+        const text = lessonBatch > 0
+            ? `Bugün ${lang} dersimize başlayalım! Seviyem: ${level}. Günlük hedefim ${state.goal} kelime; bugün ${state.count} kelime tamamladım. Şimdi sıradaki ${lessonBatch} yeni kelime veya kalıbı, temel ve günlük kullanımdan başlayarak tablolar ve örneklerle eksiksiz öğret.`
+            : `Bugünkü ${state.goal} kelimelik ${lang} hedefimi tamamladım. Seviyem: ${level}. Yeni kelime sayacını artırmadan kısa bir tekrar ve konuşma pratiği yaptır.`;
         setComposerValue(text, { focus: false });
         sendMessage();
     }
@@ -7361,6 +7417,7 @@ ${answer}` : action;
         const personaSel = document.getElementById('personaSelect');
         if (personaSel) personaSel.value = 'dil_kocu';
         document.getElementById('dilKocuPanel').classList.add('active');
+        setDilKocuQuizMode(false);
         const modelSel = document.getElementById('modelSelect');
         if (modelSel && !isProxyCloudModel(modelSel.value)) modelSel.value = 'gemini';
         const text = `Hadi ${lang} sohbet edelim! Seviyem ${level}. Seninle ${lang} pratik yapmak istiyorum. Sen de ${lang} konuş, hatalarımı sonunda Türkçe düzelt.`;
@@ -7369,22 +7426,26 @@ ${answer}` : action;
     }
 
     // "Quiz Başlat" butonu — quiz modunu açar/kapatır
-    function startDilKocuQuiz() {
-        dilKocuQuizActive = !dilKocuQuizActive;
+    function setDilKocuQuizMode(active) {
+        dilKocuQuizActive = Boolean(active);
         const btn = document.getElementById('dk-quiz-btn');
-        if (btn) {
-            if (dilKocuQuizActive) {
-                btn.classList.add('active-quiz');
-                btn.textContent = '\u{2705} Quiz Aktif \u2713';
-                const lang = getDilKocuLang();
-                const text = `Quiz zamanı! Bana bugüne kadar öğrettiğin ${lang} kelimelerden 5 soru sor. Ben cevaplayacağım.`;
-                setComposerValue(text, { focus: false });
-                sendMessage();
-            } else {
-                btn.classList.remove('active-quiz');
-                btn.textContent = '\u{1F4DD} Quiz Başlat';
-            }
-        }
+        if (!btn) return;
+        btn.classList.toggle('active-quiz', dilKocuQuizActive);
+        btn.textContent = dilKocuQuizActive ? '\u{2705} Quiz Aktif \u2713' : '\u{1F4DD} Quiz Başlat';
+    }
+
+    function startDilKocuQuiz() {
+        setDilKocuQuizMode(!dilKocuQuizActive);
+        if (!dilKocuQuizActive) return;
+
+        const lang = getDilKocuLang();
+        const goal = getDilKocuGoal();
+        const questionCount = window.DilKocuCore
+            ? window.DilKocuCore.getQuizQuestionCount(goal)
+            : Math.min(goal, 20, Math.max(5, Math.ceil(goal / 3)));
+        const text = `Quiz zamanı! Bugüne kadar öğrettiğin ${lang} kelimelerden ${questionCount} soruluk bir quiz yap. Soruları birer birer sor; ben cevapladıkça değerlendir ve sonra sıradaki soruya geç.`;
+        setComposerValue(text, { focus: false });
+        sendMessage();
     }
 
 
@@ -8922,6 +8983,7 @@ ${answer}` : action;
                         } else if (typeof actualModelForAuto !== 'undefined' && actualModelForAuto) {
                             botReply += "\n\n<div style='font-size:10px; color:var(--cc-text-muted); margin-top:8px;'>⚡ Model: " + actualModelForAuto + "</div>";
                         }
+                        recordDilKocuProgressFromResponse(botReply);
                         chat.messages.push({ role: 'assistant', content: botReply });
                         attachMsgActionsToBotDiv(botId, chat.messages.length - 1, chat.messages[chat.messages.length - 1]);
                         chat.updatedAt = Date.now();
@@ -9270,6 +9332,7 @@ ${answer}` : action;
                     } else if (typeof actualModelForAuto !== 'undefined' && actualModelForAuto) {
                         botReply += "\n\n<div style='font-size:10px; color:var(--cc-text-muted); margin-top:8px;'>⚡ Model: " + actualModelForAuto + "</div>";
                     }
+                    recordDilKocuProgressFromResponse(botReply);
                     chat.messages.push({ role: "assistant", content: botReply });
                     attachMsgActionsToBotDiv(botId, chat.messages.length - 1, chat.messages[chat.messages.length - 1]);
                     ensureChatTitleFromAssistantResponse(botReply);
