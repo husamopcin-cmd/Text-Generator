@@ -8342,8 +8342,6 @@ ${answer}` : action;
             return;
         }
 
-
-
         if (!msgObj.images && !docTextToUse && isAmbiguousImageCreationRequest(text)) {
             delete typingDiv.dataset.typingIndicator;
             const askText = "Neyi çizmemi istiyorsun kanka?";
