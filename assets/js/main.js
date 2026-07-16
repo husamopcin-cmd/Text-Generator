@@ -919,6 +919,36 @@
         });
     }
 
+    function classifyImageProviderFailure(errorData, responseStatus) {
+        let attempts = [];
+        try {
+            const parsed = typeof errorData?.details === 'string' ? JSON.parse(errorData.details) : errorData?.details;
+            if (Array.isArray(parsed)) attempts = parsed;
+        } catch (error) {}
+
+        const statuses = attempts.map(attempt => Number(attempt.status)).filter(Number.isFinite);
+        const errors = attempts.map(attempt => String(attempt.error || '').toLowerCase());
+        if (responseStatus === 429 || statuses.includes(429) || errors.some(error => /quota|credit|limit/.test(error))) {
+            return { error: 'provider_quota', message: 'Görsel sağlayıcının kotası veya kredisi yetersiz.' };
+        }
+        if (responseStatus === 401 || responseStatus === 403 || statuses.some(status => status === 401 || status === 403)) {
+            return { error: 'provider_unauthorized', message: 'Görsel sağlayıcı anahtarı geçersiz veya yetkisiz (403).' };
+        }
+        if (errors.length > 0 && errors.every(error => error === 'missing_env')) {
+            return { error: 'missing_env', message: 'Hiçbir görsel sağlayıcısı yapılandırılmamış.' };
+        }
+        if (errors.some(error => error === 'timeout')) {
+            return { error: 'provider_timeout', message: 'Görsel sağlayıcısı zaman aşımına uğradı.' };
+        }
+        if (errors.some(error => error === 'network')) {
+            return { error: 'network', message: 'Görsel sağlayıcısına ağ üzerinden ulaşılamadı.' };
+        }
+        return {
+            error: String(errorData?.error || 'provider_error'),
+            message: String(errorData?.message || 'Görsel sağlayıcı zinciri başarısız oldu.')
+        };
+    }
+
     async function generateRunwareImage(prompt, width = 1024, height = 1024) {
         const apiKey = (localStorage.getItem('cinocode_runware_api_key') || localStorage.getItem('runware_api_key') || '').trim();
         const useProxy = !apiKey;
@@ -954,25 +984,10 @@
             }
 
             if (!resp.ok) {
-                let errorMsg = 'provider_error';
-                let message = 'Runware API hatası.';
-                try {
-                    const errorData = await resp.json();
-                    if (errorData && errorData.error) errorMsg = errorData.error;
-                    if (errorData && errorData.message) message = errorData.message;
-                    // Detaylarda insufficientCredits varsa yakala
-                    if (errorData && errorData.details) {
-                        const detailsStr = typeof errorData.details === 'string' ? errorData.details : JSON.stringify(errorData.details);
-                        if (detailsStr.includes('insufficientCredits')) {
-                            errorMsg = 'runware_insufficient_credits';
-                            message = 'Runware bakiyesi/kredisi yetersiz.';
-                        }
-                    }
-                } catch(e) {}
-                if (resp.status === 401 || resp.status === 403) errorMsg = 'unauthorized';
-                else if (resp.status === 404) errorMsg = 'not_found';
-                else if (resp.status === 503) errorMsg = 'missing_env';
-                return { success: false, status: resp.status, error: errorMsg, message: message };
+                const errorData = await resp.json().catch(() => null);
+                const failure = classifyImageProviderFailure(errorData, resp.status);
+                if (resp.status === 404) failure.error = 'not_found';
+                return { success: false, status: resp.status, error: failure.error, message: failure.message };
             }
 
             const data = await resp.json();
@@ -1176,6 +1191,10 @@
     }
 
     window.selectedFiles = window.selectedFiles || [];
+    const SELECTED_FILES_MAX_COUNT = 30;
+    const MAX_VISION_IMAGES = 5;
+    const IMAGE_UPLOAD_MAX_BYTES = 15 * 1024 * 1024;
+    const VISION_BASE64_MAX_CHARS = Math.floor(3.5 * 1024 * 1024);
     const DOCUMENT_UPLOAD_MAX_BYTES = 25 * 1024 * 1024;
     const DOCUMENT_CONTEXT_MAX_CHARS = 1000000;
     const ARCHIVE_MAX_FILES = 180;
@@ -1185,13 +1204,44 @@
     const ARCHIVE_IGNORED_PATH = /(^|\/)(node_modules|\.git|dist|build|coverage|\.next|vendor|__MACOSX)(\/|$)/i;
     const ARCHIVE_SECRET_PATH = /(^|\/)(\.env(?:\.|$)|id_rsa(?:\.|$)|[^/]+\.(?:pem|key|p12|pfx))(\/|$)?/i;
 
+    function getSelectedImagePayloadChars() {
+        return (window.selectedFiles || [])
+            .filter(file => file.rawType === 'image')
+            .reduce((total, file) => total + String(file.content || '').length, 0);
+    }
+
+    function isDuplicateSelectedFile(fileObj) {
+        return (window.selectedFiles || []).some(existing =>
+            existing.name === fileObj.name
+            && Number(existing.size || 0) === Number(fileObj.size || 0)
+            && existing.rawType === fileObj.rawType
+        );
+    }
+
     function addSelectedFile(fileObj) {
-        if (window.selectedFiles.length >= 30) {
-            showNonBlockingToast("En fazla 30 dosya yükleyebilirsiniz.");
-            return;
+        if (window.selectedFiles.length >= SELECTED_FILES_MAX_COUNT) {
+            showNonBlockingToast(`En fazla ${SELECTED_FILES_MAX_COUNT} dosya yükleyebilirsiniz.`);
+            return false;
+        }
+        if (isDuplicateSelectedFile(fileObj)) {
+            showNonBlockingToast(`"${fileObj.name}" zaten ekli.`);
+            return false;
+        }
+        if (fileObj.rawType === 'image') {
+            const imageCount = window.selectedFiles.filter(file => file.rawType === 'image').length;
+            if (imageCount >= MAX_VISION_IMAGES) {
+                showNonBlockingToast(`Tek istekte en fazla ${MAX_VISION_IMAGES} görsel analiz edilebilir.`);
+                return false;
+            }
+            const projectedChars = getSelectedImagePayloadChars() + String(fileObj.content || '').length;
+            if (projectedChars > VISION_BASE64_MAX_CHARS) {
+                showNonBlockingToast(`"${fileObj.name}" eklenmedi; görsel analiz paketi güvenli istek sınırını aşıyor.`);
+                return false;
+            }
         }
         window.selectedFiles.push(fileObj);
         renderFilePreviews();
+        return true;
     }
 
     function removeSelectedFile(id) {
@@ -1245,39 +1295,47 @@
     }
 
     function processImageAsPromise(file) {
-        return new Promise((resolve) => {
+        return new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.onload = function(e) {
                 const img = new Image();
                 img.onload = function() {
-                    const canvas = document.createElement('canvas');
-                    const MAX_WIDTH = 1024;
-                    const MAX_HEIGHT = 1024;
-                    let width = img.width;
-                    let height = img.height;
+                    try {
+                        const canvas = document.createElement('canvas');
+                        const MAX_WIDTH = 1024;
+                        const MAX_HEIGHT = 1024;
+                        let width = img.width;
+                        let height = img.height;
 
-                    if (width > height) {
-                        if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
-                    } else {
-                        if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
+                        if (width > height) {
+                            if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+                        } else if (height > MAX_HEIGHT) {
+                            width *= MAX_HEIGHT / height;
+                            height = MAX_HEIGHT;
+                        }
+                        canvas.width = Math.max(1, Math.round(width));
+                        canvas.height = Math.max(1, Math.round(height));
+                        const ctx = canvas.getContext('2d');
+                        if (!ctx) throw new Error('Görsel işleme alanı oluşturulamadı.');
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+                        const dataUrl = canvas.toDataURL('image/jpeg', 0.82);
+                        resolve({
+                            id: "file_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9),
+                            name: file.name,
+                            type: 'image/jpeg',
+                            size: file.size,
+                            content: dataUrl,
+                            rawType: "image"
+                        });
+                    } catch (error) {
+                        reject(error);
                     }
-                    canvas.width = width;
-                    canvas.height = height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, width, height);
-
-                    const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
-                    resolve({
-                        id: "file_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9),
-                        name: file.name,
-                        type: file.type,
-                        size: file.size,
-                        content: dataUrl,
-                        rawType: "image"
-                    });
                 };
+                img.onerror = () => reject(new Error('Görsel tarayıcı tarafından okunamadı.'));
                 img.src = e.target.result;
             };
+            reader.onerror = () => reject(reader.error || new Error('Dosya okunamadı.'));
             reader.readAsDataURL(file);
         });
     }
@@ -1288,18 +1346,14 @@
         closeAttachMenu();
 
         files.forEach(file => {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                addSelectedFile({
-                    id: "file_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9),
-                    name: file.name,
-                    type: file.type,
-                    size: file.size,
-                    content: e.target.result,
-                    rawType: "audio"
-                });
-            };
-            reader.readAsDataURL(file);
+            addSelectedFile({
+                id: "file_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9),
+                name: file.name,
+                type: file.type,
+                size: file.size,
+                content: null,
+                rawType: "audio"
+            });
         });
         event.target.value = '';
     }
@@ -1311,9 +1365,17 @@
         showNonBlockingToast(`${files.length} görsel yükleniyor...`);
 
         for (const file of files) {
-            if (file.type.startsWith('image/')) {
+            if (!file.type.startsWith('image/')) continue;
+            if (file.size > IMAGE_UPLOAD_MAX_BYTES) {
+                showNonBlockingToast(`"${file.name}" çok büyük. Görseller en fazla 15 MB olabilir.`);
+                continue;
+            }
+            try {
                 const fileObj = await processImageAsPromise(file);
                 addSelectedFile(fileObj);
+            } catch (error) {
+                console.error('Görsel okuma hatası:', error);
+                showNonBlockingToast(`"${file.name}" görsel olarak okunamadı.`);
             }
         }
 
@@ -1332,23 +1394,25 @@
 
         for (const file of files) {
             if (file.type.startsWith('image/')) {
-                const fileObj = await processImageAsPromise(file);
-                addSelectedFile(fileObj);
+                if (file.size > IMAGE_UPLOAD_MAX_BYTES) {
+                    showNonBlockingToast(`"${file.name}" çok büyük. Görseller en fazla 15 MB olabilir.`);
+                    continue;
+                }
+                try {
+                    const fileObj = await processImageAsPromise(file);
+                    addSelectedFile(fileObj);
+                } catch (error) {
+                    console.error('Görsel okuma hatası:', error);
+                    showNonBlockingToast(`"${file.name}" görsel olarak okunamadı.`);
+                }
             } else if (file.type.startsWith('video/')) {
-                await new Promise((resolve) => {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        addSelectedFile({
-                            id: "file_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9),
-                            name: file.name,
-                            type: file.type,
-                            size: file.size,
-                            content: e.target.result,
-                            rawType: "video"
-                        });
-                        resolve();
-                    };
-                    reader.readAsDataURL(file);
+                addSelectedFile({
+                    id: "file_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9),
+                    name: file.name,
+                    type: file.type,
+                    size: file.size,
+                    content: null,
+                    rawType: "video"
                 });
             }
         }
@@ -1894,7 +1958,9 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
     }
 
     function getSmartSuggestions(assistantText, userText) {
-        const combined = ((assistantText || "") + " " + (userText || "")).toLocaleLowerCase("tr-TR");
+        const userContext = String(userText || "").toLocaleLowerCase("tr-TR");
+        const assistantContext = String(assistantText || "").toLocaleLowerCase("tr-TR");
+        const combined = `${assistantContext} ${userContext}`;
         const activePersona = document.getElementById('personaSelect') ? document.getElementById('personaSelect').value : 'kanka';
         const isProgrammer = (activePersona === 'usta_yazilimci');
         const isTeacher = (activePersona === 'dil_kocu' || activePersona === 'akademik_koc');
@@ -1910,9 +1976,14 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
         };
 
         const safetyContext = /(reddedemem|yardimci olamam|yardımcı olamam|güvenli alternatif|guvenli alternatif|güvenlik uyarısı|guvenlik uyarisi|riskleri|riskli|tehlikeli|zararlı|zararli|illegal|yasa dışı|yasadışı|unsafe|phishing|kimlik avi|dolandırıcılık|dolandiricilik|şiddet|siddet|çocuk güvenliği|cocuk guvenligi|nsfw|porno|cinsel)/i.test(combined);
-        const imageContext = /(\[generate_image|görsel|gorsel|resim|fotoğraf|fotograf|çizim|cizim|image|promptu kopyala|runware|pollinations)/i.test(combined) || currentMode === 'image';
-        const videoContext = /(\[generate_video|video|klip|film|storyboard|slideshow|webm|sahne)/i.test(combined) || currentMode === 'video';
-        const gameContext = /(oyun|game|canvas|skor|zıpla|engel)/i.test(combined) || currentMode === 'game';
+        const imageContext = /(\[generate_image|görsel|gorsel|görseli|gorseli|resim|resmi|fotoğraf|fotograf|fotoğrafı|fotografi|çizim|cizim|çiz|ciz|image|promptu kopyala|runware|pollinations)/i.test(userContext)
+            || currentMode === 'image'
+            || /(\[generate_image|data-runware-prompt|pollinations)/i.test(assistantContext);
+        const videoContext = /(\[generate_video|video|klip|film|storyboard|slideshow|webm|kamera hareketi|sahne planı)/i.test(userContext)
+            || currentMode === 'video'
+            || /(\[generate_video|data-generated-video)/i.test(assistantContext);
+        const gameTermPattern = /(?:^|[^\p{L}\p{N}_])(oyun(?:u|um|lar|larda|lardan|dan|a)?|game|canvas|skor|zıpla|engel)(?=$|[^\p{L}\p{N}_])/iu;
+        const gameContext = gameTermPattern.test(userContext) || currentMode === 'game';
         const codeContext = (isProgrammer || combined.includes("```") || currentMode === 'webapp') && !gameContext;
         const bugContext = /(hata kodu|hata mesajı|bug|çalışmıyor|calismiyor|bozuk|debug|fix|patch|stack trace|exception|network error|timeout|cors hatası|kırpılmış|kirpilmis|taşıyor|tasiyor|görünmüyor|gorunmuyor|kaymış|kaymis|düzelt|duzelt|sorun var|hatalı)/i.test(combined);
         const writingContext = /(hikaye|öykü|oyku|senaryo|rol|roleplay|karakter|şiir|siir|metin|makale|başlık|baslik|içerik|icerik)/i.test(combined);
@@ -2643,7 +2714,7 @@ ${answer}` : action;
         return keys[Math.floor(Math.random() * keys.length)];
     }
 
-    const PROXY_CLOUD_MODELS = ['openai', 'cerebras', 'deepseek', 'mistral', 'openrouter', 'gemini', 'groq', 'fireworks', 'together'];
+    const PROXY_CLOUD_MODELS = ['openai', 'cerebras', 'deepseek', 'mistral', 'openrouter', 'gemini', 'groq', 'fireworks', 'together', 'anthropic'];
 
     function isProxyCloudModel(modelValue) {
         return PROXY_CLOUD_MODELS.includes(String(modelValue || '').trim().toLowerCase());
@@ -2651,7 +2722,7 @@ ${answer}` : action;
 
     function isVisionCapableModel(modelValue) {
         if (!modelValue) return false;
-        const proxyVisionProviders = ['gemini', 'openrouter', 'groq'];
+        const proxyVisionProviders = ['openai', 'gemini', 'openrouter', 'groq', 'anthropic'];
         if (isProxyCloudModel(modelValue)) return proxyVisionProviders.includes(String(modelValue).trim().toLowerCase());
         const v = modelValue.toLowerCase();
         return v.includes('llava')
@@ -2666,15 +2737,16 @@ ${answer}` : action;
         const hasOption = (value) => !!(modelSelect && Array.from(modelSelect.options).some(opt => opt.value === value));
         const current = String(currentModel || '').trim();
         const currentLower = current.toLowerCase();
-        if (['gemini', 'openrouter', 'groq'].includes(currentLower) && hasOption(current)) return current;
+        if (['openai', 'gemini', 'openrouter', 'groq', 'anthropic'].includes(currentLower) && hasOption(current)) return current;
         if (currentLower.includes('nvidia') && (localStorage.getItem('nvidia_api_key') || '').trim() && hasOption(current)) return current;
         if ((currentLower.includes('llava') || currentLower.includes('vision')) && !currentLower.includes('openrouter') && !currentLower.includes('groq') && hasOption(current)) return current;
 
         const orderedVisionModels = [
+            'openai',
             'gemini',
-            'openrouter',
             'groq',
-            'meta-llama/llama-3.2-11b-vision-instruct:free-openrouter',
+            'openrouter',
+            'anthropic',
             'meta-llama/llama-4-scout-17b-16e-instruct-groq'
         ];
         if ((localStorage.getItem('nvidia_api_key') || '').trim()) {
@@ -3743,8 +3815,10 @@ ${answer}` : action;
     function getImageProviderStatus(error, cardElement = null) {
         if (cardElement && cardElement.getAttribute('data-runware-error')) {
             const runwareErr = cardElement.getAttribute('data-runware-error');
-            if (runwareErr === 'unauthorized') return { ok: false, reason: 'runware_unauthorized' };
-            if (runwareErr === 'missing_env') return { ok: false, reason: 'runware_missing_env' };
+            if (runwareErr === 'unauthorized' || runwareErr === 'provider_unauthorized') return { ok: false, reason: 'provider_unauthorized' };
+            if (runwareErr === 'missing_env') return { ok: false, reason: 'provider_missing_env' };
+            if (runwareErr === 'provider_quota' || runwareErr === 'runware_insufficient_credits') return { ok: false, reason: 'provider_quota' };
+            if (runwareErr === 'provider_timeout') return { ok: false, reason: 'provider_timeout' };
             if (runwareErr === 'not_found') return { ok: false, reason: 'runware_not_found' };
             if (runwareErr === 'cors_or_blocked') return { ok: false, reason: 'cors_or_browser_block' };
             if (runwareErr === 'network') return { ok: false, reason: 'network_error' };
@@ -3771,7 +3845,10 @@ ${answer}` : action;
             quota_or_limit: 'Sağlayıcı kota veya hız limitine takıldı.',
             network_error: 'Ağ bağlantısı veya zaman aşımı nedeniyle üretim tamamlanamadı.',
             cors_or_browser_block: 'Tarayıcı/CORS engeli nedeniyle sağlayıcıya ulaşılamadı. Mobil tarayıcı/CORS/içerik engeli olabilir.',
-            runware_unauthorized: 'Runware anahtarı geçersiz, yetkisiz veya kota/bakiye sorunu olabilir.',
+            provider_unauthorized: 'Görsel sağlayıcı anahtarı geçersiz veya yetkisiz (403).',
+            provider_missing_env: 'Hiçbir görsel sağlayıcısı yapılandırılmamış.',
+            provider_quota: 'Görsel sağlayıcının kotası veya kredisi yetersiz.',
+            provider_timeout: 'Görsel sağlayıcısı zaman aşımına uğradı.',
             runware_missing_env: 'Netlify RUNWARE_API_KEY eksik. Netlify Environment Variables bölümüne eklenmeli.',
             runware_not_found: 'Görsel endpoint bulunamadı. Netlify function veya provider endpoint kontrol edilmeli (404).',
             fallback_failed: 'Yedek görsel sağlayıcısı da yanıt vermedi.',
@@ -3784,7 +3861,10 @@ ${answer}` : action;
         const providerName = kind === 'video' ? 'Video provider not configured' : (reason.startsWith('runware_') ? 'Runware Proxy' : 'AI image provider chain');
         const nextSteps = {
             runware_missing_env: 'Netlify Dashboard > Site settings > Environment variables bölümüne RUNWARE_API_KEY ekle.',
-            runware_unauthorized: 'Ayarlardan girilen yerel API keyi kontrol edin veya Netlify environment variable değerinin doğruluğunu teyit edin.',
+            provider_unauthorized: 'İlgili sağlayıcı anahtarını iptal edip yenisini Netlify ve local .env içine girin.',
+            provider_missing_env: 'Netlify veya local .env içine en az bir görsel sağlayıcı anahtarı ekleyin.',
+            provider_quota: 'Sağlayıcı panelindeki kredi ve kota durumunu kontrol edin.',
+            provider_timeout: 'Biraz sonra tekrar deneyin veya başka bir görsel sağlayıcısı yapılandırın.',
             cors_or_browser_block: 'Mobil tarayıcıda içerik engelleyicileri (adblock) kapatıp tekrar deneyin.',
             missing_video_provider: 'Gerçek video için backend video provider ve ilgili API/env yapılandırılmalıdır.',
             default: 'Ağ bağlantınızı veya API durumlarını kontrol edin.'
@@ -8068,6 +8148,14 @@ ${answer}` : action;
         const images = window.selectedFiles ? window.selectedFiles.filter(f => f.rawType === 'image').map(f => f.content) : [];
         const hasImage = images.length > 0;
 
+        const unsupportedMedia = window.selectedFiles
+            ? window.selectedFiles.filter(file => file.rawType === 'audio' || file.rawType === 'video')
+            : [];
+        if (unsupportedMedia.length > 0) {
+            showNonBlockingToast('Ses ve video analizi henüz bağlı değil. Bu ekleri kaldırıp görsel veya belge gönderin.');
+            return;
+        }
+
         const documents = window.selectedFiles ? window.selectedFiles.filter(f => f.rawType === 'document') : [];
         let docTextToUse = null;
         let docNameToUse = "Belge";
@@ -8486,7 +8574,7 @@ ${answer}` : action;
                 if (PROXY_CLOUD_MODELS.includes(lower)) {
                     return { provider: lower, modelId: lower, displayLabel: normalized };
                 }
-                const providerMatch = normalized.match(/(?:[-:])(openai|cerebras|deepseek|mistral|openrouter|gemini|groq|fireworks|together|nvidia|xai)(?:\b|$)/i);
+                const providerMatch = normalized.match(/(?:[-:])(openai|cerebras|deepseek|mistral|openrouter|gemini|groq|fireworks|together|nvidia|xai|anthropic)(?:\b|$)/i);
                 const provider = providerMatch ? providerMatch[1].toLowerCase() : null;
                 const modelId = provider ? normalized.replace(new RegExp(`(?:[-:])${provider}(?:\b|$)`, 'i'), '').trim() : normalized;
                 return { provider, modelId, displayLabel: normalized };
@@ -8550,7 +8638,7 @@ ${answer}` : action;
             function isVisionRouteModel(modelValue) {
                 if (!modelValue) return false;
                 const parsed = parseModelLabel(modelValue);
-                if (parsed && isProxyCloudProvider(parsed.provider) && ['gemini', 'openrouter', 'groq'].includes(parsed.provider)) return true;
+                if (parsed && isProxyCloudProvider(parsed.provider) && ['openai', 'gemini', 'openrouter', 'groq', 'anthropic'].includes(parsed.provider)) return true;
                 return isVisionModel(modelValue);
             }
 
@@ -8574,12 +8662,14 @@ ${answer}` : action;
             }
 
             // Fallback (Yedekleme) Kuyruğu Hazırlığı
-            const hasAttachments = !!selectedImageBase64;
+            const hasAttachments = isVisionTask;
             const isPdfCoaching = isAkademikKocNow || (document.getElementById('personaSelect') && document.getElementById('personaSelect').value === 'dil_kocu');
             const visionModels = [
+                "openai",
                 "gemini",
-                "openrouter",
                 "groq",
+                "openrouter",
+                "anthropic",
                 "nvidia/nemotron-nano-12b-v2-vl-nvidia"
             ];
             const normalTextModels = [

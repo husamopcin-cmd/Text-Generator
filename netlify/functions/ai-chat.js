@@ -34,11 +34,19 @@ const DEFAULT_MODELS = {
   deepseek: 'deepseek-chat',
   mistral: 'mistral-small-latest',
   openrouter: 'meta-llama/llama-3.3-70b-instruct:free',
-  gemini: 'gemini-2.0-flash',
+  gemini: 'gemini-2.5-flash',
   groq: 'llama-3.3-70b-versatile',
   fireworks: 'accounts/fireworks/models/gpt-oss-120b',
   together: 'meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo',
   xai: 'grok-3-mini',
+  anthropic: 'claude-haiku-4-5-20251001'
+};
+
+const VISION_MODELS = {
+  openai: 'gpt-4o-mini',
+  gemini: 'gemini-2.5-flash',
+  groq: 'meta-llama/llama-4-scout-17b-16e-instruct',
+  openrouter: 'google/gemini-2.5-flash',
   anthropic: 'claude-haiku-4-5-20251001'
 };
 
@@ -72,7 +80,7 @@ function parseModelLabel(label) {
   const normalized = String(label || '').trim();
   const lower = normalized.toLowerCase();
   if (PROXY_PROVIDERS.includes(lower)) {
-    return { provider: lower, modelId: DEFAULT_MODELS[lower] };
+    return { provider: lower, modelId: DEFAULT_MODELS[lower], isProviderAlias: true };
   }
   const provider = normalized.includes('-openai') ? 'openai'
     : normalized.includes('-cerebras') ? 'cerebras'
@@ -89,10 +97,16 @@ function parseModelLabel(label) {
   const modelId = provider
     ? normalized.replace(new RegExp(`-${provider}$`, 'i'), '').trim() || DEFAULT_MODELS[provider]
     : normalized;
-  return { provider, modelId };
+  return { provider, modelId, isProviderAlias: false };
 }
 
-function resolveModelId(provider, parsedSelection) {
+function resolveModelId(provider, parsedSelection, taskType) {
+  if (taskType === 'vision') {
+    if (parsedSelection.provider === provider && parsedSelection.modelId && !parsedSelection.isProviderAlias) {
+      return parsedSelection.modelId;
+    }
+    return VISION_MODELS[provider] || DEFAULT_MODELS[provider] || provider;
+  }
   if (parsedSelection.provider === provider && parsedSelection.modelId) {
     return parsedSelection.modelId;
   }
@@ -406,6 +420,9 @@ function buildProviderPayload(provider, model, messages, temperature, maxTokens)
 }
 
 function getFallbackOrder(taskType) {
+  if (taskType === 'vision') {
+    return ['openai', 'gemini', 'groq', 'openrouter', 'anthropic'];
+  }
   if (taskType === 'pdf') {
     return ['gemini', 'openai', 'deepseek', 'cerebras', 'mistral', 'openrouter', 'anthropic'];
   }
@@ -456,7 +473,7 @@ exports.handler = async function(event) {
 
   const allowedMessages = messages.map(m => {
     const item = { role: String(m.role || 'user'), content: String(m.content || '') };
-    if (Array.isArray(m.images)) item.images = m.images;
+    if (Array.isArray(m.images)) item.images = m.images.slice(0, 5);
     return item;
   });
 
@@ -465,10 +482,13 @@ exports.handler = async function(event) {
   const candidates = fallback.filter(provider => PROVIDER_KEYS[provider]);
 
   if (!candidates.length) {
+    const message = taskType === 'vision'
+      ? 'Görsel analizi için OpenAI, Gemini, Groq, OpenRouter veya Anthropic sağlayıcısı yapılandırılmalı.'
+      : 'Hiçbir bulut sağlayıcı yapılandırılmamış.';
     return {
       statusCode: 503,
       headers: buildSecurityHeaders(event),
-      body: JSON.stringify(makeError(503, 'Hiçbir bulut sağlayıcı yapılandırılmamış.'))
+      body: JSON.stringify(makeError(503, message))
     };
   }
 
@@ -481,7 +501,7 @@ exports.handler = async function(event) {
   }
 
   const runProvider = async (provider) => {
-    const model = resolveModelId(provider, parsedSelection);
+    const model = resolveModelId(provider, parsedSelection, taskType);
     const payload = buildProviderPayload(provider, model, allowedMessages, temperature, maxTokens);
     if (!payload) return null;
 
@@ -545,7 +565,9 @@ exports.handler = async function(event) {
         ? 'İstek çok büyük.'
         : lastError?.error === 'timeout'
           ? 'Model zaman aşımına uğradı.'
-          : 'Tüm bulut sağlayıcılar şu an yanıt vermiyor. Yerel Qwen 7B seç veya biraz bekle.';
+          : taskType === 'vision'
+            ? 'Görsel analiz sağlayıcıları şu an yanıt vermiyor. Vision API anahtarlarını ve model erişimini kontrol edin.'
+            : 'Tüm bulut sağlayıcılar şu an yanıt vermiyor. Yerel Qwen 7B seç veya biraz bekle.';
 
   return {
     statusCode: 502,

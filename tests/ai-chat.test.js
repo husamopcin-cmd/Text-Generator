@@ -114,3 +114,81 @@ test('tries the selected provider first and falls back after rate limiting', asy
     }
   );
 });
+test('vision tasks use Gemini 2.5 Flash and cap image inputs at five', async () => {
+  await withFreshHandler({ GEMINI_API_KEY: 'gemini-test' }, async (handler) => {
+    let request;
+    global.fetch = async (url, options) => {
+      request = { url, body: JSON.parse(options.body) };
+      return {
+        ok: true,
+        status: 200,
+        text: async () => JSON.stringify({
+          candidates: [{ content: { parts: [{ text: 'vision ok' }] } }]
+        })
+      };
+    };
+
+    const images = Array.from({ length: 6 }, (_, index) => `data:image/png;base64,aW1hZ2Ut${index}`);
+    const response = await handler({
+      httpMethod: 'POST',
+      body: JSON.stringify({
+        taskType: 'vision',
+        selectedModel: 'gemini',
+        messages: [{ role: 'user', content: 'describe', images }]
+      })
+    });
+    const body = parseBody(response);
+    const imageParts = request.body.contents.flatMap(item => item.parts || []).filter(part => part.inline_data);
+
+    assert.equal(response.statusCode, 200);
+    assert.equal(body.provider, 'gemini');
+    assert.equal(body.model, 'gemini-2.5-flash');
+    assert.match(request.url, /models\/gemini-2\.5-flash:generateContent/);
+    assert.equal(imageParts.length, 5);
+  });
+});
+
+test('vision routing excludes configured text-only providers', async () => {
+  await withFreshHandler({ DEEPSEEK_API_KEY: 'deepseek-test' }, async (handler) => {
+    global.fetch = async () => assert.fail('text-only provider must not receive vision input');
+    const response = await handler({
+      httpMethod: 'POST',
+      body: JSON.stringify({
+        taskType: 'vision',
+        selectedModel: 'deepseek',
+        messages: [{ role: 'user', content: 'describe', images: ['data:image/png;base64,aW1hZ2U='] }]
+      })
+    });
+
+    assert.equal(response.statusCode, 503);
+    assert.match(parseBody(response).error, /Görsel analizi için/);
+  });
+});
+
+test('Groq vision routing uses Llama 4 Scout', async () => {
+  await withFreshHandler({ GROQ_API_KEY: 'groq-test' }, async (handler) => {
+    let requestBody;
+    global.fetch = async (url, options) => {
+      assert.equal(url, 'https://api.groq.com/openai/v1/chat/completions');
+      requestBody = JSON.parse(options.body);
+      return {
+        ok: true,
+        status: 200,
+        text: async () => JSON.stringify({ choices: [{ message: { content: 'groq vision ok' } }] })
+      };
+    };
+
+    const response = await handler({
+      httpMethod: 'POST',
+      body: JSON.stringify({
+        taskType: 'vision',
+        selectedModel: 'groq',
+        messages: [{ role: 'user', content: 'describe', images: ['data:image/png;base64,aW1hZ2U='] }]
+      })
+    });
+
+    assert.equal(response.statusCode, 200);
+    assert.equal(requestBody.model, 'meta-llama/llama-4-scout-17b-16e-instruct');
+    assert.ok(Array.isArray(requestBody.messages[0].content));
+  });
+});

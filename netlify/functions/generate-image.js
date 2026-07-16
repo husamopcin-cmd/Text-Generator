@@ -23,6 +23,16 @@ async function fetchWithTimeout(url, options, timeoutMs) {
   }
 }
 
+function classifyProviderHttpError(status, responseText) {
+  const normalized = String(responseText || '').toLowerCase();
+  if (status === 402 || /insufficientcredits|insufficient[_ -]?credits|billing_hard_limit|billing hard limit|credit balance|quota/.test(normalized)) {
+    return 'insufficient_credits';
+  }
+  if (status === 401 || status === 403) return 'unauthorized';
+  if (status === 429) return 'quota_or_limit';
+  return 'provider_error';
+}
+
 function pickOpenAIImageSize(width, height) {
   const ratio = width / height;
   if (ratio > 1.15) return '1536x1024';
@@ -57,7 +67,7 @@ async function tryOpenAI(prompt, width, height) {
 
   const text = await resp.text();
   if (!resp.ok) {
-    return { ok: false, error: 'provider_error', status: resp.status, details: text.slice(0, 500) };
+    return { ok: false, error: classifyProviderHttpError(resp.status, text), status: resp.status, details: text.slice(0, 500) };
   }
 
   let data;
@@ -117,8 +127,12 @@ async function tryRunware(prompt, width, height) {
 
   const text = await resp.text();
   if (!resp.ok) {
-    const error = text.includes('insufficientCredits') ? 'insufficient_credits' : 'provider_error';
-    return { ok: false, error, status: resp.status, details: text.slice(0, 500) };
+    return {
+      ok: false,
+      error: classifyProviderHttpError(resp.status, text),
+      status: resp.status,
+      details: text.slice(0, 500)
+    };
   }
 
   let data;
@@ -152,7 +166,7 @@ async function tryFal(prompt, width, height) {
 
   const text = await resp.text();
   if (!resp.ok) {
-    return { ok: false, error: 'provider_error', status: resp.status, details: text.slice(0, 500) };
+    return { ok: false, error: classifyProviderHttpError(resp.status, text), status: resp.status, details: text.slice(0, 500) };
   }
 
   let data;
@@ -190,7 +204,7 @@ async function tryReplicate(prompt, width, height) {
 
   const text = await resp.text();
   if (!resp.ok) {
-    return { ok: false, error: 'provider_error', status: resp.status, details: text.slice(0, 500) };
+    return { ok: false, error: classifyProviderHttpError(resp.status, text), status: resp.status, details: text.slice(0, 500) };
   }
 
   let data;
@@ -226,7 +240,7 @@ async function tryStability(prompt, width, height) {
 
   const text = await resp.text();
   if (!resp.ok) {
-    return { ok: false, error: 'provider_error', status: resp.status, details: text.slice(0, 500) };
+    return { ok: false, error: classifyProviderHttpError(resp.status, text), status: resp.status, details: text.slice(0, 500) };
   }
 
   let data;
@@ -255,7 +269,7 @@ async function tryHuggingFace(prompt) {
 
   if (!resp.ok) {
     const text = await resp.text();
-    return { ok: false, error: 'provider_error', status: resp.status, details: text.slice(0, 500) };
+    return { ok: false, error: classifyProviderHttpError(resp.status, text), status: resp.status, details: text.slice(0, 500) };
   }
 
   const contentType = resp.headers.get('content-type') || '';

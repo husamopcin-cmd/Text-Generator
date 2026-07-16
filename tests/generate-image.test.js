@@ -94,7 +94,7 @@ test('returns a controlled failure when a configured provider rejects the reques
     assert.equal(body.error, 'all_providers_failed');
     assert.deepEqual(calls, ['https://api.runware.ai/v1']);
     assert.equal(attempts[0].provider, 'runware');
-    assert.equal(attempts[0].error, 'provider_error');
+    assert.equal(attempts[0].error, 'quota_or_limit');
   });
 });
 
@@ -147,5 +147,42 @@ test('uses OpenAI image generation with a supported size and returns base64 data
     assert.equal(request.body.model, 'gpt-image-1-mini');
     assert.equal(request.body.size, '1536x1024');
     assert.equal(request.body.quality, 'low');
+  });
+});
+test('classifies OpenAI billing limits as insufficient credits', async () => {
+  await withProviderEnvironment({ OPENAI_API_KEY: 'openai-test-key' }, async () => {
+    global.fetch = async () => ({
+      ok: false,
+      status: 400,
+      text: async () => JSON.stringify({
+        error: { type: 'billing_limit_user_error', code: 'billing_hard_limit_reached', message: 'Billing hard limit has been reached.' }
+      })
+    });
+
+    const response = await handler({
+      httpMethod: 'POST',
+      body: JSON.stringify({ prompt: 'test image', forceProvider: 'openai' })
+    });
+    const attempts = JSON.parse(parseBody(response).details);
+
+    assert.equal(response.statusCode, 502);
+    assert.equal(attempts[0].error, 'insufficient_credits');
+    assert.equal(attempts[0].status, 400);
+  });
+});
+
+test('classifies Fal 403 responses as unauthorized', async () => {
+  await withProviderEnvironment({ FAL_KEY: 'fal-test-key' }, async () => {
+    global.fetch = async () => ({ ok: false, status: 403, text: async () => 'Forbidden' });
+
+    const response = await handler({
+      httpMethod: 'POST',
+      body: JSON.stringify({ prompt: 'test image', forceProvider: 'fal' })
+    });
+    const attempts = JSON.parse(parseBody(response).details);
+
+    assert.equal(response.statusCode, 502);
+    assert.equal(attempts[0].error, 'unauthorized');
+    assert.equal(attempts[0].status, 403);
   });
 });
