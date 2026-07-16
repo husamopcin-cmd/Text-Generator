@@ -92,16 +92,43 @@ test('startup profile flow uses the professional modal instead of native prompt'
   const startup = main.match(/function getStoredUserName\(\)[\s\S]*?let loggedUser = getStoredUserName\(\);/);
   assert.ok(startup, 'Missing safe stored-user bootstrap');
   assert.doesNotMatch(startup[0], /prompt\(/);
-  assert.match(main, /setTimeout\(\(\) => openLocalAuthModal\(\), 0\)/);
-  assert.match(main, /function logout\(\)[\s\S]*?rememberLocalProfile\(loggedUser\)/);
+  assert.match(main, /await initializeAccountSession\(\)/);
+  assert.match(main, /setTimeout\(\(\) => openAccountAuthModal\(\), 0\)/);
+  assert.match(main, /async function logout\(\)[\s\S]*?await signOutAccountSession\(\)/);
   assert.doesNotMatch(startup[0], /ahmet/i, 'real names must not be treated as migration sentinels');
 });
 
-test('local sign-in and registration are explicit about their backend boundary', () => {
-  const auth = coach.match(/function openLocalAuthModal\(initialMode\)[\s\S]*?\n    function renameLocalProfile/);
-  assert.ok(auth, 'Missing local auth modal');
+test('cloud account form collects professional fields and delegates credentials to Supabase', () => {
+  const auth = coach.match(/function openAccountAuthModal\(initialMode\)[\s\S]*?\n    function openLocalProfileSetupModal/);
+  assert.ok(auth, 'Missing cloud account modal');
   assert.match(auth[0], /Giriş Yap/);
   assert.match(auth[0], /Kayıt Ol/);
+  for (const id of [
+    'cloudAuthFirstName',
+    'cloudAuthLastName',
+    'cloudAuthAge',
+    'cloudAuthEmail',
+    'cloudAuthPassword',
+    'cloudAuthPasswordConfirm',
+    'cloudAuthGoogleBtn'
+  ]) {
+    assert.match(auth[0], new RegExp(`id="${id}"`));
+  }
+  assert.match(auth[0], /signInWithPassword/);
+  assert.match(auth[0], /client\.auth\.signUp/);
+  assert.match(auth[0], /signInWithOAuth/);
+  assert.match(auth[0], /provider: 'google'/);
+  assert.match(auth[0], /Şifren CinoCode koduna veya localStorage'a kaydedilmez/);
+  assert.doesNotMatch(auth[0], /localStorage\.setItem\([^\n]*(password|parola|şifre)/i);
+  assert.match(html, /@supabase\/supabase-js@2\.110\.5/);
+  assert.match(css, /\.cc-auth-google/);
+  assert.match(css, /\.cc-auth-password-row/);
+  assert.match(css, /\.cc-auth-backend-status/);
+});
+
+test('local profile remains a password-free fallback', () => {
+  const auth = coach.match(/function openLocalProfileSetupModal\(initialMode\)[\s\S]*?\n    function renameLocalProfile/);
+  assert.ok(auth, 'Missing local profile fallback');
   assert.match(auth[0], /Bu sürüm yereldir/);
   assert.match(auth[0], /Şifre, e-posta doğrulaması ve bulut senkronizasyonu yoktur/);
   assert.doesNotMatch(auth[0], /type="password"/);

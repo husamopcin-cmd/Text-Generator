@@ -33,6 +33,8 @@ Netlify Functions tarafından gerçekten okunan değişkenler:
 - [ ] `REPLICATE_API_TOKEN`
 - [ ] `STABILITY_API_KEY`
 - [ ] `HUGGINGFACE_API_KEY`
+- [ ] `SUPABASE_URL`
+- [ ] `SUPABASE_PUBLISHABLE_KEY`
 
 Kurulum notları:
 
@@ -42,6 +44,11 @@ Kurulum notları:
 - Arayüz izin veriyorsa kapsamı **Functions**, deploy context'i **Production** olarak seç.
 - Arayüz izin veriyorsa anahtarları **Contains secret values** olarak işaretle.
 - Eksik sağlayıcılar fallback zincirinden çıkarılır; en az bir çalışan sağlayıcı bulunmalıdır.
+- `SUPABASE_URL` ve `SUPABASE_PUBLISHABLE_KEY`, e-posta/şifre ve Google giriş ekranını etkinleştirir.
+- Supabase publishable key tarayıcı istemcileri için tasarlanmıştır; `service_role` anahtarını kesinlikle Netlify'a bu adla ekleme veya frontend'e açma.
+- Supabase Dashboard -> Authentication -> Providers bölümünde Email ve Google sağlayıcılarını etkinleştir.
+- Google Cloud tarafındaki OAuth Client Secret yalnızca Supabase Google provider ayarına girilir; CinoCode `.env` dosyasına veya frontend'e yazılmaz.
+- Supabase URL Configuration içinde canlı siteyi ve yerel geliştirme için `http://localhost:8899/**` adresini izinli redirect listesine ekle.
 
 ## 2. Render - TTS Sunucusu
 
@@ -59,6 +66,8 @@ Kurulum notları:
 ## 3. Yerel `.env`
 
 - [ ] Kullandığın yeni Netlify sağlayıcı anahtarlarını yerel `.env` içinde güncelle.
+- [ ] `SUPABASE_URL` ve `SUPABASE_PUBLISHABLE_KEY` değerlerini yerel `.env` içine ekle.
+- [ ] Google OAuth Client Secret değerini yerel `.env` içine koyma; Supabase panelinde tut.
 - [ ] Yeni `GOOGLE_TTS_KEY` değerini yerel `.env` içinde güncelle.
 - [ ] `.env` dosyasını silme; `netlify dev` ve yerel TTS çalıştırması bu dosyayı kullanır.
 - [ ] `.env` dosyasını ZIP'e ekleme ve içeriğini sohbetlere yapıştırma.

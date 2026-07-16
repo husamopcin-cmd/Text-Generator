@@ -17,6 +17,8 @@
     <script src="https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js"></script>
     <!-- JSZip (ZIP içindeki güvenli metin/kod dosyalarını yerelde çıkarma) -->
     <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+    <!-- Supabase Auth (e-posta/şifre ve Google OAuth, sabit v2 sürümü) -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.5"></script>
 
     <!-- PWA Cache Busting -->
     <script>
@@ -122,8 +124,8 @@
             <div id="accountPopover" style="display:none; position:absolute; bottom:35px; left:0; width:100%; background:var(--cc-bg-surface); border: 1px solid rgba(255, 255, 255, 0.08); padding:12px; border-radius: var(--cc-radius); z-index:10010; box-shadow:0 4px 15px rgba(0,0,0,0.5); text-align:center; color:var(--cc-text-primary);">
                 <div style="font-size:11px; color:var(--cc-text-muted); margin-bottom:12px;" id="accountStats">Sohbet verileriniz güvende.</div>
                 <button onclick="toggleAccountPopover(event); openLocalProfileModal();" style="width:100%; min-width:0; background:transparent; border: 1px solid rgba(255, 255, 255, 0.08); color:var(--cc-text-primary); cursor:pointer; font-size:12px; font-weight:600; padding:7px 8px; border-radius: var(--cc-radius); margin-bottom:8px;">👤 Profil</button>
-                <button onclick="toggleAccountPopover(event); openLocalProfileModal();" style="width:100%; min-width:0; background:transparent; border: 1px solid rgba(255, 255, 255, 0.08); color:var(--cc-text-primary); cursor:pointer; font-size:12px; font-weight:600; padding:7px 8px; border-radius: var(--cc-radius); margin-bottom:8px;">⚙️ Hesap Ayarları</button>
-                <button onclick="deleteLocalAccount()" style="width:100%; min-width:0; background:rgba(243,139,168,0.1); border:1px solid rgba(243,139,168,0.3); color:#f38ba8; cursor:pointer; font-size:12px; font-weight:600; padding:7px 8px; border-radius: var(--cc-radius); margin-bottom:8px;">🗑️ Hesabı Sil</button>
+                <button onclick="toggleAccountPopover(event); openLocalProfileModal();" style="width:100%; min-width:0; background:transparent; border: 1px solid rgba(255, 255, 255, 0.08); color:var(--cc-text-primary); cursor:pointer; font-size:12px; font-weight:600; padding:7px 8px; border-radius: var(--cc-radius); margin-bottom:8px;">⚙️ Profil ve Veri</button>
+                <button onclick="deleteLocalAccount()" style="width:100%; min-width:0; background:rgba(243,139,168,0.1); border:1px solid rgba(243,139,168,0.3); color:#f38ba8; cursor:pointer; font-size:12px; font-weight:600; padding:7px 8px; border-radius: var(--cc-radius); margin-bottom:8px;">🗑️ Yerel Verileri Sil</button>
                 <button onclick="logout()" style="width:100%; min-width:0; background:rgba(243,139,168,0.1); border:1px solid rgba(243,139,168,0.3); color:#f38ba8; cursor:pointer; font-size:12px; font-weight:600; padding:7px 8px; border-radius: var(--cc-radius); margin-bottom:8px;">Çıkış Yap</button>
             </div>
         </div>

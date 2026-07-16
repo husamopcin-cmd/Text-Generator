@@ -85,7 +85,7 @@ test('answers allowed preflight requests with strict CORS headers', () => {
 test('public functions no longer emit wildcard CORS headers', () => {
   const fs = require('node:fs');
   const path = require('node:path');
-  for (const name of ['ai-chat.js', 'generate-image.js', 'web-search.js']) {
+  for (const name of ['ai-chat.js', 'generate-image.js', 'web-search.js', 'auth-config.js']) {
     const source = fs.readFileSync(path.join(__dirname, '..', 'netlify', 'functions', name), 'utf8');
     assert.doesNotMatch(source, /Access-Control-Allow-Origin['"]?\s*:\s*['"]\*['"]/);
     assert.match(source, /guardRequest\(event/);

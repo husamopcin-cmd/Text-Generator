@@ -7,6 +7,7 @@ const root = path.join(__dirname, '..');
 const html = fs.readFileSync(path.join(root, 'cinocode_chat.html'), 'utf8');
 const main = fs.readFileSync(path.join(root, 'assets', 'js', 'main.js'), 'utf8');
 const aiChat = fs.readFileSync(path.join(root, 'netlify', 'functions', 'ai-chat.js'), 'utf8');
+const authConfig = fs.readFileSync(path.join(root, 'netlify', 'functions', 'auth-config.js'), 'utf8');
 const generateImage = fs.readFileSync(path.join(root, 'netlify', 'functions', 'generate-image.js'), 'utf8');
 const server = fs.readFileSync(path.join(root, 'server.py'), 'utf8');
 const checklist = fs.readFileSync(path.join(root, 'NETLIFY-ENV-KURULUM.md'), 'utf8');
@@ -26,6 +27,8 @@ const expectedNetlifyKeys = [
   'REPLICATE_API_TOKEN',
   'RUNWARE_API_KEY',
   'STABILITY_API_KEY',
+  'SUPABASE_PUBLISHABLE_KEY',
+  'SUPABASE_URL',
   'TOGETHER_API_KEY',
   'XAI_API_KEY'
 ];
@@ -37,6 +40,7 @@ function extractNodeEnvKeys(source) {
 test('deployment checklist covers every Netlify provider variable used by code', () => {
   const actual = [...new Set([
     ...extractNodeEnvKeys(aiChat),
+    ...extractNodeEnvKeys(authConfig),
     ...extractNodeEnvKeys(generateImage)
   ])].sort();
 

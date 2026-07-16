@@ -13,11 +13,16 @@
     }
     let loggedUser = getStoredUserName();
 
-    function logout() {
+    async function logout() {
+        if (typeof signOutAccountSession === 'function') {
+            await signOutAccountSession();
+            return;
+        }
         if (loggedUser && typeof rememberLocalProfile === 'function') {
             rememberLocalProfile(loggedUser);
         }
         localStorage.removeItem('cinocode_user');
+        localStorage.removeItem('cinocode_auth_mode');
         window.location.reload();
     }
 
@@ -7083,6 +7088,13 @@ ${answer}` : action;
     window.onload = async () => {
         renderMyApps();
         fz22ApplyColorPrefs();
+        if (typeof initializeAccountSession === 'function') {
+            try {
+                await initializeAccountSession();
+            } catch (authError) {
+                console.warn('Account session initialization failed', authError);
+            }
+        }
         if (window.location.protocol === 'file:') {
             const banner = document.createElement('div');
             banner.style = "background: #f38ba8; color: #11111b; text-align: center; padding: 10px; font-weight: bold; font-size: 13px; z-index: 9999; border-bottom: 2px solid #eba0ac;";
@@ -7094,8 +7106,8 @@ ${answer}` : action;
             if (loggedUser && typeof rememberLocalProfile === 'function') {
                 rememberLocalProfile(loggedUser);
             }
-            if (!loggedUser && typeof openLocalAuthModal === 'function') {
-                setTimeout(() => openLocalAuthModal(), 0);
+            if (!loggedUser && typeof openAccountAuthModal === 'function') {
+                setTimeout(() => openAccountAuthModal(), 0);
             }
 
             if (loggedUser) {
