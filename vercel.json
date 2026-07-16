@@ -1,0 +1,15 @@
+{
+  "routes": [
+    {
+      "src": "/.netlify/functions/(.*)",
+      "dest": "/api/$1"
+    },
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/.*",
+      "dest": "/cinocode_chat.html"
+    }
+  ]
+}

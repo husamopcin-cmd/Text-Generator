@@ -11,6 +11,7 @@ const authConfig = fs.readFileSync(path.join(root, 'netlify', 'functions', 'auth
 const generateImage = fs.readFileSync(path.join(root, 'netlify', 'functions', 'generate-image.js'), 'utf8');
 const server = fs.readFileSync(path.join(root, 'server.py'), 'utf8');
 const checklist = fs.readFileSync(path.join(root, 'NETLIFY-ENV-KURULUM.md'), 'utf8');
+const vercelConfig = JSON.parse(fs.readFileSync(path.join(root, 'vercel.json'), 'utf8'));
 
 const expectedNetlifyKeys = [
   'ANTHROPIC_API_KEY',
@@ -48,6 +49,57 @@ test('deployment checklist covers every Netlify provider variable used by code',
   for (const key of expectedNetlifyKeys) {
     assert.match(checklist, new RegExp('`' + key + '`'));
   }
+});
+
+test('Vercel config preserves static assets and maps Netlify function routes', () => {
+  assert.deepEqual(vercelConfig.routes, [
+    { src: '/.netlify/functions/(.*)', dest: '/api/$1' },
+    { handle: 'filesystem' },
+    { src: '/.*', dest: '/cinocode_chat.html' }
+  ]);
+});
+
+test('Vercel API wrappers cover every Netlify function endpoint', () => {
+  for (const name of ['ai-chat', 'auth-config', 'generate-image', 'image-search', 'web-search']) {
+    const source = fs.readFileSync(path.join(root, 'api', `${name}.js`), 'utf8');
+    assert.match(source, new RegExp(`\\.\\./netlify/functions/${name}`));
+    assert.match(source, /createVercelHandler\(handler\)/);
+  }
+});
+
+test('Vercel adapter translates a Netlify handler response', async () => {
+  const { createVercelHandler } = require('../api/_netlify-adapter');
+  const vercelHandler = createVercelHandler(async event => {
+    assert.equal(event.httpMethod, 'POST');
+    assert.equal(event.headers.origin, 'https://example.com');
+    assert.equal(event.body, '{"hello":"world"}');
+    return {
+      statusCode: 201,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ok: true })
+    };
+  });
+
+  const headers = {};
+  const res = {
+    statusCode: 0,
+    body: '',
+    setHeader(name, value) { headers[name] = value; },
+    status(code) { this.statusCode = code; return this; },
+    send(body) { this.body = body; return this; }
+  };
+
+  await vercelHandler({
+    method: 'POST',
+    headers: { Origin: 'https://example.com' },
+    query: {},
+    url: '/api/test',
+    body: { hello: 'world' }
+  }, res);
+
+  assert.equal(res.statusCode, 201);
+  assert.equal(headers['Content-Type'], 'application/json');
+  assert.equal(res.body, '{"ok":true}');
 });
 
 test('deployment checklist covers the Render TTS key without embedding values', () => {
