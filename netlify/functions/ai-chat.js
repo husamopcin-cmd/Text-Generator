@@ -51,10 +51,20 @@ const VISION_MODELS = {
 };
 
 const PROVIDER_TIMEOUTS = {
-  chat: 15000,
-  pdf: 30000,
-  vision: 35000
+  chat: 30000,
+  pdf: 50000,
+  vision: 45000
 };
+
+const FUNCTION_BUDGET_MS = 55000;
+
+function getProviderTimeoutMs(taskType, maxTokens) {
+  if (taskType !== 'chat') return PROVIDER_TIMEOUTS[taskType] || PROVIDER_TIMEOUTS.chat;
+  if (maxTokens >= 6500) return 52000;
+  if (maxTokens >= 5000) return 47000;
+  if (maxTokens >= 2500) return 40000;
+  return PROVIDER_TIMEOUTS.chat;
+}
 
 function makeError(status, message, details = {}) {
   return {
@@ -462,6 +472,7 @@ exports.handler = async function(event) {
   const selectedModel = String(body.selectedModel || '').trim();
   const temperature = Number.isFinite(body.temperature) ? body.temperature : 0.7;
   const maxTokens = Number.isFinite(body.maxTokens) ? body.maxTokens : 1024;
+  const requestDeadline = Date.now() + FUNCTION_BUDGET_MS;
 
   if (!messages.length) {
     return {
@@ -505,8 +516,12 @@ exports.handler = async function(event) {
     const payload = buildProviderPayload(provider, model, allowedMessages, temperature, maxTokens);
     if (!payload) return null;
 
+    const remainingBudget = requestDeadline - Date.now();
+    if (remainingBudget < 1000) {
+      return { error: 'timeout', provider, model, status: 'timeout' };
+    }
     const controller = new AbortController();
-    const timeout = PROVIDER_TIMEOUTS[taskType] || 15000;
+    const timeout = Math.min(getProviderTimeoutMs(taskType, maxTokens), remainingBudget);
     const timeoutId = setTimeout(() => controller.abort(), timeout);
 
     let res;

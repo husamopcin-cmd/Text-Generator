@@ -1740,6 +1740,10 @@
         return /(detaylı anlat|detayli anlat|tam kılavuz|tam kilavuz|uzun anlat|adım adım anlat|adim adim anlat)/i.test(text || "");
     }
 
+    function isLongResponseRequest(text) {
+        return /(uzun\s+(yanıt|yanit|cevap|anlat|açıkla|acikla|yaz)|çok\s+detaylı|cok\s+detayli|olabildiğince\s+detaylı|olabildigince\s+detayli|kapsamlı\s+(yanıt|yanit|cevap|anlatım|anlatim))/i.test(text || "");
+    }
+
     function isLegacyBehaviorMode() {
         return localStorage.getItem('cinocode_behavior_version') === 'legacy';
     }
@@ -1777,6 +1781,7 @@
         }
         if (taskType === 'pdf') return 4096;
         if (isShortResponseRequest(text)) return RESPONSE_LENGTH_TOKEN_LIMITS.short;
+        if (isLongResponseRequest(text)) return RESPONSE_LENGTH_TOKEN_LIMITS.long;
 
         const selectedBudget = isDetailedResponseRequest(text)
             ? RESPONSE_LENGTH_TOKEN_LIMITS.detailed
@@ -7719,17 +7724,6 @@ ${answer}` : action;
         } catch(e) {}
     }
 
-    function isStyleBoundaryQuestion(text) {
-        const value = String(text || "").toLocaleLowerCase("tr-TR");
-        if (!value) return false;
-        const asksStyle = /(serbest|free\s*mode|freemode|sansürsüz|sansursuz|sınırsız|sinirsiz|her şeyi|her seyi|her istediğimi|her istedigimi|limit|sınır|sinir)/i.test(value);
-        const asksCapability = /(mod|üslup|uslup|yapar mı|yapar misin|yapabilir misin|sınır yok|sinir yok|sınırsız mı|sinirsiz mi|sansürsüz mü|sansursuz mu|her istediğimi|her istedigimi)/i.test(value);
-        return asksStyle && asksCapability;
-    }
-
-    function getStyleBoundaryAnswer() {
-        return "Serbest Üslup sınırsız mod değildir. Daha direkt, samimi ve cesur bir konuşma tarzıdır; yetişkin sensual/mature konularda daha estetik ve ima dolu yazabilir. Ama yasa dışı zarar, dolandırıcılık, zararlı kod, çocuk güvenliği, açık pornografik içerik, rıza dışı içerik ve gerçek kişilere zarar gibi konularda her modda sınır vardır.";
-    }
 
     function setGenerationUiBusy(isBusy) {
         const sendBtn = getMainSendButton();
@@ -8345,24 +8339,6 @@ ${answer}` : action;
             return;
         }
 
-        if (!msgObj.images && !docTextToUse && isStyleBoundaryQuestion(text)) {
-            const answer = getStyleBoundaryAnswer();
-            const boundaryDiv = document.createElement("div");
-            boundaryDiv.className = "message bot";
-            boundaryDiv.id = botId;
-            boundaryDiv.innerHTML = renderContentWithImages(answer, true);
-            messagesDiv.appendChild(boundaryDiv);
-            scrubPlaceholderErrorImages(boundaryDiv);
-            addCopyButtons(boundaryDiv);
-            appendSmartSuggestions(boundaryDiv, answer, text);
-            chat.messages.push({ role: "assistant", content: answer });
-            attachMsgActionsToBotDiv(boundaryDiv, chat.messages.length - 1, chat.messages[chat.messages.length - 1]);
-            chat.updatedAt = Date.now();
-            saveDatabase();
-            scrollToBottom();
-            cleanupGenerationUi();
-            return;
-        }
 
 
         if (!msgObj.images && !docTextToUse && isAmbiguousImageCreationRequest(text)) {
@@ -8601,9 +8577,12 @@ ${answer}` : action;
             }
 
             function getRequestTimeoutMs() {
-                if (taskType === 'vision') return 35000;
-                if (taskType === 'pdf') return 30000;
-                return 15000;
+                if (taskType === 'vision') return 50000;
+                if (taskType === 'pdf') return 58000;
+                if (responseMaxTokens >= RESPONSE_LENGTH_TOKEN_LIMITS.long) return 58000;
+                if (responseMaxTokens >= RESPONSE_LENGTH_TOKEN_LIMITS.detailed) return 52000;
+                if (responseMaxTokens >= RESPONSE_LENGTH_TOKEN_LIMITS.normal) return 42000;
+                return 30000;
             }
 
             // Model cooldowns (store in localStorage to persist across reloads)
@@ -9494,7 +9473,18 @@ ${answer}` : action;
                     }
                 } catch(e) {}
             } else {
-                try { document.getElementById(botId).innerHTML = "<b>Hata:</b> " + error.message; } catch(e) {}
+                try {
+                    const rawMessage = String((error && error.message) || "Bilinmeyen hata");
+                    const isTimeout = /zaman aşımı|zaman asimi|timeout|aborted/i.test(rawMessage);
+                    const isConfiguration = /api anahtar|environment variables|hiçbir uygun model|hicbir uygun model/i.test(rawMessage);
+                    const explanation = isTimeout
+                        ? "Yanıt beklenenden uzun sürdüğü için bağlantı zaman sınırına ulaştı. Mesajın kaybolmadı; tekrar deneyebilir veya daha sonra kaldığın yerden devam edebilirsin."
+                        : isConfiguration
+                            ? "Sohbet sağlayıcısı hazır değil. API anahtarı ve sağlayıcı yapılandırması kontrol edilmeli."
+                            : "Yanıt tamamlanamadı. Bu otomatik bir içerik reddi değil; sağlayıcı veya bağlantı tarafında geçici bir sorun oluştu. Mesajın kaybolmadı, tekrar deneyebilirsin.";
+                    const safeTechnicalMessage = escapeHtmlText(rawMessage).slice(0, 500);
+                    document.getElementById(botId).innerHTML = `<div class="chat-generation-error" style="border:1px solid #f38ba8;border-radius:var(--cc-radius);padding:12px;background:rgba(243,139,168,0.08);"><div style="font-weight:700;color:#f38ba8;margin-bottom:6px;">Yanıt tamamlanamadı</div><div style="line-height:1.5;">${explanation}</div><details style="margin-top:8px;color:var(--cc-text-muted);"><summary>Teknik ayrıntı</summary><div style="margin-top:6px;word-break:break-word;">${safeTechnicalMessage}</div></details></div>`;
+                } catch(e) {}
             }
         } finally {
             // Ensure UI is always re-enabled to avoid permanent lock
