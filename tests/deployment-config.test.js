@@ -12,6 +12,7 @@ const generateImage = fs.readFileSync(path.join(root, 'netlify', 'functions', 'g
 const server = fs.readFileSync(path.join(root, 'server.py'), 'utf8');
 const checklist = fs.readFileSync(path.join(root, 'NETLIFY-ENV-KURULUM.md'), 'utf8');
 const vercelConfig = JSON.parse(fs.readFileSync(path.join(root, 'vercel.json'), 'utf8'));
+const vercelIgnore = fs.readFileSync(path.join(root, '.vercelignore'), 'utf8');
 
 const expectedNetlifyKeys = [
   'ANTHROPIC_API_KEY',
@@ -57,6 +58,12 @@ test('Vercel config preserves static assets and maps Netlify function routes', (
     { handle: 'filesystem' },
     { src: '/.*', dest: '/cinocode_chat.html' }
   ]);
+});
+
+test('Vercel upload excludes local secrets and development state', () => {
+  for (const entry of ['.env', '.netlify', '.git', 'node_modules', 'users.db']) {
+    assert.match(vercelIgnore, new RegExp(`^${entry.replace('.', '\\.')}$`, 'm'));
+  }
 });
 
 test('Vercel API wrappers cover every Netlify function endpoint', () => {

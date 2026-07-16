@@ -6903,7 +6903,10 @@ ${answer}` : action;
                 .filter(item => item && item.title && item.snippet && item.title !== 'Uyarı')
                 .slice(0, 4);
             if (!useful.length) return "";
-            return useful.map((item, index) => `${index + 1}. ${item.title}: ${item.snippet}`).join("\n");
+            return useful.map((item, index) => {
+                const source = getSafeExternalHttpUrl(item.url || "");
+                return `${index + 1}. ${item.title}: ${item.snippet}${source ? ` (Kaynak: ${source})` : ""}`;
+            }).join("\n");
         } catch(e) {
             console.warn("Web arama hatası", e);
             return "";
