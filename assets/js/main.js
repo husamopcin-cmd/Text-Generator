@@ -813,7 +813,7 @@
     function getPublicVideoSubject(rawPrompt) {
         let clean = sanitizeAssistantOutput(String(rawPrompt || ""));
         clean = clean.replace(/\[(?:GENERATE_VIDEO|GENERATE_IMAGE):[\s\S]*?\]/gi, "");
-        clean = clean.replace(/,\s*(punchy fast cuts|energetic storytelling|punchy motion blur|polished cinematic structure|smooth camera moves|professional framing|slow cinematic reveals|dramatic lighting|epic atmosphere|consistent character design|scene-to-scene continuity|detailed environment|narrative flow|crisp detail|fine texture details|4k inspired clarity|ultra high resolution detail|filmic grading|premium studio polish|cinematic depth of field|no humans|no men|no women|no people|no man|no woman|no extra limbs|no deformed anatomy|no text|no watermark|high quality|cinematic|clean|friendly|safe|balanced|non-graphic|darker cinematic tone|intense mature atmosphere|gritty style|masterpiece)+/gi, "");
+        clean = clean.replace(/,\s*(punchy fast cuts|energetic storytelling|punchy motion blur|punchy energetic composition|bold dynamic motion blur|polished cinematic structure|smooth camera moves|smooth motion cues|professional framing|slow cinematic reveals|slow cinematic reveal|dramatic lighting|epic atmosphere|consistent character design|consistent subject design|scene-to-scene continuity|detailed environment|narrative flow|smooth scene transitions|visual storytelling|rich visual detail|crisp detail|fine texture details|4k inspired clarity|ultra high resolution detail|filmic grading|premium studio polish|cinematic depth of field|no humans|no men|no women|no people|no man|no woman|no extra limbs|no deformed anatomy|no text|no watermark|high quality|cinematic|clean|friendly|safe|balanced|non-graphic|darker cinematic tone|intense mature atmosphere|gritty style|masterpiece|dynamic composition|engaging atmosphere)+/gi, "");
         return clean.replace(/\s+/g, " ").replace(/^\s*,\s*|\s*,\s*$/g, "").trim() || "istenen sahne";
     }
 
@@ -843,13 +843,13 @@
             const savedVideoMode = localStorage.getItem('video_mode') || 'fast_clip';
             const savedVideoQuality = localStorage.getItem('video_quality') || 'standard';
             if (savedVideoMode === 'fast_clip') {
-                clean += ', punchy fast cuts, energetic storytelling, punchy motion blur';
+                clean += ', punchy energetic composition, bold dynamic motion blur';
             } else if (savedVideoMode === 'standard_video') {
-                clean += ', polished cinematic structure, smooth camera moves, professional framing';
+                clean += ', polished cinematic structure, smooth motion cues, professional framing';
             } else if (savedVideoMode === 'cinematic') {
-                clean += ', slow cinematic reveals, dramatic lighting, epic atmosphere';
+                clean += ', slow cinematic reveal, dramatic lighting, epic atmosphere';
             } else if (savedVideoMode === 'scene_long' || savedVideoMode === 'experimental_long') {
-                clean += ', consistent character design, scene-to-scene continuity, detailed environment, narrative flow';
+                clean += ', consistent subject design, scene-to-scene continuity, detailed environment';
             }
             if (savedVideoQuality === 'high') {
                 clean += ', crisp detail, fine texture details, 4k inspired clarity';
@@ -884,7 +884,7 @@
 
     function getCoreVideoPrompt(rawPrompt) {
         return buildCleanMediaPrompt(rawPrompt || "", "video")
-            .replace(/,\s*(punchy fast cuts|energetic storytelling|punchy motion blur|polished cinematic structure|smooth camera moves|professional framing|slow cinematic reveals|dramatic lighting|epic atmosphere|consistent character design|scene-to-scene continuity|detailed environment|narrative flow|crisp detail|fine texture details|4k inspired clarity|ultra high resolution detail|filmic grading|premium studio polish|cinematic depth of field|no humans|no men|no women|no extra limbs|no deformed anatomy|no text|no watermark|high quality|cinematic|exactly one subject|single focal subject|exactly two subjects|two separate characters|exactly three subjects|three independent characters|exactly four subjects|four independent characters|exactly five subjects|five independent characters|exactly six separate full-body subjects|six independent characters|clean|friendly|safe|balanced|non-graphic|darker cinematic tone|intense mature atmosphere|gritty style|no explicit sexual content|no minors|no sexual violence|no hate content|no extreme gore|no illegal harm instructions|no real person sexualization)+/gi, "")
+            .replace(/,\s*(punchy fast cuts|energetic storytelling|punchy motion blur|punchy energetic composition|bold dynamic motion blur|polished cinematic structure|smooth camera moves|smooth motion cues|professional framing|slow cinematic reveals|slow cinematic reveal|dramatic lighting|epic atmosphere|consistent character design|consistent subject design|scene-to-scene continuity|detailed environment|narrative flow|smooth scene transitions|visual storytelling|rich visual detail|dynamic composition|engaging atmosphere|crisp detail|fine texture details|4k inspired clarity|ultra high resolution detail|filmic grading|premium studio polish|cinematic depth of field|no humans|no men|no women|no extra limbs|no deformed anatomy|no text|no watermark|high quality|cinematic|exactly one subject|single focal subject|exactly two subjects|two separate characters|exactly three subjects|three independent characters|exactly four subjects|four independent characters|exactly five subjects|five independent characters|exactly six separate full-body subjects|six independent characters|clean|friendly|safe|balanced|non-graphic|darker cinematic tone|intense mature atmosphere|gritty style|no explicit sexual content|no minors|no sexual violence|no hate content|no extreme gore|no illegal harm instructions|no real person sexualization)+/gi, "")
             .trim();
     }
 
@@ -5071,11 +5071,11 @@ ${answer}` : action;
 
         // Uzun video için sahne tutarlılığı
         if (isLongVideo) {
-            enhanced += ', consistent character design, scene-to-scene continuity, detailed environment, narrative flow, smooth scene transitions';
+            enhanced += ', consistent subject design, scene-to-scene continuity, detailed environment, smooth scene transitions';
         }
 
         // Genel video geliştirmeleri
-        enhanced += ', dynamic composition, visual storytelling, engaging atmosphere';
+        enhanced += ', dynamic composition, rich visual detail, engaging atmosphere';
 
         return enhanced;
     }
