@@ -20,3 +20,20 @@ test('the settings save button stays visible (sticky) instead of requiring a scr
   assert.match(match[0], /bottom:/, 'sticky positioning requires an anchor edge');
   assert.match(match[1], /Kaydet/, 'button must still say Kaydet (it already calls closeSettings() internally, i.e. Kaydet ve Çık)');
 });
+
+test('Runware, NVIDIA, xAI and Azure API key fields each link to their official key-issuing page', () => {
+  const expectedLinks = {
+    azureKeyInput: 'https://azure.microsoft.com/en-us/products/ai-services/ai-speech',
+    runwareApiKeyInput: 'https://my.runware.ai/keys',
+    nvidiaApiKeyInput: 'https://build.nvidia.com',
+    xaiApiKeyInput: 'https://console.x.ai'
+  };
+  for (const [inputId, url] of Object.entries(expectedLinks)) {
+    const inputIndex = html.indexOf(`id="${inputId}"`);
+    assert.notEqual(inputIndex, -1, `${inputId} must exist`);
+    const precedingBlock = html.slice(Math.max(0, inputIndex - 400), inputIndex);
+    const linkMatch = precedingBlock.match(/<a[^>]*href="([^"]+)"[^>]*target="_blank"[^>]*rel="noopener noreferrer"[^>]*>/g) || [];
+    assert.ok(linkMatch.length > 0, `${inputId}'s label must contain a help link`);
+    assert.ok(linkMatch.some(a => a.includes(url)), `${inputId}'s help link must point to ${url}`);
+  }
+});
