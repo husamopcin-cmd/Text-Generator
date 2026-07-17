@@ -717,7 +717,12 @@
         if (new RegExp(`${TR_WB_BEFORE}(anlat|açıkla|acikla|cevap ver)${TR_WB_AFTER}.{0,20}${TR_WB_BEFORE}(yeter|yetişir|yetisir|kâfi|kafi)${TR_WB_AFTER}`, "iu").test(normalized)) return true;
 
         const debugWords = ["hata verdi", "niye hata", "çalışmıyor", "calismiyor", "bozuk", "düzelt", "duzelt", "ne yaptın", "ne yaptin", "naptın", "naptin", "neden böyle", "neden boyle", "ekranda", "şu çıktı", "su cikti", "rapor", "log", "provider:", "reason:", "endpoint:", "network_error", "üretilemedi", "uretilemedi", "çöktü", "coktu", "console", "error", "bug", "deli misin", "yahu", "bu niye"];
-        if (debugWords.some(w => normalized.includes(w))) return true;
+        // Tek kelimelik işaretler kelime sınırıyla aranır; düz substring kontrolü
+        // "log"u "logo"da, "bug"ı "buğday"da eşleştirip görsel isteğini engelliyordu.
+        if (debugWords.some(w => {
+            if (w.includes(' ') || w.includes(':') || w.includes('_')) return normalized.includes(w);
+            return new RegExp(`${TR_WB_BEFORE}${w}${TR_WB_AFTER}`, "iu").test(normalized);
+        })) return true;
 
         if (normalized.length > 250 && (normalized.includes(":") || normalized.includes("{") || normalized.includes("fallback"))) return true;
         return false;
@@ -725,9 +730,35 @@
 
     function getMediaCommandSubject(text) {
         return normalizeMediaIntentText(text)
-            .replace(new RegExp(`${TR_WB_BEFORE}(kanka|knk|bana|lütfen|lutfen|bir|bi|şu|su|bu|onu|bunu|görsel|gorsel|resim|fotoğraf|fotograf|image|picture|video|klip|film|oluştur|olustur|üret|uret|çiz|ciz|yap|hazırla|hazirla|generate|draw|create|paint|tasarla|çevir|cevir|istiyorum|misin|mısın|musun|müsün)${TR_WB_AFTER}`, "giu"), " ")
+            .replace(new RegExp(`${TR_WB_BEFORE}(kanka|knk|bana|lütfen|lutfen|bir|bi|şu|su|bu|onu|bunu|görsel|gorsel|resim|fotoğraf|fotograf|image|picture|video|klip|film|oluştur|olustur|üret|uret|çiz|ciz|yap|hazırla|hazirla|generate|draw|create|paint|tasarla|çevir|cevir|istiyorum|misin|mısın|musun|müsün|ded|dedim|demiştim|demistim|hadi|haydi)${TR_WB_AFTER}`, "giu"), " ")
             .replace(/\s+/g, " ")
             .trim();
+    }
+
+    // buildCleanMediaPrompt'un eklediği İngilizce stil son-eklerini ayıklamak için.
+    // Openverse/arama sorguları "elma, high quality, cinematic, detailed, sharp" gibi
+    // anlamsız girdilerle beslenmesin diye kullanılır.
+    const IMAGE_STYLE_SUFFIX_RE = /\b(high quality|cinematic depth of field|cinematic|detailed environment|detailed|sharp|masterpiece|dramatic lighting|darker cinematic tone|intense mature atmosphere|non[- ]graphic|clean|friendly|safe|balanced|exactly (?:one|two|three|four|five|six)[a-z -]*|single focal subject|(?:two|three|four|five|six) (?:separate|independent)[a-z -]*|six separate full-body subjects|no (?:humans?|people|man|woman|men|women|text|watermark|extra limbs|deformed anatomy))\b/gi;
+
+    function getCoreImageSubject(text) {
+        // Önce tr-TR küçük harfe çevir: JS'nin /i bayrağı "İnternetten" gibi Türkçe
+        // büyük İ içeren kelimeleri eşleştiremiyor.
+        const withoutSuffixes = normalizeMediaIntentText(text)
+            .replace(IMAGE_STYLE_SUFFIX_RE, " ")
+            .replace(/(açık|acik)\s+(lisanslı|lisansli|lisans)/gi, " ")
+            .replace(new RegExp(`${TR_WB_BEFORE}(internetten|internette|webden|openverse|benzerini|benzeri|bul|ara|arat|getir)${TR_WB_AFTER}`, "giu"), " ");
+        return getMediaCommandSubject(withoutSuffixes);
+    }
+
+    // "internetten X görseli bul" gibi açık arama istekleri; görsel ÜRETİMİNDEN ayrı yönlendirilir.
+    function isDirectImageSearchRequest(text) {
+        const normalized = normalizeMediaIntentText(text);
+        if (!normalized || hasMediaNegativeIntent(normalized)) return false;
+        const wantsWeb = /(internetten|internette|webden|web üzerinden|web uzerinden|openverse|açık lisans|acik lisans)/i.test(normalized);
+        if (!wantsWeb) return false;
+        const hasSearchVerb = new RegExp(`${TR_WB_BEFORE}(bul|ara|arat|getir)${TR_WB_AFTER}`, "iu").test(normalized);
+        if (!hasSearchVerb) return false;
+        return /(görsel|gorsel|resim|resm|fotoğraf|fotograf|image|foto|benzerini|benzeri)/i.test(normalized);
     }
 
     function hasRenderableMediaSubject(text) {
@@ -739,7 +770,9 @@
         const normalized = (text || "").toLocaleLowerCase("tr-TR").trim();
         const isShortDrawCommand = normalized.length < 25 &&
             /(?:çiz|ciz|oluştur|olustur|üret|uret|draw|create|paint|tasarla)/i.test(normalized);
-        if (isShortDrawCommand) return true;
+        // Kısayol yalnızca fiil dışında gerçek bir özne kaldıysa geçerli; tek başına
+        // "çiz" gibi öznesiz komutlar netleştirme sorusuna düşmeli.
+        if (isShortDrawCommand && subject.length >= 1) return true;
         const isValid = subject.length >= 3 && !/^(kanka|knk|abi|abim|reis|dostum)$/.test(subject);
         if (!isValid) {
 
@@ -805,7 +838,7 @@
         }
         // Sadece komut kalıplarını temizle; kelime içlerini ve kullanıcı isimlerini bozma.
         clean = clean
-            .replace(new RegExp(`${TR_WB_BEFORE}(lütfen|lutfen|kanka|knk|bana|şu|su|bu)${TR_WB_AFTER}`, "giu"), " ")
+            .replace(new RegExp(`${TR_WB_BEFORE}(lütfen|lutfen|kanka|knk|bana|şu|su|bu|ded|dedim|demiştim|demistim|hadi|haydi)${TR_WB_AFTER}`, "giu"), " ")
             .replace(new RegExp(`${TR_WB_BEFORE}(çiz|ciz|yap|oluştur|olustur|üret|uret|hazırla|hazirla)${TR_WB_AFTER}`, "giu"), " ")
             .replace(/\s{2,}/g, " ")
             .trim();
@@ -1605,13 +1638,20 @@
             "iu"
         ).test(normalized);
         if (hasExplicitDrawCommand) return false;
-        return /(patch|bug|fix|hata|sistemi|provider|code|kod|console|error|api|key|token|ayarlar|settings|log|debug|developer|geliştirici|gelistirici|select-string|get-content|node --check)/i.test(normalized);
+        // Kelime sınırı şart: sınırsız "log" deseni "logo"yu, "kod" deseni "kodak"ı
+        // teknik tartışma sanıp görsel üretimini engelliyordu.
+        return new RegExp(`${TR_WB_BEFORE}(patch|bug|fix|hata|hatası|hatasi|sistemi|provider|code|kod|console|error|api|key|token|ayarlar|settings|log|debug|developer|geliştirici|gelistirici|select-string|get-content|node --check)${TR_WB_AFTER}`, "iu").test(normalized);
     }
 
     function isDirectImageGenerationRequest(text) {
         const normalized = (text || "").toLocaleLowerCase("tr-TR").trim();
         if (!normalized || isImageTechnicalDiscussion(normalized) || hasMediaNegativeIntent(normalized)) return false;
         if (/(analiz et|açıkla|acikla|bu nedir|ne var|yorumla|yükledim|yukledim)/i.test(normalized)) return false;
+        // Kullanıcı açıkça kodla çizim istiyorsa (SVG/HTML/canvas) görsel üretimine yönlendirme;
+        // bu istekler kod üretimi olarak normal sohbet modeline gitmeli.
+        if (new RegExp(`${TR_WB_BEFORE}(svg|html|css|canvas|javascript|kod|kodu|koduyla|kodla|kodunu|code)${TR_WB_AFTER}`, "iu").test(normalized)) return false;
+        // Açık "internetten bul/ara" isteği üretim değil, görsel aramasıdır.
+        if (isDirectImageSearchRequest(normalized)) return false;
 
         const imageWords = ["resim", "görsel", "gorsel", "fotoğraf", "fotograf", "image", "picture", "illüstrasyon", "illustrasyon", "çizim", "cizim", "avatar", "logo", "poster", "afiş", "afis", "kapak", "manzara", "wallpaper"];
         const createVerbs = ["oluştur", "olustur", "çiz", "ciz", "yap", "üret", "uret", "hazırla", "hazirla", "generate", "draw", "create", "paint", "tasarla"];
@@ -1981,9 +2021,19 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
         };
 
         const safetyContext = /(reddedemem|yardimci olamam|yardımcı olamam|güvenli alternatif|guvenli alternatif|güvenlik uyarısı|guvenlik uyarisi|riskleri|riskli|tehlikeli|zararlı|zararli|illegal|yasa dışı|yasadışı|unsafe|phishing|kimlik avi|dolandırıcılık|dolandiricilik|şiddet|siddet|çocuk güvenliği|cocuk guvenligi|nsfw|porno|cinsel)/i.test(combined);
-        const imageContext = /(\[generate_image|görsel|gorsel|görseli|gorseli|resim|resmi|fotoğraf|fotograf|fotoğrafı|fotografi|çizim|cizim|çiz|ciz|image|promptu kopyala|runware|pollinations)/i.test(userContext)
-            || currentMode === 'image'
-            || /(\[generate_image|data-runware-prompt|pollinations)/i.test(assistantContext);
+        // Görsel çipleri yalnızca cevap gerçekten görsel içeriyorsa veya kullanıcı
+        // gerçekten görsel üretimi/araması istediyse gösterilir; "currentMode" kalıcı
+        // olduğu için tek başına bağlam kanıtı sayılmaz (her mesajda çip çıkarıyordu).
+        // Not: Bu fonksiyon testlerde izole çalıştırıldığı için kontroller kendi içinde.
+        const assistantHasImageEvidence = /(\[generate_image|data-runware-prompt|pollinations|web-image-results|açık lisanslı sonuç)/i.test(assistantContext);
+        const userAsksImageCreation = (
+            /(resim|resmi|görsel|gorsel|fotoğraf|fotograf|çizim|cizim|image|logo|poster|avatar|manzara|wallpaper)/i.test(userContext)
+            && /(?<![\p{L}\p{N}_])(çiz|ciz|çizsene|cizsene|oluştur|olustur|üret|uret|tasarla|hazırla|hazirla)(?![\p{L}\p{N}_])/iu.test(userContext)
+        ) || /(?<![\p{L}\p{N}_])(çiz|ciz|çizsene|cizsene)(?![\p{L}\p{N}_])/iu.test(userContext);
+        const userAsksImageSearch = /(internetten|internette|webden|openverse|açık lisans|acik lisans)/i.test(userContext)
+            && /(?<![\p{L}\p{N}_])(bul|ara|arat|getir)(?![\p{L}\p{N}_])/iu.test(userContext)
+            && /(görsel|gorsel|resim|fotoğraf|fotograf|image|foto|benzerini|benzeri)/i.test(userContext);
+        const imageContext = assistantHasImageEvidence || userAsksImageCreation || userAsksImageSearch;
         const videoContext = /(\[generate_video|video|klip|film|storyboard|slideshow|webm|kamera hareketi|sahne planı)/i.test(userContext)
             || currentMode === 'video'
             || /(\[generate_video|data-generated-video)/i.test(assistantContext);
@@ -3764,16 +3814,15 @@ ${answer}` : action;
     }
 
     function searchSimilarImagesFromPrompt(prompt) {
-        const cleanPrompt = String(prompt || lastMediaPrompt || '').trim();
-        if (!cleanPrompt) {
+        // Stil son-ekleri ("high quality, cinematic...") atılır ve kalıcı medya kaynağı
+        // tercihi DEĞİŞTİRİLMEZ: bu tek seferlik, kullanıcı kontrollü bir aramadır.
+        const coreSubject = getCoreImageSubject(String(prompt || lastMediaPrompt || ''));
+        if (!coreSubject) {
             showNonBlockingToast('Aranacak görsel konusu bulunamadı.');
             return;
         }
         setAppMode('image');
-        const webRadio = document.getElementById('mediaSourceWeb');
-        if (webRadio) webRadio.checked = true;
-        saveMediaSourceSelection('web');
-        setComposerValue(`Bana şu resmi oluştur: ${cleanPrompt}`);
+        setComposerValue(`İnternetten benzerini bul: ${coreSubject}`);
         sendMessage();
     }
 
@@ -8301,13 +8350,27 @@ ${answer}` : action;
 
         const wantsImageGeneration = !msgObj.images && !docTextToUse && isDirectImageGenerationRequest(text);
         const wantsVideoGeneration = !msgObj.images && !docTextToUse && isDirectVideoCreationRequest(text);
+        const wantsImageSearch = !msgObj.images && !docTextToUse && isDirectImageSearchRequest(text);
 
         const selectedMediaSource = document.querySelector('input[name="mediaSource"]:checked')?.value || 'ai';
         const isMediaRequest = wantsImageGeneration || wantsVideoGeneration || (currentMode === "video" && isVideoModeCreationRequest(text));
 
-        if (selectedMediaSource === 'web' && wantsImageGeneration) {
+        if (wantsImageSearch || (selectedMediaSource === 'web' && wantsImageGeneration)) {
             delete typingDiv.dataset.typingIndicator;
-            const searchQuery = (getMediaCommandSubject(text) || buildCleanMediaPrompt(text, 'image') || text).slice(0, 200);
+            // Sorgu, komut kelimeleri ve stil son-ekleri ayıklanmış gerçek özneden kurulur;
+            // özne yoksa son geçerli görsel konusu denenir, o da yoksa Openverse ÇAĞRILMAZ.
+            let searchQuery = getCoreImageSubject(text).slice(0, 200);
+            if (!searchQuery && lastMediaPrompt) searchQuery = getCoreImageSubject(lastMediaPrompt).slice(0, 200);
+            if (!searchQuery) {
+                const askText = 'Aranacak görsel konusu net değil. Örneğin "internetten kırmızı araba görseli bul" yazabilirsin.';
+                typingDiv.innerHTML = renderContentWithImages(askText, true);
+                chat.messages.push({ role: 'assistant', content: askText, meta: { ui: true } });
+                chat.updatedAt = Date.now();
+                saveDatabase();
+                scrollToBottom();
+                cleanupGenerationUi();
+                return;
+            }
             typingDiv.textContent = `🔍 İnternette “${searchQuery}” aranıyor...`;
             try {
                 const webImages = await searchInternetImages(searchQuery);
@@ -8358,13 +8421,34 @@ ${answer}` : action;
 
         if (wantsImageGeneration) {
             setAppMode("image");
-            const cleanPrompt = buildCleanMediaPrompt(text, "image");
+            // "tekrar çiz / yeniden oluştur" gibi kısa takip mesajlarında son geçerli görsel
+            // konusu yeniden kullanılır; bağlam yoksa rastgele üretim yerine netleştirme istenir.
+            let imagePromptSource = text;
+            const commandSubject = getMediaCommandSubject(text);
+            if (/^(tekrar|yeniden|bir daha|birdaha|aynısını|aynisini|aynısı|aynisi)$/.test(commandSubject)) {
+                const lastCore = getCoreImageSubject(lastMediaPrompt || '');
+                if (lastCore) {
+                    imagePromptSource = lastCore;
+                } else {
+                    delete typingDiv.dataset.typingIndicator;
+                    const askText = "Neyi çizmemi istiyorsun kanka?";
+                    typingDiv.innerHTML = renderContentWithImages(askText, true);
+                    chat.messages.push({ role: "assistant", content: askText });
+                    attachMsgActionsToBotDiv(botId, chat.messages.length - 1, chat.messages[chat.messages.length - 1]);
+                    chat.updatedAt = Date.now();
+                    saveDatabase();
+                    scrollToBottom();
+                    return;
+                }
+            }
+            const cleanPrompt = buildCleanMediaPrompt(imagePromptSource, "image");
             delete typingDiv.dataset.typingIndicator;
             typingDiv.innerHTML = renderContentWithImages(`[GENERATE_IMAGE: ${cleanPrompt}]`, true);
             scrubPlaceholderErrorImages(typingDiv);
             addCopyButtons(typingDiv);
             chat.messages.push({ role: "assistant", content: `[GENERATE_IMAGE: ${cleanPrompt}]` });
             attachMsgActionsToBotDiv(botId, chat.messages.length - 1, chat.messages[chat.messages.length - 1]);
+            appendSmartSuggestions(botId, `[GENERATE_IMAGE: ${cleanPrompt}]`, text);
             chat.updatedAt = Date.now();
             saveDatabase();
             scrollToBottom();
