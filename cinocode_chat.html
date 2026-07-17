@@ -906,10 +906,10 @@
             </span>
         </label>
 
-        <div style="color: var(--cc-text-primary); font-size: 13px; margin-bottom: 6px; text-align: left; font-weight:600;">
-            Gelişmiş Ses Ayarları
-        </div>
-        <div id="voiceNameEditorList" style="margin-bottom: 12px;"></div>
+        <details style="background:var(--cc-bg-elevated); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: var(--cc-radius); padding:8px; margin-bottom:12px;">
+            <summary style="cursor:pointer; color:var(--cc-text-primary); font-weight:600; font-size:13px; outline:none; user-select:none;">Gelişmiş Ses Ayarları</summary>
+            <div id="voiceNameEditorList" style="margin-top: 8px;"></div>
+        </details>
 
         <div style="display: flex; gap: 10px; margin-bottom: 10px;">
             <div style="flex: 1; text-align: left;">
@@ -1059,7 +1059,7 @@
         <button onclick="closeSettings(); fz19StartTour();" style="width:100%; padding:11px; border-radius: var(--cc-radius); border:1px solid #a6e3a1; background:rgba(166,227,161,0.1); color:#a6e3a1; font-size:13px; font-weight:600; cursor:pointer; transition:all 0.2s; display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:10px;" onmouseover="this.style.background='rgba(166,227,161,0.2)'" onmouseout="this.style.background='rgba(166,227,161,0.1)'">🧭 CinoCode'u Keşfet (Tur)</button>
         <button onclick="openFz19Editor()" style="width:100%; padding:11px; border-radius: var(--cc-radius); border:1px solid var(--cc-accent-brand); background:rgba(137,180,250,0.1); color:var(--cc-accent-brand); font-size:13px; font-weight:600; cursor:pointer; transition:all 0.2s; display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:10px;" onmouseover="this.style.background='rgba(137,180,250,0.2)'" onmouseout="this.style.background='rgba(137,180,250,0.1)'">🎨 Arayüzü Düzenle</button>
         <button type="button" class="send-btn" style="width:100%; border-radius:var(--cc-radius); padding:8px; background:var(--cc-border); color:var(--cc-text-primary); margin-bottom:8px;" onclick="resetAgeGate()">🔄 Yaş Doğrulamasını Sıfırla</button>
-        <button class="send-btn" style="width: 100%; border-radius: var(--cc-radius); padding: 10px;" onclick="saveSettings()">Kaydet</button>
+        <button class="send-btn" style="width: 100%; border-radius: var(--cc-radius); padding: 10px; position: sticky; bottom: -10px; z-index: 5; margin: 12px -10px -10px; width: calc(100% + 20px); box-shadow: 0 -6px 12px -6px rgba(0,0,0,0.4);" onclick="saveSettings()">💾 Kaydet ve Çık</button>
     </div>
 
     <!-- FAZ 19 — Arayüzü Düzenle Overlay -->
