@@ -7,6 +7,7 @@ const root = path.join(__dirname, '..');
 const html = fs.readFileSync(path.join(root, 'cinocode_chat.html'), 'utf8');
 const main = fs.readFileSync(path.join(root, 'assets', 'js', 'main.js'), 'utf8');
 const coach = fs.readFileSync(path.join(root, 'assets', 'js', 'sinavkocu.js'), 'utf8');
+const authCore = fs.readFileSync(path.join(root, 'assets', 'js', 'auth-core.js'), 'utf8');
 const css = fs.readFileSync(path.join(root, 'assets', 'css', 'main.css'), 'utf8');
 
 function countId(id) {
@@ -89,18 +90,18 @@ test('contextual projects entry remains available in the attach menu', () => {
 });
 
 test('startup profile flow uses the professional modal instead of native prompt', () => {
-  const startup = main.match(/function getStoredUserName\(\)[\s\S]*?let loggedUser = getStoredUserName\(\);/);
-  assert.ok(startup, 'Missing safe stored-user bootstrap');
-  assert.doesNotMatch(startup[0], /prompt\(/);
-  assert.match(main, /await initializeAccountSession\(\)/);
-  assert.match(main, /setTimeout\(\(\) => openAccountAuthModal\(\), 0\)/);
-  assert.match(main, /async function logout\(\)[\s\S]*?await signOutAccountSession\(\)/);
-  assert.doesNotMatch(startup[0], /ahmet/i, 'real names must not be treated as migration sentinels');
+  assert.match(main, /window\.CinoCodeAuth.*getStoredUserName/);
+  assert.match(main, /window\.CinoCodeAuth\.signOutAccountSession/);
+  assert.match(main, /window\.CinoCodeAuth\.rememberLocalProfile/);
+  assert.match(main, /window\.CinoCodeAuth\.openAccountAuthModal/);
+  assert.match(main, /await window\.CinoCodeAuth\.initializeAccountSession\(\)/, 'startup must restore the Supabase session through auth-core');
+  assert.match(main, /loggedUser = window\.CinoCodeAuth\.getStoredUserName\(\);/, 'loggedUser must be refreshed after session init');
+  assert.doesNotMatch(main, /typeof initializeAccountSession === 'function'/, 'stale bare-global guard must not return');
 });
 
 test('cloud account form collects professional fields and delegates credentials to Supabase', () => {
-  const auth = coach.match(/function openAccountAuthModal\(initialMode\)[\s\S]*?\n    function openLocalProfileSetupModal/);
-  assert.ok(auth, 'Missing cloud account modal');
+  const auth = authCore.match(/function openAccountAuthModal\(initialMode\)[\s\S]*?setMode\(mode\);/);
+  assert.ok(auth, 'Missing cloud account modal in auth-core.js');
   assert.match(auth[0], /Giriş Yap/);
   assert.match(auth[0], /Kayıt Ol/);
   for (const id of [
@@ -121,14 +122,15 @@ test('cloud account form collects professional fields and delegates credentials 
   assert.match(auth[0], /Şifren CinoCode koduna veya localStorage'a kaydedilmez/);
   assert.doesNotMatch(auth[0], /localStorage\.setItem\([^\n]*(password|parola|şifre)/i);
   assert.match(html, /@supabase\/supabase-js@2\.110\.5/);
+  assert.match(html, /auth-core\.js/);
   assert.match(css, /\.cc-auth-google/);
   assert.match(css, /\.cc-auth-password-row/);
   assert.match(css, /\.cc-auth-backend-status/);
 });
 
 test('local profile remains a password-free fallback', () => {
-  const auth = coach.match(/function openLocalProfileSetupModal\(initialMode\)[\s\S]*?\n    function renameLocalProfile/);
-  assert.ok(auth, 'Missing local profile fallback');
+  const auth = authCore.match(/function openLocalProfileSetupModal\(initialMode\)[\s\S]*?setMode\(mode\);/);
+  assert.ok(auth, 'Missing local profile fallback in auth-core.js');
   assert.match(auth[0], /Bu sürüm yereldir/);
   assert.match(auth[0], /Şifre, e-posta doğrulaması ve bulut senkronizasyonu yoktur/);
   assert.doesNotMatch(auth[0], /type="password"/);

@@ -3,23 +3,16 @@
 
 
 
-    function getStoredUserName() {
-        let name = null;
-        try { name = localStorage.getItem('cinocode_user'); } catch (e) {}
-        const normalized = String(name || '')
-            .replace(/[\u0000-\u001f\u007f<>]/g, '')
-            .replace(/\s+/g, ' ').trim().slice(0, 40);
-        return normalized || null;
-    }
-    let loggedUser = getStoredUserName();
+    // Use auth-core functions
+    let loggedUser = window.CinoCodeAuth ? window.CinoCodeAuth.getStoredUserName() : null;
 
     async function logout() {
-        if (typeof signOutAccountSession === 'function') {
-            await signOutAccountSession();
+        if (window.CinoCodeAuth && typeof window.CinoCodeAuth.signOutAccountSession === 'function') {
+            await window.CinoCodeAuth.signOutAccountSession();
             return;
         }
-        if (loggedUser && typeof rememberLocalProfile === 'function') {
-            rememberLocalProfile(loggedUser);
+        if (loggedUser && window.CinoCodeAuth && typeof window.CinoCodeAuth.rememberLocalProfile === 'function') {
+            window.CinoCodeAuth.rememberLocalProfile(loggedUser);
         }
         localStorage.removeItem('cinocode_user');
         localStorage.removeItem('cinocode_auth_mode');
@@ -730,7 +723,7 @@
 
     function getMediaCommandSubject(text) {
         return normalizeMediaIntentText(text)
-            .replace(new RegExp(`${TR_WB_BEFORE}(kanka|knk|bana|lütfen|lutfen|bir|bi|şu|su|bu|onu|bunu|görsel|gorsel|resim|fotoğraf|fotograf|image|picture|video|klip|film|oluştur|olustur|üret|uret|çiz|ciz|yap|hazırla|hazirla|generate|draw|create|paint|tasarla|çevir|cevir|istiyorum|misin|mısın|musun|müsün|ded|dedim|demiştim|demistim|hadi|haydi)${TR_WB_AFTER}`, "giu"), " ")
+            .replace(new RegExp(`${TR_WB_BEFORE}(kanka|knk|bana|lütfen|lutfen|bir|bi|şu|su|bu|onu|bunu|görsel|gorsel|resim|fotoğraf|fotograf|image|picture|video|klip|film|oluştur|olustur|üret|uret|çiz|ciz|yap|hazırla|hazirla|generate|draw|create|paint|tasarla|çevir|cevir|istiyorum|misin|mısın|musun|müsün|ded|dedim|demiştim|demistim|hadi|haydi|şimdi|simdi|hemen)${TR_WB_AFTER}`, "giu"), " ")
             .replace(/\s+/g, " ")
             .trim();
     }
@@ -7239,12 +7232,13 @@ ${answer}` : action;
     window.onload = async () => {
         renderMyApps();
         fz22ApplyColorPrefs();
-        if (typeof initializeAccountSession === 'function') {
+        if (window.CinoCodeAuth && typeof window.CinoCodeAuth.initializeAccountSession === 'function') {
             try {
-                await initializeAccountSession();
+                await window.CinoCodeAuth.initializeAccountSession();
             } catch (authError) {
                 console.warn('Account session initialization failed', authError);
             }
+            loggedUser = window.CinoCodeAuth.getStoredUserName();
         }
         if (window.location.protocol === 'file:') {
             const banner = document.createElement('div');
@@ -7254,11 +7248,11 @@ ${answer}` : action;
         }
 
         if (document.getElementById('loggedInUser')) {
-            if (loggedUser && typeof rememberLocalProfile === 'function') {
-                rememberLocalProfile(loggedUser);
+            if (loggedUser && window.CinoCodeAuth && typeof window.CinoCodeAuth.rememberLocalProfile === 'function') {
+                window.CinoCodeAuth.rememberLocalProfile(loggedUser);
             }
-            if (!loggedUser && typeof openAccountAuthModal === 'function') {
-                setTimeout(() => openAccountAuthModal(), 0);
+            if (!loggedUser && window.CinoCodeAuth && typeof window.CinoCodeAuth.openAccountAuthModal === 'function') {
+                setTimeout(() => window.CinoCodeAuth.openAccountAuthModal(), 0);
             }
 
             if (loggedUser) {
