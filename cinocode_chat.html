@@ -1411,7 +1411,7 @@
                         <div class="profile-menu-item" style="color:#f38ba8;" onclick="if(confirm('Tüm geçmiş silinsin mi?')) { localStorage.removeItem('cinocode_db_' + (loggedUser || 'default')); location.reload(); }">Sohbetleri Temizle</div>
                     </div>
                     <div class="profile-menu-section">
-                        <div class="profile-menu-item" onclick="location.reload()">Çıkış Yap</div>
+                        <div class="profile-menu-item" onclick="logout()">Çıkış Yap</div>
                     </div>
                 `;
             }

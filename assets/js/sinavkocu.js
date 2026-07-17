@@ -850,6 +850,31 @@ function buildExamCoachSuffix() {
         return window.location.origin + window.location.pathname;
     }
 
+    // OAuth dönüşünden sonra adres çubuğunda kalan token/code parametrelerini temizler;
+    // aksi halde yenilemede kod tekrar işlenmeye çalışılır ve URL paylaşımı token sızdırabilir.
+    function cleanOAuthReturnUrl() {
+        try {
+            if (!window.history || typeof window.history.replaceState !== 'function') return;
+            const url = new URL(window.location.href);
+            ['code', 'state', 'access_token', 'refresh_token', 'expires_in', 'expires_at',
+             'token_type', 'type', 'provider_token', 'provider_refresh_token',
+             'error', 'error_code', 'error_description'].forEach(param => url.searchParams.delete(param));
+            window.history.replaceState({}, document.title, url.pathname + url.search);
+        } catch (e) {}
+    }
+
+    function refreshAccountHeaderUi() {
+        const nameEl = document.getElementById('loggedInUser');
+        const wrapEl = document.getElementById('loggedInUserWrapper');
+        if (!nameEl || !wrapEl) return;
+        if (loggedUser) {
+            nameEl.innerText = loggedUser;
+            wrapEl.style.display = 'inline';
+        } else {
+            wrapEl.style.display = 'none';
+        }
+    }
+
     function clearCloudAccountMarkers(clearUser = true) {
         const keys = [
             CLOUD_AUTH_MODE_KEY,
@@ -899,6 +924,22 @@ function buildExamCoachSuffix() {
                 storageKey: CLOUD_AUTH_STORAGE_KEY
             }
         });
+        // Client memoize edildiği için bu dinleyici yalnızca bir kez kaydedilir.
+        cloudAuthClient.auth.onAuthStateChange((event, session) => {
+            if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'USER_UPDATED') && session && session.user) {
+                applyCloudAccount(session.user);
+                refreshAccountHeaderUi();
+                const overlay = document.getElementById('localAuthOverlay');
+                if (overlay) {
+                    overlay.remove();
+                    document.body.classList.remove('cc-auth-open');
+                }
+            } else if (event === 'SIGNED_OUT') {
+                clearCloudAccountMarkers(true);
+                loggedUser = null;
+                refreshAccountHeaderUi();
+            }
+        });
         return cloudAuthClient;
     }
 
@@ -936,6 +977,7 @@ function buildExamCoachSuffix() {
         const { data, error } = await client.auth.getSession();
         if (error) throw error;
         const user = data && data.session && data.session.user;
+        if (hasOAuthReturn) cleanOAuthReturnUrl();
         if (user) {
             applyCloudAccount(user);
             return { configured: true, authenticated: true, mode: 'cloud' };
@@ -972,7 +1014,11 @@ function buildExamCoachSuffix() {
         if (/user already registered/i.test(message)) return 'Bu e-posta ile zaten bir hesap var. Giriş Yap sekmesini kullan.';
         if (/email not confirmed/i.test(message)) return 'Önce e-posta adresini doğrulaman gerekiyor.';
         if (/password should be/i.test(message)) return 'Şifre güvenlik koşullarını karşılamıyor.';
-        if (/rate limit/i.test(message)) return 'Çok fazla deneme yapıldı. Biraz bekleyip tekrar dene.';
+        if (/rate limit|too many requests/i.test(message)) return 'Çok fazla deneme yapıldı. Biraz bekleyip tekrar dene.';
+        if (/provider is not enabled|unsupported provider/i.test(message)) return 'Google ile giriş henüz etkin değil. Supabase panelinde Google sağlayıcısının yapılandırılması gerekiyor.';
+        if (/failed to fetch|networkerror|load failed|abort/i.test(message)) return 'Sunucuya ulaşılamadı. İnternet bağlantını kontrol edip tekrar dene.';
+        if (/signup.*disabled|signups not allowed/i.test(message)) return 'Yeni kayıt şu anda kapalı.';
+        if (/invalid email/i.test(message)) return 'Geçerli bir e-posta adresi yaz.';
         return message;
     }
 
