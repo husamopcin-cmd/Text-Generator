@@ -19,7 +19,8 @@
         window.location.reload();
     }
 
-    window.onerror = function(msg, url, lineNo) { alert('Hata: ' + msg + '\nSatir: ' + lineNo); return false; };
+    window.onerror = function(msg, url, lineNo) { console.error('[CinoCode]', msg, 'satır:', lineNo); return false; };
+    window.addEventListener('unhandledrejection', function(e) { console.error('[CinoCode] Unhandled promise rejection:', e.reason); });
     // ----- GLOBAL DEĞİŞKENLER & HAFIZA SİSTEMİ -----
     const messagesDiv = document.getElementById("messages");
     const userInput = document.getElementById("userInput");
