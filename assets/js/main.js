@@ -2497,6 +2497,24 @@ ${answer}` : action;
         return added;
     }
 
+    const DOC_PROCESSING_TIMEOUT_MS = 20000;
+    const DOC_TIMEOUT_MARKER = 'DOC_PROCESSING_TIMEOUT';
+
+    function withDocTimeout(promise, timeoutMs = DOC_PROCESSING_TIMEOUT_MS) {
+        let timer;
+        const timeout = new Promise((_, reject) => {
+            timer = setTimeout(() => reject(new Error(DOC_TIMEOUT_MARKER)), timeoutMs);
+        });
+        return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+    }
+
+    function docErrorMessage(fileName, err, fallbackMessage) {
+        if (err && err.message === DOC_TIMEOUT_MARKER) {
+            return `"${fileName}" işlenirken zaman aşımına uğradı (${Math.round(DOC_PROCESSING_TIMEOUT_MS / 1000)} sn). Dosya çok büyük/karmaşık olabilir; tekrar deneyin veya daha küçük bir dosya kullanın.`;
+        }
+        return fallbackMessage;
+    }
+
     async function handleDocSelect(event) {
         const files = Array.from(event.target.files);
         if (!files.length) return;
@@ -2511,67 +2529,71 @@ ${answer}` : action;
 
             if (isXlsxDocument(file)) {
                 try {
-                    await extractXlsxDocument(file);
+                    await withDocTimeout(extractXlsxDocument(file));
                 } catch (err) {
                     console.error('XLSX okuma hatası:', err);
-                    showNonBlockingToast(`"${file.name}" Excel dosyası olarak okunamadı.`);
+                    showNonBlockingToast(docErrorMessage(file.name, err, `"${file.name}" Excel dosyası olarak okunamadı.`));
                 }
             } else if (isPptxDocument(file)) {
                 try {
-                    await extractPptxDocument(file);
+                    await withDocTimeout(extractPptxDocument(file));
                 } catch (err) {
                     console.error('PPTX okuma hatası:', err);
-                    showNonBlockingToast(`"${file.name}" sunum dosyası olarak okunamadı.`);
+                    showNonBlockingToast(docErrorMessage(file.name, err, `"${file.name}" sunum dosyası olarak okunamadı.`));
                 }
             } else if (isZipDocument(file)) {
                 try {
-                    await extractZipDocument(file);
+                    await withDocTimeout(extractZipDocument(file));
                 } catch (err) {
                     console.error('ZIP okuma hatası:', err);
-                    showNonBlockingToast(`"${file.name}" açılamadı veya geçerli bir ZIP değil.`);
+                    showNonBlockingToast(docErrorMessage(file.name, err, `"${file.name}" açılamadı veya geçerli bir ZIP değil.`));
                 }
             } else if (file.type === "application/pdf") {
                 try {
-                    if (!window.pdfjsLib.GlobalWorkerOptions.workerSrc) {
-                        window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
-                    }
-                    const arrayBuffer = await file.arrayBuffer();
-                    const pdf = await window.pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-                    let fullText = "";
+                    await withDocTimeout((async () => {
+                        if (!window.pdfjsLib.GlobalWorkerOptions.workerSrc) {
+                            window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+                        }
+                        const arrayBuffer = await file.arrayBuffer();
+                        const pdf = await window.pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                        let fullText = "";
 
-                    for (let p = 1; p <= Math.min(25, pdf.numPages); p++) {
-                        const page = await pdf.getPage(p);
-                        const textContent = await page.getTextContent();
-                        const pageText = textContent.items.map(item => item.str).join(" ");
-                        fullText += pageText + "\n";
-                    }
+                        for (let p = 1; p <= Math.min(25, pdf.numPages); p++) {
+                            const page = await pdf.getPage(p);
+                            const textContent = await page.getTextContent();
+                            const pageText = textContent.items.map(item => item.str).join(" ");
+                            fullText += pageText + "\n";
+                        }
 
-                    addDocumentTextFile(file, fullText, { sourceType: 'pdf' });
+                        addDocumentTextFile(file, fullText, { sourceType: 'pdf' });
+                    })());
                 } catch (err) {
                     console.error("PDF okuma hatası:", err);
-                    showNonBlockingToast(`"${file.name}" PDF olarak okunamadı.`);
+                    showNonBlockingToast(docErrorMessage(file.name, err, `"${file.name}" PDF olarak okunamadı.`));
                 }
             } else if (isPlainTextDocument(file)) {
                 try {
-                    const text = await file.text();
+                    const text = await withDocTimeout(file.text());
                     addDocumentTextFile(file, text, { sourceType: 'text' });
                 } catch (err) {
                     console.error("Belge okuma hatası:", err);
-                    showNonBlockingToast(`"${file.name}" metin olarak okunamadı.`);
+                    showNonBlockingToast(docErrorMessage(file.name, err, `"${file.name}" metin olarak okunamadı.`));
                 }
             } else if (isDocxDocument(file)) {
                 try {
                     if (typeof mammoth === 'undefined') {
-                        alert("Word okuyucu yüklenemedi.");
+                        showNonBlockingToast("Word okuyucu yüklenemedi. İnternet bağlantısını kontrol edin.");
                         continue;
                     }
-                    const arrayBuffer = await file.arrayBuffer();
-                    const result = await mammoth.extractRawText({ arrayBuffer });
-                    const text = (result && result.value || "").trim();
-                    addDocumentTextFile(file, text, { sourceType: 'docx' });
+                    await withDocTimeout((async () => {
+                        const arrayBuffer = await file.arrayBuffer();
+                        const result = await mammoth.extractRawText({ arrayBuffer });
+                        const text = (result && result.value || "").trim();
+                        addDocumentTextFile(file, text, { sourceType: 'docx' });
+                    })());
                 } catch (err) {
                     console.error("DOCX okuma hatası:", err);
-                    showNonBlockingToast(`"${file.name}" Word belgesi olarak okunamadı.`);
+                    showNonBlockingToast(docErrorMessage(file.name, err, `"${file.name}" Word belgesi olarak okunamadı.`));
                 }
             } else {
                 showNonBlockingToast(`"${file.name}" desteklenmiyor. PDF, DOCX, XLSX, PPTX, ZIP veya metin/kod dosyası seçin.`);
