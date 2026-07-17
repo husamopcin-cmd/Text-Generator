@@ -1063,6 +1063,7 @@
                 // Sunucu sağlayıcı zinciri başarısızsa ücretsiz yedeği doğrudan dene.
                 const errType = result ? (result.error || 'unknown') : 'unknown';
                 el.setAttribute('data-runware-error', errType);
+                if (result && result.message) el.setAttribute('data-runware-message', result.message);
                 const seed = Math.floor(Math.random() * 999999);
                 img.src = `https://image.pollinations.ai/prompt/${encodeURIComponent(String(prompt).substring(0, 400))}?width=1024&height=1024&nologo=true&seed=${seed}`;
                 if (spinner) spinner.remove();
@@ -4031,18 +4032,22 @@ ${answer}` : action;
     function getImageProviderStatus(error, cardElement = null) {
         if (cardElement && cardElement.getAttribute('data-runware-error')) {
             const runwareErr = cardElement.getAttribute('data-runware-error');
-            if (runwareErr === 'unauthorized' || runwareErr === 'provider_unauthorized') return { ok: false, reason: 'provider_unauthorized' };
-            if (runwareErr === 'missing_env') return { ok: false, reason: 'provider_missing_env' };
-            if (runwareErr === 'provider_quota' || runwareErr === 'runware_insufficient_credits') return { ok: false, reason: 'provider_quota' };
-            if (runwareErr === 'provider_timeout') return { ok: false, reason: 'provider_timeout' };
-            if (runwareErr === 'not_found') return { ok: false, reason: 'runware_not_found' };
-            if (runwareErr === 'cors_or_blocked') return { ok: false, reason: 'cors_or_browser_block' };
-            if (runwareErr === 'network') return { ok: false, reason: 'network_error' };
+            const detail = cardElement.getAttribute('data-runware-message') || null;
+            if (runwareErr === 'unauthorized' || runwareErr === 'provider_unauthorized') return { ok: false, reason: 'provider_unauthorized', detail };
+            if (runwareErr === 'missing_env' || runwareErr === 'provider_missing_env') return { ok: false, reason: 'provider_missing_env', detail };
+            if (runwareErr === 'provider_quota' || runwareErr === 'runware_insufficient_credits') return { ok: false, reason: 'provider_quota', detail };
+            if (runwareErr === 'provider_timeout') return { ok: false, reason: 'provider_timeout', detail };
+            if (runwareErr === 'not_found') return { ok: false, reason: 'runware_not_found', detail };
+            if (runwareErr === 'cors_or_blocked') return { ok: false, reason: 'cors_or_browser_block', detail };
+            if (runwareErr === 'network') return { ok: false, reason: 'network_error', detail };
+            // Backend zaten sınıflandırdı ama etiket burada özel olarak listelenmemiş
+            // (örn. all_providers_failed) — yine de gerçek sebebi/mesajı kaybetme.
+            return { ok: false, reason: 'provider_unavailable', detail: detail || runwareErr };
         }
         const message = String(error && (error.message || error.error || error.status || error) || "").toLocaleLowerCase("tr-TR");
         if (/429|quota|limit|rate/.test(message)) return { ok: false, reason: 'quota_or_limit' };
         if (/cors|blocked|file:/.test(message) || window.location.protocol === "file:") return { ok: false, reason: 'cors_or_browser_block' };
-        if (/network|timeout|failed to fetch|load error/.test(message)) return { ok: false, reason: 'network_error' };
+        if (error && /network|timeout|failed to fetch/.test(message)) return { ok: false, reason: 'network_error' };
         return { ok: false, reason: 'provider_unavailable' };
     }
 
@@ -4070,7 +4075,7 @@ ${answer}` : action;
             fallback_failed: 'Yedek görsel sağlayıcısı da yanıt vermedi.',
             unknown_error: 'Görsel üretiminde bilinmeyen bir hata oluştu.'
         };
-        const safeMessage = String(messages[reason] || messages.unknown_error)
+        const safeMessage = String((status && status.detail) || messages[reason] || messages.unknown_error)
             .replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 
         // Safe Diagnostics
@@ -4148,18 +4153,29 @@ ${answer}` : action;
             } catch(e){}
 
             const title = card.dataset.imageTitle || "Görsel";
-            let backendError = card.getAttribute('data-runware-error') || 'network_error';
+            const hasBackendReason = !!card.getAttribute('data-runware-error');
+            let backendError = card.getAttribute('data-runware-error') || 'image_display_failed';
+            const backendMessage = card.getAttribute('data-runware-message') || '';
             let errReasonStr = backendError === 'missing_env' ? 'missing_env (API Anahtarları Eksik)' : backendError;
-            let providerStr = backendError !== 'network_error' && backendError !== 'unknown' ? 'AI image backend' : 'AI provider fallback';
+            let providerStr = hasBackendReason ? 'AI image backend' : 'AI provider fallback';
+            const escapeHtml = (value) => String(value || '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+            // hasBackendReason yoksa: backend araması BAŞARILI oldu ama tarayıcıda görsel yüklenemedi
+            // (süresi dolmuş bağlantı, CDN engeli, geçici ağ sorunu vb.) — "network_error" diye kesin
+            // bir sebep uydurmak yerine bunu dürüstçe belirt.
+            const summaryLine = backendMessage
+                ? escapeHtml(backendMessage)
+                : (hasBackendReason
+                    ? `Sağlayıcı reddetti veya bağlantı koptu. (Asıl Hata: ${escapeHtml(errReasonStr)})`
+                    : 'Görsel bağlantısı oluşturuldu ama tarayıcıda yüklenemedi (süresi dolmuş bağlantı, CDN engeli veya geçici bir ağ sorunu olabilir).');
 
             card.outerHTML = `
                 <div class="media-error-message" style="text-align:left; margin: 12px 0; background:var(--cc-bg-surface); border:1px solid #f38ba8; border-radius: var(--cc-radius); padding:12px; color:var(--cc-text-primary);">
                     <div style="color:#f38ba8; font-weight:700; margin-bottom:6px;">${title} üretilemedi</div>
-                    <div style="font-size:13px; line-height:1.5; margin-bottom: 8px;">Sağlayıcı reddetti veya bağlantı koptu. (Asıl Hata: ${errReasonStr})</div>
+                    <div style="font-size:13px; line-height:1.5; margin-bottom: 8px;">${summaryLine}</div>
                     <details style="font-size:11px; color:var(--cc-text-muted); border-top: 1px solid var(--cc-border); padding-top: 6px; margin-bottom:10px; cursor: pointer;">
                         <summary style="outline:none; user-select:none; color:#f9e2af; font-weight:600;">Teknik detayları göster</summary>
                         <div style="margin-top:6px; font-family:monospace; background:var(--cc-bg-main); padding:8px; border-radius: var(--cc-radius); border: 1px solid rgba(255, 255, 255, 0.08); word-wrap:break-word;">
-                            Reason: ${backendError}<br>
+                            Reason: ${escapeHtml(backendError)}<br>
                             Endpoint: ${providerStr}
                         </div>
                     </details>
@@ -4207,7 +4223,10 @@ ${answer}` : action;
                 if (!isPlaceholderErrorImage(src)) return;
                 const card = getPlaceholderImageCard(img);
                 if (card) {
-                    card.outerHTML = renderMediaErrorMessage("Görsel üretilemedi.", getImageProviderStatus("image load error"));
+                    // Gerçek sebebi kartın kendi data-runware-* öznitelikleri biliyor; sabit bir
+                    // "image load error" metni her zaman network_error'a eşleşip gerçek nedeni
+                    // ("all_providers_failed", 403, kota vb.) ezmesin diye card'ı ilet.
+                    card.outerHTML = renderMediaErrorMessage("Görsel üretilemedi.", getImageProviderStatus(null, card));
                 } else {
                     img.remove();
                 }
