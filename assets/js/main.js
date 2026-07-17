@@ -1227,6 +1227,10 @@
     const ARCHIVE_ENTRY_MAX_BYTES = 1024 * 1024;
     const ARCHIVE_TOTAL_MAX_BYTES = 20 * 1024 * 1024;
     const ARCHIVE_TEXT_EXTENSIONS = ['.txt', '.md', '.js', '.jsx', '.ts', '.tsx', '.py', '.html', '.css', '.scss', '.json', '.csv', '.xml', '.yml', '.yaml', '.sql', '.java', '.c', '.h', '.cpp', '.cs', '.go', '.rs', '.php', '.rb', '.swift', '.kt', '.sh', '.ps1', '.toml', '.ini', '.cfg'];
+    const OFFICE_XLSX_MAX_SHEETS = 20;
+    const OFFICE_XLSX_SHEET_MAX_CHARS = 200000;
+    const OFFICE_PPTX_MAX_SLIDES = 100;
+    const OFFICE_PPTX_SLIDE_MAX_CHARS = 20000;
     const ARCHIVE_IGNORED_PATH = /(^|\/)(node_modules|\.git|dist|build|coverage|\.next|vendor|__MACOSX)(\/|$)/i;
     const ARCHIVE_SECRET_PATH = /(^|\/)(\.env(?:\.|$)|id_rsa(?:\.|$)|[^/]+\.(?:pem|key|p12|pfx))(\/|$)?/i;
 
@@ -2374,6 +2378,125 @@ ${answer}` : action;
         return added;
     }
 
+    function decodeOfficeXmlEntities(value) {
+        return String(value || '')
+            .replace(/&#x([0-9a-f]+);/gi, (m, hex) => { const code = parseInt(hex, 16); return Number.isFinite(code) && code >= 0 && code <= 0x10FFFF ? String.fromCodePoint(code) : ''; })
+            .replace(/&#(\d+);/g, (m, dec) => { const code = parseInt(dec, 10); return Number.isFinite(code) && code >= 0 && code <= 0x10FFFF ? String.fromCodePoint(code) : ''; })
+            .replace(/&quot;/g, '"')
+            .replace(/&apos;/g, "'")
+            .replace(/&lt;/g, '<')
+            .replace(/&gt;/g, '>')
+            .replace(/&amp;/g, '&');
+    }
+
+    function extractPptxSlideText(xml) {
+        const paragraphs = String(xml || '').split(/<\/a:p>/);
+        const lines = [];
+        for (const paragraph of paragraphs) {
+            const runs = [];
+            const runPattern = /<a:t(?:\s[^>]*)?>([\s\S]*?)<\/a:t>/g;
+            let match;
+            while ((match = runPattern.exec(paragraph)) !== null) {
+                runs.push(decodeOfficeXmlEntities(match[1]));
+            }
+            const line = runs.join('').replace(/\u0000/g, '').trim();
+            if (line) lines.push(line);
+        }
+        return lines.join('\n').trim();
+    }
+
+    function collectXlsxSections(workbook, availableChars) {
+        const allNames = (workbook && workbook.SheetNames) || [];
+        const names = allNames.slice(0, OFFICE_XLSX_MAX_SHEETS);
+        const sections = [];
+        let collectedChars = 0;
+        let included = 0;
+        for (const name of names) {
+            const sheet = workbook.Sheets ? workbook.Sheets[name] : null;
+            if (!sheet) continue;
+            const csv = String(window.XLSX.utils.sheet_to_csv(sheet, { blankrows: false }) || '')
+                .replace(/\u0000/g, '').trim().slice(0, OFFICE_XLSX_SHEET_MAX_CHARS);
+            if (!csv) continue;
+            const header = `\n--- Sayfa: ${name} ---\n`;
+            const room = Math.max(0, availableChars - collectedChars - header.length);
+            if (!room) break;
+            const body = csv.slice(0, room);
+            sections.push(header + body);
+            collectedChars += header.length + body.length;
+            included++;
+            if (body.length < csv.length) break;
+        }
+        return { sections, included, totalSheets: allNames.length };
+    }
+
+    async function extractXlsxDocument(file) {
+        if (typeof window.XLSX === 'undefined') {
+            showNonBlockingToast('Excel okuyucu yüklenemedi. İnternet bağlantısını kontrol edin.');
+            return false;
+        }
+
+        const arrayBuffer = await file.arrayBuffer();
+        const workbook = window.XLSX.read(new Uint8Array(arrayBuffer), { type: 'array' });
+        const availableChars = Math.max(0, getRemainingDocumentContextChars() - file.name.length - 80);
+        const { sections, included, totalSheets } = collectXlsxSections(workbook, availableChars);
+
+        if (!sections.length) {
+            showNonBlockingToast(`"${file.name}" içinde okunabilir tablo verisi bulunamadı.`);
+            return false;
+        }
+
+        const added = addDocumentTextFile(file, sections.join('\n'), { sourceType: 'xlsx', type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        if (added) {
+            const skipped = Math.max(0, totalSheets - included);
+            showNonBlockingToast(`Excel hazır: ${included} sayfa eklendi${skipped ? `, ${skipped} sayfa atlandı` : ''}.`);
+        }
+        return added;
+    }
+
+    async function extractPptxDocument(file) {
+        if (typeof window.JSZip === 'undefined') {
+            showNonBlockingToast('Sunum okuyucu yüklenemedi. İnternet bağlantısını kontrol edin.');
+            return false;
+        }
+
+        const archive = await window.JSZip.loadAsync(file);
+        const slideNumberOf = (entryName) => parseInt((entryName.match(/slide(\d+)\.xml$/i) || [])[1], 10) || 0;
+        const slideEntries = Object.values(archive.files || {})
+            .filter(entry => entry && !entry.dir && /^ppt\/slides\/slide\d+\.xml$/i.test(String(entry.name || '').replace(/\\/g, '/')))
+            .sort((a, b) => slideNumberOf(a.name) - slideNumberOf(b.name))
+            .slice(0, OFFICE_PPTX_MAX_SLIDES);
+        const sections = [];
+        let collectedChars = 0;
+        let included = 0;
+        const availableChars = Math.max(0, getRemainingDocumentContextChars() - file.name.length - 80);
+
+        for (const entry of slideEntries) {
+            const xml = await entry.async('string');
+            const text = extractPptxSlideText(xml).slice(0, OFFICE_PPTX_SLIDE_MAX_CHARS);
+            if (!text) continue;
+            const header = `\n--- Slayt ${slideNumberOf(entry.name)} ---\n`;
+            const room = Math.max(0, availableChars - collectedChars - header.length);
+            if (!room) break;
+            const body = text.slice(0, room);
+            sections.push(header + body);
+            collectedChars += header.length + body.length;
+            included++;
+            if (body.length < text.length) break;
+        }
+
+        if (!sections.length) {
+            showNonBlockingToast(`"${file.name}" slaytlarında okunabilir metin bulunamadı.`);
+            return false;
+        }
+
+        const added = addDocumentTextFile(file, sections.join('\n'), { sourceType: 'pptx', type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation' });
+        if (added) {
+            const skipped = slideEntries.length - included;
+            showNonBlockingToast(`Sunum hazır: ${included} slayt eklendi${skipped > 0 ? `, ${skipped} slayt atlandı` : ''}.`);
+        }
+        return added;
+    }
+
     async function handleDocSelect(event) {
         const files = Array.from(event.target.files);
         if (!files.length) return;
@@ -2386,7 +2509,21 @@ ${answer}` : action;
                 continue;
             }
 
-            if (isZipDocument(file)) {
+            if (isXlsxDocument(file)) {
+                try {
+                    await extractXlsxDocument(file);
+                } catch (err) {
+                    console.error('XLSX okuma hatası:', err);
+                    showNonBlockingToast(`"${file.name}" Excel dosyası olarak okunamadı.`);
+                }
+            } else if (isPptxDocument(file)) {
+                try {
+                    await extractPptxDocument(file);
+                } catch (err) {
+                    console.error('PPTX okuma hatası:', err);
+                    showNonBlockingToast(`"${file.name}" sunum dosyası olarak okunamadı.`);
+                }
+            } else if (isZipDocument(file)) {
                 try {
                     await extractZipDocument(file);
                 } catch (err) {
@@ -2437,7 +2574,7 @@ ${answer}` : action;
                     showNonBlockingToast(`"${file.name}" Word belgesi olarak okunamadı.`);
                 }
             } else {
-                showNonBlockingToast(`"${file.name}" desteklenmiyor. PDF, DOCX, ZIP veya metin/kod dosyası seçin.`);
+                showNonBlockingToast(`"${file.name}" desteklenmiyor. PDF, DOCX, XLSX, PPTX, ZIP veya metin/kod dosyası seçin.`);
             }
         }
         event.target.value = '';
@@ -2453,6 +2590,16 @@ ${answer}` : action;
     function isDocxDocument(file) {
         if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') return true;
         return (file.name || '').toLowerCase().endsWith('.docx');
+    }
+
+    function isXlsxDocument(file) {
+        if (file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') return true;
+        return (file.name || '').toLowerCase().endsWith('.xlsx');
+    }
+
+    function isPptxDocument(file) {
+        if (file.type === 'application/vnd.openxmlformats-officedocument.presentationml.presentation') return true;
+        return (file.name || '').toLowerCase().endsWith('.pptx');
     }
 
     // ----- AYARLAR (SETTINGS) -----
