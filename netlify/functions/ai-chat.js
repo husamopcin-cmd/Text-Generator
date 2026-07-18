@@ -78,7 +78,12 @@ function limitMessages(messages, taskType) {
   if (!Array.isArray(messages)) return [];
   const count = taskType === 'pdf' ? 8 : 4;
   const maxLen = taskType === 'pdf' ? 40000 : 20000;
-  return messages.slice(-count).map(msg => {
+  // System mesajı (persona/mod override talimatları dahil) pozisyonuna bakılmaksızın
+  // korunur; yalnızca geri kalan konuşma geçmişi son `count` mesaja kırpılır. Aksi halde
+  // düz slice(-count) uzun sohbetlerde en baştaki system mesajını sessizce düşürüyordu.
+  const systemMessages = messages.filter(msg => msg && msg.role === 'system');
+  const conversationMessages = messages.filter(msg => !msg || msg.role !== 'system');
+  return [...systemMessages, ...conversationMessages.slice(-count)].map(msg => {
     const content = String(msg.content || '').substring(0, maxLen);
     const copy = { ...msg, content };
     if ('images' in copy && !Array.isArray(copy.images)) delete copy.images;

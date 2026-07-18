@@ -165,6 +165,40 @@ test('vision routing excludes configured text-only providers', async () => {
   });
 });
 
+test('preserves the system prompt while trimming recent chat history', async () => {
+  await withFreshHandler({ OPENAI_API_KEY: 'openai-test' }, async (handler) => {
+    let requestBody;
+    global.fetch = async (url, options) => {
+      requestBody = JSON.parse(options.body);
+      return {
+        ok: true,
+        status: 200,
+        text: async () => JSON.stringify({ choices: [{ message: { content: 'ok' } }] })
+      };
+    };
+
+    // system + 7 sohbet turu (>4): eski slice(-4) mantığı system mesajını tamamen düşürürdü.
+    const conversation = Array.from({ length: 7 }, (_, index) => ({
+      role: index % 2 === 0 ? 'user' : 'assistant',
+      content: `mesaj-${index}`
+    }));
+    const response = await handler({
+      httpMethod: 'POST',
+      body: JSON.stringify({
+        selectedModel: 'gpt-4o-mini-openai',
+        messages: [{ role: 'system', content: 'SERBEST USLUP FINAL OVERRIDE' }, ...conversation]
+      })
+    });
+
+    assert.equal(response.statusCode, 200);
+    assert.equal(requestBody.messages[0].role, 'system');
+    assert.equal(requestBody.messages[0].content, 'SERBEST USLUP FINAL OVERRIDE');
+    // Sadece son 4 sohbet mesajı korunmalı (system hariç), toplam 5 mesaj.
+    assert.equal(requestBody.messages.length, 5);
+    assert.deepEqual(requestBody.messages.slice(1).map(m => m.content), ['mesaj-3', 'mesaj-4', 'mesaj-5', 'mesaj-6']);
+  });
+});
+
 test('Groq vision routing uses Llama 4 Scout', async () => {
   await withFreshHandler({ GROQ_API_KEY: 'groq-test' }, async (handler) => {
     let requestBody;
