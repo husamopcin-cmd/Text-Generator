@@ -113,3 +113,56 @@ test('live HTTPS rejects an insecure or invalid custom TTS URL', () => {
   assert.equal(resolveTtsUrl({ savedUrl: 'not a url' }), 'https://cinocode-tts-server.onrender.com/api/tts');
   assert.equal(resolveTtsUrl({ ollamaIp: 'http://192.168.1.10:11434' }), 'https://cinocode-tts-server.onrender.com/api/tts');
 });
+
+test('Edge TTS fallback to Google is signaled to the client via a response header instead of staying invisible', () => {
+  assert.match(server, /def mp3_response\(audio_data, fallback_voice=None\)/, 'mp3_response must accept which fallback voice (if any) was used');
+  assert.match(server, /response\.headers\['X-Cino-TTS-Fallback'\] = fallback_voice/, 'the fallback voice must be exposed as a response header');
+  assert.match(server, /mp3_response\(google_tts\(text, fallback_voice, api_key\), fallback_voice=fallback_voice\)/, 'the actual Edge->Google fallback call site must pass the fallback voice through');
+  assert.match(server, /Access-Control-Expose-Headers'\] = 'X-Cino-TTS-Fallback'/, 'without Access-Control-Expose-Headers, fetch() in the browser cannot read the custom header at all');
+});
+
+test('speakWithServer surfaces a character-switch warning instead of silently playing a different voice', () => {
+  const serverFn = main.match(/function speakWithServer\([\s\S]*?\r?\n    \}\r?\n\r?\n    function quickSyncVoiceReadEmojis/);
+  assert.ok(serverFn, 'Missing speakWithServer implementation');
+  assert.match(serverFn[0], /response\.headers\.get\('X-Cino-TTS-Fallback'\)/, 'must read the fallback signal from the response');
+  assert.match(serverFn[0], /getVoiceDisplayName\(expectedVoiceId\)/, 'the warning must name the character the user actually selected');
+  assert.match(serverFn[0], /"warning"\)/, 'must be shown as an explicit warning toast, not a console-only note');
+});
+
+test('previewVoice exists, uses its own isolated audio element, and never touches the live conversation-read state', () => {
+  const start = main.search(/function previewVoice\(voiceId\)/);
+  assert.notEqual(start, -1, 'previewVoice must exist so all nine profiles can be sampled from Settings');
+  const end = main.indexOf('\n    function populateVoices()', start);
+  assert.notEqual(end, -1);
+  const fnSrc = main.slice(start, end);
+  assert.doesNotMatch(fnSrc, /speechRunId/, 'preview must not interfere with the live conversation-read run id');
+  assert.doesNotMatch(fnSrc, /isPlayingTTS/, 'preview must not interfere with the live playback flag');
+  assert.doesNotMatch(fnSrc, /ttsQueue/, 'preview must not touch the conversation TTS queue');
+  assert.doesNotMatch(fnSrc, /window\.sharedAudio/, 'preview must not reuse (and potentially interrupt) the conversation audio element');
+  assert.match(fnSrc, /window\.previewAudio/, 'preview must use a dedicated, isolated audio element');
+});
+
+test('previewVoice routes the device voice (Deniz/native) through speechSynthesis directly, never through the server pipeline', () => {
+  const start = main.search(/function previewVoice\(voiceId\)/);
+  const end = main.indexOf('\n    function populateVoices()', start);
+  const fnSrc = main.slice(start, end);
+  assert.match(fnSrc, /voiceId === "male_local" \|\| voiceId\.startsWith\("native_"\)/, 'must branch device/native voices away from the server fetch path');
+  assert.match(fnSrc, /window\.speechSynthesis\.speak\(utterance\)/, 'device voice preview must use the Web Speech API directly');
+});
+
+test('previewVoice for server-side characters reuses the same voice-id resolution and MP3 validation as real playback', () => {
+  const start = main.search(/function previewVoice\(voiceId\)/);
+  const end = main.indexOf('\n    function populateVoices()', start);
+  const fnSrc = main.slice(start, end);
+  assert.match(fnSrc, /getServerTtsVoiceId\(voiceId\)/, 'must resolve the same stable server voice id as real speech, not a different lookup');
+  assert.match(fnSrc, /isValidMp3Header\(bytes\)/, 'preview audio must be validated the same way as real TTS audio, not trusted blindly');
+  assert.match(fnSrc, /AbortController/, 'preview fetch must be cancellable/time-bounded, not able to hang forever');
+});
+
+test('every one of the nine voice profile rows in the settings editor gets a working preview button', () => {
+  const fnStart = main.search(/function renderVoiceNameEditor\(\)/);
+  const fnEnd = main.indexOf('\n    }', main.indexOf('container.innerHTML = html;', fnStart)) + 6;
+  const fnSrc = main.slice(fnStart, fnEnd);
+  assert.match(fnSrc, /onclick="previewVoice\('\$\{voiceId\}'\)"/, 'each rendered voice row must wire up a preview button for that exact voiceId');
+  assert.match(fnSrc, /Sesi önizle/, 'preview button must have a clear Turkish label/title');
+});

@@ -54,7 +54,12 @@
         const quietMessages = ["ayar", "değiştirildi", "kaydedildi", "ses"];
         if (originalToast) {
             window.showToast = window.showNonBlockingToast = function(msg, type) {
-                if (msg && quietMessages.some(q => msg.toLowerCase().includes(q)) && !msg.toLowerCase().includes("hata")) {
+                // "ses" gibi çok kısa/genel filtre kelimeleri, TTS hata/uyarılarındaki
+                // "farklı bir sesle" gibi meşru cümlelerle de eşleşip onları da sessize alıyordu.
+                // warning/error tipi açıkça belirtilen mesajlar kasıtlı olarak önemlidir,
+                // gevşek anahtar kelime eşleşmesiyle asla bastırılmamalı.
+                const isImportant = type === 'warning' || type === 'error';
+                if (!isImportant && msg && quietMessages.some(q => msg.toLowerCase().includes(q)) && !msg.toLowerCase().includes("hata")) {
                     console.log("Silenced Toast:", msg);
                     return; // Sessize al
                 }

@@ -165,13 +165,18 @@ async def edge_tts_async(text, voice, pitch, rate):
     return buffer.read()
 
 
-def mp3_response(audio_data):
-    return send_file(
+def mp3_response(audio_data, fallback_voice=None):
+    response = send_file(
         io.BytesIO(audio_data),
         mimetype="audio/mpeg",
         as_attachment=False,
         download_name="speech.mp3"
     )
+    # Edge TTS başarısız olup Google'a sessizce geçildiğinde, istemcinin kullanıcıya
+    # şeffaf bir uyarı gösterebilmesi için hangi yedek sesin kullanıldığını header'da taşı.
+    if fallback_voice:
+        response.headers['X-Cino-TTS-Fallback'] = fallback_voice
+    return response
 
 
 @app.before_request
@@ -236,7 +241,7 @@ def tts():
                 return jsonify({"ok": False, "error": "tts_provider_failed"}), 502
             fallback_voice = EDGE_TO_GOOGLE_FALLBACK.get(voice, 'female_gtts')
             try:
-                return mp3_response(google_tts(text, fallback_voice, api_key))
+                return mp3_response(google_tts(text, fallback_voice, api_key), fallback_voice=fallback_voice)
             except Exception as google_error:
                 app.logger.error("Google TTS fallback failed: %s", google_error)
                 return jsonify({"ok": False, "error": "tts_provider_failed"}), 502
@@ -260,6 +265,9 @@ def add_security_headers(response):
         response.headers['Access-Control-Allow-Origin'] = origin.rstrip('/')
     response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
     response.headers['Access-Control-Allow-Methods'] = 'GET,POST,OPTIONS'
+    # Custom header'lar CORS altında varsayılan olarak JS'e görünmez; fallback bildirimi
+    # fetch() ile okunabilsin diye açıkça expose ediyoruz.
+    response.headers['Access-Control-Expose-Headers'] = 'X-Cino-TTS-Fallback'
     response.headers['Vary'] = 'Origin'
     response.headers['Cache-Control'] = 'no-store'
     response.headers['X-Content-Type-Options'] = 'nosniff'

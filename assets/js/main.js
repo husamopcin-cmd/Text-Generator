@@ -5915,12 +5915,86 @@ ${answer}` : action;
             html += `<div style="display:flex; align-items:center; justify-content:space-between; gap:8px; padding:6px 0; border-bottom:1px solid var(--cc-border);">
                 <span style="color:var(--cc-text-primary); font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeSidebarHtml(displayName)}</span>
                 <span style="display:flex; gap:2px; flex-shrink:0;">
+                    <button type="button" onclick="previewVoice('${voiceId}')" title="Sesi önizle" style="background:transparent; border:none; color:#89b4fa; cursor:pointer; font-size:14px; padding:2px 6px;">🔊</button>
                     <button type="button" onclick="promptRenameVoice('${voiceId}')" title="İsmi değiştir" style="background:transparent; border:none; color:var(--cc-accent-brand); cursor:pointer; font-size:14px; padding:2px 6px;">✏️</button>
                     ${isCustom ? `<button type="button" onclick="resetVoiceName('${voiceId}')" title="Varsayılana dön" style="background:transparent; border:none; color:#f38ba8; cursor:pointer; font-size:14px; padding:2px 6px;">↺</button>` : ''}
                 </span>
             </div>`;
         });
         container.innerHTML = html;
+    }
+
+    // Sesi önizle: normal sohbet-okuma kuyruğuna (speechRunId/isPlayingTTS) hiç dokunmadan,
+    // kendi bağımsız Audio öğesiyle kısa bir örnek cümle çalar. Böylece kullanıcı bir karakteri
+    // dinlerken devam eden bir bot cevabının sesi kesilmez/bozulmaz.
+    function previewVoice(voiceId) {
+        const displayName = getVoiceDisplayName(voiceId);
+        const sampleText = "Merhaba, ben " + displayName.replace(/\s*\(.*?\)\s*/g, "").trim() + ". Böyle konuşuyorum.";
+
+        if (voiceId === "male_local" || voiceId.startsWith("native_")) {
+            try {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(sampleText);
+                utterance.lang = "tr-TR";
+                const voices = synth.getVoices();
+                let matchedVoice = null;
+                if (voiceId.startsWith("native_uri_")) {
+                    const targetUri = decodeURIComponent(voiceId.replace("native_uri_", ""));
+                    matchedVoice = voices.find(v => v.voiceURI === targetUri) || null;
+                } else if (voiceId === "male_local") {
+                    matchedVoice = voices.find(v => (v.lang || "").toLowerCase().includes("tr")) || null;
+                }
+                if (matchedVoice) utterance.voice = matchedVoice;
+                window.speechSynthesis.speak(utterance);
+            } catch (e) {
+                showNonBlockingToast("Cihaz sesi önizlemesi başarısız oldu.", "error");
+            }
+            return;
+        }
+
+        const ttsUrl = getTtsUrl();
+        if (!ttsUrl) {
+            showNonBlockingToast("Önizleme için Ayarlar > Bulut Ses Sunucusu URL'si yapılandırılmalı.", "warning");
+            return;
+        }
+        const vName = getServerTtsVoiceId(voiceId);
+
+        if (!window.previewAudio) window.previewAudio = new Audio();
+        const previewAudio = window.previewAudio;
+        try { previewAudio.pause(); previewAudio.currentTime = 0; } catch (e) {}
+        if (window.previewObjectUrl) {
+            try { URL.revokeObjectURL(window.previewObjectUrl); } catch (e) {}
+            window.previewObjectUrl = null;
+        }
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+        fetch(ttsUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: sampleText, voice: vName, lang: 'tr-TR' }),
+            signal: controller.signal
+        }).then(async response => {
+            if (!response.ok) throw new Error(`Önizleme sunucusu ${response.status} döndürdü.`);
+            const contentType = String(response.headers.get('content-type') || '').split(';')[0].trim().toLowerCase();
+            if (contentType !== 'audio/mpeg') throw new Error('Beklenmeyen önizleme MIME türü: ' + (contentType || 'boş'));
+            const buffer = await response.arrayBuffer();
+            const bytes = new Uint8Array(buffer);
+            if (bytes.byteLength < 256) throw new Error('Önizleme ses yanıtı beklenenden küçük veya kesilmiş.');
+            if (!isValidMp3Header(bytes)) throw new Error('Önizleme yanıtı geçerli bir MP3 başlığı taşımıyor.');
+            const fallbackVoice = response.headers.get('X-Cino-TTS-Fallback');
+            return { blob: new Blob([buffer], { type: 'audio/mpeg' }), fallbackVoice };
+        }).then(result => {
+            window.previewObjectUrl = URL.createObjectURL(result.blob);
+            previewAudio.src = window.previewObjectUrl;
+            if (result.fallbackVoice) {
+                showNonBlockingToast(`${displayName} şu anda geçici olarak kullanılamıyor; farklı bir sesle önizleniyor.`, "warning");
+            }
+            return previewAudio.play();
+        }).catch(error => {
+            console.warn('Ses önizleme başarısız:', error);
+            showNonBlockingToast(`${displayName} önizlenemedi. Sunucuya ulaşılamadı veya ses üretilemedi.`, "error");
+        }).finally(() => clearTimeout(timeoutId));
     }
 
     function populateVoices() {
@@ -6675,6 +6749,7 @@ ${answer}` : action;
         audio.onended = finishOnce;
         audio.onerror = (err) => failServerVoice("Ses oynatılamadı.", err);
 
+        let fallbackVoiceUsed = null;
         const timeoutId = setTimeout(() => abortController.abort(), 20000);
         fetch(ttsUrl, {
             method: 'POST',
@@ -6685,6 +6760,9 @@ ${answer}` : action;
             if (!response.ok) throw new Error(`TTS sunucusu ${response.status} döndürdü.`);
             const contentType = String(response.headers.get('content-type') || '').split(';')[0].trim().toLowerCase();
             if (contentType !== 'audio/mpeg') throw new Error(`Beklenmeyen TTS MIME türü: ${contentType || 'boş'}`);
+            // Sunucu Edge TTS başarısız olup Google'a sessizce geçtiğinde bunu header ile bildirir;
+            // kullanıcıya "farklı ses kullanılıyor" diye şeffaf bir uyarı gösterebiliyoruz.
+            fallbackVoiceUsed = response.headers.get('X-Cino-TTS-Fallback') || null;
             const buffer = await response.arrayBuffer();
             const bytes = new Uint8Array(buffer);
             if (bytes.byteLength < 256) throw new Error('TTS ses yanıtı beklenenden küçük veya kesilmiş.');
@@ -6694,6 +6772,9 @@ ${answer}` : action;
             if (!isSpeakerOn || speechRunId !== expectedRunId || voiceSelect.value !== expectedVoiceId || abortController.signal.aborted) return;
             window.currentTtsObjectUrl = URL.createObjectURL(blob);
             audio.src = window.currentTtsObjectUrl;
+            if (fallbackVoiceUsed) {
+                showNonBlockingToast(`${getVoiceDisplayName(expectedVoiceId)} şu anda geçici olarak kullanılamıyor; farklı bir sesle devam ediliyor.`, "warning");
+            }
             return audio.play();
         }).catch(error => {
             if (abortController.signal.aborted) {

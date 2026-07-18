@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
+const vm = require('node:vm');
 
 const root = path.resolve(__dirname, '..');
 const html = fs.readFileSync(path.join(root, 'cinocode_chat.html'), 'utf8');
@@ -42,4 +43,37 @@ test('cloud TTS field explains that the default server is used when no override 
   assert.match(html, /type="url" id="ttsUrlInput"/);
   assert.match(html, /Özel sunucu kullanmıyorsanız boş bırakın/);
   assert.match(html, /Boş bırakıldığında CinoCode'un varsayılan güvenli ses sunucusu kullanılır/);
+});
+
+test('the toast quiet-filter no longer silently swallows explicit warning/error messages that happen to contain a filtered word like "ses"', () => {
+  // Regression guard for a real bug caught via live browser testing: the spam-suppression
+  // filter did a bare substring match on generic words like "ses", which matched (and silently
+  // dropped) the TTS fallback/failure warnings this very session added — e.g. "...farklı bir
+  // sesle devam ediliyor." never reached the user because it contains "ses".
+  const overrideMatch = html.match(/const originalToast = window\.showToast[\s\S]*?\n    <\/script>/);
+  assert.ok(overrideMatch, 'toast quiet-filter override script must exist');
+  const scriptSrc = overrideMatch[0].replace(/<\/script>$/, '');
+
+  const calls = [];
+  const context = {
+    window: {
+      showNonBlockingToast: (msg, type) => { calls.push({ msg, type, silenced: false }); }
+    },
+    console: { log: () => { calls.push({ silenced: true }); } }
+  };
+  vm.createContext(context);
+  vm.runInContext(scriptSrc, context);
+
+  context.window.showNonBlockingToast('Tolga şu anda geçici olarak kullanılamıyor; farklı bir sesle devam ediliyor.', 'warning');
+  context.window.showNonBlockingToast('Ses değiştirildi.');
+
+  assert.equal(calls.length, 2);
+  assert.equal(calls[0].silenced, false, 'an explicit warning containing "ses" must reach the user, not be silently dropped');
+  assert.equal(calls[1].silenced, true, 'a mundane untyped confirmation must still be silenced (original spam-suppression intent preserved)');
+});
+
+test('every one of the nine voice profile rows can be sampled before the user commits to a character', () => {
+  const match = html.match(/<details[^>]*>\s*<summary[^>]*>Gelişmiş Ses Ayarları<\/summary>([\s\S]*?)<\/details>/);
+  assert.ok(match, 'voice name editor accordion must exist');
+  assert.match(match[1], /id="voiceNameEditorList"/, 'the accordion must contain the voice list container that previewVoice buttons render into');
 });
