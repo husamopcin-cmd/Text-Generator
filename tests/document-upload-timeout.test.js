@@ -47,8 +47,11 @@ test('withDocTimeout resolves normally when the wrapped operation finishes befor
 
 test('docErrorMessage gives a distinct, honest Turkish timeout message instead of a misleading format-specific error', () => {
   const timeoutMsg = runHelpers(`result = docErrorMessage('rapor.pdf', new Error('DOC_PROCESSING_TIMEOUT'), '"rapor.pdf" PDF olarak okunamadı.');`);
-  assert.match(timeoutMsg, /zaman aşımına uğradı/);
+  assert.match(timeoutMsg, /beklenenden çok uzun sürdü/);
   assert.match(timeoutMsg, /rapor\.pdf/);
+  // Senkron XLSX/ZIP parse'ı setTimeout'un tam 20 sn'de tetiklenmesini garanti etmediğinden
+  // (JS tek thread, ağır iş event loop'u bloke eder), mesaj artık kesin bir süre iddia etmiyor.
+  assert.doesNotMatch(timeoutMsg, /\(\d+\s*sn\)/, 'message must not claim a precise cutoff duration it cannot guarantee');
 
   const fallbackMsg = runHelpers(`result = docErrorMessage('rapor.pdf', new Error('some other failure'), '"rapor.pdf" PDF olarak okunamadı.');`);
   assert.equal(fallbackMsg, '"rapor.pdf" PDF olarak okunamadı.');

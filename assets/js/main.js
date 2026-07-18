@@ -1043,6 +1043,26 @@
         }
     }
 
+    // Üretilen görselin URL'sini, ait olduğu sohbetteki mesajın içine kalıcı olarak yazar.
+    // Böylece sayfa yenilendiğinde veya eski sohbete dönüldüğünde aynı görsel yeniden
+    // üretilmek yerine doğrudan gösterilir (gereksiz API maliyeti/kota tüketimini önler).
+    function persistResolvedImageUrl(el, url) {
+        const msgIndexAttr = el.getAttribute('data-message-index');
+        const chatIdAttr = el.getAttribute('data-chat-id');
+        if (msgIndexAttr === null || !chatIdAttr || !url) return;
+        const idx = parseInt(msgIndexAttr, 10);
+        if (!Number.isInteger(idx) || idx < 0) return;
+        const targetChat = sessions[chatIdAttr];
+        if (!targetChat || !Array.isArray(targetChat.messages) || !targetChat.messages[idx]) return;
+        const original = targetChat.messages[idx].content;
+        if (typeof original !== 'string') return;
+        const rewritten = original.replace(/\[GENERATE_IMAGE:\s*.*?\]/i, `[GENERATED_IMAGE: ${url}]`);
+        if (rewritten === original) return; // İşaretleyici bulunamadı, dokunma.
+        targetChat.messages[idx].content = rewritten;
+        targetChat.updatedAt = Date.now();
+        saveDatabase();
+    }
+
     async function triggerRunwareImages() {
         const pending = document.querySelectorAll('[data-runware-prompt]:not([data-runware-done])');
         for (const el of pending) {
@@ -1060,13 +1080,15 @@
                 if (spinner) spinner.remove();
                 const dlBtn = el.querySelector('button');
                 if (dlBtn) dlBtn.style.display = '';
+                persistResolvedImageUrl(el, result.url);
             } else {
                 // Sunucu sağlayıcı zinciri başarısızsa ücretsiz yedeği doğrudan dene.
                 const errType = result ? (result.error || 'unknown') : 'unknown';
                 el.setAttribute('data-runware-error', errType);
                 if (result && result.message) el.setAttribute('data-runware-message', result.message);
                 const seed = Math.floor(Math.random() * 999999);
-                img.src = `https://image.pollinations.ai/prompt/${encodeURIComponent(String(prompt).substring(0, 400))}?width=1024&height=1024&nologo=true&seed=${seed}`;
+                const fallbackUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(String(prompt).substring(0, 400))}?width=1024&height=1024&nologo=true&seed=${seed}`;
+                img.src = fallbackUrl;
                 if (spinner) spinner.remove();
                 // Kullanıcıya bakiye hatası veya diğer hatalar durumunda fallback bilgilendirme kartı bas
                 const container = el.closest('[data-generated-image-card="true"]') || el;
@@ -1078,6 +1100,7 @@
                 infoDiv.style.cssText = 'color:#f9e2af; font-size:11px; margin-top:8px; text-align:center; font-style:italic;';
                 infoDiv.textContent = note;
                 container.appendChild(infoDiv);
+                persistResolvedImageUrl(el, fallbackUrl);
             }
         }
     }
@@ -2512,7 +2535,7 @@ ${answer}` : action;
 
     function docErrorMessage(fileName, err, fallbackMessage) {
         if (err && err.message === DOC_TIMEOUT_MARKER) {
-            return `"${fileName}" işlenirken zaman aşımına uğradı (${Math.round(DOC_PROCESSING_TIMEOUT_MS / 1000)} sn). Dosya çok büyük/karmaşık olabilir; tekrar deneyin veya daha küçük bir dosya kullanın.`;
+            return `"${fileName}" işlenmesi beklenenden çok uzun sürdü ve durduruldu. Dosya çok büyük/karmaşık olabilir; tekrar deneyin veya daha küçük bir dosya kullanın.`;
         }
         return fallbackMessage;
     }
@@ -4254,7 +4277,7 @@ ${answer}` : action;
         window.placeholderImageObserver.observe(messagesDiv, { childList: true, subtree: true });
     }
 
-    function renderContentWithImages(text, isLast = false) {
+    function renderContentWithImages(text, isLast = false, messageIndex = null) {
         text = String(text || "");
         // Hafıza sistemini yakala (Kullanıcı arayüzünde BİLMEMESİ GEREKİYOR, TERTEMİZ GİZLİ KALMALI)
         text = text.replace(/\[REMEMBER:([\s\S]*?)\]/gi, (match, fact) => {
@@ -4271,6 +4294,16 @@ ${answer}` : action;
         let safeText = sanitizeAssistantOutput(text);
 
         let html = renderMarkdownSafely(safeText);
+        // Daha önce başarıyla üretilip geçmişe kaydedilmiş görselleri yeniden üretmeden doğrudan göster.
+        html = html.replace(/\[GENERATED_IMAGE:\s*(.*?)\]/gi, (match, rawUrl) => {
+            const resolvedUrl = String(rawUrl || "").trim();
+            if (!resolvedUrl || !/^https?:\/\//i.test(resolvedUrl)) return '';
+            const safeUrl = resolvedUrl.replace(/"/g, '&quot;');
+            return `<div data-generated-image-card="true" data-image-url="${safeUrl}" data-image-title="Oluşturulan Görsel" style="text-align:center; margin: 15px 0; background: var(--cc-bg-surface); padding: 10px; border-radius: var(--cc-radius); border: 1px solid rgba(255, 255, 255, 0.08);">
+                        <img src="${safeUrl}" style="max-width:100%; border-radius: var(--cc-radius); display:block; margin: 0 auto 10px auto; min-height: 200px; background: var(--cc-bg-elevated) center/cover no-repeat;" onload="handleGeneratedImageLoad(this)" onerror="handleGeneratedImageError(this)">
+                        <button class="run-code-btn" style="background:var(--cc-accent-brand); color:var(--cc-bg-main); width:auto; padding:8px 15px;" onclick="downloadImage('${safeUrl}', 'CinoCode_Gorsel.jpg')">💾 Resmi İndir</button>
+                    </div>`;
+        });
         html = html.replace(/\[GENERATE_IMAGE:\s*(.*?)\]/gi, (match, promptText) => {
             if (isTechnicalText(promptText)) return '';
             let finalPrompt = buildCleanMediaPrompt(promptText, "image");
@@ -4284,8 +4317,13 @@ ${answer}` : action;
             if (true) {
                 // Runware async: önce spinner göster, sonra triggerRunwareImages() dolduracak
                 const cardId = 'rw-card-' + Date.now() + '-' + Math.floor(Math.random() * 100000);
+                // Sonuç geldiğinde geçmişteki mesajı gerçek URL ile güncelleyip yeniden üretimi önlemek için
+                // hangi sohbetteki hangi mesaja ait olduğunu karta işaretliyoruz.
+                const persistAttrs = messageIndex !== null
+                    ? ` data-message-index="${messageIndex}" data-chat-id="${String(currentChatId).replace(/"/g, '&quot;')}"`
+                    : '';
                 setTimeout(() => triggerRunwareImages(), 50);
-                return `<div id="${cardId}" data-generated-image-card="true" data-runware-prompt="${safePrompt}" data-image-title="${imageTitle}" style="text-align:center; margin: 15px 0; background: var(--cc-bg-surface); padding: 10px; border-radius: var(--cc-radius); border: 1px solid rgba(255, 255, 255, 0.08);">
+                return `<div id="${cardId}" data-generated-image-card="true" data-runware-prompt="${safePrompt}" data-image-title="${imageTitle}"${persistAttrs} style="text-align:center; margin: 15px 0; background: var(--cc-bg-surface); padding: 10px; border-radius: var(--cc-radius); border: 1px solid rgba(255, 255, 255, 0.08);">
                             <div class="runware-spinner" style="color:var(--cc-text-muted); font-size:13px; padding:40px 0;">Görsel üretiliyor (Runware)...</div>
                             <img data-runware-img="1" src="" style="max-width:100%; border-radius: var(--cc-radius); display:none; margin: 0 auto 10px auto;" onload="this.style.display='block'; handleGeneratedImageLoad(this)" onerror="handleGeneratedImageError(this)">
                             <button class="run-code-btn" style="background:var(--cc-accent-brand); color:var(--cc-bg-main); width:auto; padding:8px 15px; display:none;" onclick="downloadImage(this.previousElementSibling.src, 'CinoCode_Gorsel.jpg')">💾 Resmi İndir</button>
@@ -5144,6 +5182,9 @@ ${answer}` : action;
 
     function getMessageCopyText(content) {
         const raw = String(content || "");
+        // Zaten üretilmiş görsel işaretleyicisi tek başınaysa doğrudan URL'yi kopyala.
+        const resolvedMatch = raw.match(/^\s*\[GENERATED_IMAGE:\s*(\S+)\]\s*$/i);
+        if (resolvedMatch) return resolvedMatch[1];
         // [GENERATE_IMAGE:...]/[GENERATE_VIDEO:...] gibi internal işaretleyicileri kullanıcıya kopyalama;
         // parantez içindeki asıl prompt'u çıkarıp teknik/stil suffix'lerini temizle.
         const match = raw.match(/^\s*\[(?:GENERATE_IMAGE|GENERATE_VIDEO):\s*([\s\S]*?)\]\s*$/i);
@@ -5444,7 +5485,7 @@ ${answer}` : action;
 
                 div.innerHTML = htmlContent;
             } else {
-                div.innerHTML = renderContentWithImages(msg.content, index === history.length - 1);
+                div.innerHTML = renderContentWithImages(msg.content, index === history.length - 1, index);
                 appendInternetImageResults(div, msg);
                 addCopyButtons(div);
 
@@ -6423,6 +6464,7 @@ ${answer}` : action;
 
         let cleanText = text.replace(/```[\s\S]*?```/g, " kod parçası ").replace(/`.*?`/g, "").replace(/[#*_-]/g, "");
         cleanText = cleanText.replace(/\[GENERATE_IMAGE:.*?\]/g, " Resmi hazırlıyorum. ");
+        cleanText = cleanText.replace(/\[GENERATED_IMAGE:.*?\]/g, " Görsel hazır. ");
         cleanText = cleanText.replace(/CinoCode/gi, "Cinokod").trim();
         if (!cleanText) { playNextTTS(); return; }
 
@@ -8675,11 +8717,12 @@ ${answer}` : action;
             }
             const cleanPrompt = buildCleanMediaPrompt(imagePromptSource, "image");
             delete typingDiv.dataset.typingIndicator;
-            typingDiv.innerHTML = renderContentWithImages(`[GENERATE_IMAGE: ${cleanPrompt}]`, true);
+            chat.messages.push({ role: "assistant", content: `[GENERATE_IMAGE: ${cleanPrompt}]` });
+            const newImageMsgIndex = chat.messages.length - 1;
+            typingDiv.innerHTML = renderContentWithImages(`[GENERATE_IMAGE: ${cleanPrompt}]`, true, newImageMsgIndex);
             scrubPlaceholderErrorImages(typingDiv);
             addCopyButtons(typingDiv);
-            chat.messages.push({ role: "assistant", content: `[GENERATE_IMAGE: ${cleanPrompt}]` });
-            attachMsgActionsToBotDiv(botId, chat.messages.length - 1, chat.messages[chat.messages.length - 1]);
+            attachMsgActionsToBotDiv(botId, newImageMsgIndex, chat.messages[newImageMsgIndex]);
             appendSmartSuggestions(botId, `[GENERATE_IMAGE: ${cleanPrompt}]`, text);
             chat.updatedAt = Date.now();
             saveDatabase();
@@ -9343,9 +9386,10 @@ ${answer}` : action;
                               imgContent += "\n\n<div style='font-size:10px; color:var(--cc-text-muted); margin-top:8px;'>⚡ Model: " + actualModelForAuto + "</div>";
                           }
                           chat.messages.push({ role: 'assistant', content: imgContent });
+                          const newImageMsgIndex = chat.messages.length - 1;
                           // Render placeholder now
-                          document.getElementById(botId).innerHTML = renderContentWithImages(imgContent, true);
-                          attachMsgActionsToBotDiv(botId, chat.messages.length - 1, chat.messages[chat.messages.length - 1]);
+                          document.getElementById(botId).innerHTML = renderContentWithImages(imgContent, true, newImageMsgIndex);
+                          attachMsgActionsToBotDiv(botId, newImageMsgIndex, chat.messages[newImageMsgIndex]);
                           scrollToBottom();
                           // Skip normal rendering below
                           return;
@@ -9631,8 +9675,9 @@ ${answer}` : action;
                     imgContent += "\n\n<div style='font-size:10px; color:var(--cc-text-muted); margin-top:8px;'>⚡ Model: " + actualModelForAuto + "</div>";
                 }
                 chat.messages.push({ role: 'assistant', content: imgContent });
-                document.getElementById(botId).innerHTML = renderContentWithImages(imgContent, true);
-                attachMsgActionsToBotDiv(botId, chat.messages.length - 1, chat.messages[chat.messages.length - 1]);
+                const newImageMsgIndex = chat.messages.length - 1;
+                document.getElementById(botId).innerHTML = renderContentWithImages(imgContent, true, newImageMsgIndex);
+                attachMsgActionsToBotDiv(botId, newImageMsgIndex, chat.messages[newImageMsgIndex]);
                 scrollToBottom();
                 chat.updatedAt = Date.now();
                 saveDatabase();
