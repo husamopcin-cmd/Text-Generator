@@ -65,7 +65,7 @@ test('local development origins include every supported CinoCode port', () => {
 });
 
 test('named server voices never silently fall back to browser speech', () => {
-  const serverFn = main.match(/function speakWithServer\([\s\S]*?\n    \}\n\n    function quickSyncVoiceReadEmojis/);
+  const serverFn = main.match(/function speakWithServer\([\s\S]*?\r?\n    \}\r?\n\r?\n    function quickSyncVoiceReadEmojis/);
   assert.ok(serverFn, 'Missing speakWithServer implementation');
   assert.doesNotMatch(serverFn[0], /speakWithLocalVoice\(/);
   assert.match(serverFn[0], /Başka cinsiyette veya cihaz sesine otomatik geçiş yapılmadı/);
