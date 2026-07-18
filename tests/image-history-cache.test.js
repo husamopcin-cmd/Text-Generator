@@ -85,7 +85,7 @@ test('triggerRunwareImages persists the resolved URL on both the primary success
 });
 
 test('a resolved [GENERATED_IMAGE: url] marker renders directly and never calls triggerRunwareImages again', () => {
-  const start = main.search(/html = html\.replace\(\/\\\[GENERATED_IMAGE:/);
+  const start = main.search(/resolvedImageUrls\.forEach/);
   assert.notEqual(start, -1, 'the resolved-image render branch must exist');
   const end = main.indexOf('});', start) + 3;
   const resolvedBranchSrc = main.slice(start, end);
@@ -94,10 +94,20 @@ test('a resolved [GENERATED_IMAGE: url] marker renders directly and never calls 
   assert.match(resolvedBranchSrc, /handleGeneratedImageLoad/, 'it must still wire up the normal image-loaded artifact tracking');
 });
 
-test('the resolved-image branch runs before the pending-generation branch so a resolved marker is never mistaken for a fresh request', () => {
-  const resolvedIdx = main.search(/html = html\.replace\(\/\\\[GENERATED_IMAGE:/);
+test('the resolved-image marker is extracted into a placeholder token before markdown parsing runs, and swapped for the real card afterward', () => {
+  // Regression guard for a real bug caught via live browser testing: marked.parse() auto-linkifies
+  // bare https:// URLs, which corrupted the raw "[GENERATED_IMAGE: url]" bracket syntax (produced a
+  // stray "</a>" and no image at all) when the substitution ran on the post-markdown HTML like the
+  // GENERATE_IMAGE (pending) branch does. The fix extracts the URL from the raw text BEFORE
+  // renderMarkdownSafely() runs, and only injects the final <div> card into the HTML afterward.
+  const placeholderIdx = main.search(/safeText = safeText\.replace\(\/\\\[GENERATED_IMAGE:/);
+  const markdownIdx = main.search(/let html = renderMarkdownSafely\(safeText\);/);
+  const forEachIdx = main.search(/resolvedImageUrls\.forEach/);
   const pendingIdx = main.search(/html = html\.replace\(\/\\\[GENERATE_IMAGE:/);
-  assert.ok(resolvedIdx !== -1 && pendingIdx !== -1 && resolvedIdx < pendingIdx);
+  assert.ok(placeholderIdx !== -1, 'must extract GENERATED_IMAGE from raw text before markdown parsing');
+  assert.ok(placeholderIdx < markdownIdx, 'placeholder extraction must happen before renderMarkdownSafely() so marked.parse() never sees a bare URL inside brackets');
+  assert.ok(markdownIdx < forEachIdx, 'the real HTML card must be injected only after markdown+sanitize has already run');
+  assert.ok(forEachIdx < pendingIdx, 'resolved images must be substituted before the pending-generation branch runs');
 });
 
 test('"tekrar çiz" (retry) still builds a brand-new GENERATE_IMAGE marker instead of reusing a cached resolved URL', () => {

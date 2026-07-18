@@ -4293,16 +4293,29 @@ ${answer}` : action;
         // Sızıntıları UI'dan temizle
         let safeText = sanitizeAssistantOutput(text);
 
-        let html = renderMarkdownSafely(safeText);
-        // Daha önce başarıyla üretilip geçmişe kaydedilmiş görselleri yeniden üretmeden doğrudan göster.
-        html = html.replace(/\[GENERATED_IMAGE:\s*(.*?)\]/gi, (match, rawUrl) => {
+        // Markdown motoru (marked) çıplak https:// URL'lerini otomatik <a> linkine çevirip
+        // köşeli parantez yapısını bozduğu için, çözülmüş görsel URL'sini markdown render'dan
+        // ÖNCE düz metin üzerinde güvenli bir placeholder token'a çeviriyoruz; gerçek HTML kartı
+        // markdown+sanitize bittikten SONRA bu token'ın yerine geçiyor.
+        const resolvedImageUrls = [];
+        safeText = safeText.replace(/\[GENERATED_IMAGE:\s*(.*?)\]/gi, (match, rawUrl) => {
             const resolvedUrl = String(rawUrl || "").trim();
             if (!resolvedUrl || !/^https?:\/\//i.test(resolvedUrl)) return '';
+            const token = `CINOCODERESOLVEDIMAGE${resolvedImageUrls.length}TOKEN`;
+            resolvedImageUrls.push(resolvedUrl);
+            return token;
+        });
+
+        let html = renderMarkdownSafely(safeText);
+        // Daha önce başarıyla üretilip geçmişe kaydedilmiş görselleri yeniden üretmeden doğrudan göster.
+        resolvedImageUrls.forEach((resolvedUrl, i) => {
+            const token = `CINOCODERESOLVEDIMAGE${i}TOKEN`;
             const safeUrl = resolvedUrl.replace(/"/g, '&quot;');
-            return `<div data-generated-image-card="true" data-image-url="${safeUrl}" data-image-title="Oluşturulan Görsel" style="text-align:center; margin: 15px 0; background: var(--cc-bg-surface); padding: 10px; border-radius: var(--cc-radius); border: 1px solid rgba(255, 255, 255, 0.08);">
+            const cardHtml = `<div data-generated-image-card="true" data-image-url="${safeUrl}" data-image-title="Oluşturulan Görsel" style="text-align:center; margin: 15px 0; background: var(--cc-bg-surface); padding: 10px; border-radius: var(--cc-radius); border: 1px solid rgba(255, 255, 255, 0.08);">
                         <img src="${safeUrl}" style="max-width:100%; border-radius: var(--cc-radius); display:block; margin: 0 auto 10px auto; min-height: 200px; background: var(--cc-bg-elevated) center/cover no-repeat;" onload="handleGeneratedImageLoad(this)" onerror="handleGeneratedImageError(this)">
                         <button class="run-code-btn" style="background:var(--cc-accent-brand); color:var(--cc-bg-main); width:auto; padding:8px 15px;" onclick="downloadImage('${safeUrl}', 'CinoCode_Gorsel.jpg')">💾 Resmi İndir</button>
                     </div>`;
+            html = html.split(token).join(cardHtml);
         });
         html = html.replace(/\[GENERATE_IMAGE:\s*(.*?)\]/gi, (match, promptText) => {
             if (isTechnicalText(promptText)) return '';
