@@ -6214,6 +6214,10 @@ ${answer}` : action;
                 return `http://${urlObj.hostname}:8001/api/tts`;
             } catch(e) {}
         }
+        // Canlı HTTPS sayfasında http://host:8001 varsayımı hem mixed-content nedeniyle
+        // engellenir hem de Netlify üzerinde böyle bir TTS servisi yoktur. Sunucu sesi için
+        // kullanıcı açıkça bir HTTPS bulut TTS URL'si tanımlamalıdır.
+        if (window.location.protocol === "https:") return "";
         return "http://" + window.location.hostname + ":8001/api/tts";
     }
 
@@ -6512,78 +6516,119 @@ ${answer}` : action;
         return SERVER_TTS_VOICE_IDS[expectedVoiceId] || 'male_gtts';
     }
 
+    function isValidMp3Header(bytes) {
+        if (!bytes || bytes.length < 3) return false;
+        // ID3 tag veya MPEG audio frame sync.
+        return (bytes[0] === 0x49 && bytes[1] === 0x44 && bytes[2] === 0x33) ||
+               (bytes[0] === 0xFF && (bytes[1] & 0xE0) === 0xE0);
+    }
+
     function speakWithServer(cleanText, expectedRunId, expectedVoiceId, langCode = "tr-TR", onDone = null) {
         if (!isSpeakerOn || speechRunId !== expectedRunId || voiceSelect.value !== expectedVoiceId) {
             isPlayingTTS = false;
             return;
         }
+
+        const ttsUrl = getTtsUrl();
+        if (!ttsUrl) {
+            setTtsRouteMeta("server_character_voice_unavailable", expectedVoiceId, null, "Bulut TTS URL'si yapılandırılmamış.");
+            showNonBlockingToast("Bu karakter sesi için Ayarlar > Bulut Ses Sunucusu URL'si alanına geçerli bir HTTPS adresi girilmeli.", "warning");
+            isPlayingTTS = false;
+            if (onDone) onDone();
+            return;
+        }
+
         const vName = getServerTtsVoiceId(expectedVoiceId);
 
         if (!window.sharedAudio) window.sharedAudio = new Audio();
         const audio = window.sharedAudio;
         window.currentAudio = audio;
 
-        // Karakter pitch/rate ayarı sunucuda uygulanır. İstemci yalnız kullanıcı hızını uygular.
+        // Önceki istek/oynatma kesin olarak sonlandırılır; iki ses üst üste binmez.
+        if (window.currentTtsAbortController) {
+            try { window.currentTtsAbortController.abort(); } catch(e) {}
+        }
+        const abortController = new AbortController();
+        window.currentTtsAbortController = abortController;
+        try {
+            audio.pause();
+            audio.currentTime = 0;
+            audio.removeAttribute('src');
+            audio.load();
+        } catch(e) {}
+        if (window.currentTtsObjectUrl) {
+            try { URL.revokeObjectURL(window.currentTtsObjectUrl); } catch(e) {}
+            window.currentTtsObjectUrl = null;
+        }
+
+        // Karakter pitch/rate ayarı yalnız sunucuda uygulanır. İstemci sadece kullanıcı hızını uygular.
         audio.fz19BaseRate = 1.0;
         let finalRate = window.fz19GetTtsSpeed();
         finalRate = Math.min(3.5, Math.max(0.5, finalRate));
-
         audio.defaultPlaybackRate = finalRate;
         audio.playbackRate = finalRate;
 
-        audio.onplay = () => {
-            const liveRate = Math.min(3.5, Math.max(0.5, (audio.fz19BaseRate || 1) * window.fz19GetTtsSpeed()));
-            audio.playbackRate = liveRate;
-            setTtsRouteMeta("server_character_voice", expectedVoiceId, { name: vName, lang: langCode }, "");
-        };
-
-        let fallbackStarted = false;
-        const fallbackToLocalOnce = (reason, error) => {
-            if (fallbackStarted) return;
-            fallbackStarted = true;
-            console.warn(`TTS fallback tetiklendi: ${reason}`, error);
-            showNonBlockingToast("Sunucuya ulaşılamadı, tarayıcı sesine geçildi.", "warning");
-
-            audio.onended = null;
-            audio.onerror = null;
-            audio.onplay = null;
-            try { audio.pause(); } catch(e){}
-            audio.currentTime = 0;
-
-            if (isSpeakerOn && speechRunId === expectedRunId && voiceSelect.value === expectedVoiceId) {
-                speakWithLocalVoice(cleanText, expectedRunId, expectedVoiceId, langCode, onDone);
-            }
-        };
-
-        audio.onended = () => {
+        let finished = false;
+        const finishOnce = () => {
+            if (finished) return;
+            finished = true;
+            if (window.currentTtsAbortController === abortController) window.currentTtsAbortController = null;
             if (onDone) onDone();
-            else if(isSpeakerOn && speechRunId === expectedRunId && voiceSelect.value === expectedVoiceId) playNextTTS();
+            else if (isSpeakerOn && speechRunId === expectedRunId && voiceSelect.value === expectedVoiceId) playNextTTS();
             else isPlayingTTS = false;
         };
 
-        audio.onerror = (err) => {
-            fallbackToLocalOnce("Sunucu hatası (onerror)", err);
+        const failServerVoice = (reason, error) => {
+            if (finished || abortController.signal.aborted) return;
+            finished = true;
+            console.warn(`TTS sunucu sesi durduruldu: ${reason}`, error || "");
+            setTtsRouteMeta("server_character_voice_failed", expectedVoiceId, { name: vName, lang: langCode }, reason);
+            showNonBlockingToast("Seçilen sunucu sesi şu anda kullanılamıyor. Başka cinsiyette veya cihaz sesine otomatik geçiş yapılmadı.", "error");
+            try { audio.pause(); audio.removeAttribute('src'); audio.load(); } catch(e) {}
+            if (window.currentTtsObjectUrl) {
+                try { URL.revokeObjectURL(window.currentTtsObjectUrl); } catch(e) {}
+                window.currentTtsObjectUrl = null;
+            }
+            if (window.currentTtsAbortController === abortController) window.currentTtsAbortController = null;
+            isPlayingTTS = false;
+            if (onDone) onDone();
         };
 
-        fetch(getTtsUrl(), {
+        audio.onplay = () => {
+            audio.playbackRate = Math.min(3.5, Math.max(0.5, window.fz19GetTtsSpeed()));
+            setTtsRouteMeta("server_character_voice", expectedVoiceId, { name: vName, lang: langCode }, "");
+        };
+        audio.onended = finishOnce;
+        audio.onerror = (err) => failServerVoice("Ses oynatılamadı.", err);
+
+        const timeoutId = setTimeout(() => abortController.abort(), 20000);
+        fetch(ttsUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ text: cleanText, voice: vName, lang: langCode })
-        }).then(response => {
+            body: JSON.stringify({ text: cleanText, voice: vName, lang: langCode }),
+            signal: abortController.signal
+        }).then(async response => {
             if (!response.ok) throw new Error(`TTS sunucusu ${response.status} döndürdü.`);
-            return response.blob();
+            const contentType = String(response.headers.get('content-type') || '').split(';')[0].trim().toLowerCase();
+            if (contentType !== 'audio/mpeg') throw new Error(`Beklenmeyen TTS MIME türü: ${contentType || 'boş'}`);
+            const buffer = await response.arrayBuffer();
+            const bytes = new Uint8Array(buffer);
+            if (bytes.byteLength < 256) throw new Error('TTS ses yanıtı beklenenden küçük veya kesilmiş.');
+            if (!isValidMp3Header(bytes)) throw new Error('TTS yanıtı geçerli bir MP3 başlığı taşımıyor.');
+            return new Blob([buffer], { type: 'audio/mpeg' });
         }).then(blob => {
-            if (!isSpeakerOn || speechRunId !== expectedRunId || voiceSelect.value !== expectedVoiceId) return;
-            if (!blob || !String(blob.type || '').startsWith('audio/')) throw new Error('Geçersiz TTS ses yanıtı.');
-            if (window.currentTtsObjectUrl) URL.revokeObjectURL(window.currentTtsObjectUrl);
+            if (!isSpeakerOn || speechRunId !== expectedRunId || voiceSelect.value !== expectedVoiceId || abortController.signal.aborted) return;
             window.currentTtsObjectUrl = URL.createObjectURL(blob);
             audio.src = window.currentTtsObjectUrl;
             return audio.play();
-        }).catch(e => {
-            fallbackToLocalOnce("Sunucu isteği veya oynatma başarısız", e);
-        });
+        }).catch(error => {
+            if (abortController.signal.aborted) {
+                failServerVoice("TTS isteği zaman aşımına uğradı veya iptal edildi.", error);
+            } else {
+                failServerVoice("Sunucu isteği ya da ses doğrulaması başarısız.", error);
+            }
+        }).finally(() => clearTimeout(timeoutId));
     }
-
 
     function quickSyncVoiceReadEmojis(checked) {
         localStorage.setItem('cinocode_tts_read_emojis', checked ? '1' : '0');
@@ -6761,6 +6806,10 @@ ${answer}` : action;
     // Tüm ses kaynaklarını anında sustur
     function stopAllAudio() {
         synth.cancel();
+        if (window.currentTtsAbortController) {
+            try { window.currentTtsAbortController.abort(); } catch(e) {}
+            window.currentTtsAbortController = null;
+        }
         if(window.currentAudio) {
             try {
                 window.currentAudio.pause();

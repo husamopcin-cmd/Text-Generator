@@ -10,7 +10,8 @@ const launcher = fs.readFileSync(path.join(root, 'baslat.bat'), 'utf8');
 const checklist = fs.readFileSync(path.join(root, 'NETLIFY-ENV-KURULUM.md'), 'utf8');
 
 test('TTS sends text in a POST body instead of a URL', () => {
-  assert.match(main, /fetch\(getTtsUrl\(\),\s*\{\s*method: 'POST'/);
+  assert.match(main, /const ttsUrl = getTtsUrl\(\)/);
+  assert.match(main, /fetch\(ttsUrl,\s*\{\s*method: 'POST'/);
   assert.match(main, /body: JSON\.stringify\(\{ text: cleanText, voice: vName, lang: langCode \}\)/);
   assert.doesNotMatch(main, /getTtsUrl\(\) \+ "\?voice="/);
 });

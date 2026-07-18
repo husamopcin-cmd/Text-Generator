@@ -63,3 +63,17 @@ test('local development origins include every supported CinoCode port', () => {
     assert.match(server, new RegExp(`'http://127\\.0\\.0\\.1:${port}'`));
   }
 });
+
+test('named server voices never silently fall back to browser speech', () => {
+  const serverFn = main.match(/function speakWithServer\([\s\S]*?\n    \}\n\n    function quickSyncVoiceReadEmojis/);
+  assert.ok(serverFn, 'Missing speakWithServer implementation');
+  assert.doesNotMatch(serverFn[0], /speakWithLocalVoice\(/);
+  assert.match(serverFn[0], /Başka cinsiyette veya cihaz sesine otomatik geçiş yapılmadı/);
+});
+
+test('live HTTPS requires an explicitly configured secure TTS endpoint', () => {
+  assert.match(main, /if \(window\.location\.protocol === "https:"\) return ""/);
+  assert.match(main, /contentType !== 'audio\/mpeg'/);
+  assert.match(main, /isValidMp3Header/);
+  assert.match(main, /currentTtsAbortController/);
+});
