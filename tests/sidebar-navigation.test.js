@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
+const vm = require('node:vm');
 
 const root = path.join(__dirname, '..');
 const html = fs.readFileSync(path.join(root, 'cinocode_chat.html'), 'utf8');
@@ -45,6 +46,48 @@ test('existing studio handlers remain unchanged and document upload is wired', (
   assert.match(getButton('sidebarDocStudioBtn'), /onclick="closeMobileSidebar\(\); triggerFileInput\('docUpload'\)"/);
   assert.match(main, /function closeMobileSidebar\(\)/);
   assert.match(getButton('sidebarDocStudioBtn'), />Belge<\/span>/);
+});
+
+test('mobile collapse keeps studios discoverable while collapsing the secondary library', () => {
+  const functionMatch = html.match(/function applySidebarMobileCollapse\(\) \{\r?\n[\s\S]*?^        \}/m);
+  assert.ok(functionMatch, 'Missing mobile sidebar collapse function');
+
+  function runAtWidth(width) {
+    function createDetail() {
+      let isOpen = true;
+      return {
+        removeAttribute(name) {
+          if (name === 'open') isOpen = false;
+        },
+        setAttribute(name) {
+          if (name === 'open') isOpen = true;
+        },
+        get open() {
+          return isOpen;
+        }
+      };
+    }
+
+    const details = {
+      sidebarLibraryDetails: createDetail(),
+      sidebarStudiosDetails: createDetail()
+    };
+    vm.runInNewContext(`${functionMatch[0]}\napplySidebarMobileCollapse();`, {
+      window: { innerWidth: width },
+      document: { getElementById: id => details[id] }
+    });
+    return details;
+  }
+
+  for (const width of [375, 390, 768]) {
+    const details = runAtWidth(width);
+    assert.equal(details.sidebarLibraryDetails.open, false, `library should collapse at ${width}px`);
+    assert.equal(details.sidebarStudiosDetails.open, true, `studios should stay open at ${width}px`);
+  }
+
+  const desktopDetails = runAtWidth(769);
+  assert.equal(desktopDetails.sidebarLibraryDetails.open, true);
+  assert.equal(desktopDetails.sidebarStudiosDetails.open, true);
 });
 
 test('projects is a unique full-width action before existing app and skills actions', () => {
