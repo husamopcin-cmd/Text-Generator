@@ -645,7 +645,8 @@
         // Teknik veya kod baglami iceriyorsa filtreleme
         if (low.includes('throw new error') || low.includes('catch (')) return false;
 
-        const refusalPattern = /(k[uü]f[uü]r edemem|sistemim izin vermiyor|etik kural|kodlar[iı]mda (b[oö]yle|k[uü]f[uü]r)|sayg[iı]l[iı] konu[sş]|bu sohbeti (burada )?sonland[iı]r|bu dille ilerlemeyelim|ben (bir )?yapay zek[aâ])/i;
+        // Genişletilmiş pattern: GPT-5.5 model-level refuse kalıplarını da yakala
+        const refusalPattern = /(k[uü]f[uü]r edemem|sistemim izin vermiyor|etik kural|kodlar[iı]mda (b[oö]yle|k[uü]f[uü]r)|sayg[iı]l[iı] konu[sş]|bu sohbeti (burada )?sonland[iı]r|bu dille ilerlemeyelim|ben (bir )?yapay zek[aâ]|topluluk kurallar|saygı çerçevesinde|etkile[sş]ime girmeyece[gğ]im|iyi g[uü]nler\.|bu [uü]slupla devam edemem|bu tarz bir dil kullanam|bu [sş]ekilde (yardımcı olamam|devam edemem)|uygunsuz içerik|bu tür içeriklere yardımcı)/i;
         return refusalPattern.test(low);
     }
 
@@ -8952,7 +8953,10 @@ ${answer}` : action;
             if (isDebugMode()) console.log("CINOCODE_DEBUG_STYLEMODE:", getFeatureValue('styleMode'));
             if (isDebugMode()) console.log("CINOCODE_DEBUG_FULL_SYSTEM_PROMPT:", baseSystemPrompt);
             reqMessages.push({ role: "system", content: baseSystemPrompt });
-            const historyLimit = (taskType === 'chat') ? 4 : 20;
+            // Free modda: eski reddetme mesajları modele geri dönüp kilidi sürdürüyor.
+            // Bu yüzden free modda history'yi 2'ye indiriyoruz — daha az "geçmiş reddetme" = daha az kilit.
+            const activeStyleForHistory = getFeatureValue('styleMode') || 'safe';
+            const historyLimit = (taskType === 'chat') ? (activeStyleForHistory === 'free' ? 2 : 4) : 20;
             const rawHistory = chat.messages || [];
             // collect recent messages but filter out UI/system notifications and document chunks for normal chat
             const historyMsgs = [];

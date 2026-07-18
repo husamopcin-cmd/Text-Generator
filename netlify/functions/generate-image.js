@@ -23,6 +23,20 @@ async function fetchWithTimeout(url, options, timeoutMs) {
   }
 }
 
+// Kısa ömürlü provider URL'lerini sunucu tarafında fetch edip kalıcı base64 data URI'ya çevirir.
+// Böylece tarayıcıya giden URL hiç expire olmaz.
+async function urlToBase64DataUri(imageUrl) {
+  try {
+    const resp = await fetchWithTimeout(imageUrl, {}, 15000);
+    if (!resp.ok) return null;
+    const contentType = resp.headers.get('content-type') || 'image/jpeg';
+    const buf = Buffer.from(await resp.arrayBuffer());
+    return 'data:' + contentType.split(';')[0] + ';base64,' + buf.toString('base64');
+  } catch (e) {
+    return null;
+  }
+}
+
 function classifyProviderHttpError(status, responseText) {
   const normalized = String(responseText || '').toLowerCase();
   if (status === 402 || /insufficientcredits|insufficient[_ -]?credits|billing_hard_limit|billing hard limit|credit balance|quota/.test(normalized)) {
@@ -138,7 +152,10 @@ async function tryRunware(prompt, width, height) {
   let data;
   try { data = JSON.parse(text); } catch (e) { data = null; }
   const result = (data && data.data && data.data[0]) || (Array.isArray(data) && data[0]) || null;
-  if (result && result.imageURL) return { ok: true, url: result.imageURL };
+  if (result && result.imageURL) {
+    const b64 = await urlToBase64DataUri(result.imageURL);
+    return b64 ? { ok: true, url: b64 } : { ok: true, url: result.imageURL };
+  }
   return { ok: false, error: 'empty_response', details: text.slice(0, 500) };
 }
 
@@ -172,7 +189,10 @@ async function tryFal(prompt, width, height) {
   let data;
   try { data = JSON.parse(text); } catch (e) { data = null; }
   const url = data && data.images && data.images[0] && data.images[0].url;
-  if (url) return { ok: true, url };
+  if (url) {
+    const b64 = await urlToBase64DataUri(url);
+    return b64 ? { ok: true, url: b64 } : { ok: true, url };
+  }
   return { ok: false, error: 'empty_response', details: text.slice(0, 500) };
 }
 
@@ -211,7 +231,10 @@ async function tryReplicate(prompt, width, height) {
   try { data = JSON.parse(text); } catch (e) { data = null; }
   const output = data && data.output;
   const url = Array.isArray(output) ? output[0] : (typeof output === 'string' ? output : null);
-  if (url) return { ok: true, url };
+  if (url) {
+    const b64 = await urlToBase64DataUri(url);
+    return b64 ? { ok: true, url: b64 } : { ok: true, url };
+  }
   return { ok: false, error: 'empty_response', details: text.slice(0, 500) };
 }
 
