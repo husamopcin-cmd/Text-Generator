@@ -325,6 +325,7 @@
         const badge = document.getElementById('cloudAuthBadge');
         const submit = document.getElementById('localAuthSubmit');
         const googleButton = document.getElementById('cloudAuthGoogleBtn');
+        const forgotPasswordLink = document.getElementById('forgotPasswordLink');
 
         function setBusy(nextBusy) {
             busy = nextBusy;
@@ -345,6 +346,7 @@
             nameFields.hidden = signingIn;
             ageGroup.hidden = signingIn;
             confirmGroup.hidden = signingIn;
+            forgotPasswordLink.hidden = !signingIn;
             passwordInput.autocomplete = signingIn ? 'current-password' : 'new-password';
             error.textContent = '';
             setBusy(false);
@@ -362,7 +364,7 @@
             overlay.remove();
             openLocalProfileSetupModal(mode);
         };
-        document.getElementById('forgotPasswordLink').onclick = async () => {
+        forgotPasswordLink.onclick = async () => {
             if (!authReady || busy) return;
             const email = emailInput.value.trim().toLowerCase();
             if (!emailInput.checkValidity()) {

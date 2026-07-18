@@ -37,3 +37,9 @@ test('Runware, NVIDIA, xAI and Azure API key fields each link to their official 
     assert.ok(linkMatch.some(a => a.includes(url)), `${inputId}'s help link must point to ${url}`);
   }
 });
+
+test('cloud TTS field explains that the default server is used when no override is saved', () => {
+  assert.match(html, /type="url" id="ttsUrlInput"/);
+  assert.match(html, /Özel sunucu kullanmıyorsanız boş bırakın/);
+  assert.match(html, /Boş bırakıldığında CinoCode'un varsayılan güvenli ses sunucusu kullanılır/);
+});

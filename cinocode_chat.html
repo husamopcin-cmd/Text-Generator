@@ -894,9 +894,10 @@
         <input type="text" id="ollamaIpInput" placeholder="http://192.168.1.X:11434" style="width:100%; background:var(--cc-bg-surface); border: 1px solid rgba(255, 255, 255, 0.08); color:var(--cc-text-primary); padding:8px; border-radius: var(--cc-radius); margin-bottom: 10px; box-sizing: border-box; outline: none; font-size: 13px;">
 
         <div style="color: var(--cc-text-primary); font-size: 13px; margin-bottom: 5px; text-align: left;">
-            Bulut Ses Sunucusu URL'si (Opsiyonel):
+            Bulut Ses Sunucusu URL'si (İsteğe bağlı özel sunucu):
         </div>
-        <input type="text" id="ttsUrlInput" placeholder="https://cinocode-tts.onrender.com/api/tts" style="width:100%; background:var(--cc-bg-surface); border: 1px solid rgba(255, 255, 255, 0.08); color:var(--cc-text-primary); padding:8px; border-radius: var(--cc-radius); margin-bottom: 10px; box-sizing: border-box; outline: none; font-size: 13px;">
+        <input type="url" id="ttsUrlInput" placeholder="Özel sunucu kullanmıyorsanız boş bırakın" style="width:100%; background:var(--cc-bg-surface); border: 1px solid rgba(255, 255, 255, 0.08); color:var(--cc-text-primary); padding:8px; border-radius: var(--cc-radius); margin-bottom: 4px; box-sizing: border-box; outline: none; font-size: 13px;">
+        <div style="color:var(--cc-text-muted); font-size:11px; line-height:1.35; text-align:left; margin-bottom:10px;">Boş bırakıldığında CinoCode'un varsayılan güvenli ses sunucusu kullanılır.</div>
 
         <label style="display:flex; align-items:flex-start; gap:10px; color:var(--cc-text-primary); font-size:13px; line-height:1.35; text-align:left; margin-bottom: 12px;">
             <input type="checkbox" id="ttsVoiceLockToggle" style="margin-top:2px; accent-color:#a6e3a1;">

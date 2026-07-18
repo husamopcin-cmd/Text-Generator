@@ -3097,6 +3097,17 @@ ${answer}` : action;
             }
         }
 
+        const ttsUrlInput = document.getElementById('ttsUrlInput');
+        const requestedTtsUrl = ttsUrlInput?.value?.trim() || "";
+        const normalizedTtsUrl = normalizeTtsUrl(requestedTtsUrl);
+        if (requestedTtsUrl && !normalizedTtsUrl) {
+            if (typeof showNonBlockingToast === 'function') {
+                showNonBlockingToast('Bulut ses sunucusu için geçerli bir HTTPS URL\'si girin.', 'warning');
+            }
+            ttsUrlInput?.focus();
+            return;
+        }
+
         const groqKey = document.getElementById('groqApiKeyInput')?.value?.trim() || "";
         localStorage.setItem('groq_api_key', groqKey);
 
@@ -3117,8 +3128,7 @@ ${answer}` : action;
         const ollamaIp = document.getElementById('ollamaIpInput').value.trim();
         localStorage.setItem('ollama_ip', ollamaIp);
 
-        const ttsUrl = document.getElementById('ttsUrlInput').value.trim();
-        localStorage.setItem('tts_url', ttsUrl);
+        localStorage.setItem('tts_url', normalizedTtsUrl);
 
         const azureKey = document.getElementById('azureKeyInput').value.trim();
         localStorage.setItem('azure_speech_key', azureKey);
@@ -6248,30 +6258,39 @@ ${answer}` : action;
     let ttsQueue = [];
     let isPlayingTTS = false;
 
-    function getTtsUrl() {
-        let savedTtsUrl = localStorage.getItem("tts_url");
-        if (savedTtsUrl && savedTtsUrl.trim() !== "") {
-            let url = savedTtsUrl.trim();
-            if (!url.includes("/api/tts")) {
-                if (url.endsWith("/")) {
-                    url += "api/tts";
-                } else {
-                    url += "/api/tts";
-                }
+    const DEFAULT_TTS_URL = "https://cinocode-tts-server.onrender.com/api/tts";
+
+    function normalizeTtsUrl(value) {
+        const rawUrl = String(value || "").trim();
+        if (!rawUrl) return "";
+        try {
+            const parsedUrl = new URL(rawUrl);
+            const isSecure = parsedUrl.protocol === "https:";
+            const isLocalHttp = parsedUrl.protocol === "http:" && window.location.protocol !== "https:";
+            if (!isSecure && !isLocalHttp) return "";
+            const cleanPath = parsedUrl.pathname.replace(/\/+$/, "");
+            if (!cleanPath.endsWith("/api/tts")) {
+                parsedUrl.pathname = `${cleanPath}/api/tts`;
             }
-            return url;
+            return parsedUrl.toString();
+        } catch (error) {
+            return "";
         }
+    }
+
+    function getTtsUrl() {
+        const savedTtsUrl = normalizeTtsUrl(localStorage.getItem("tts_url"));
+        if (savedTtsUrl) return savedTtsUrl;
         const ollamaIpStr = localStorage.getItem("ollama_ip");
-        if (ollamaIpStr && ollamaIpStr.startsWith("http")) {
+        if (window.location.protocol !== "https:" && ollamaIpStr && ollamaIpStr.startsWith("http")) {
             try {
                 const urlObj = new URL(ollamaIpStr);
                 return `http://${urlObj.hostname}:8001/api/tts`;
             } catch(e) {}
         }
-        // Canlı HTTPS sayfasında http://host:8001 varsayımı hem mixed-content nedeniyle
-        // engellenir hem de Netlify üzerinde böyle bir TTS servisi yoktur. Sunucu sesi için
-        // kullanıcı açıkça bir HTTPS bulut TTS URL'si tanımlamalıdır.
-        if (window.location.protocol === "https:") return "";
+        // Canlı HTTPS'te yeni kullanıcılar public Render TTS servisini otomatik kullanır.
+        // TTS kimlik bilgileri yalnızca Render ortamında kalır; bu public endpoint secret değildir.
+        if (window.location.protocol === "https:") return DEFAULT_TTS_URL;
         return "http://" + window.location.hostname + ":8001/api/tts";
     }
 

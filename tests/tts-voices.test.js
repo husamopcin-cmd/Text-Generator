@@ -2,10 +2,29 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
+const vm = require('node:vm');
 
 const root = path.join(__dirname, '..');
 const main = fs.readFileSync(path.join(root, 'assets', 'js', 'main.js'), 'utf8');
 const server = fs.readFileSync(path.join(root, 'server.py'), 'utf8');
+const ttsUrlSourceMatch = main.match(/(const DEFAULT_TTS_URL[\s\S]*?function getTtsUrl\(\) \{[\s\S]*?\r?\n    \})\r?\n\r?\n    \/\/ Dil Koçu/);
+assert.ok(ttsUrlSourceMatch, 'Missing TTS URL resolver source');
+const ttsUrlSource = ttsUrlSourceMatch[1];
+
+function resolveTtsUrl({ savedUrl = '', ollamaIp = '', protocol = 'https:', hostname = 'cinocode-final-v4.netlify.app' } = {}) {
+  const values = new Map([
+    ['tts_url', savedUrl],
+    ['ollama_ip', ollamaIp]
+  ]);
+  const context = {
+    URL,
+    window: { location: { protocol, hostname } },
+    localStorage: { getItem: key => values.get(key) || null },
+    result: null
+  };
+  vm.runInNewContext(`${ttsUrlSource}\nresult = getTtsUrl();`, context);
+  return context.result;
+}
 
 const characterVoiceIds = [
   'female_gtts',
@@ -71,9 +90,26 @@ test('named server voices never silently fall back to browser speech', () => {
   assert.match(serverFn[0], /Başka cinsiyette veya cihaz sesine otomatik geçiş yapılmadı/);
 });
 
-test('live HTTPS requires an explicitly configured secure TTS endpoint', () => {
-  assert.match(main, /if \(window\.location\.protocol === "https:"\) return ""/);
+test('live HTTPS uses the public Render TTS endpoint when no custom override exists', () => {
+  assert.match(main, /const DEFAULT_TTS_URL = "https:\/\/cinocode-tts-server\.onrender\.com\/api\/tts"/);
+  assert.match(main, /const savedTtsUrl = normalizeTtsUrl\(localStorage\.getItem\("tts_url"\)\)/);
+  assert.match(main, /if \(savedTtsUrl\) return savedTtsUrl/);
+  assert.match(main, /if \(window\.location\.protocol === "https:"\) return DEFAULT_TTS_URL/);
+  assert.match(main, /localStorage\.setItem\('tts_url', normalizedTtsUrl\)/);
+  assert.match(main, /if \(!isSecure && !isLocalHttp\) return ""/);
   assert.match(main, /contentType !== 'audio\/mpeg'/);
   assert.match(main, /isValidMp3Header/);
   assert.match(main, /currentTtsAbortController/);
+});
+
+test('TTS URL resolution honors a secure override and returns to the default when cleared', () => {
+  assert.equal(resolveTtsUrl(), 'https://cinocode-tts-server.onrender.com/api/tts');
+  assert.equal(resolveTtsUrl({ savedUrl: 'https://voice.example.com' }), 'https://voice.example.com/api/tts');
+  assert.equal(resolveTtsUrl({ savedUrl: '' }), 'https://cinocode-tts-server.onrender.com/api/tts');
+});
+
+test('live HTTPS rejects an insecure or invalid custom TTS URL', () => {
+  assert.equal(resolveTtsUrl({ savedUrl: 'http://voice.example.com/api/tts' }), 'https://cinocode-tts-server.onrender.com/api/tts');
+  assert.equal(resolveTtsUrl({ savedUrl: 'not a url' }), 'https://cinocode-tts-server.onrender.com/api/tts');
+  assert.equal(resolveTtsUrl({ ollamaIp: 'http://192.168.1.10:11434' }), 'https://cinocode-tts-server.onrender.com/api/tts');
 });

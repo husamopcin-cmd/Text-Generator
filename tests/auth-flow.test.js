@@ -181,6 +181,11 @@ test('password reset link exists in auth modal UI', () => {
   assert.match(authCore, /Şifremi unuttum/);
 });
 
+test('password reset link is visible only on the sign-in tab', () => {
+  assert.match(authCore, /const forgotPasswordLink = document\.getElementById\('forgotPasswordLink'\)/);
+  assert.match(authCore, /forgotPasswordLink\.hidden = !signingIn/);
+});
+
 test('resetPassword uses generic success message to avoid account enumeration', () => {
   assert.match(authCore, /E-posta adresine şifre sıfırlama bağlantısı gönderildi/);
   // Check that we don't reveal account existence in error messages
