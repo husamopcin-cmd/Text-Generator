@@ -1244,7 +1244,7 @@
 
     window.selectedFiles = window.selectedFiles || [];
     const SELECTED_FILES_MAX_COUNT = 30;
-    const MAX_VISION_IMAGES = 5;
+    const MAX_VISION_IMAGES = 20;
     const IMAGE_UPLOAD_MAX_BYTES = 15 * 1024 * 1024;
     const VISION_BASE64_MAX_CHARS = Math.floor(3.5 * 1024 * 1024);
     const DOCUMENT_UPLOAD_MAX_BYTES = 25 * 1024 * 1024;

@@ -114,7 +114,7 @@ test('tries the selected provider first and falls back after rate limiting', asy
     }
   );
 });
-test('vision tasks use Gemini 3.5 Flash and cap image inputs at five', async () => {
+test('vision tasks use Gemini 3.5 Flash and cap image inputs at twenty', async () => {
   await withFreshHandler({ GEMINI_API_KEY: 'gemini-test' }, async (handler) => {
     let request;
     global.fetch = async (url, options) => {
@@ -128,7 +128,7 @@ test('vision tasks use Gemini 3.5 Flash and cap image inputs at five', async () 
       };
     };
 
-    const images = Array.from({ length: 6 }, (_, index) => `data:image/png;base64,aW1hZ2Ut${index}`);
+    const images = Array.from({ length: 25 }, (_, index) => `data:image/png;base64,aW1hZ2Ut${index}`);
     const response = await handler({
       httpMethod: 'POST',
       body: JSON.stringify({
@@ -144,7 +144,7 @@ test('vision tasks use Gemini 3.5 Flash and cap image inputs at five', async () 
     assert.equal(body.provider, 'gemini');
     assert.equal(body.model, 'gemini-3.5-flash');
     assert.match(request.url, /models\/gemini-3\.5-flash:generateContent/);
-    assert.equal(imageParts.length, 5);
+    assert.equal(imageParts.length, 20);
   });
 });
 

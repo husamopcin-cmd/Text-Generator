@@ -283,15 +283,15 @@
                 <div class="cc-auth-divider"><span>veya e-posta ile</span></div>
                 <form id="localAuthForm" novalidate>
                     <div id="cloudAuthNameFields" class="cc-auth-name-grid">
-                        <div><label for="cloudAuthFirstName">İsim</label><input id="cloudAuthFirstName" type="text" maxlength="40" autocomplete="given-name" placeholder="Hüsamettin"></div>
-                        <div><label for="cloudAuthLastName">Soyisim</label><input id="cloudAuthLastName" type="text" maxlength="40" autocomplete="family-name" placeholder="Öpçin"></div>
+                        <div><label for="cloudAuthFirstName">İsim</label><input id="cloudAuthFirstName" type="text" maxlength="40" autocomplete="given-name" placeholder="CinoCan"></div>
+                        <div><label for="cloudAuthLastName">Soyisim</label><input id="cloudAuthLastName" type="text" maxlength="40" autocomplete="family-name" placeholder="Test"></div>
                     </div>
                     <div id="cloudAuthAgeGroup" class="cc-auth-field-group">
                         <label for="cloudAuthAge">Yaş</label>
                         <input id="cloudAuthAge" type="number" min="1" max="120" inputmode="numeric" placeholder="24">
                     </div>
                     <label for="cloudAuthEmail">E-posta <span>(Gmail dahil)</span></label>
-                    <input id="cloudAuthEmail" type="email" maxlength="254" autocomplete="email" inputmode="email" placeholder="ornek@gmail.com" required>
+                    <input id="cloudAuthEmail" type="email" maxlength="254" autocomplete="email" inputmode="email" placeholder="cino219k@gmail.com" required>
                     <label for="cloudAuthPassword">Şifre</label>
                     <div class="cc-auth-password-row"><input id="cloudAuthPassword" type="password" minlength="8" maxlength="128" autocomplete="new-password" placeholder="En az 8 karakter" required><button type="button" id="cloudAuthPasswordToggle" aria-label="Şifreyi göster" title="Şifreyi göster">Göster</button></div>
                     <button id="forgotPasswordLink" type="button" class="cc-auth-forgot-password">Şifremi unuttum</button>
@@ -516,10 +516,10 @@
                 </div>
                 <form id="localAuthForm" novalidate>
                     <label for="localAuthName">Görünen isim</label>
-                    <input id="localAuthName" name="displayName" type="text" minlength="2" maxlength="40" autocomplete="name" placeholder="Örn: Hüsamettin" required>
+                    <input id="localAuthName" name="displayName" type="text" minlength="2" maxlength="40" autocomplete="name" placeholder="Örn: CinoCan" required>
                     <div id="localAuthAgeGroup" class="cc-auth-field-group">
                         <label for="localAuthAge">Yaş <span>(isteğe bağlı)</span></label>
-                        <input id="localAuthAge" name="age" type="number" min="1" max="120" inputmode="numeric" placeholder="Örn: 24">
+                        <input id="localAuthAge" name="age" type="number" min="1" max="120" inputmode="numeric" placeholder="Örn: 20">
                     </div>
                     <div id="localAuthProfiles" class="cc-auth-profiles" aria-label="Bu cihazdaki profiller"></div>
                     <div id="localAuthError" class="cc-auth-error" role="alert" aria-live="polite"></div>

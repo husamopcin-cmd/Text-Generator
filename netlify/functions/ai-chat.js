@@ -489,7 +489,7 @@ exports.handler = async function(event) {
 
   const allowedMessages = messages.map(m => {
     const item = { role: String(m.role || 'user'), content: String(m.content || '') };
-    if (Array.isArray(m.images)) item.images = m.images.slice(0, 5);
+    if (Array.isArray(m.images)) item.images = m.images.slice(0, 20);
     return item;
   });
 

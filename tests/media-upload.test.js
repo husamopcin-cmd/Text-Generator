@@ -26,7 +26,7 @@ test('file pickers enable real multi-selection while camera remains single-shot'
 });
 
 test('vision queue uses current message images with bounded payloads', () => {
-  assert.match(main, /const MAX_VISION_IMAGES = 5/);
+  assert.match(main, /const MAX_VISION_IMAGES = 20/);
   assert.match(main, /const VISION_BASE64_MAX_CHARS = Math\.floor\(3\.5 \* 1024 \* 1024\)/);
   assert.match(main, /const hasAttachments = isVisionTask/);
   assert.doesNotMatch(main, /const hasAttachments = !!selectedImageBase64/);
