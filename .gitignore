@@ -6,6 +6,8 @@
 
 *.log
 node_modules
+playwright-report/
+test-results/
 *.mp3
 users.db
 __pycache__/
