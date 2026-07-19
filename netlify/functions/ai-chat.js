@@ -34,7 +34,7 @@ const DEFAULT_MODELS = {
   deepseek: 'deepseek-chat',
   mistral: 'mistral-small-latest',
   openrouter: 'meta-llama/llama-3.3-70b-instruct:free',
-  gemini: 'gemini-2.5-flash',
+  gemini: 'gemini-3.5-flash',
   groq: 'llama-3.3-70b-versatile',
   fireworks: 'accounts/fireworks/models/gpt-oss-120b',
   together: 'meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo',
@@ -44,7 +44,7 @@ const DEFAULT_MODELS = {
 
 const VISION_MODELS = {
   openai: 'gpt-4o-mini',
-  gemini: 'gemini-2.5-flash',
+  gemini: 'gemini-3.5-flash',
   groq: 'meta-llama/llama-4-scout-17b-16e-instruct',
   openrouter: 'google/gemini-2.5-flash',
   anthropic: 'claude-haiku-4-5-20251001'
