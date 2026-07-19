@@ -7290,6 +7290,23 @@ ${answer}` : action;
     // generator "kötü başlık" sayıp bir sonraki mesajı bekleyecek.
     const TITLE_GENERIC_WORDS = new Set(["normal", "soru", "devam", "tamam", "kanka", "yap", "oluştur", "olustur", "peki", "ok", "evet", "hayır", "hayir", "selam", "merhaba", "naber", "napıyorsun", "napiyorsun"]);
 
+    // FAZ 21: Token-aware bağlam bütçesi — historyLimit (mesaj SAYISI) tek başına
+    // yeterli değildi çünkü tek bir mesaj 50.000 karaktere kadar çıkabiliyordu;
+    // 2-4 büyük mesaj bile isteği şişirip modelin context penceresini zorlayabilirdi.
+    // Karakter sayısını kaba bir token tahmini olarak kullanıp (yaklaşık 4 char/token),
+    // geçmişi bu bütçeye göre de kırpıyoruz — en eskiden başlayıp atıyoruz, en yeni
+    // (en azından son) mesajı her zaman koruyoruz. historyMsgs dizisini yerinde (in-place)
+    // değiştirir, referansı bozmaz.
+    function fz21ApplyHistoryCharBudget(historyMsgs, budgetChars) {
+        if (!Array.isArray(historyMsgs) || !Number.isFinite(budgetChars)) return historyMsgs;
+        let totalChars = historyMsgs.reduce((sum, hm) => sum + (hm && hm.content ? String(hm.content).length : 0), 0);
+        while (totalChars > budgetChars && historyMsgs.length > 1) {
+            const dropped = historyMsgs.shift();
+            totalChars -= (dropped && dropped.content ? String(dropped.content).length : 0);
+        }
+        return historyMsgs;
+    }
+
     function generateChatTitleFromMessage(message, attachmentInfo) {
         let text = cleanTextForTitle(message);
 
@@ -7981,6 +7998,12 @@ ${answer}` : action;
                 }
                 historyMsgs.unshift(hm);
             }
+
+            // FAZ 21: mesaj SAYISI sınırı (historyLimit) zaten yukarıda uygulandı; şimdi
+            // karakter/token bütçesini de uyguluyoruz — vision/pdf görevlerinde bu bütçeyi
+            // esnetmiyoruz (o yollar zaten kendi büyük-içerik kırpmasını ayrıca yapıyor).
+            const historyCharBudget = (taskType === 'chat') ? (activeStyleForHistory === 'free' ? 6000 : 12000) : Infinity;
+            fz21ApplyHistoryCharBudget(historyMsgs, historyCharBudget);
 
             for (let hm of historyMsgs) {
                 let hmClone = { role: hm.role, content: (hm.content || '') };
