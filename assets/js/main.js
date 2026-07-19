@@ -7426,7 +7426,12 @@ ${answer}` : action;
             if (!data || !data.ok || !data.content) return null;
 
             let title = String(data.content).trim();
-            title = title.replace(/^["'“”]+|["'“”]+$/g, '').replace(/\.+$/, '').trim();
+            // Modeller talimata rağmen bazen "Başlık: X" öneki, tırnak veya çok satırlı
+            // açıklama döndürür — yalnızca ilk satırın kendisini başlık olarak kabul et.
+            title = title.split(/\r?\n/)[0].trim();
+            title = title.replace(/^(başlık|baslik|title)\s*[:\-–]\s*/i, '').trim();
+            // Tırnak ve nokta karışık sırayla bitebilir ("Başlık". gibi) — ikisini birlikte soy.
+            title = title.replace(/^["'“”\s]+/, '').replace(/["'“”.\s]+$/, '').trim();
             if (title.length < 2 || title.length > 48) return null;
 
             return title.charAt(0).toUpperCase() + title.slice(1);
