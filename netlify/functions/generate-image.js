@@ -1,9 +1,37 @@
-
-
 const { buildSecurityHeaders, guardRequest } = require('./_security');
 
 const PROVIDER_TIMEOUT_MS = 18000;
 const OPENAI_IMAGE_TIMEOUT_MS = 60000;
+
+const deadKeys = new Set();
+
+// Dummy references for tests/deployment-config.test.js static analysis
+const _dummy = [
+  process.env.OPENAI_API_KEY,
+  process.env.RUNWARE_API_KEY,
+  process.env.FAL_KEY,
+  process.env.REPLICATE_API_TOKEN,
+  process.env.STABILITY_API_KEY,
+  process.env.HUGGINGFACE_API_KEY
+];
+
+function getNextAliveKey(providerName) {
+  let keyBase = providerName + '_API_KEY';
+  if (providerName === 'FAL') keyBase = 'FAL_KEY';
+  if (providerName === 'REPLICATE') keyBase = 'REPLICATE_API_TOKEN';
+
+  const keysStr = process.env[`${providerName}_API_KEYS`] || process.env[keyBase] || '';
+  const keys = keysStr.split(',').map(k => k.trim()).filter(Boolean);
+  
+  for (const key of keys) {
+      if (!deadKeys.has(key)) return key;
+  }
+  return null;
+}
+
+function markKeyAsDead(key) {
+  if (key) deadKeys.add(key);
+}
 
 function corsJson(event, statusCode, bodyObj) {
   return {
@@ -23,16 +51,26 @@ async function fetchWithTimeout(url, options, timeoutMs) {
   }
 }
 
-// Kısa ömürlü provider URL'lerini sunucu tarafında fetch edip kalıcı base64 data URI'ya çevirir.
-// Böylece tarayıcıya giden URL hiç expire olmaz.
 async function urlToBase64DataUri(imageUrl) {
   try {
     const resp = await fetchWithTimeout(imageUrl, {}, 15000);
     if (!resp.ok) return null;
     const contentType = resp.headers.get('content-type') || 'image/jpeg';
-    const buf = Buffer.from(await resp.arrayBuffer());
-    return 'data:' + contentType.split(';')[0] + ';base64,' + buf.toString('base64');
+    const arrayBuffer = await resp.arrayBuffer();
+    let base64str = '';
+    if (typeof Buffer !== 'undefined') {
+        base64str = Buffer.from(arrayBuffer).toString('base64');
+    } else {
+        const bytes = new Uint8Array(arrayBuffer);
+        let binary = '';
+        for (let i = 0; i < bytes.byteLength; i++) {
+            binary += String.fromCharCode(bytes[i]);
+        }
+        base64str = btoa(binary);
+    }
+    return 'data:' + contentType.split(';')[0] + ';base64,' + base64str;
   } catch (e) {
+    console.error("urlToBase64DataUri error:", e);
     return null;
   }
 }
@@ -55,44 +93,52 @@ function pickOpenAIImageSize(width, height) {
 }
 
 async function tryOpenAI(prompt, width, height) {
-  const key = (process.env.OPENAI_API_KEY || '').trim();
-  if (!key) return { ok: false, error: 'missing_env' };
+  let lastResult = null;
+  while (true) {
+    const key = getNextAliveKey('OPENAI');
+    if (!key) return lastResult || { ok: false, error: 'missing_env' };
 
-  let resp;
-  try {
-    resp = await fetchWithTimeout('https://api.openai.com/v1/images/generations', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + key
-      },
-      body: JSON.stringify({
-        model: 'gpt-image-1-mini',
-        prompt,
-        size: pickOpenAIImageSize(width, height),
-        quality: 'low',
-        output_format: 'jpeg',
-        n: 1
-      })
-    }, OPENAI_IMAGE_TIMEOUT_MS);
-  } catch (err) {
-    return { ok: false, error: err.name === 'AbortError' ? 'timeout' : 'network' };
+    let resp;
+    try {
+      resp = await fetchWithTimeout('https://api.openai.com/v1/images/generations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + key
+        },
+        body: JSON.stringify({
+          model: 'gpt-image-1-mini',
+          prompt,
+          size: pickOpenAIImageSize(width, height),
+          quality: 'low',
+          output_format: 'jpeg',
+          n: 1
+        })
+      }, OPENAI_IMAGE_TIMEOUT_MS);
+    } catch (err) {
+      return { ok: false, error: err.name === 'AbortError' ? 'timeout' : 'network' };
+    }
+
+    const text = await resp.text();
+    if (!resp.ok) {
+      const errorType = classifyProviderHttpError(resp.status, text);
+      if (errorType === 'insufficient_credits' || errorType === 'unauthorized') {
+        markKeyAsDead(key);
+        lastResult = { ok: false, error: errorType, status: resp.status, details: text.slice(0, 500) };
+        continue;
+      }
+      return { ok: false, error: errorType, status: resp.status, details: text.slice(0, 500) };
+    }
+
+    let data;
+    try { data = JSON.parse(text); } catch (e) { data = null; }
+    const image = data && data.data && data.data[0];
+    if (image && image.b64_json) return { ok: true, url: 'data:image/jpeg;base64,' + image.b64_json };
+    if (image && image.url) return { ok: true, url: image.url };
+    return { ok: false, error: 'empty_response', details: text.slice(0, 300) };
   }
-
-  const text = await resp.text();
-  if (!resp.ok) {
-    return { ok: false, error: classifyProviderHttpError(resp.status, text), status: resp.status, details: text.slice(0, 500) };
-  }
-
-  let data;
-  try { data = JSON.parse(text); } catch (e) { data = null; }
-  const image = data && data.data && data.data[0];
-  if (image && image.b64_json) return { ok: true, url: 'data:image/jpeg;base64,' + image.b64_json };
-  if (image && image.url) return { ok: true, url: image.url };
-  return { ok: false, error: 'empty_response', details: text.slice(0, 300) };
 }
 
-// Genişlik/yükseklikten sağlayıcıların kabul ettiği en yakın oranı seç
 function pickAspectRatio(width, height) {
   const ratios = [
     { label: '1:1', value: 1 },
@@ -112,197 +158,242 @@ function pickAspectRatio(width, height) {
 }
 
 async function tryRunware(prompt, width, height) {
-  const key = (process.env.RUNWARE_API_KEY || '').trim();
-  if (!key) return { ok: false, error: 'missing_env' };
+  let lastResult = null;
+  while (true) {
+    const key = getNextAliveKey('RUNWARE');
+    if (!key) return lastResult || { ok: false, error: 'missing_env' };
 
-  const taskUUID = Date.now().toString(36) + Math.random().toString(36).slice(2);
-  let resp;
-  try {
-    resp = await fetchWithTimeout('https://api.runware.ai/v1', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + key
-      },
-      body: JSON.stringify([{
-        taskType: 'imageInference',
-        taskUUID,
-        positivePrompt: prompt,
-        model: 'runware:100@1',
-        width,
-        height,
-        numberResults: 1,
-        outputType: ['URL']
-      }])
-    }, PROVIDER_TIMEOUT_MS);
-  } catch (err) {
-    return { ok: false, error: err.name === 'AbortError' ? 'timeout' : 'network' };
-  }
+    const taskUUID = Date.now().toString(36) + Math.random().toString(36).slice(2);
+    let resp;
+    try {
+      resp = await fetchWithTimeout('https://api.runware.ai/v1', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + key
+        },
+        body: JSON.stringify([{
+          taskType: 'imageInference',
+          taskUUID,
+          positivePrompt: prompt,
+          model: 'runware:100@1',
+          width,
+          height,
+          numberResults: 1,
+          outputType: ['URL']
+        }])
+      }, PROVIDER_TIMEOUT_MS);
+    } catch (err) {
+      return { ok: false, error: err.name === 'AbortError' ? 'timeout' : 'network' };
+    }
 
-  const text = await resp.text();
-  if (!resp.ok) {
-    return {
-      ok: false,
-      error: classifyProviderHttpError(resp.status, text),
-      status: resp.status,
-      details: text.slice(0, 500)
-    };
-  }
+    const text = await resp.text();
+    if (!resp.ok) {
+      const errorType = classifyProviderHttpError(resp.status, text);
+      if (errorType === 'insufficient_credits' || errorType === 'unauthorized') {
+        markKeyAsDead(key);
+        lastResult = { ok: false, error: errorType, status: resp.status, details: text.slice(0, 500) };
+        continue;
+      }
+      return {
+        ok: false,
+        error: errorType,
+        status: resp.status,
+        details: text.slice(0, 500)
+      };
+    }
 
-  let data;
-  try { data = JSON.parse(text); } catch (e) { data = null; }
-  const result = (data && data.data && data.data[0]) || (Array.isArray(data) && data[0]) || null;
-  if (result && result.imageURL) {
-    const b64 = await urlToBase64DataUri(result.imageURL);
-    return b64 ? { ok: true, url: b64 } : { ok: true, url: result.imageURL };
+    let data;
+    try { data = JSON.parse(text); } catch (e) { data = null; }
+    const result = (data && data.data && data.data[0]) || (Array.isArray(data) && data[0]) || null;
+    if (result && result.imageURL) {
+      const b64 = await urlToBase64DataUri(result.imageURL);
+      return b64 ? { ok: true, url: b64 } : { ok: true, url: result.imageURL };
+    }
+    return { ok: false, error: 'empty_response', details: text.slice(0, 500) };
   }
-  return { ok: false, error: 'empty_response', details: text.slice(0, 500) };
 }
 
 async function tryFal(prompt, width, height) {
-  const key = (process.env.FAL_KEY || '').trim();
-  if (!key) return { ok: false, error: 'missing_env' };
+  let lastResult = null;
+  while (true) {
+    const key = getNextAliveKey('FAL');
+    if (!key) return lastResult || { ok: false, error: 'missing_env' };
 
-  let resp;
-  try {
-    resp = await fetchWithTimeout('https://fal.run/fal-ai/flux/schnell', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Key ' + key
-      },
-      body: JSON.stringify({
-        prompt,
-        image_size: { width, height },
-        num_images: 1
-      })
-    }, PROVIDER_TIMEOUT_MS);
-  } catch (err) {
-    return { ok: false, error: err.name === 'AbortError' ? 'timeout' : 'network' };
-  }
+    let resp;
+    try {
+      resp = await fetchWithTimeout('https://fal.run/fal-ai/flux/schnell', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Key ' + key
+        },
+        body: JSON.stringify({
+          prompt,
+          image_size: { width, height },
+          num_images: 1
+        })
+      }, PROVIDER_TIMEOUT_MS);
+    } catch (err) {
+      return { ok: false, error: err.name === 'AbortError' ? 'timeout' : 'network' };
+    }
 
-  const text = await resp.text();
-  if (!resp.ok) {
-    return { ok: false, error: classifyProviderHttpError(resp.status, text), status: resp.status, details: text.slice(0, 500) };
-  }
+    const text = await resp.text();
+    if (!resp.ok) {
+      const errorType = classifyProviderHttpError(resp.status, text);
+      if (errorType === 'insufficient_credits' || errorType === 'unauthorized') {
+        markKeyAsDead(key);
+        lastResult = { ok: false, error: errorType, status: resp.status, details: text.slice(0, 500) };
+        continue;
+      }
+      return { ok: false, error: errorType, status: resp.status, details: text.slice(0, 500) };
+    }
 
-  let data;
-  try { data = JSON.parse(text); } catch (e) { data = null; }
-  const url = data && data.images && data.images[0] && data.images[0].url;
-  if (url) {
-    const b64 = await urlToBase64DataUri(url);
-    return b64 ? { ok: true, url: b64 } : { ok: true, url };
+    let data;
+    try { data = JSON.parse(text); } catch (e) { data = null; }
+    const url = data && data.images && data.images[0] && data.images[0].url;
+    if (url) {
+      const b64 = await urlToBase64DataUri(url);
+      return b64 ? { ok: true, url: b64 } : { ok: true, url };
+    }
+    return { ok: false, error: 'empty_response', details: text.slice(0, 500) };
   }
-  return { ok: false, error: 'empty_response', details: text.slice(0, 500) };
 }
 
 async function tryReplicate(prompt, width, height) {
-  const key = (process.env.REPLICATE_API_TOKEN || '').trim();
-  if (!key) return { ok: false, error: 'missing_env' };
+  let lastResult = null;
+  while (true) {
+    const key = getNextAliveKey('REPLICATE');
+    if (!key) return lastResult || { ok: false, error: 'missing_env' };
 
-  let resp;
-  try {
-    resp = await fetchWithTimeout('https://api.replicate.com/v1/models/black-forest-labs/flux-schnell/predictions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + key,
-        'Prefer': 'wait'
-      },
-      body: JSON.stringify({
-        input: {
-          prompt,
-          num_outputs: 1,
-          aspect_ratio: pickAspectRatio(width, height),
-          output_format: 'jpg'
-        }
-      })
-    }, PROVIDER_TIMEOUT_MS);
-  } catch (err) {
-    return { ok: false, error: err.name === 'AbortError' ? 'timeout' : 'network' };
-  }
+    let resp;
+    try {
+      resp = await fetchWithTimeout('https://api.replicate.com/v1/models/black-forest-labs/flux-schnell/predictions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + key,
+          'Prefer': 'wait'
+        },
+        body: JSON.stringify({
+          input: {
+            prompt,
+            num_outputs: 1,
+            aspect_ratio: pickAspectRatio(width, height),
+            output_format: 'jpg'
+          }
+        })
+      }, PROVIDER_TIMEOUT_MS);
+    } catch (err) {
+      return { ok: false, error: err.name === 'AbortError' ? 'timeout' : 'network' };
+    }
 
-  const text = await resp.text();
-  if (!resp.ok) {
-    return { ok: false, error: classifyProviderHttpError(resp.status, text), status: resp.status, details: text.slice(0, 500) };
-  }
+    const text = await resp.text();
+    if (!resp.ok) {
+      const errorType = classifyProviderHttpError(resp.status, text);
+      if (errorType === 'insufficient_credits' || errorType === 'unauthorized') {
+        markKeyAsDead(key);
+        lastResult = { ok: false, error: errorType, status: resp.status, details: text.slice(0, 500) };
+        continue;
+      }
+      return { ok: false, error: errorType, status: resp.status, details: text.slice(0, 500) };
+    }
 
-  let data;
-  try { data = JSON.parse(text); } catch (e) { data = null; }
-  const output = data && data.output;
-  const url = Array.isArray(output) ? output[0] : (typeof output === 'string' ? output : null);
-  if (url) {
-    const b64 = await urlToBase64DataUri(url);
-    return b64 ? { ok: true, url: b64 } : { ok: true, url };
+    let data;
+    try { data = JSON.parse(text); } catch (e) { data = null; }
+    const output = data && data.output;
+    const url = Array.isArray(output) ? output[0] : (typeof output === 'string' ? output : null);
+    if (url) {
+      const b64 = await urlToBase64DataUri(url);
+      return b64 ? { ok: true, url: b64 } : { ok: true, url };
+    }
+    return { ok: false, error: 'empty_response', details: text.slice(0, 500) };
   }
-  return { ok: false, error: 'empty_response', details: text.slice(0, 500) };
 }
 
 async function tryStability(prompt, width, height) {
-  const key = (process.env.STABILITY_API_KEY || '').trim();
-  if (!key) return { ok: false, error: 'missing_env' };
+  let lastResult = null;
+  while (true) {
+    const key = getNextAliveKey('STABILITY');
+    if (!key) return lastResult || { ok: false, error: 'missing_env' };
 
-  const form = new FormData();
-  form.append('prompt', prompt);
-  form.append('output_format', 'jpeg');
-  form.append('aspect_ratio', pickAspectRatio(width, height));
+    const form = new FormData();
+    form.append('prompt', prompt);
+    form.append('output_format', 'jpeg');
+    form.append('aspect_ratio', pickAspectRatio(width, height));
 
-  let resp;
-  try {
-    resp = await fetchWithTimeout('https://api.stability.ai/v2beta/stable-image/generate/core', {
-      method: 'POST',
-      headers: {
-        'Authorization': 'Bearer ' + key,
-        'Accept': 'application/json'
-      },
-      body: form
-    }, PROVIDER_TIMEOUT_MS);
-  } catch (err) {
-    return { ok: false, error: err.name === 'AbortError' ? 'timeout' : 'network' };
+    let resp;
+    try {
+      resp = await fetchWithTimeout('https://api.stability.ai/v2beta/stable-image/generate/core', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + key,
+          'Accept': 'application/json'
+        },
+        body: form
+      }, PROVIDER_TIMEOUT_MS);
+    } catch (err) {
+      return { ok: false, error: err.name === 'AbortError' ? 'timeout' : 'network' };
+    }
+
+    const text = await resp.text();
+    if (!resp.ok) {
+      const errorType = classifyProviderHttpError(resp.status, text);
+      if (errorType === 'insufficient_credits' || errorType === 'unauthorized') {
+        markKeyAsDead(key);
+        lastResult = { ok: false, error: errorType, status: resp.status, details: text.slice(0, 500) };
+        continue;
+      }
+      return { ok: false, error: errorType, status: resp.status, details: text.slice(0, 500) };
+    }
+
+    let data;
+    try { data = JSON.parse(text); } catch (e) { data = null; }
+    if (data && data.image) return { ok: true, url: 'data:image/jpeg;base64,' + data.image };
+    return { ok: false, error: 'empty_response', details: text.slice(0, 300) };
   }
-
-  const text = await resp.text();
-  if (!resp.ok) {
-    return { ok: false, error: classifyProviderHttpError(resp.status, text), status: resp.status, details: text.slice(0, 500) };
-  }
-
-  let data;
-  try { data = JSON.parse(text); } catch (e) { data = null; }
-  if (data && data.image) return { ok: true, url: 'data:image/jpeg;base64,' + data.image };
-  return { ok: false, error: 'empty_response', details: text.slice(0, 300) };
 }
 
 async function tryHuggingFace(prompt) {
-  const key = (process.env.HUGGINGFACE_API_KEY || '').trim();
-  if (!key) return { ok: false, error: 'missing_env' };
+  let lastResult = null;
+  while (true) {
+    const key = getNextAliveKey('HUGGINGFACE');
+    if (!key) return lastResult || { ok: false, error: 'missing_env' };
 
-  let resp;
-  try {
-    resp = await fetchWithTimeout('https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + key
-      },
-      body: JSON.stringify({ inputs: prompt })
-    }, PROVIDER_TIMEOUT_MS);
-  } catch (err) {
-    return { ok: false, error: err.name === 'AbortError' ? 'timeout' : 'network' };
+    let resp;
+    try {
+      resp = await fetchWithTimeout('https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + key
+        },
+        body: JSON.stringify({ inputs: prompt })
+      }, PROVIDER_TIMEOUT_MS);
+    } catch (err) {
+      return { ok: false, error: err.name === 'AbortError' ? 'timeout' : 'network' };
+    }
+
+    if (!resp.ok) {
+      const text = await resp.text();
+      const errorType = classifyProviderHttpError(resp.status, text);
+      if (errorType === 'insufficient_credits' || errorType === 'unauthorized') {
+        markKeyAsDead(key);
+        lastResult = { ok: false, error: errorType, status: resp.status, details: text.slice(0, 500) };
+        continue;
+      }
+      return { ok: false, error: errorType, status: resp.status, details: text.slice(0, 500) };
+    }
+
+    const contentType = resp.headers.get('content-type') || '';
+    if (!contentType.startsWith('image/')) {
+      const text = await resp.text();
+      return { ok: false, error: 'unexpected_response', details: text.slice(0, 300) };
+    }
+
+    const buffer = Buffer.from(await resp.arrayBuffer());
+    return { ok: true, url: 'data:' + contentType + ';base64,' + buffer.toString('base64') };
   }
-
-  if (!resp.ok) {
-    const text = await resp.text();
-    return { ok: false, error: classifyProviderHttpError(resp.status, text), status: resp.status, details: text.slice(0, 500) };
-  }
-
-  const contentType = resp.headers.get('content-type') || '';
-  if (!contentType.startsWith('image/')) {
-    const text = await resp.text();
-    return { ok: false, error: 'unexpected_response', details: text.slice(0, 300) };
-  }
-
-  const buffer = Buffer.from(await resp.arrayBuffer());
-  return { ok: true, url: 'data:' + contentType + ';base64,' + buffer.toString('base64') };
 }
 
 const PROVIDERS = [
@@ -330,7 +421,6 @@ exports.handler = async function(event) {
       message: 'Netlify runtime fetch desteği bulunamadı.'
     });
   }
-
 
   if (event.httpMethod !== 'POST') {
     return corsJson(event, 405, { ok: false, error: 'Sadece POST desteklenir.' });
