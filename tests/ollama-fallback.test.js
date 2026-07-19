@@ -95,7 +95,7 @@ test('the connect attempt is time-bounded with a short abort and the timer is cl
   assert.match(fnSrc, /signal: controller\.signal/);
 });
 
-test('the fallback only fires after the whole cloud chain failed, only for text chat, and only when the toggle is on', () => {
+test('the fallback only fires after the cloud chain failed, for text and PDF but not vision, and only when enabled', () => {
   const gate = main.match(/if \(!response\) \{\s*\r?\n\s*removeImage\(\);[\s\S]*?if \(taskType !== 'vision' && isOllamaFallbackEnabled\(\)\) \{[\s\S]*?fetchOllamaFallbackResponse\(reqMessages, responseMaxTokens\)/);
   assert.ok(gate, 'fetchOllamaFallbackResponse must sit inside the !response block, gated by the toggle and non-vision task type');
   const callCount = (main.match(/fetchOllamaFallbackResponse\(/g) || []).length;
@@ -117,4 +117,48 @@ test('settings panel wires the toggle and model input: present in HTML, default 
   assert.match(main, /ollamaFallbackToggleEl\.checked = isOllamaFallbackEnabled\(\)/, 'openSettings must load the persisted toggle state');
   assert.match(main, /localStorage\.setItem\('ollama_fallback_enabled', ollamaFallbackToggle\.checked \? '1' : '0'\)/, 'save must persist the toggle');
   assert.match(main, /localStorage\.setItem\('ollama_fallback_model', ollamaFallbackModel\)/, 'save must persist the model name');
+});
+
+test('Ollama default URL follows the current browser hostname on port 11434', () => {
+  const ctx = makeContext();
+  ctx.window.location.hostname = '192.168.1.25';
+  assert.equal(vm.runInContext('getOllamaUrl()', ctx), 'http://192.168.1.25:11434');
+});
+
+test('Ollama custom URL is trimmed and loses one trailing slash', () => {
+  const ctx = makeContext({ storedValues: { ollama_ip: '  http://127.0.0.1:11434/  ' } });
+  assert.equal(vm.runInContext('getOllamaUrl()', ctx), 'http://127.0.0.1:11434');
+});
+
+test('Ollama blank model setting falls back to qwen2.5', () => {
+  const ctx = makeContext({ storedValues: { ollama_fallback_model: '   ' } });
+  assert.equal(vm.runInContext('getOllamaFallbackModel()', ctx), 'qwen2.5');
+});
+
+test('Ollama request forwards reqMessages without changing their serialized content', async () => {
+  const ctx = makeContext({ fetchImpl: () => ({ ok: true, body: 'stream' }) });
+  const messages = [{ role: 'system', content: 'rules' }, { role: 'user', content: 'question' }];
+  ctx.inputMessages = messages;
+  await vm.runInContext('fetchOllamaFallbackResponse(inputMessages, 321)', ctx);
+  const body = JSON.parse(ctx.fetchCalls[0].options.body);
+  assert.deepEqual(body.messages, messages);
+  assert.deepEqual(messages, [{ role: 'system', content: 'rules' }, { role: 'user', content: 'question' }]);
+});
+
+test('Ollama call site remains inside the cloud-response failure branch', () => {
+  const failureBlock = main.match(/if \(!response\) \{[\s\S]*?fetchOllamaFallbackResponse\(reqMessages, responseMaxTokens\)/);
+  assert.ok(failureBlock, 'a successful cloud response must bypass the local fallback block');
+});
+
+test('Ollama call site remains guarded by the explicit opt-in toggle', () => {
+  assert.match(main, /if \(taskType !== 'vision' && isOllamaFallbackEnabled\(\)\) \{\s*const localResp = await fetchOllamaFallbackResponse/);
+});
+
+test('Ollama gate includes PDF and text tasks while excluding vision tasks', () => {
+  const gate = (taskType, enabled) => taskType !== 'vision' && enabled;
+  assert.equal(gate('chat', true), true);
+  assert.equal(gate('pdf', true), true);
+  assert.equal(gate('vision', true), false);
+  assert.equal(gate('chat', false), false);
+  assert.match(main, /metin sohbeti ve PDF görevlerinde/);
 });

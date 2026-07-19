@@ -8732,8 +8732,8 @@ ${answer}` : action;
             if (!response) {
                 removeImage();
                 // Son çare: bulut zinciri komple tükendiyse ve kullanıcı ayarlardan
-                // bilinçli olarak açtıysa, yerel Ollama denenir (vision hariç — yerel
-                // fallback bu turda yalnızca metin sohbeti için).
+                // bilinçli olarak açtıysa, yerel Ollama metin sohbeti ve PDF görevlerinde
+                // denenir; vision görevleri bu fallback kapsamının dışındadır.
                 if (taskType !== 'vision' && isOllamaFallbackEnabled()) {
                     const localResp = await fetchOllamaFallbackResponse(reqMessages, responseMaxTokens);
                     if (localResp) {

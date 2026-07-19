@@ -162,3 +162,86 @@ test('offline fallback generator and bad-title detector keep their existing cont
   assert.equal(vm.runInContext("isBadAutoTitle('abc')", context), true, 'too-short titles are bad');
   assert.equal(vm.runInContext("isBadAutoTitle('Python Hata Çözümü')", context), false);
 });
+
+test('AI title input is capped at exactly 500 characters before it reaches the API', async () => {
+  const ctx = makeAiTitleContext(() => ({ ok: true, json: async () => ({ ok: true, content: 'Bounded Title' }) }));
+  await vm.runInContext(`fz19GenerateAiChatTitle('${'a'.repeat(620)}')`, ctx);
+  const body = JSON.parse(ctx.fetchCalls[0].options.body);
+  assert.equal(body.messages[1].content.length, 500);
+  assert.equal(body.messages[1].content, 'a'.repeat(500));
+});
+
+test('AI title rejects a whitespace-only model answer', async () => {
+  const ctx = makeAiTitleContext(() => ({ ok: true, json: async () => ({ ok: true, content: '   \n  ' }) }));
+  assert.equal(await vm.runInContext("fz19GenerateAiChatTitle('valid input')", ctx), null);
+});
+
+test('AI title rejects a one-character model answer', async () => {
+  const ctx = makeAiTitleContext(() => ({ ok: true, json: async () => ({ ok: true, content: 'x' }) }));
+  assert.equal(await vm.runInContext("fz19GenerateAiChatTitle('valid input')", ctx), null);
+});
+
+test('AI title accepts an answer at the exact 48-character limit', async () => {
+  const answer = 'a'.repeat(48);
+  const ctx = makeAiTitleContext(() => ({ ok: true, json: async () => ({ ok: true, content: answer }) }));
+  assert.equal(await vm.runInContext("fz19GenerateAiChatTitle('valid input')", ctx), 'A' + 'a'.repeat(47));
+});
+
+test('AI title rejects an answer one character over the 48-character limit', async () => {
+  const ctx = makeAiTitleContext(() => ({ ok: true, json: async () => ({ ok: true, content: 'a'.repeat(49) }) }));
+  assert.equal(await vm.runInContext("fz19GenerateAiChatTitle('valid input')", ctx), null);
+});
+
+test('AI title falls back cleanly when the API returns invalid JSON', async () => {
+  const ctx = makeAiTitleContext(() => ({ ok: true, json: async () => { throw new SyntaxError('bad json'); } }));
+  assert.equal(await vm.runInContext("fz19GenerateAiChatTitle('valid input')", ctx), null);
+});
+
+test('late AI title results are safe across deletion, chat switching, valid-title races and promise rejection', async () => {
+  function deferred() {
+    let resolve;
+    const promise = new Promise(r => { resolve = r; });
+    return { promise, resolve };
+  }
+  function makeFlow(aiFactory) {
+    const context = {
+      sessions: {
+        c1: { title: 'Yeni Sohbet', manualTitle: false, messages: [] },
+        c2: { title: 'Second Chat', manualTitle: false, messages: [] }
+      },
+      currentChatId: 'c1', saveDatabase() {}, renderSidebar() {},
+      generateChatTitleFromMessage: () => 'Offline Title',
+      isBadAutoTitle: title => !title || title === 'Yeni Sohbet',
+      fz19GenerateAiChatTitle: aiFactory
+    };
+    vm.createContext(context);
+    vm.runInContext(ensureFromUserInputSrc + "\nensureChatTitleFromUserInput('hello', null);", context);
+    return context;
+  }
+
+  const switchedDeferred = deferred();
+  const switched = makeFlow(() => switchedDeferred.promise);
+  switched.currentChatId = 'c2';
+  switchedDeferred.resolve('AI Title');
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(switched.sessions.c1.title, 'AI Title');
+  assert.equal(switched.sessions.c2.title, 'Second Chat');
+
+  const deletedDeferred = deferred();
+  const deleted = makeFlow(() => deletedDeferred.promise);
+  delete deleted.sessions.c1;
+  deletedDeferred.resolve('AI Title');
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(deleted.sessions.c1, undefined);
+
+  const racedDeferred = deferred();
+  const raced = makeFlow(() => racedDeferred.promise);
+  raced.sessions.c1.title = 'Existing Valid Title';
+  racedDeferred.resolve('Late AI Title');
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(raced.sessions.c1.title, 'Existing Valid Title');
+
+  const rejected = makeFlow(() => Promise.reject(new Error('provider rejected')));
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(rejected.sessions.c1.title, 'Offline Title');
+});
