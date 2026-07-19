@@ -701,7 +701,7 @@
     window.fz19GetTtsSpeed = function() {
         try {
             let speed = parseFloat(localStorage.getItem('fz19_tts_speed'));
-            if(isNaN(speed) || speed < 1 || speed > 3) speed = 1.0;
+            if(isNaN(speed) || speed < 0.5 || speed > 3.5) speed = 1.0;
             return speed;
         } catch(e) { return 1.0; }
     };

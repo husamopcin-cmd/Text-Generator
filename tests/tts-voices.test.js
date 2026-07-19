@@ -12,6 +12,9 @@ const server = fs.readFileSync(path.join(root, 'server.py'), 'utf8');
 const ttsUrlSourceMatch = main.match(/(const DEFAULT_TTS_URL[\s\S]*?function getTtsUrl\(\) \{[\s\S]*?\r?\n    \})\r?\n\r?\n    \/\/ Dil Koçu/);
 assert.ok(ttsUrlSourceMatch, 'Missing TTS URL resolver source');
 const ttsUrlSource = ttsUrlSourceMatch[1];
+const ttsSpeedSourceMatch = ttsCoreJs.match(/(window\.fz19GetTtsSpeed = function\(\) \{[\s\S]*?\r?\n    \};\r?\n\r?\n    window\.fz19UpdateTtsSpeed = function\(\) \{[\s\S]*?\r?\n    \};)/);
+assert.ok(ttsSpeedSourceMatch, 'Missing TTS speed persistence source');
+const ttsSpeedSource = ttsSpeedSourceMatch[1];
 
 function resolveTtsUrl({ savedUrl = '', ollamaIp = '', protocol = 'https:', hostname = 'cinocode-final-v4.netlify.app' } = {}) {
   const values = new Map([
@@ -25,6 +28,35 @@ function resolveTtsUrl({ savedUrl = '', ollamaIp = '', protocol = 'https:', host
     result: null
   };
   vm.runInNewContext(`${ttsUrlSource}\nresult = getTtsUrl();`, context);
+  return context.result;
+}
+
+function roundTripTtsSpeed(value) {
+  const values = new Map();
+  const slider = { value: String(value) };
+  const label = { innerText: '' };
+  const context = {
+    window: {},
+    document: {
+      getElementById: id => id === 'fz19TtsSpeedSlider' ? slider : id === 'fz19TtsSpeedLabel' ? label : null
+    },
+    localStorage: {
+      getItem: key => values.has(key) ? values.get(key) : null,
+      setItem: (key, storedValue) => values.set(key, String(storedValue))
+    },
+    result: null
+  };
+  vm.runInNewContext(`${ttsSpeedSource}\nwindow.fz19UpdateTtsSpeed();\nresult = window.fz19GetTtsSpeed();`, context);
+  return { stored: values.get('fz19_tts_speed'), label: label.innerText, reloaded: context.result };
+}
+
+function readStoredTtsSpeed(value) {
+  const context = {
+    window: {},
+    localStorage: { getItem: () => value },
+    result: null
+  };
+  vm.runInNewContext(`${ttsSpeedSource}\nresult = window.fz19GetTtsSpeed();`, context);
   return context.result;
 }
 
@@ -76,6 +108,21 @@ test('server keeps character-specific speaking rates and pitch', () => {
   }
   assert.match(main, /audio\.fz19BaseRate = 1\.0/);
   assert.match(main, /let finalRate = window\.fz19GetTtsSpeed\(\)/);
+});
+
+test('TTS speed preserves every slider boundary and supported reload value', () => {
+  for (const speed of [0.5, 0.9, 1.0, 3.0, 3.5]) {
+    const result = roundTripTtsSpeed(speed);
+    assert.equal(result.stored, String(speed));
+    assert.equal(result.label, `${speed.toFixed(1)}x`);
+    assert.equal(result.reloaded, speed);
+  }
+});
+
+test('TTS speed still falls back safely for values outside the slider range', () => {
+  for (const value of ['invalid', '0.4', '3.6']) {
+    assert.equal(readStoredTtsSpeed(value), 1.0);
+  }
 });
 
 test('local development origins include every supported CinoCode port', () => {
