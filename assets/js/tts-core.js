@@ -722,6 +722,15 @@
         }
     };
 
+    window.fz19SyncTtsSpeedUi = function() {
+        const slider = document.getElementById('fz19TtsSpeedSlider');
+        const label = document.getElementById('fz19TtsSpeedLabel');
+        const speed = window.fz19GetTtsSpeed();
+        if (slider) slider.value = String(speed);
+        if (label) label.innerText = speed.toFixed(1) + "x";
+    };
+    window.fz19SyncTtsSpeedUi();
+
     const SERVER_TTS_VOICE_IDS = Object.freeze({
         female_gtts: 'female_gtts',
         female_edge: 'female_edge',

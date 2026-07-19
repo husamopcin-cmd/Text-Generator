@@ -5945,7 +5945,18 @@ ${answer}` : action;
     }
 
     // ----- DİĞER FONKSİYONLAR -----
-    const renderer = new marked.Renderer();
+    // Keep the app usable when the external Markdown CDN is unavailable.
+    // The fallback escapes all input and only preserves line breaks.
+    if (!window.marked || typeof window.marked.parse !== 'function' || typeof window.marked.Renderer !== 'function') {
+        window.marked = {
+            Renderer: class Renderer {},
+            setOptions: function() {},
+            parse: function(value) {
+                return escapeHtmlText(String(value || '')).replace(/\n/g, '<br>');
+            }
+        };
+    }
+    const renderer = new window.marked.Renderer();
     renderer.code = function(codeOrToken, maybeLang) {
         const code = String(typeof codeOrToken === 'string' ? codeOrToken : codeOrToken.text || '');
         const rawLanguage = typeof codeOrToken === 'string' ? maybeLang : codeOrToken.lang;
@@ -5978,7 +5989,7 @@ ${answer}` : action;
         const trustedCodeBlock = `<div class="code-wrapper" style="position:relative;"><div class="fz19-sticky-code-bar" style="display:flex; justify-content:flex-end; gap:8px; align-items:center;">${topBarContent}</div><pre class="fz19-code-body"><code class="hljs ${language}">${highlighted}</code></pre></div>`;
         return registerTrustedRenderFragment(trustedCodeBlock);
     };
-    marked.setOptions({ renderer: renderer, breaks: true });
+    window.marked.setOptions({ renderer: renderer, breaks: true });
 
 
     // ----- KÜTÜPHANE (LIBRARY) SİSTEMİ -----
