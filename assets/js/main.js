@@ -2686,6 +2686,11 @@ ${answer}` : action;
         const currentOllamaIp = localStorage.getItem('ollama_ip') || "";
         document.getElementById('ollamaIpInput').value = currentOllamaIp;
 
+        const ollamaFallbackToggleEl = document.getElementById('ollamaFallbackToggle');
+        if (ollamaFallbackToggleEl) ollamaFallbackToggleEl.checked = isOllamaFallbackEnabled();
+        const ollamaFallbackModelEl = document.getElementById('ollamaFallbackModelInput');
+        if (ollamaFallbackModelEl) ollamaFallbackModelEl.value = localStorage.getItem('ollama_fallback_model') || "";
+
         const currentTtsUrl = localStorage.getItem('tts_url') || "";
         document.getElementById('ttsUrlInput').value = currentTtsUrl;
 
@@ -3128,6 +3133,11 @@ ${answer}` : action;
 
         const ollamaIp = document.getElementById('ollamaIpInput').value.trim();
         localStorage.setItem('ollama_ip', ollamaIp);
+
+        const ollamaFallbackToggle = document.getElementById('ollamaFallbackToggle');
+        if (ollamaFallbackToggle) localStorage.setItem('ollama_fallback_enabled', ollamaFallbackToggle.checked ? '1' : '0');
+        const ollamaFallbackModel = document.getElementById('ollamaFallbackModelInput')?.value?.trim() || "";
+        localStorage.setItem('ollama_fallback_model', ollamaFallbackModel);
 
         localStorage.setItem('tts_url', normalizedTtsUrl);
 
@@ -7176,6 +7186,44 @@ ${answer}` : action;
         return "http://" + window.location.hostname + ":11434";
     }
 
+    function isOllamaFallbackEnabled() {
+        return localStorage.getItem('ollama_fallback_enabled') === '1';
+    }
+
+    function getOllamaFallbackModel() {
+        const saved = (localStorage.getItem('ollama_fallback_model') || "").trim();
+        return saved || 'qwen2.5';
+    }
+
+    // Bulut zinciri tükendiğinde kullanıcının kendi makinesindeki Ollama'yı dener.
+    // Ollama kapalıysa kullanıcıyı bekletmemek için bağlantı 3 saniyede kesilir;
+    // yanıt başladıktan sonra abort zamanlayıcısı temizlenir ki akış yarıda kesilmesin.
+    async function fetchOllamaFallbackResponse(reqMessages, responseMaxTokens) {
+        const controller = new AbortController();
+        const connectTimeoutId = setTimeout(() => controller.abort(), 3000);
+        try {
+            const resp = await fetch(getOllamaUrl() + "/api/chat", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    model: getOllamaFallbackModel(),
+                    messages: reqMessages,
+                    stream: true,
+                    keep_alive: "1h",
+                    options: { num_predict: responseMaxTokens }
+                }),
+                signal: controller.signal
+            });
+            clearTimeout(connectTimeoutId);
+            if (!resp.ok) return null;
+            window.activeGenerationController = controller;
+            return resp;
+        } catch (e) {
+            clearTimeout(connectTimeoutId);
+            return null;
+        }
+    }
+
     async function checkOllamaStatus() {
         try {
             const res = await fetch(getOllamaUrl() + "/", { method: "HEAD" });
@@ -8583,6 +8631,24 @@ ${answer}` : action;
 
             if (!response) {
                 removeImage();
+                // Son çare: bulut zinciri komple tükendiyse ve kullanıcı ayarlardan
+                // bilinçli olarak açtıysa, yerel Ollama denenir (vision hariç — yerel
+                // fallback bu turda yalnızca metin sohbeti için).
+                if (taskType !== 'vision' && isOllamaFallbackEnabled()) {
+                    const localResp = await fetchOllamaFallbackResponse(reqMessages, responseMaxTokens);
+                    if (localResp) {
+                        isGroq = false; isNvidia = false; isOpenRouter = false; isXai = false; isGemini = false;
+                        actualModel = getOllamaFallbackModel();
+                        window.lastWorkingProvider = 'ollama';
+                        window.lastWorkingModel = actualModel;
+                        window.lastWorkingModelAt = Date.now();
+                        fallbackNote = `<div class="fallback-note" style="font-size:11px; color:#a6e3a1; margin-top:8px; padding:6px; background:rgba(166, 227, 161, 0.1); border-radius: var(--cc-radius); border-left:3px solid #a6e3a1;">🖥️ Bulut sağlayıcılar yanıt veremedi; bu yanıt <b>yerel model (Ollama: ${escapeHtmlText(actualModel)})</b> ile üretildi.</div>`;
+                        response = localResp;
+                    }
+                }
+            }
+
+            if (!response) {
                 const fallbackCandidate = fallbackQueue.find(modelValue => {
                     const provider = parseModelLabel(modelValue).provider;
                     return !provider || hasProviderApiKey(provider);
