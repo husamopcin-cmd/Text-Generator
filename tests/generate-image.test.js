@@ -9,7 +9,8 @@ const PROVIDER_ENV_KEYS = [
   'FAL_KEY',
   'REPLICATE_API_TOKEN',
   'STABILITY_API_KEY',
-  'HUGGINGFACE_API_KEY'
+  'HUGGINGFACE_API_KEY',
+  'POLLINATIONS_API_KEY'
 ];
 
 function parseBody(response) {
@@ -67,7 +68,7 @@ test('reports missing provider configuration without touching the network', asyn
 
     assert.equal(response.statusCode, 502);
     assert.equal(body.error, 'missing_env');
-    assert.equal(JSON.parse(body.details).length, 6);
+    assert.equal(JSON.parse(body.details).length, 7);
   });
 });
 
@@ -254,5 +255,348 @@ test('classifies Fal 403 responses as unauthorized', async () => {
     assert.equal(response.statusCode, 502);
     assert.equal(attempts[0].error, 'unauthorized');
     assert.equal(attempts[0].status, 403);
+  });
+});
+
+// Pollinations-specific tests
+test('Pollinations without key returns missing_env', async () => {
+  await withProviderEnvironment({}, async () => {
+    global.fetch = async () => assert.fail('fetch must not be called');
+    const response = await handler({
+      httpMethod: 'POST',
+      body: JSON.stringify({ prompt: 'test image', forceProvider: 'pollinations' })
+    });
+    const body = parseBody(response);
+
+    assert.equal(response.statusCode, 502);
+    assert.equal(body.error, 'missing_env');
+  });
+});
+
+test('Pollinations with key uses correct endpoint and auth', async () => {
+  await withProviderEnvironment({ POLLINATIONS_API_KEY: 'pollinations-test-key' }, async () => {
+    let request;
+    global.fetch = async (url, options) => {
+      request = { url, options };
+      return {
+        ok: true,
+        status: 200,
+        headers: { get: (name) => name === 'content-type' ? 'image/jpeg' : null },
+        arrayBuffer: async () => Buffer.from('fake-image-bytes')
+      };
+    };
+
+    const response = await handler({
+      httpMethod: 'POST',
+      body: JSON.stringify({ prompt: 'sunset over mountains', width: 1024, height: 768, forceProvider: 'pollinations' })
+    });
+    const body = parseBody(response);
+
+    assert.equal(response.statusCode, 200);
+    assert.equal(body.provider, 'pollinations');
+    assert.ok(body.images[0].startsWith('data:image/jpeg;base64,'));
+    assert.ok(request.url.includes('gen.pollinations.ai/image'));
+    assert.equal(request.options.headers.Authorization, 'Bearer pollinations-test-key');
+  });
+});
+
+test('Pollinations successful JPEG response', async () => {
+  await withProviderEnvironment({ POLLINATIONS_API_KEY: 'test-key' }, async () => {
+    global.fetch = async () => ({
+      ok: true,
+      status: 200,
+      headers: { get: (name) => name === 'content-type' ? 'image/jpeg' : null },
+      arrayBuffer: async () => Buffer.from('jpeg-bytes')
+    });
+
+    const response = await handler({
+      httpMethod: 'POST',
+      body: JSON.stringify({ prompt: 'test', forceProvider: 'pollinations' })
+    });
+    const body = parseBody(response);
+
+    assert.equal(response.statusCode, 200);
+    assert.equal(body.ok, true);
+    assert.ok(body.images[0].startsWith('data:image/jpeg;base64,'));
+  });
+});
+
+test('Pollinations successful PNG response preserves MIME type', async () => {
+  await withProviderEnvironment({ POLLINATIONS_API_KEY: 'test-key' }, async () => {
+    global.fetch = async () => ({
+      ok: true,
+      status: 200,
+      headers: { get: (name) => name === 'content-type' ? 'image/png' : null },
+      arrayBuffer: async () => Buffer.from('png-bytes')
+    });
+
+    const response = await handler({
+      httpMethod: 'POST',
+      body: JSON.stringify({ prompt: 'test', forceProvider: 'pollinations' })
+    });
+    const body = parseBody(response);
+
+    assert.equal(response.statusCode, 200);
+    assert.ok(body.images[0].startsWith('data:image/png;base64,'));
+  });
+});
+
+test('Pollinations 401 returns unauthorized and marks key dead', async () => {
+  await withProviderEnvironment({ POLLINATIONS_API_KEY: 'bad-key' }, async () => {
+    global.fetch = async () => ({
+      ok: false,
+      status: 401,
+      text: async () => 'Unauthorized'
+    });
+
+    const response = await handler({
+      httpMethod: 'POST',
+      body: JSON.stringify({ prompt: 'test', forceProvider: 'pollinations' })
+    });
+    const attempts = JSON.parse(parseBody(response).details);
+
+    assert.equal(response.statusCode, 502);
+    assert.equal(attempts[0].error, 'unauthorized');
+    assert.equal(attempts[0].status, 401);
+  });
+});
+
+test('Pollinations 402 returns insufficient credits', async () => {
+  await withProviderEnvironment({ POLLINATIONS_API_KEY: 'no-credits-key' }, async () => {
+    global.fetch = async () => ({
+      ok: false,
+      status: 402,
+      text: async () => 'Insufficient credits'
+    });
+
+    const response = await handler({
+      httpMethod: 'POST',
+      body: JSON.stringify({ prompt: 'test', forceProvider: 'pollinations' })
+    });
+    const attempts = JSON.parse(parseBody(response).details);
+
+    assert.equal(response.statusCode, 502);
+    assert.equal(attempts[0].error, 'insufficient_credits');
+    assert.equal(attempts[0].status, 402);
+  });
+});
+
+test('Pollinations 429 returns quota_or_limit', async () => {
+  await withProviderEnvironment({ POLLINATIONS_API_KEY: 'rate-limited-key' }, async () => {
+    global.fetch = async () => ({
+      ok: false,
+      status: 429,
+      text: async () => 'Too many requests'
+    });
+
+    const response = await handler({
+      httpMethod: 'POST',
+      body: JSON.stringify({ prompt: 'test', forceProvider: 'pollinations' })
+    });
+    const attempts = JSON.parse(parseBody(response).details);
+
+    assert.equal(response.statusCode, 502);
+    assert.equal(attempts[0].error, 'quota_or_limit');
+    assert.equal(attempts[0].status, 429);
+  });
+});
+
+test('Pollinations 500 returns provider_error', async () => {
+  await withProviderEnvironment({ POLLINATIONS_API_KEY: 'test-key' }, async () => {
+    global.fetch = async () => ({
+      ok: false,
+      status: 500,
+      text: async () => 'Internal server error'
+    });
+
+    const response = await handler({
+      httpMethod: 'POST',
+      body: JSON.stringify({ prompt: 'test', forceProvider: 'pollinations' })
+    });
+    const attempts = JSON.parse(parseBody(response).details);
+
+    assert.equal(response.statusCode, 502);
+    assert.equal(attempts[0].error, 'provider_error');
+    assert.equal(attempts[0].status, 500);
+  });
+});
+
+test('Pollinations timeout returns timeout error', async () => {
+  await withProviderEnvironment({ POLLINATIONS_API_KEY: 'test-key' }, async () => {
+    global.fetch = async () => {
+      const err = new Error('Aborted');
+      err.name = 'AbortError';
+      throw err;
+    };
+
+    const response = await handler({
+      httpMethod: 'POST',
+      body: JSON.stringify({ prompt: 'test', forceProvider: 'pollinations' })
+    });
+    const attempts = JSON.parse(parseBody(response).details);
+
+    assert.equal(response.statusCode, 502);
+    assert.equal(attempts[0].error, 'timeout');
+  });
+});
+
+test('Pollinations rejects text/html Content-Type', async () => {
+  await withProviderEnvironment({ POLLINATIONS_API_KEY: 'test-key' }, async () => {
+    global.fetch = async () => ({
+      ok: true,
+      status: 200,
+      headers: { get: (name) => name === 'content-type' ? 'text/html' : null },
+      arrayBuffer: async () => Buffer.from('<html>error</html>')
+    });
+
+    const response = await handler({
+      httpMethod: 'POST',
+      body: JSON.stringify({ prompt: 'test', forceProvider: 'pollinations' })
+    });
+    const attempts = JSON.parse(parseBody(response).details);
+
+    assert.equal(response.statusCode, 502);
+    assert.equal(attempts[0].error, 'unexpected_response');
+  });
+});
+
+test('Pollinations rejects application/json Content-Type', async () => {
+  await withProviderEnvironment({ POLLINATIONS_API_KEY: 'test-key' }, async () => {
+    global.fetch = async () => ({
+      ok: true,
+      status: 200,
+      headers: { get: (name) => name === 'content-type' ? 'application/json' : null },
+      arrayBuffer: async () => Buffer.from('{"error":"not an image"}')
+    });
+
+    const response = await handler({
+      httpMethod: 'POST',
+      body: JSON.stringify({ prompt: 'test', forceProvider: 'pollinations' })
+    });
+    const attempts = JSON.parse(parseBody(response).details);
+
+    assert.equal(response.statusCode, 502);
+    assert.equal(attempts[0].error, 'unexpected_response');
+  });
+});
+
+test('Pollinations rejects empty response body', async () => {
+  await withProviderEnvironment({ POLLINATIONS_API_KEY: 'test-key' }, async () => {
+    global.fetch = async () => ({
+      ok: true,
+      status: 200,
+      headers: { get: (name) => name === 'content-type' ? 'image/jpeg' : null },
+      arrayBuffer: async () => Buffer.from('')
+    });
+
+    const response = await handler({
+      httpMethod: 'POST',
+      body: JSON.stringify({ prompt: 'test', forceProvider: 'pollinations' })
+    });
+    const attempts = JSON.parse(parseBody(response).details);
+
+    assert.equal(response.statusCode, 502);
+    assert.equal(attempts[0].error, 'empty_response');
+  });
+});
+
+test('Pollinations rejects oversized response', async () => {
+  await withProviderEnvironment({ POLLINATIONS_API_KEY: 'test-key' }, async () => {
+    const largeBuffer = Buffer.alloc(11 * 1024 * 1024); // 11MB, over 10MB limit
+    global.fetch = async () => ({
+      ok: true,
+      status: 200,
+      headers: { get: (name) => name === 'content-type' ? 'image/jpeg' : null },
+      arrayBuffer: async () => largeBuffer
+    });
+
+    const response = await handler({
+      httpMethod: 'POST',
+      body: JSON.stringify({ prompt: 'test', forceProvider: 'pollinations' })
+    });
+    const attempts = JSON.parse(parseBody(response).details);
+
+    assert.equal(response.statusCode, 502);
+    assert.equal(attempts[0].error, 'response_too_large');
+  });
+});
+
+test('Pollinations clamps width and height to safe ranges', async () => {
+  await withProviderEnvironment({ POLLINATIONS_API_KEY: 'test-key' }, async () => {
+    let requestUrl;
+    global.fetch = async (url) => {
+      requestUrl = url;
+      return {
+        ok: true,
+        status: 200,
+        headers: { get: (name) => name === 'content-type' ? 'image/jpeg' : null },
+        arrayBuffer: async () => Buffer.from('image-bytes')
+      };
+    };
+
+    const response = await handler({
+      httpMethod: 'POST',
+      body: JSON.stringify({ prompt: 'test', width: 5000, height: 100, forceProvider: 'pollinations' })
+    });
+
+    assert.equal(response.statusCode, 200);
+    assert.ok(requestUrl.includes('width=2048')); // clamped to max
+    assert.ok(requestUrl.includes('height=256')); // clamped to min
+  });
+});
+
+test('Pollinations fallback chain continues on failure', async () => {
+  await withProviderEnvironment({
+    OPENAI_API_KEY: 'openai-key',
+    POLLINATIONS_API_KEY: 'pollinations-key'
+  }, async () => {
+    const calls = [];
+    global.fetch = async (url) => {
+      calls.push(url);
+      if (url.includes('api.openai.com')) {
+        return { ok: false, status: 500, text: async () => 'Server error' };
+      }
+      if (url.includes('gen.pollinations.ai')) {
+        return {
+          ok: true,
+          status: 200,
+          headers: { get: (name) => name === 'content-type' ? 'image/jpeg' : null },
+          arrayBuffer: async () => Buffer.from('pollinations-image-bytes')
+        };
+      }
+      return { ok: false, status: 500, text: async () => 'Server error' };
+    };
+
+    const response = await handler({
+      httpMethod: 'POST',
+      body: JSON.stringify({ prompt: 'test image' })
+    });
+    const body = parseBody(response);
+
+    assert.equal(response.statusCode, 200);
+    assert.equal(body.provider, 'pollinations');
+    assert.ok(calls.some(url => url.includes('api.openai.com')));
+    assert.ok(calls.some(url => url.includes('gen.pollinations.ai')));
+  });
+});
+
+test('Pollinations does not leak API key in error details', async () => {
+  await withProviderEnvironment({ POLLINATIONS_API_KEY: 'secret-key-12345' }, async () => {
+    global.fetch = async () => ({
+      ok: false,
+      status: 401,
+      text: async () => 'Unauthorized'
+    });
+
+    const response = await handler({
+      httpMethod: 'POST',
+      body: JSON.stringify({ prompt: 'test', forceProvider: 'pollinations' })
+    });
+    const body = parseBody(response);
+    const details = body.details;
+
+    assert.equal(response.statusCode, 502);
+    assert.ok(!details.includes('secret-key-12345'));
+    assert.ok(!details.includes('Bearer'));
   });
 });

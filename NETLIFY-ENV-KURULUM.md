@@ -33,6 +33,7 @@ Netlify Functions tarafından gerçekten okunan değişkenler:
 - [ ] `REPLICATE_API_TOKEN`
 - [ ] `STABILITY_API_KEY`
 - [ ] `HUGGINGFACE_API_KEY`
+- [ ] `POLLINATIONS_API_KEY`
 - [ ] `SUPABASE_URL`
 - [ ] `SUPABASE_PUBLISHABLE_KEY`
 

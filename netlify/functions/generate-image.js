@@ -12,13 +12,62 @@ const _dummy = [
   process.env.FAL_KEY,
   process.env.REPLICATE_API_TOKEN,
   process.env.STABILITY_API_KEY,
-  process.env.HUGGINGFACE_API_KEY
+  process.env.HUGGINGFACE_API_KEY,
+  process.env.POLLINATIONS_API_KEY
 ];
+
+async function tryPollinations(prompt, width, height) {
+  const key = getNextAliveKey('POLLINATIONS');
+  if (!key) return { ok: false, error: 'missing_env' };
+
+  const safeWidth = Math.min(2048, Math.max(256, width));
+  const safeHeight = Math.min(2048, Math.max(256, height));
+  const encodedPrompt = encodeURIComponent(prompt);
+  const url = `https://gen.pollinations.ai/image/${encodedPrompt}?width=${safeWidth}&height=${safeHeight}&nologo=true`;
+
+  const MAX_RESPONSE_BYTES = 10 * 1024 * 1024; // 10MB
+
+  let resp;
+  try {
+    resp = await fetchWithTimeout(url, {
+      method: 'GET',
+      headers: key ? { 'Authorization': 'Bearer ' + key } : {}
+    }, PROVIDER_TIMEOUT_MS);
+  } catch (err) {
+    return { ok: false, error: err.name === 'AbortError' ? 'timeout' : 'network' };
+  }
+
+  if (!resp.ok) {
+    const text = await resp.text();
+    const errorType = classifyProviderHttpError(resp.status, text);
+    if (errorType === 'unauthorized' || errorType === 'insufficient_credits') {
+      markKeyAsDead(key);
+    }
+    return { ok: false, error: errorType, status: resp.status, details: text.slice(0, 500) };
+  }
+
+  const contentType = resp.headers.get('content-type') || '';
+  if (!contentType.startsWith('image/')) {
+    return { ok: false, error: 'unexpected_response', details: 'Content-Type is not an image' };
+  }
+
+  const buffer = await resp.arrayBuffer();
+  if (buffer.byteLength === 0) {
+    return { ok: false, error: 'empty_response' };
+  }
+  if (buffer.byteLength > MAX_RESPONSE_BYTES) {
+    return { ok: false, error: 'response_too_large' };
+  }
+
+  const base64 = Buffer.from(buffer).toString('base64');
+  return { ok: true, url: 'data:' + contentType.split(';')[0] + ';base64,' + base64 };
+}
 
 function getNextAliveKey(providerName, excludeKeys) {
   let keyBase = providerName + '_API_KEY';
   if (providerName === 'FAL') keyBase = 'FAL_KEY';
   if (providerName === 'REPLICATE') keyBase = 'REPLICATE_API_TOKEN';
+  if (providerName === 'POLLINATIONS') keyBase = 'POLLINATIONS_API_KEY';
 
   const keysStr = process.env[`${providerName}_API_KEYS`] || process.env[keyBase] || '';
   const keys = keysStr.split(',').map(k => k.trim()).filter(Boolean);
@@ -438,7 +487,8 @@ const PROVIDERS = [
   { name: 'runware', fn: tryRunware },
   { name: 'fal', fn: tryFal },
   { name: 'replicate', fn: tryReplicate },
-  { name: 'huggingface', fn: tryHuggingFace }
+  { name: 'huggingface', fn: tryHuggingFace },
+  { name: 'pollinations', fn: tryPollinations }
 ];
 
 exports.handler = async function(event) {
