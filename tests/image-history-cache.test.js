@@ -132,7 +132,7 @@ test('history re-render threads the real array index into renderContentWithImage
 });
 
 test('getMessageCopyText copies the plain URL for a resolved image marker instead of the raw bracket syntax', () => {
-  const getMessageCopyTextSrc = extractFunction(/function getMessageCopyText/, /\n\n/);
+  const getMessageCopyTextSrc = extractFunction(/function getMessageCopyText/, /\r?\n\r?\n/);
   const context = { result: null, getPublicVideoSubject: () => '' };
   vm.createContext(context);
   vm.runInContext(getMessageCopyTextSrc + "\nresult = getMessageCopyText('[GENERATED_IMAGE: https://cdn.example.com/elma.jpg]');", context);
