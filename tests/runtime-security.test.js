@@ -4,7 +4,9 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const root = path.join(__dirname, '..');
-const main = fs.readFileSync(path.join(root, 'assets', 'js', 'main.js'), 'utf8');
+const mainJs = fs.readFileSync(path.join(root, 'assets', 'js', 'main.js'), 'utf8');
+const ttsCoreJs = fs.readFileSync(path.join(root, 'assets', 'js', 'tts-core.js'), 'utf8');
+const main = mainJs + '\n' + ttsCoreJs;
 const server = fs.readFileSync(path.join(root, 'server.py'), 'utf8');
 const launcher = fs.readFileSync(path.join(root, 'baslat.bat'), 'utf8');
 const checklist = fs.readFileSync(path.join(root, 'NETLIFY-ENV-KURULUM.md'), 'utf8');

@@ -5,7 +5,9 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const root = path.join(__dirname, '..');
-const main = fs.readFileSync(path.join(root, 'assets', 'js', 'main.js'), 'utf8');
+const mainJs = fs.readFileSync(path.join(root, 'assets', 'js', 'main.js'), 'utf8');
+const ttsCoreJs = fs.readFileSync(path.join(root, 'assets', 'js', 'tts-core.js'), 'utf8');
+const main = mainJs + '\n' + ttsCoreJs;
 const server = fs.readFileSync(path.join(root, 'server.py'), 'utf8');
 const ttsUrlSourceMatch = main.match(/(const DEFAULT_TTS_URL[\s\S]*?function getTtsUrl\(\) \{[\s\S]*?\r?\n    \})\r?\n\r?\n    \/\/ Dil Koçu/);
 assert.ok(ttsUrlSourceMatch, 'Missing TTS URL resolver source');
