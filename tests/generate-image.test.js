@@ -171,6 +171,76 @@ test('classifies OpenAI billing limits as insufficient credits', async () => {
   });
 });
 
+test('retries the next pooled key on a rate limit instead of permanently killing it', async () => {
+  await withProviderEnvironment({ RUNWARE_API_KEYS: 'runware-key-1,runware-key-2' }, async () => {
+    const calls = [];
+    global.fetch = async (url, options) => {
+      const auth = options && options.headers && options.headers.Authorization;
+      calls.push(auth || url);
+      if (auth === 'Bearer runware-key-1') {
+        return { ok: false, status: 429, text: async () => 'rate limited' };
+      }
+      if (auth === 'Bearer runware-key-2') {
+        return {
+          ok: true,
+          status: 200,
+          text: async () => JSON.stringify({ data: [{ imageURL: 'https://example.test/pool-success.jpg' }] })
+        };
+      }
+      return { ok: false, status: 404, text: async () => 'not found' };
+    };
+
+    const response = await handler({
+      httpMethod: 'POST',
+      body: JSON.stringify({ prompt: 'test image', forceProvider: 'runware' })
+    });
+    const body = parseBody(response);
+
+    assert.equal(response.statusCode, 200);
+    assert.equal(body.provider, 'runware');
+    assert.deepEqual(calls.slice(0, 2), ['Bearer runware-key-1', 'Bearer runware-key-2']);
+  });
+
+  await withProviderEnvironment({ RUNWARE_API_KEYS: 'runware-key-1' }, async () => {
+    global.fetch = async () => ({
+      ok: true,
+      status: 200,
+      text: async () => JSON.stringify({ data: [{ imageURL: 'https://example.test/still-alive.jpg' }] })
+    });
+
+    const response = await handler({
+      httpMethod: 'POST',
+      body: JSON.stringify({ prompt: 'test image again', forceProvider: 'runware' })
+    });
+    const body = parseBody(response);
+
+    assert.equal(response.statusCode, 200, 'a temporary rate limit must not permanently blacklist the key');
+    assert.equal(body.provider, 'runware');
+  });
+});
+
+test('stops retrying once every pooled key has been rate limited (no infinite loop)', async () => {
+  await withProviderEnvironment({ RUNWARE_API_KEYS: 'runware-key-a,runware-key-b' }, async () => {
+    const calls = [];
+    global.fetch = async (url, options) => {
+      const auth = options && options.headers && options.headers.Authorization;
+      calls.push(auth);
+      return { ok: false, status: 429, text: async () => 'rate limited' };
+    };
+
+    const response = await handler({
+      httpMethod: 'POST',
+      body: JSON.stringify({ prompt: 'test image', forceProvider: 'runware' })
+    });
+    const body = parseBody(response);
+    const attempts = JSON.parse(body.details);
+
+    assert.equal(response.statusCode, 502);
+    assert.equal(attempts[0].error, 'quota_or_limit');
+    assert.deepEqual(calls, ['Bearer runware-key-a', 'Bearer runware-key-b']);
+  });
+});
+
 test('classifies Fal 403 responses as unauthorized', async () => {
   await withProviderEnvironment({ FAL_KEY: 'fal-test-key' }, async () => {
     global.fetch = async () => ({ ok: false, status: 403, text: async () => 'Forbidden' });

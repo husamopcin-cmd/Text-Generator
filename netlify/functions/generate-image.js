@@ -15,16 +15,16 @@ const _dummy = [
   process.env.HUGGINGFACE_API_KEY
 ];
 
-function getNextAliveKey(providerName) {
+function getNextAliveKey(providerName, excludeKeys) {
   let keyBase = providerName + '_API_KEY';
   if (providerName === 'FAL') keyBase = 'FAL_KEY';
   if (providerName === 'REPLICATE') keyBase = 'REPLICATE_API_TOKEN';
 
   const keysStr = process.env[`${providerName}_API_KEYS`] || process.env[keyBase] || '';
   const keys = keysStr.split(',').map(k => k.trim()).filter(Boolean);
-  
+
   for (const key of keys) {
-      if (!deadKeys.has(key)) return key;
+      if (!deadKeys.has(key) && !(excludeKeys && excludeKeys.has(key))) return key;
   }
   return null;
 }
@@ -94,9 +94,11 @@ function pickOpenAIImageSize(width, height) {
 
 async function tryOpenAI(prompt, width, height) {
   let lastResult = null;
+  const triedKeys = new Set();
   while (true) {
-    const key = getNextAliveKey('OPENAI');
+    const key = getNextAliveKey('OPENAI', triedKeys);
     if (!key) return lastResult || { ok: false, error: 'missing_env' };
+    triedKeys.add(key);
 
     let resp;
     try {
@@ -124,6 +126,10 @@ async function tryOpenAI(prompt, width, height) {
       const errorType = classifyProviderHttpError(resp.status, text);
       if (errorType === 'insufficient_credits' || errorType === 'unauthorized') {
         markKeyAsDead(key);
+        lastResult = { ok: false, error: errorType, status: resp.status, details: text.slice(0, 500) };
+        continue;
+      }
+      if (errorType === 'quota_or_limit') {
         lastResult = { ok: false, error: errorType, status: resp.status, details: text.slice(0, 500) };
         continue;
       }
@@ -159,9 +165,11 @@ function pickAspectRatio(width, height) {
 
 async function tryRunware(prompt, width, height) {
   let lastResult = null;
+  const triedKeys = new Set();
   while (true) {
-    const key = getNextAliveKey('RUNWARE');
+    const key = getNextAliveKey('RUNWARE', triedKeys);
     if (!key) return lastResult || { ok: false, error: 'missing_env' };
+    triedKeys.add(key);
 
     const taskUUID = Date.now().toString(36) + Math.random().toString(36).slice(2);
     let resp;
@@ -195,6 +203,10 @@ async function tryRunware(prompt, width, height) {
         lastResult = { ok: false, error: errorType, status: resp.status, details: text.slice(0, 500) };
         continue;
       }
+      if (errorType === 'quota_or_limit') {
+        lastResult = { ok: false, error: errorType, status: resp.status, details: text.slice(0, 500) };
+        continue;
+      }
       return {
         ok: false,
         error: errorType,
@@ -216,9 +228,11 @@ async function tryRunware(prompt, width, height) {
 
 async function tryFal(prompt, width, height) {
   let lastResult = null;
+  const triedKeys = new Set();
   while (true) {
-    const key = getNextAliveKey('FAL');
+    const key = getNextAliveKey('FAL', triedKeys);
     if (!key) return lastResult || { ok: false, error: 'missing_env' };
+    triedKeys.add(key);
 
     let resp;
     try {
@@ -246,6 +260,10 @@ async function tryFal(prompt, width, height) {
         lastResult = { ok: false, error: errorType, status: resp.status, details: text.slice(0, 500) };
         continue;
       }
+      if (errorType === 'quota_or_limit') {
+        lastResult = { ok: false, error: errorType, status: resp.status, details: text.slice(0, 500) };
+        continue;
+      }
       return { ok: false, error: errorType, status: resp.status, details: text.slice(0, 500) };
     }
 
@@ -262,9 +280,11 @@ async function tryFal(prompt, width, height) {
 
 async function tryReplicate(prompt, width, height) {
   let lastResult = null;
+  const triedKeys = new Set();
   while (true) {
-    const key = getNextAliveKey('REPLICATE');
+    const key = getNextAliveKey('REPLICATE', triedKeys);
     if (!key) return lastResult || { ok: false, error: 'missing_env' };
+    triedKeys.add(key);
 
     let resp;
     try {
@@ -296,6 +316,10 @@ async function tryReplicate(prompt, width, height) {
         lastResult = { ok: false, error: errorType, status: resp.status, details: text.slice(0, 500) };
         continue;
       }
+      if (errorType === 'quota_or_limit') {
+        lastResult = { ok: false, error: errorType, status: resp.status, details: text.slice(0, 500) };
+        continue;
+      }
       return { ok: false, error: errorType, status: resp.status, details: text.slice(0, 500) };
     }
 
@@ -313,9 +337,11 @@ async function tryReplicate(prompt, width, height) {
 
 async function tryStability(prompt, width, height) {
   let lastResult = null;
+  const triedKeys = new Set();
   while (true) {
-    const key = getNextAliveKey('STABILITY');
+    const key = getNextAliveKey('STABILITY', triedKeys);
     if (!key) return lastResult || { ok: false, error: 'missing_env' };
+    triedKeys.add(key);
 
     const form = new FormData();
     form.append('prompt', prompt);
@@ -344,6 +370,10 @@ async function tryStability(prompt, width, height) {
         lastResult = { ok: false, error: errorType, status: resp.status, details: text.slice(0, 500) };
         continue;
       }
+      if (errorType === 'quota_or_limit') {
+        lastResult = { ok: false, error: errorType, status: resp.status, details: text.slice(0, 500) };
+        continue;
+      }
       return { ok: false, error: errorType, status: resp.status, details: text.slice(0, 500) };
     }
 
@@ -356,9 +386,11 @@ async function tryStability(prompt, width, height) {
 
 async function tryHuggingFace(prompt) {
   let lastResult = null;
+  const triedKeys = new Set();
   while (true) {
-    const key = getNextAliveKey('HUGGINGFACE');
+    const key = getNextAliveKey('HUGGINGFACE', triedKeys);
     if (!key) return lastResult || { ok: false, error: 'missing_env' };
+    triedKeys.add(key);
 
     let resp;
     try {
@@ -379,6 +411,10 @@ async function tryHuggingFace(prompt) {
       const errorType = classifyProviderHttpError(resp.status, text);
       if (errorType === 'insufficient_credits' || errorType === 'unauthorized') {
         markKeyAsDead(key);
+        lastResult = { ok: false, error: errorType, status: resp.status, details: text.slice(0, 500) };
+        continue;
+      }
+      if (errorType === 'quota_or_limit') {
         lastResult = { ok: false, error: errorType, status: resp.status, details: text.slice(0, 500) };
         continue;
       }
