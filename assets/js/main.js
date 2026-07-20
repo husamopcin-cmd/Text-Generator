@@ -1087,16 +1087,45 @@
                 const errType = result ? (result.error || 'unknown') : 'unknown';
                 el.setAttribute('data-runware-error', errType);
                 if (result && result.message) el.setAttribute('data-runware-message', result.message);
+                
+                // Serverless fonksiyon üzerinden Pollinations fallback çağrısı
+                try {
+                    const fallbackResp = await fetch('/.netlify/functions/generate-image', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ 
+                            prompt, 
+                            width: 1024, 
+                            height: 1024,
+                            forceProvider: 'pollinations'
+                        })
+                    });
+                    const fallbackData = await fallbackResp.json();
+                    if (fallbackData.ok && fallbackData.images && fallbackData.images[0]) {
+                        img.src = fallbackData.images[0];
+                        if (spinner) spinner.remove();
+                        const dlBtn = el.querySelector('button');
+                        if (dlBtn) dlBtn.style.display = '';
+                        const container = el.closest('[data-generated-image-card="true"]') || el;
+                        const note = '⚠️ Ücretli sağlayıcı başarısız; ücretsiz yedek kullanıldı.';
+                        const infoDiv = document.createElement('div');
+                        infoDiv.style.cssText = 'color:#f9e2af; font-size:11px; margin-top:8px; text-align:center; font-style:italic;';
+                        infoDiv.textContent = note;
+                        container.appendChild(infoDiv);
+                        persistResolvedImageUrl(el, fallbackData.images[0]);
+                        return;
+                    }
+                } catch (fallbackErr) {
+                    console.warn('Pollinations fallback failed:', fallbackErr);
+                }
+                
+                // Serverless fallback de başarısız olursa eski hotlink yöntemi
                 const seed = Math.floor(Math.random() * 999999);
                 const fallbackUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(String(prompt).substring(0, 400))}?width=1024&height=1024&nologo=true&seed=${seed}`;
                 img.src = fallbackUrl;
                 if (spinner) spinner.remove();
-                // Kullanıcıya bakiye hatası veya diğer hatalar durumunda fallback bilgilendirme kartı bas
                 const container = el.closest('[data-generated-image-card="true"]') || el;
-                const note = errType === 'runware_insufficient_credits'
-                    ? '⚠️ Yapay zekâ sağlayıcı kredisi yetersiz; ücretsiz yedek deneniyor.'
-                    : `⚠️ Yapay zekâ sağlayıcı zinciri (${errType}) yanıt vermedi; ücretsiz yedek deneniyor.`;
-
+                const note = '⚠️ Görsel sağlayıcı zinciri başarısız; doğrudan URL deneniyor.';
                 const infoDiv = document.createElement('div');
                 infoDiv.style.cssText = 'color:#f9e2af; font-size:11px; margin-top:8px; text-align:center; font-style:italic;';
                 infoDiv.textContent = note;
