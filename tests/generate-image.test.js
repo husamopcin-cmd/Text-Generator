@@ -59,7 +59,11 @@ test('rejects an unknown forced provider without touching the network', async ()
 
 test('reports missing provider configuration without touching the network', async () => {
   await withProviderEnvironment({}, async () => {
-    global.fetch = async () => assert.fail('fetch must not be called');
+    let fetchCalls = 0;
+    global.fetch = async () => {
+      fetchCalls += 1;
+      return { ok: false, status: 500, text: async () => 'unexpected fetch' };
+    };
     const response = await handler({
       httpMethod: 'POST',
       body: JSON.stringify({ prompt: 'test image' })
@@ -69,6 +73,7 @@ test('reports missing provider configuration without touching the network', asyn
     assert.equal(response.statusCode, 502);
     assert.equal(body.error, 'missing_env');
     assert.equal(JSON.parse(body.details).length, 7);
+    assert.equal(fetchCalls, 0, 'fetch must not be called when no provider is configured');
   });
 });
 
