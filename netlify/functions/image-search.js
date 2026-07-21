@@ -3,6 +3,33 @@ const { buildSecurityHeaders, guardRequest } = require('./_security');
 const OPENVERSE_ENDPOINT = 'https://api.openverse.org/v1/images/';
 const SEARCH_TIMEOUT_MS = 12000;
 
+// Targets explicitly sexual content only — NOT a general content filter.
+// Normal and lawful queries (nature, animals, art, etc.) are entirely unaffected.
+// Applied to both incoming queries and outgoing result metadata.
+const EXPLICIT_CONTENT_RE = /\b(porn|porno|pornography|pornographic|xxx|hentai|nudist|nudity|nude\s+(photo|image|pic)|naked\s+(woman|man|girl|boy|photo|image|pic)|nsfw|sex\s+video|sexual\s+content|explicit\s+sex|adult\s+content|sikiş|seks\s+video|müstehcen\s+(görsel|video|film)|erotik\s+film|porno\s+video|sikişme|pornografi)\b/i;
+
+function sanitizeSearchQuery(raw) {
+  // Strip ASCII control characters (U+0000–U+001F, U+007F), normalize
+  // whitespace, and cap at 150 chars for Openverse. The outer 200-char
+  // DoS guard in the handler runs before this function.
+  return String(raw || '')
+    .replace(/[\x00-\x1F\x7F]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 150);
+}
+
+function isExplicitQuery(query) {
+  return EXPLICIT_CONTENT_RE.test(query);
+}
+
+function isUnsafeResultItem(item) {
+  if (!item) return true;
+  const title = String(item.title || '');
+  const attribution = String(item.attribution || '');
+  return EXPLICIT_CONTENT_RE.test(title) || EXPLICIT_CONTENT_RE.test(attribution);
+}
+
 function jsonResponse(event, statusCode, body) {
   return {
     statusCode,
@@ -50,12 +77,17 @@ exports.handler = async function(event) {
     return jsonResponse(event, 400, { ok: false, error: 'bad_json', message: 'Geçersiz JSON.' });
   }
 
-  const query = String(body.query || '').trim();
+  const rawQuery = String(body.query || '').trim();
+  // Outer DoS guard: reject before any processing.
+  if (rawQuery.length > 200) {
+    return jsonResponse(event, 413, { ok: false, error: 'query_too_long', message: 'Arama sorgusu en fazla 200 karakter olabilir.' });
+  }
+  const query = sanitizeSearchQuery(rawQuery);
   if (!query) {
     return jsonResponse(event, 400, { ok: false, error: 'missing_query', message: 'Arama sorgusu gerekli.' });
   }
-  if (query.length > 200) {
-    return jsonResponse(event, 413, { ok: false, error: 'query_too_long', message: 'Arama sorgusu en fazla 200 karakter olabilir.' });
+  if (isExplicitQuery(query)) {
+    return jsonResponse(event, 400, { ok: false, error: 'unsafe_query', message: 'Bu arama sorgusu desteklenmiyor.' });
   }
   if (typeof fetch === 'undefined') {
     return jsonResponse(event, 500, { ok: false, error: 'runtime_fetch_missing', message: 'Sunucu arama desteği bulunamadı.' });
@@ -102,7 +134,7 @@ exports.handler = async function(event) {
         height: Number(item.height) || null,
         source: String(item.source || 'Openverse').trim().slice(0, 80)
       };
-    }).filter(Boolean).slice(0, 8);
+    }).filter(Boolean).filter(item => !isUnsafeResultItem(item)).slice(0, 8);
 
     return jsonResponse(event, 200, { ok: true, query, source: 'Openverse', images });
   } catch (err) {
