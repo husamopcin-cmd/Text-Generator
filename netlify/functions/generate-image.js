@@ -100,12 +100,26 @@ async function fetchWithTimeout(url, options, timeoutMs) {
   }
 }
 
+// Minimum payload to reject empty/error bodies. Raster images from all current
+// providers (Runware, Fal, Replicate) are well above this threshold. Small but
+// valid formats like tiny WebP or SVG are not returned by these providers.
+const MIN_IMAGE_BYTES = 1024;
+// 20 MB hard cap — avoids runway memory usage in the Lambda runtime.
+const MAX_IMAGE_BYTES = 20 * 1024 * 1024;
+
 async function urlToBase64DataUri(imageUrl) {
   try {
     const resp = await fetchWithTimeout(imageUrl, {}, 15000);
     if (!resp.ok) return null;
-    const contentType = resp.headers.get('content-type') || 'image/jpeg';
+    // Reject responses without an explicit image/* Content-Type. A missing or
+    // non-image type (e.g. text/html error page) must not be treated as a valid
+    // image and returned to the frontend as ok:true.
+    const rawContentType = resp.headers.get('content-type') || '';
+    const mimeType = rawContentType.split(';')[0].trim().toLowerCase();
+    if (!mimeType.startsWith('image/')) return null;
     const arrayBuffer = await resp.arrayBuffer();
+    const byteLength = arrayBuffer.byteLength;
+    if (byteLength < MIN_IMAGE_BYTES || byteLength > MAX_IMAGE_BYTES) return null;
     let base64str = '';
     if (typeof Buffer !== 'undefined') {
         base64str = Buffer.from(arrayBuffer).toString('base64');
@@ -117,7 +131,7 @@ async function urlToBase64DataUri(imageUrl) {
         }
         base64str = btoa(binary);
     }
-    return 'data:' + contentType.split(';')[0] + ';base64,' + base64str;
+    return 'data:' + mimeType + ';base64,' + base64str;
   } catch (e) {
     console.error("urlToBase64DataUri error:", e);
     return null;
@@ -269,7 +283,8 @@ async function tryRunware(prompt, width, height) {
     const result = (data && data.data && data.data[0]) || (Array.isArray(data) && data[0]) || null;
     if (result && result.imageURL) {
       const b64 = await urlToBase64DataUri(result.imageURL);
-      return b64 ? { ok: true, url: b64 } : { ok: true, url: result.imageURL };
+      if (!b64) return { ok: false, error: 'base64_conversion_failed' };
+      return { ok: true, url: b64 };
     }
     return { ok: false, error: 'empty_response', details: text.slice(0, 500) };
   }
@@ -321,7 +336,8 @@ async function tryFal(prompt, width, height) {
     const url = data && data.images && data.images[0] && data.images[0].url;
     if (url) {
       const b64 = await urlToBase64DataUri(url);
-      return b64 ? { ok: true, url: b64 } : { ok: true, url };
+      if (!b64) return { ok: false, error: 'base64_conversion_failed' };
+      return { ok: true, url: b64 };
     }
     return { ok: false, error: 'empty_response', details: text.slice(0, 500) };
   }
@@ -378,7 +394,8 @@ async function tryReplicate(prompt, width, height) {
     const url = Array.isArray(output) ? output[0] : (typeof output === 'string' ? output : null);
     if (url) {
       const b64 = await urlToBase64DataUri(url);
-      return b64 ? { ok: true, url: b64 } : { ok: true, url };
+      if (!b64) return { ok: false, error: 'base64_conversion_failed' };
+      return { ok: true, url: b64 };
     }
     return { ok: false, error: 'empty_response', details: text.slice(0, 500) };
   }
