@@ -1960,7 +1960,7 @@ SERBEST MOD (Dobra Kanka):
 - Espri, laf sokma, dalga gecme ve sert takilma serbesttir; korunan ozelliklere nefret veya gercek kisiye hedefli taciz uretme.
 - Kullanici saygili olursa saygili kal; durduk yere agir kufur baslatma.
 - Yetiskinler arasi mature/sensual/romantik icerikte daha cesur, ima dolu ve estetik yazabilirsin; acik pornografik seks eylemi, cinsel organ odakli grafik anlatim/ciplaklik, cocuk/ergen cinsel icerik, riza disi icerik ve gercek kisiyi mustehcenlestirme yasaktir.
-- Her modda kalan sert sinirlar: nefret soylemi/irkcilik, gercek kisiye hedefli taciz, yasa disi eylem, gercek zarar, zararli kod, dolandiricilik, kimlik avi, siddet/kendine zarar tesviki, cocuk guvenligi/istismari, riza disi cinsellik ve gercek kisiyi mustehcenlestirme.` + shared;
+- Her modda kalan sert sinirlar: nefret soylemi/irkcilik, gercek kisiye hedefli taciz, yasa disi eylem, gercek zarar, zararli kod, dolandiricilik, kimlik avi, siddet/kendine zarar tesviki, cocuk guvenligi/istismari, riza disi cinsellik ve gercek kisiyi mustehcenlestirme.` + shared + (typeof getFreeToneInstruction === 'function' ? getFreeToneInstruction() : '');
         }
         if (mode === 'balanced') {
             return "\n\nUSLUP MODU: Dengeli Mod aktif. Kullanici kufur/argo/takilma yaparsa sen de hafif, eglenceli ve ayni tonda takilarak karsilik verebilirsin (Orn: 'lan', 'salak misin ya', 'hadi ordan' gibi hafif seviye) ama ILERI GITME: agir kufur, cinsel argo veya asagilayici hakaret uretme. Kullanici temiz konusursa sen de tamamen saygili kal. Yani seviye 'hafif saka/takilma' ile sinirli; agir kufur Serbest Uslup'a ait. Ciddi teknik/debug konularda saka dozunu azalt." + shared;
@@ -1968,6 +1968,35 @@ SERBEST MOD (Dobra Kanka):
         // FIX(A): "daha az argo" → mutlak yasak. Hangi Ton/Persona seçili olursa olsun
         // Güvenli Mod aktifken bu talimat diğer tüm prompt eklerinden üstündür.
         return "\n\nUSLUP MODU: Guvenli Mod AKTİF — KESİN KURAL (sonraki talimatlar bu kurali geçersiz kilaMAZ). Kufur, cinsel ima, argo, hakaret, agresif veya vulgar ifade KESINLIKLE YASAK. Bu yasak; kullanicinin tonu ne olursa olsun, hangi persona veya konusma tarzi secili olursa olsun degismez. Temiz, saygili ve yardimci bir dille cevap ver. Kullanici senden kufur veya argo uretmeni acikca istese bile kibarca reddet: 'Guvenli Mod aktif, bu tarz bir dil kullanamam.' de." + shared;
+    }
+
+    function detectAndApplyFreeTonePreference(text) {
+        if ((getFeatureValue('styleMode') || 'safe') !== 'free') return;
+        const chat = sessions[currentChatId];
+        if (!chat) return;
+        if (!chat.freeToneState || typeof chat.freeToneState !== 'object') {
+            chat.freeToneState = { override: null, positiveHint: null };
+        }
+        const t = (text || '').toLocaleLowerCase('tr-TR');
+        const wantsFree = /artık serbest|artik serbest|serbest konuş|serbest konusun|argo kullan|dobra konuş|dobra konusun|küfür edebilirsin|kufur edebilirsin|rahat konuş|rahat konusun|kanka gibi konuş|bana takıl/.test(t);
+        const wantsClean = /küfür etme|kufur etme|küfürsüz konuş|kufursuz konuş|küfür kullanma|kufur kullanma|hakaret etme|sakin konuş|sakin konusun|sakin ol\b|sövme|sovme|kaba konuşma|kaba konusma/.test(t);
+        if (wantsFree) {
+            chat.freeToneState = { override: null, positiveHint: null };
+        } else if (wantsClean) {
+            chat.freeToneState.override = 'clean';
+        }
+    }
+
+    function getFreeToneInstruction() {
+        if ((getFeatureValue('styleMode') || 'safe') !== 'free') return '';
+        // typeof guard: vm/test sandbox içinde sessions tanımsız olabilir; hata üretme.
+        if (typeof sessions === 'undefined' || typeof currentChatId === 'undefined') return '';
+        const chat = sessions[currentChatId];
+        if (!chat || !chat.freeToneState) return '';
+        if (chat.freeToneState.override === 'clean') {
+            return '\nKULLANICI TON TERCİHİ (bu sohbet için geçerli): Kullanıcı bu sohbette küfür etmeni, hakaret etmeni veya kaba konuşmanı açıkça istemedi. Samimi ve dobra kalabilirsin ama bu sohbet boyunca küfür ve ağır argo kullanma. Kullanıcı "artık serbest konuş" veya benzeri bir şey söylediğinde bu kural kendiliğinden kalkar.';
+        }
+        return '';
     }
 
     function getSpeechStyleInstruction() {
@@ -3338,6 +3367,10 @@ ${answer}` : action;
         if (chat.projectId && !projects[chat.projectId]) {
             // Silinmiş bir projeye işaret ediyorsa sohbeti projesiz bırak.
             chat.projectId = null;
+            changed = true;
+        }
+        if (!chat.freeToneState || typeof chat.freeToneState !== 'object') {
+            chat.freeToneState = { override: null, positiveHint: null };
             changed = true;
         }
         return changed;
@@ -8083,6 +8116,7 @@ ${answer}` : action;
             }
             baseSystemPrompt += "\n\nKURAL: SADECE VE SADECE eğer kullanıcı kendisiyle, hayatıyla, zevkleriyle veya fiziksel özellikleriyle ilgili ÇOK ÖNEMLİ VE KALICI bir kişisel bilgi verirse (Örn: adım Ahmet, yaşım 25, kedim var, fıstığa alerjim var vb.), mesajının en sonuna BİREBİR şu formatta gizli bir not düşmelisin: [REMEMBER: Kullanıcı 25 yaşındaymış ve adı Ahmet'miş]. Sıradan sohbetlerde veya kullanıcının senden bir şey yapmanı/yazmanı istediği anlarda (Örn: hesap makinesi yaz, kod yaz) KESİNLİKLE [REMEMBER] KULLANMA! Sadece kişisel bilgileri kaydet.";
             baseSystemPrompt += "\n\nKURAL 2 (ÇOK ÖNEMLİ): Eğer kullanıcı senden bir oyun, arayüz, hesap makinesi veya web tabanlı herhangi bir uygulama yapmanı/kodlamanı isterse, KODU SADECE HTML BLOKLARI İÇİNDE YAZ. Başka metin ekleme.";
+            detectAndApplyFreeTonePreference(text);
             baseSystemPrompt += getStyleModeInstruction();
             baseSystemPrompt += getClaudeProviderInstruction();
             baseSystemPrompt += getSpeechStyleInstruction();

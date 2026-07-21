@@ -83,3 +83,104 @@ test('final override is present once and guarded by free mode', () => {
     /if \(activeStyleForReminder === 'free'\) \{[\s\S]*SERBEST USLUP FINAL OVERRIDE/
   );
 });
+
+// ─── B4: Free tone state persistence ────────────────────────────────────────
+
+test('B4: normalizeChatMetadata initializes freeToneState with null override and positiveHint', () => {
+  assert.match(html, /chat\.freeToneState = \{ override: null, positiveHint: null \}/);
+});
+
+test('B4: detectAndApplyFreeTonePreference function is defined', () => {
+  assert.match(html, /function detectAndApplyFreeTonePreference/);
+});
+
+test('B4: detectAndApplyFreeTonePreference hard-guards on mode !== free', () => {
+  const start = html.indexOf('function detectAndApplyFreeTonePreference');
+  const end = html.indexOf('\n    }', start) + 6;
+  const body = html.slice(start, end);
+  assert.match(body, /!== 'free'\) return/);
+});
+
+test('B4: detectAndApplyFreeTonePreference recognizes a clean-tone request', () => {
+  const start = html.indexOf('function detectAndApplyFreeTonePreference');
+  const end = html.indexOf('\n    }', start) + 6;
+  const body = html.slice(start, end);
+  assert.match(body, /küfür etme|kufur etme/);
+});
+
+test('B4: detectAndApplyFreeTonePreference recognizes a return-to-free request', () => {
+  const start = html.indexOf('function detectAndApplyFreeTonePreference');
+  const end = html.indexOf('\n    }', start) + 6;
+  const body = html.slice(start, end);
+  assert.match(body, /artık serbest|artik serbest/);
+});
+
+test('B4: detectAndApplyFreeTonePreference clears state on explicit free request', () => {
+  const start = html.indexOf('function detectAndApplyFreeTonePreference');
+  const end = html.indexOf('\n    }', start) + 6;
+  const body = html.slice(start, end);
+  assert.match(body, /chat\.freeToneState = \{ override: null, positiveHint: null \}/);
+});
+
+test('B4: getFreeToneInstruction function is defined', () => {
+  assert.match(html, /function getFreeToneInstruction/);
+});
+
+test('B4: getFreeToneInstruction hard-guards on mode !== free', () => {
+  const start = html.indexOf('function getFreeToneInstruction');
+  const end = html.indexOf('\n    }', start) + 6;
+  const body = html.slice(start, end);
+  assert.match(body, /!== 'free'\) return ''/);
+});
+
+test('B4: getFreeToneInstruction returns empty string when override is not set', () => {
+  const sandbox = {
+    getFeatureValue: () => 'free',
+    sessions: { c1: { freeToneState: { override: null, positiveHint: null } } },
+    currentChatId: 'c1'
+  };
+  const source = `${extractFunction('getFreeToneInstruction')}\nresult = getFreeToneInstruction();`;
+  vm.runInNewContext(source, sandbox, { filename: 'cinocode-free-tone.vm.js' });
+  assert.equal(sandbox.result, '');
+});
+
+test('B4: getFreeToneInstruction returns a clean-tone directive when override is clean', () => {
+  const sandbox = {
+    getFeatureValue: () => 'free',
+    sessions: { c1: { freeToneState: { override: 'clean', positiveHint: null } } },
+    currentChatId: 'c1'
+  };
+  const source = `${extractFunction('getFreeToneInstruction')}\nresult = getFreeToneInstruction();`;
+  vm.runInNewContext(source, sandbox, { filename: 'cinocode-free-tone.vm.js' });
+  assert.match(sandbox.result, /küfür etmeni.*istemedi/);
+});
+
+test('B4: getFreeToneInstruction returns empty in safe mode even with clean override set', () => {
+  const sandbox = {
+    getFeatureValue: () => 'safe',
+    sessions: { c1: { freeToneState: { override: 'clean', positiveHint: null } } },
+    currentChatId: 'c1'
+  };
+  const source = `${extractFunction('getFreeToneInstruction')}\nresult = getFreeToneInstruction();`;
+  vm.runInNewContext(source, sandbox, { filename: 'cinocode-free-tone.vm.js' });
+  assert.equal(sandbox.result, '');
+});
+
+test('B4: getStyleModeInstruction free branch calls getFreeToneInstruction defensively', () => {
+  const instruction = runStyleFunction('getStyleModeInstruction', 'free');
+  assert.match(instruction, /Serbest Uslup TAM AKTIF/);
+});
+
+test('B4: sendMessage calls detectAndApplyFreeTonePreference before building the style instruction', () => {
+  const callSite = html.indexOf('detectAndApplyFreeTonePreference(text)');
+  const styleCallSite = html.indexOf('baseSystemPrompt += getStyleModeInstruction()');
+  assert.notEqual(callSite, -1);
+  assert.ok(callSite < styleCallSite, 'detectAndApplyFreeTonePreference must run before getStyleModeInstruction is appended');
+});
+
+test('B4: safe and balanced modes are untouched by free tone state', () => {
+  const safeInstruction = runStyleFunction('getStyleModeInstruction', 'safe');
+  const balancedInstruction = runStyleFunction('getStyleModeInstruction', 'balanced');
+  assert.doesNotMatch(safeInstruction, /KULLANICI TON TERCİHİ/);
+  assert.doesNotMatch(balancedInstruction, /KULLANICI TON TERCİHİ/);
+});
