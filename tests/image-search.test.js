@@ -300,7 +300,7 @@ test('result flow: mixed safe and unsafe results — only safe ones are returned
   });
 });
 
-test('result flow: all results filtered → ok:true with empty images array', async () => {
+test('result flow: all results filtered → ok:true with status no_safe_results', async () => {
   const allBad = [
     { ...SAFE_RESULT, id: 'b1', title: 'porno video' },
     { ...SAFE_RESULT, id: 'b2', thumbnail: 'javascript:x', url: 'javascript:x' }
@@ -308,6 +308,7 @@ test('result flow: all results filtered → ok:true with empty images array', as
   await withFetch(makeOpenverseSuccess(allBad), async () => {
     const body = parseBody(await handler({ httpMethod: 'POST', body: JSON.stringify({ query: 'art' }) }));
     assert.equal(body.ok, true);
+    assert.equal(body.status, 'no_safe_results');
     assert.deepEqual(body.images, []);
   });
 });

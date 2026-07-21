@@ -136,6 +136,9 @@ exports.handler = async function(event) {
       };
     }).filter(Boolean).filter(item => !isUnsafeResultItem(item)).slice(0, 8);
 
+    if (results.length > 0 && images.length === 0) {
+      return jsonResponse(event, 200, { ok: true, status: 'no_safe_results', query, source: 'Openverse', images: [] });
+    }
     return jsonResponse(event, 200, { ok: true, query, source: 'Openverse', images });
   } catch (err) {
     return jsonResponse(event, 502, {
