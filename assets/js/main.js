@@ -746,6 +746,21 @@
     }
 
     // "internetten X görseli bul" gibi açık arama istekleri; görsel ÜRETİMİNDEN ayrı yönlendirilir.
+    function hasActiveImageContext() {
+        if (!lastMediaPrompt) return false;
+        const activeChat = sessions[currentChatId];
+        if (!activeChat || !Array.isArray(activeChat.messages)) return false;
+        const recent = activeChat.messages.slice(-6);
+        return recent.some(function(m) {
+            if (m.role === 'assistant' && m.webImageQuery) return true;
+            if (m.role === 'assistant' && typeof m.content === 'string' &&
+                /^\[GENERATE_IMAGE:/i.test(m.content)) return true;
+            if (m.role === 'user' && typeof m.content === 'string' &&
+                isDirectImageGenerationRequest(m.content)) return true;
+            return false;
+        });
+    }
+
     function isDirectImageSearchRequest(text) {
         const normalized = normalizeMediaIntentText(text);
         if (!normalized || hasMediaNegativeIntent(normalized)) return false;
@@ -753,7 +768,9 @@
         if (!wantsWeb) return false;
         const hasSearchVerb = new RegExp(`${TR_WB_BEFORE}(bul|ara|arat|getir)${TR_WB_AFTER}`, "iu").test(normalized);
         if (!hasSearchVerb) return false;
-        return /(görsel|gorsel|resim|resm|fotoğraf|fotograf|image|foto|benzerini|benzeri)/i.test(normalized);
+        const hasVisualWord = /(görsel|gorsel|resim|resm|fotoğraf|fotograf|image|foto|benzerini|benzeri)/i.test(normalized);
+        if (hasVisualWord) return true;
+        return hasActiveImageContext();
     }
 
     function hasRenderableMediaSubject(text) {
@@ -4050,17 +4067,40 @@ ${answer}` : action;
         target.appendChild(section);
     }
 
-    function searchSimilarImagesFromPrompt(prompt) {
-        // Stil son-ekleri ("high quality, cinematic...") atılır ve kalıcı medya kaynağı
-        // tercihi DEĞİŞTİRİLMEZ: bu tek seferlik, kullanıcı kontrollü bir aramadır.
+    async function searchSimilarImagesFromPrompt(prompt) {
+        // Stil son-ekleri atılır; kullanıcı mesajı sohbete eklenmez,
+        // arama doğrudan tetiklenir ve sonuç bot div olarak eklenir.
         const coreSubject = getCoreImageSubject(String(prompt || lastMediaPrompt || ''));
         if (!coreSubject) {
             showNonBlockingToast('Aranacak görsel konusu bulunamadı.');
             return;
         }
-        setAppMode('image');
-        setComposerValue(`İnternetten benzerini bul: ${coreSubject}`);
-        sendMessage();
+        const chat = sessions[currentChatId];
+        if (!chat) return;
+        const botId = 'bot-' + Date.now();
+        const div = document.createElement('div');
+        div.className = 'message bot'; div.id = botId;
+        if (messagesDiv) messagesDiv.appendChild(div);
+        div.textContent = `🔍 İnternette "${coreSubject}" aranıyor...`;
+        scrollToBottom();
+        try {
+            const webImages = await searchInternetImages(coreSubject);
+            const noticeText = webImages.length
+                ? `İnternetten bulunan açık lisanslı görseller: ${coreSubject}`
+                : `"${coreSubject}" için uygun açık lisanslı görsel bulunamadı.`;
+            const assistantMessage = { role: 'assistant', content: noticeText, webImageQuery: coreSubject, webImages };
+            div.innerHTML = renderContentWithImages(noticeText, true);
+            appendInternetImageResults(div, assistantMessage);
+            chat.messages.push(assistantMessage);
+            attachMsgActionsToBotDiv(botId, chat.messages.length - 1, assistantMessage);
+        } catch (err) {
+            const noticeText = 'İnternet görsel aramasına şu anda ulaşılamadı. Yapay zekâ ile üretmeyi deneyebilir veya biraz sonra tekrar arayabilirsin.';
+            div.innerHTML = renderContentWithImages(noticeText, true);
+            chat.messages.push({ role: 'assistant', content: noticeText, meta: { ui: true } });
+        }
+        chat.updatedAt = Date.now();
+        saveDatabase();
+        scrollToBottom();
     }
 
     function hasValidImageUrl(url) {
