@@ -56,7 +56,7 @@ function preflightResponse(event) {
     statusCode: 204,
     headers: buildSecurityHeaders(event, {
       'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-CinoCode-Guest-Token, X-CinoCode-Device-Id',
       'Access-Control-Max-Age': '600'
     }),
     body: ''

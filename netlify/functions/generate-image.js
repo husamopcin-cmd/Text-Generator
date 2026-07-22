@@ -1,4 +1,5 @@
 const { buildSecurityHeaders, guardRequest } = require('./_security');
+const { authorizeUsage } = require('./_access-control');
 
 const PROVIDER_TIMEOUT_MS = 18000;
 const OPENAI_IMAGE_TIMEOUT_MS = 60000;
@@ -555,6 +556,9 @@ exports.handler = async function(event) {
   if (!chain.length) {
     return corsJson(event, 400, { ok: false, error: 'unknown_provider', message: 'Bilinmeyen sağlayıcı: ' + forceProvider });
   }
+
+  const access = await authorizeUsage(event, 'image');
+  if (!access.ok) return access.response;
 
   const attempts = [];
   for (const provider of chain) {

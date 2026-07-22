@@ -1,4 +1,5 @@
 const { buildSecurityHeaders, guardRequest } = require('./_security');
+const { authorizeUsage } = require('./_access-control');
 
 const PROXY_PROVIDERS = [
   'openai',
@@ -515,6 +516,9 @@ exports.handler = async function(event) {
   for (const provider of candidates) {
     if (!providerOrder.includes(provider)) providerOrder.push(provider);
   }
+
+  const access = await authorizeUsage(event, 'chat');
+  if (!access.ok) return access.response;
 
   const runProvider = async (provider) => {
     const model = resolveModelId(provider, parsedSelection, taskType);

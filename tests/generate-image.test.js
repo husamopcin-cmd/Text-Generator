@@ -12,17 +12,31 @@ const PROVIDER_ENV_KEYS = [
   'HUGGINGFACE_API_KEY',
   'POLLINATIONS_API_KEY'
 ];
+const ACCESS_ENV_KEYS = [
+  'NODE_ENV',
+  'CINOCODE_TEST_ACCESS_BYPASS',
+  'SUPABASE_URL',
+  'SUPABASE_PUBLISHABLE_KEY',
+  'SUPABASE_SERVICE_ROLE_KEY',
+  'CINOCODE_GUEST_TOKEN_SECRET',
+  'CINOCODE_QUOTA_HASH_SECRET'
+];
 
 function parseBody(response) {
   return JSON.parse(response.body);
 }
 
-async function withProviderEnvironment(overrides, run) {
-  const snapshot = new Map(PROVIDER_ENV_KEYS.map((key) => [key, process.env[key]]));
+async function withProviderEnvironment(overrides, run, options = {}) {
+  const environmentKeys = [...PROVIDER_ENV_KEYS, ...ACCESS_ENV_KEYS];
+  const snapshot = new Map(environmentKeys.map((key) => [key, process.env[key]]));
   const originalFetch = global.fetch;
 
   try {
-    for (const key of PROVIDER_ENV_KEYS) delete process.env[key];
+    for (const key of environmentKeys) delete process.env[key];
+    if (options.accessBypass !== false) {
+      process.env.NODE_ENV = 'test';
+      process.env.CINOCODE_TEST_ACCESS_BYPASS = '1';
+    }
     for (const [key, value] of Object.entries(overrides)) process.env[key] = value;
     return await run();
   } finally {
@@ -33,6 +47,19 @@ async function withProviderEnvironment(overrides, run) {
     global.fetch = originalFetch;
   }
 }
+
+test('blocks an unauthenticated image request before any provider call', async () => {
+  await withProviderEnvironment({ OPENAI_API_KEY: 'openai-test-key' }, async () => {
+    global.fetch = async () => assert.fail('provider fetch must not be called');
+    const response = await handler({
+      httpMethod: 'POST',
+      body: JSON.stringify({ prompt: 'test image', forceProvider: 'openai' })
+    });
+
+    assert.equal(response.statusCode, 503);
+    assert.equal(parseBody(response).error, 'access_control_not_configured');
+  }, { accessBypass: false });
+});
 
 test('rejects a missing image prompt without touching the network', async () => {
   await withProviderEnvironment({}, async () => {
