@@ -68,7 +68,7 @@ test('Vercel upload excludes local secrets and development state', () => {
 });
 
 test('Vercel API wrappers cover every Netlify function endpoint', () => {
-  for (const name of ['ai-chat', 'auth-config', 'generate-image', 'image-search', 'web-search']) {
+  for (const name of ['ai-chat', 'auth-config', 'generate-image', 'guest-session', 'image-search', 'web-search']) {
     const source = fs.readFileSync(path.join(root, 'api', `${name}.js`), 'utf8');
     assert.match(source, new RegExp(`\\.\\./netlify/functions/${name}`));
     assert.match(source, /createVercelHandler\(handler\)/);
