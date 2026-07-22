@@ -5673,6 +5673,43 @@ ${answer}` : action;
     let sttFinalBuffer = '';         // Biriken final metni
     let sttFlushTimer = null;         // Debounce timer
     const STT_FLUSH_DELAY = 400;      // ms — mobilde kısa cümle sonrası yazma gecikmesi
+    const MIC_WARNING_DISMISSED_KEY = 'cinocode_mic_warning_dismissed';
+
+    function dismissMicrophoneWarning() {
+        document.getElementById('microphoneAccessWarning')?.remove();
+        try { sessionStorage.setItem(MIC_WARNING_DISMISSED_KEY, '1'); } catch (_) {}
+    }
+
+    function showMicrophoneWarning(message) {
+        try {
+            if (sessionStorage.getItem(MIC_WARNING_DISMISSED_KEY) === '1') return;
+        } catch (_) {}
+
+        document.getElementById('microphoneAccessWarning')?.remove();
+        const warning = document.createElement('div');
+        warning.id = 'microphoneAccessWarning';
+        warning.setAttribute('role', 'alert');
+        warning.style.cssText = 'position:fixed; z-index:var(--z-tooltip); width:min(320px, calc(100vw - 24px)); padding:12px 38px 12px 14px; border:1px solid #f9e2af; border-radius:12px; background:var(--cc-bg-elevated); color:var(--cc-text-primary); box-shadow:0 12px 32px rgba(0,0,0,.38); font-size:12px; line-height:1.45;';
+
+        const text = document.createElement('span');
+        text.textContent = message;
+        warning.appendChild(text);
+
+        const close = document.createElement('button');
+        close.type = 'button';
+        close.setAttribute('aria-label', 'Mikrofon uyarısını kapat');
+        close.textContent = '×';
+        close.style.cssText = 'position:absolute; top:5px; right:8px; border:0; background:transparent; color:var(--cc-text-muted); font-size:22px; cursor:pointer; line-height:1;';
+        close.addEventListener('click', dismissMicrophoneWarning);
+        warning.appendChild(close);
+        document.body.appendChild(warning);
+
+        const micButton = document.getElementById('micBtn');
+        const rect = micButton?.getBoundingClientRect();
+        const left = rect ? Math.min(window.innerWidth - 332, Math.max(12, rect.left - 130)) : 12;
+        warning.style.left = `${Math.max(12, left)}px`;
+        warning.style.bottom = rect ? `${Math.max(72, window.innerHeight - rect.top + 10)}px` : '84px';
+    }
 
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SpeechRecognition) {
@@ -5739,8 +5776,8 @@ ${answer}` : action;
         recognition.onerror = (err) => {
             isStarting = false;
             console.error("STT Hatası:", err);
-            if (err.error === 'not-allowed') {
-                alert("Tarayıcı mikrofon iznini engellemiş olabilir. Lütfen siteye mikrofon izni verin.");
+            if (err.error === 'not-allowed' || err.error === 'service-not-allowed') {
+                showMicrophoneWarning('Mikrofon erişimine izin verilmedi. Tarayıcının adres çubuğundaki mikrofon iznini açıp tekrar deneyin.');
             } else if (err.error !== 'no-speech') {
                 console.log("Mikrofon hatası: " + err.error);
             }
@@ -5774,7 +5811,10 @@ ${answer}` : action;
     }
 
     function toggleMic() {
-        if (!recognition) return alert("Tarayıcınız mikrofon desteklemiyor veya sayfa yeniden yüklenmesi gerekebilir.");
+        if (!recognition) {
+            showMicrophoneWarning('Bu tarayıcı sesle yazmayı desteklemiyor. Güncel Chrome veya Edge ile tekrar deneyin.');
+            return;
+        }
         if (isRecording || isStarting) {
             stopMic();
         } else {
@@ -5785,7 +5825,7 @@ ${answer}` : action;
             } catch(e) {
                 isStarting = false;
                 if (e.name === 'NotAllowedError') {
-                    alert("Tarayıcı mikrofon iznini engellemiş olabilir. Lütfen siteye mikrofon izni verin.");
+                    showMicrophoneWarning('Mikrofon erişimine izin verilmedi. Tarayıcının adres çubuğundaki mikrofon iznini açıp tekrar deneyin.');
                 } else {
                     console.log("Mikrofon zaten açık:", e);
                 }
@@ -6704,13 +6744,6 @@ ${answer}` : action;
             }
             loggedUser = window.CinoCodeAuth.getStoredUserName();
         }
-        if (window.location.protocol === 'file:') {
-            const banner = document.createElement('div');
-            banner.style = "background: #f38ba8; color: #11111b; text-align: center; padding: 10px; font-weight: bold; font-size: 13px; z-index: 9999; border-bottom: 2px solid #eba0ac;";
-            banner.innerHTML = "⚠️ MİKROFON UYARISI: Uygulamayı masaüstünden (file:///) açtığınız için tarayıcınız mikrofonu engelliyor. Lütfen mikrofon için VS Code Live Server (localhost) kullanın.";
-            document.body.insertBefore(banner, document.body.firstChild);
-        }
-
         if (document.getElementById('loggedInUser')) {
             if (loggedUser && window.CinoCodeAuth && typeof window.CinoCodeAuth.rememberLocalProfile === 'function') {
                 window.CinoCodeAuth.rememberLocalProfile(loggedUser);

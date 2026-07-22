@@ -215,3 +215,12 @@ test('every one of the nine voice profile rows in the settings editor gets a wor
   assert.match(fnSrc, /onclick="previewVoice\('\$\{voiceId\}'\)"/, 'each rendered voice row must wire up a preview button for that exact voiceId');
   assert.match(fnSrc, /Sesi önizle/, 'preview button must have a clear Turkish label/title');
 });
+
+test('microphone warning is contextual, dismissible and never injected on page load', () => {
+  assert.match(main, /function showMicrophoneWarning\(message\)/);
+  assert.match(main, /sessionStorage\.setItem\(MIC_WARNING_DISMISSED_KEY, '1'\)/);
+  assert.match(main, /err\.error === 'not-allowed' \|\| err\.error === 'service-not-allowed'/);
+  assert.match(main, /aria-label', 'Mikrofon uyarısını kapat'/);
+  assert.doesNotMatch(main, /MİKROFON UYARISI: Uygulamayı masaüstünden/);
+  assert.doesNotMatch(main, /window\.location\.protocol === 'file:'[\s\S]{0,500}insertBefore\(banner/);
+});

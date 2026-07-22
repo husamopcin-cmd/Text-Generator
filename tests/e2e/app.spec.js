@@ -179,6 +179,18 @@ test('Video Studio storyboard yüzeyi sandbox değişikliğinden sonra açılır
     await expect(page.locator('#messages')).toContainText('Gerçek video modeli bağlı değil');
 });
 
+test('mikrofon uyarısı küçük, kapatılabilir ve oturum boyunca sessiz kalır', async ({ page }) => {
+    await page.evaluate(() => showMicrophoneWarning('Mikrofon test uyarısı'));
+    const warning = page.locator('#microphoneAccessWarning');
+    await expect(warning).toBeVisible();
+    await expect(warning).toContainText('Mikrofon test uyarısı');
+    await warning.getByRole('button', { name: 'Mikrofon uyarısını kapat' }).click();
+    await expect(warning).toHaveCount(0);
+    await expect.poll(() => page.evaluate(() => sessionStorage.getItem('cinocode_mic_warning_dismissed'))).toBe('1');
+    await page.evaluate(() => showMicrophoneWarning('Tekrar görünmemeli'));
+    await expect(warning).toHaveCount(0);
+});
+
 test('mobil görünümde Stüdyolar erişilebilir', async ({ page, isMobile }) => {
     test.skip(!isMobile, 'Mobil kabul ölçütü');
     await page.locator('#sidebarHamburgerBtn').click();
