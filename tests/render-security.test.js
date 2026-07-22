@@ -31,6 +31,13 @@ test('code fences escape raw code and constrain language class names', () => {
   assert.match(html, /registerTrustedRenderFragment\(trustedCodeBlock\)/);
 });
 
+test('artifact iframe keeps generated code on an opaque origin', () => {
+  const iframe = html.match(/<iframe id="artifactIframe"[^>]*>/)?.[0] || '';
+  assert.ok(iframe, 'artifact iframe should exist');
+  assert.match(iframe, /sandbox="[^"]*allow-scripts[^"]*"/);
+  assert.doesNotMatch(iframe, /allow-same-origin/);
+});
+
 test('document picker advertises only formats with real bounded local parsing', () => {
   const input = html.match(/<input type="file" id="docUpload"[^>]+>/)?.[0] || '';
   assert.ok(input, 'document input should exist');
