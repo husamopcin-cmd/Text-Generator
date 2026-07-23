@@ -22,7 +22,7 @@ const schedulerSrc = extract(/function fz22ScheduleHistorySummary/, /\n\s*functi
 function contextFor(fetchImpl) {
   const calls = [];
   const context = {
-    fetch: async (url, options) => { calls.push({ url, options }); return fetchImpl(url, options); },
+    protectedApiFetch: async (url, options) => { calls.push({ url, options }); return fetchImpl(url, options); },
     setTimeout: () => ({}), clearTimeout: () => {},
     AbortController: class { constructor() { this.signal = {}; } abort() {} }, JSON, calls
   };

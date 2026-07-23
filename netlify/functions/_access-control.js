@@ -7,7 +7,7 @@ const GUEST_TOKEN_VERSION = 1;
 const GUEST_TOKEN_TTL_SECONDS = 12 * 60 * 60;
 const DEFAULT_LIMITS = Object.freeze({
   anonymous: { chat: 20, image: 3 },
-  authenticated: { chat: 100, image: 10 }
+  authenticated: { chat: 150, image: 10 }
 });
 
 function getHeader(event, name) {

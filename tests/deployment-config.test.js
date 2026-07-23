@@ -33,6 +33,7 @@ const expectedNetlifyKeys = [
   'SUPABASE_PUBLISHABLE_KEY',
   'SUPABASE_URL',
   'TOGETHER_API_KEY',
+  'TURNSTILE_SITE_KEY',
   'XAI_API_KEY'
 ];
 

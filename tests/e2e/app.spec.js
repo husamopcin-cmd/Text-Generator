@@ -18,6 +18,7 @@ async function prepareApp(page) {
         localStorage.setItem('cinocode_auth_mode', 'local');
         localStorage.setItem('fz19_tour_seen', '1');
         if (localStorage.getItem('fz19_tts_speed') === null) localStorage.setItem('fz19_tts_speed', '1');
+        sessionStorage.setItem('cinocode_guest_session_v1', JSON.stringify({ token: 'e2e-guest-token', expiresAt: Date.now() + 3600000 }));
     });
     await page.route('**/.netlify/functions/auth-config', route => route.fulfill({
         status: 200, contentType: 'application/json',

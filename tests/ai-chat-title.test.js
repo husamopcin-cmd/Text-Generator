@@ -25,7 +25,7 @@ const ensureFromUserInputSrc = extractFunction(/function ensureChatTitleFromUser
 function makeAiTitleContext(fetchImpl) {
   const fetchCalls = [];
   const context = {
-    fetch: async (url, options) => {
+    protectedApiFetch: async (url, options) => {
       fetchCalls.push({ url, options });
       if (fetchImpl) return fetchImpl(url, options);
       throw new TypeError('Failed to fetch');

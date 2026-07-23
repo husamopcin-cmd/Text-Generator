@@ -28,6 +28,7 @@ exports.handler = async function(event) {
 
   const supabaseUrl = normalizePublicUrl(process.env.SUPABASE_URL);
   const publishableKey = String(process.env.SUPABASE_PUBLISHABLE_KEY || '').trim();
+  const turnstileSiteKey = String(process.env.TURNSTILE_SITE_KEY || '').trim();
   const configured = Boolean(supabaseUrl && publishableKey.length >= 20);
   const missing = [];
   if (!supabaseUrl) missing.push('SUPABASE_URL');
@@ -38,6 +39,8 @@ exports.handler = async function(event) {
     configured,
     supabaseUrl: configured ? supabaseUrl : '',
     publishableKey: configured ? publishableKey : '',
+    guestAccessConfigured: Boolean(turnstileSiteKey),
+    turnstileSiteKey,
     missing
   });
 };

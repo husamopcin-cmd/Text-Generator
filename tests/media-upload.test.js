@@ -35,7 +35,7 @@ test('vision queue uses current message images with bounded payloads', () => {
 
 test('provider 403 details remain authorization failures instead of network errors', () => {
   const source = extractFunction(/function classifyImageProviderFailure/, /\n\s*async function generateRunwareImage/);
-  const context = { result: null };
+  const context = { result: null, getAccessControlErrorMessage: () => '' };
   vm.runInNewContext(`${source}\nresult = classifyImageProviderFailure({ details: JSON.stringify([{ provider: 'fal', error: 'provider_error', status: 403 }]) }, 502);`, context);
 
   assert.equal(context.result.error, 'provider_unauthorized');

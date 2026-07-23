@@ -19,6 +19,197 @@
         window.location.reload();
     }
 
+    const GUEST_SESSION_STORAGE_KEY = 'cinocode_guest_session_v1';
+    const GUEST_DEVICE_STORAGE_KEY = 'cinocode_guest_device_v1';
+    let guestSessionPromise = null;
+    let turnstileLoaderPromise = null;
+    let accessDeviceId = '';
+
+    function createAccessDeviceId() {
+        if (accessDeviceId) return accessDeviceId;
+        try {
+            const stored = localStorage.getItem(GUEST_DEVICE_STORAGE_KEY);
+            if (/^[A-Za-z0-9_-]{16,128}$/.test(stored || '')) {
+                accessDeviceId = stored;
+                return accessDeviceId;
+            }
+        } catch (error) {}
+        accessDeviceId = typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+            ? crypto.randomUUID()
+            : `device_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 18)}`;
+        try { localStorage.setItem(GUEST_DEVICE_STORAGE_KEY, accessDeviceId); } catch (error) {}
+        return accessDeviceId;
+    }
+
+    function clearGuestSession() {
+        try { sessionStorage.removeItem(GUEST_SESSION_STORAGE_KEY); } catch (error) {}
+    }
+
+    function readGuestSession() {
+        try {
+            const session = JSON.parse(sessionStorage.getItem(GUEST_SESSION_STORAGE_KEY) || 'null');
+            if (!session || typeof session.token !== 'string' || Number(session.expiresAt) <= Date.now() + 30000) {
+                clearGuestSession();
+                return null;
+            }
+            return session;
+        } catch (error) {
+            clearGuestSession();
+            return null;
+        }
+    }
+
+    function loadTurnstileClient() {
+        if (window.turnstile && typeof window.turnstile.render === 'function') return Promise.resolve(window.turnstile);
+        if (turnstileLoaderPromise) return turnstileLoaderPromise;
+        turnstileLoaderPromise = new Promise((resolve, reject) => {
+            const finish = () => {
+                if (window.turnstile && typeof window.turnstile.render === 'function') resolve(window.turnstile);
+                else reject(new Error('Turnstile doğrulaması yüklenemedi.'));
+            };
+            let script = document.querySelector('script[data-cinocode-turnstile]');
+            if (!script) {
+                script = document.createElement('script');
+                script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+                script.async = true;
+                script.defer = true;
+                script.dataset.cinocodeTurnstile = '1';
+                document.head.appendChild(script);
+            }
+            script.addEventListener('load', finish, { once: true });
+            script.addEventListener('error', () => reject(new Error('Turnstile doğrulaması yüklenemedi.')), { once: true });
+            setTimeout(() => reject(new Error('Turnstile doğrulaması zaman aşımına uğradı.')), 15000);
+        }).catch(error => {
+            turnstileLoaderPromise = null;
+            throw error;
+        });
+        return turnstileLoaderPromise;
+    }
+
+    async function runTurnstileChallenge(siteKey) {
+        const turnstile = await loadTurnstileClient();
+        return new Promise((resolve, reject) => {
+            const overlay = document.createElement('div');
+            overlay.id = 'cinocodeGuestVerification';
+            overlay.setAttribute('role', 'dialog');
+            overlay.setAttribute('aria-modal', 'true');
+            overlay.setAttribute('aria-labelledby', 'cinocodeGuestVerificationTitle');
+            overlay.style.cssText = 'position:fixed;inset:0;z-index:100000;display:grid;place-items:center;padding:20px;background:rgba(10,12,20,.72);backdrop-filter:blur(8px);';
+            const card = document.createElement('div');
+            card.style.cssText = 'width:min(420px,100%);padding:24px;border:1px solid rgba(137,180,250,.42);border-radius:18px;background:linear-gradient(145deg,#171927,#10121d);box-shadow:0 24px 70px rgba(0,0,0,.45);color:#eef2ff;font-family:inherit;';
+            const title = document.createElement('h2');
+            title.id = 'cinocodeGuestVerificationTitle';
+            title.textContent = 'Kısa güvenlik kontrolü';
+            title.style.cssText = 'margin:0 0 8px;font-size:20px;';
+            const text = document.createElement('p');
+            text.textContent = 'Misafir kullanımını ve servis kredilerini korumak için doğrulamayı tamamla.';
+            text.style.cssText = 'margin:0 0 18px;color:#bac2de;line-height:1.5;font-size:14px;';
+            const widget = document.createElement('div');
+            widget.style.cssText = 'min-height:70px;display:grid;place-items:center;';
+            const cancel = document.createElement('button');
+            cancel.type = 'button';
+            cancel.textContent = 'Vazgeç';
+            cancel.style.cssText = 'display:block;margin:16px auto 0;padding:9px 16px;border:1px solid #45475a;border-radius:10px;background:#1e2030;color:#cdd6f4;cursor:pointer;';
+            card.append(title, text, widget, cancel);
+            overlay.appendChild(card);
+            document.body.appendChild(overlay);
+
+            let settled = false;
+            let widgetId;
+            const finish = (error, token) => {
+                if (settled) return;
+                settled = true;
+                try { if (widgetId !== undefined) turnstile.remove(widgetId); } catch (removeError) {}
+                overlay.remove();
+                if (error) reject(error);
+                else resolve(token);
+            };
+            cancel.addEventListener('click', () => finish(new Error('Güvenlik doğrulaması iptal edildi.')));
+            widgetId = turnstile.render(widget, {
+                sitekey: siteKey,
+                action: 'cinocode-guest',
+                theme: 'dark',
+                callback: token => finish(null, token),
+                'error-callback': () => finish(new Error('Güvenlik doğrulaması başarısız oldu.')),
+                'expired-callback': () => finish(new Error('Güvenlik doğrulamasının süresi doldu.'))
+            });
+        });
+    }
+
+    async function requestGuestSession() {
+        const config = window.CinoCodeAuth && typeof window.CinoCodeAuth.loadCloudAuthConfig === 'function'
+            ? await window.CinoCodeAuth.loadCloudAuthConfig()
+            : null;
+        if (!config || !config.guestAccessConfigured || !config.turnstileSiteKey) {
+            throw new Error('Misafir erişimi henüz yapılandırılmadı. Lütfen giriş yap veya daha sonra tekrar dene.');
+        }
+        const deviceId = createAccessDeviceId();
+        const turnstileToken = await runTurnstileChallenge(config.turnstileSiteKey);
+        const response = await fetch('/.netlify/functions/guest-session', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ turnstileToken, deviceId })
+        });
+        const data = await response.json().catch(() => null);
+        if (!response.ok || !data || !data.guestToken || !Number.isFinite(Number(data.expiresIn))) {
+            throw new Error('Misafir oturumu açılamadı. Lütfen doğrulamayı yeniden dene.');
+        }
+        const session = { token: data.guestToken, expiresAt: Date.now() + (Number(data.expiresIn) * 1000) };
+        sessionStorage.setItem(GUEST_SESSION_STORAGE_KEY, JSON.stringify(session));
+        return session;
+    }
+
+    async function getGuestSession() {
+        const stored = readGuestSession();
+        if (stored) return stored;
+        if (!guestSessionPromise) {
+            guestSessionPromise = requestGuestSession().finally(() => { guestSessionPromise = null; });
+        }
+        return guestSessionPromise;
+    }
+
+    async function getProtectedApiHeaders() {
+        const accessToken = window.CinoCodeAuth && typeof window.CinoCodeAuth.getAccessToken === 'function'
+            ? await window.CinoCodeAuth.getAccessToken()
+            : '';
+        if (accessToken) return { Authorization: `Bearer ${accessToken}` };
+        const guest = await getGuestSession();
+        return {
+            'X-CinoCode-Guest-Token': guest.token,
+            'X-CinoCode-Device-Id': createAccessDeviceId()
+        };
+    }
+
+    async function protectedApiFetch(url, options = {}) {
+        const requestOptions = { ...options, headers: new Headers(options.headers || {}) };
+        const accessHeaders = await getProtectedApiHeaders();
+        Object.entries(accessHeaders).forEach(([name, value]) => requestOptions.headers.set(name, value));
+        let response = await fetch(url, requestOptions);
+        if (response.status === 401 && accessHeaders['X-CinoCode-Guest-Token']) {
+            clearGuestSession();
+            const retryHeaders = await getProtectedApiHeaders();
+            Object.entries(retryHeaders).forEach(([name, value]) => requestOptions.headers.set(name, value));
+            response = await fetch(url, requestOptions);
+        }
+        return response;
+    }
+
+    function getAccessControlErrorMessage(errorData, responseStatus) {
+        const error = String(errorData && errorData.error || '');
+        if (error === 'daily_quota_exceeded' || responseStatus === 429) {
+            return 'Günlük kullanım kotan doldu. Giriş yaparak daha yüksek kotaya geçebilir veya yarın tekrar deneyebilirsin.';
+        }
+        if (error === 'guest_session_required' || error === 'invalid_access_token') {
+            return 'Oturum doğrulanamadı. Lütfen yeniden giriş yap veya misafir doğrulamasını tekrarla.';
+        }
+        if (error === 'quota_service_unavailable' || error === 'access_control_not_configured' || responseStatus === 503) {
+            return 'Kullanım doğrulama servisi geçici olarak kullanılamıyor. Kredi güvenliği için istek gönderilmedi.';
+        }
+        return '';
+    }
+
+    window.CinoCodeAccess = { protectedApiFetch, clearGuestSession, getAccessControlErrorMessage };
+
     window.onerror = function(msg, url, lineNo) { console.error('[CinoCode]', msg, 'satır:', lineNo); return false; };
     window.addEventListener('unhandledrejection', function(e) { console.error('[CinoCode] Unhandled promise rejection:', e.reason); });
     // ----- GLOBAL DEĞİŞKENLER & HAFIZA SİSTEMİ -----
@@ -965,6 +1156,8 @@
     }
 
     function classifyImageProviderFailure(errorData, responseStatus) {
+        const accessMessage = getAccessControlErrorMessage(errorData, responseStatus);
+        if (accessMessage) return { error: String(errorData && errorData.error || 'access_control'), message: accessMessage };
         let attempts = [];
         try {
             const parsed = typeof errorData?.details === 'string' ? JSON.parse(errorData.details) : errorData?.details;
@@ -1002,7 +1195,7 @@
             let resp;
             if (useProxy) {
                 // Netlify Function proxy'si üzerinden çağrı
-                resp = await fetch('/.netlify/functions/generate-image', {
+                resp = await protectedApiFetch('/.netlify/functions/generate-image', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ prompt, width, height })
@@ -1107,7 +1300,7 @@
                 
                 // Serverless fonksiyon üzerinden Pollinations fallback çağrısı
                 try {
-                    const fallbackResp = await fetch('/.netlify/functions/generate-image', {
+                    const fallbackResp = await protectedApiFetch('/.netlify/functions/generate-image', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ 
@@ -7565,7 +7758,7 @@ ${answer}` : action;
             const timeoutId = setTimeout(() => controller.abort(), 6000);
             let resp;
             try {
-                resp = await fetch('/.netlify/functions/ai-chat', {
+                resp = await protectedApiFetch('/.netlify/functions/ai-chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     signal: controller.signal,
@@ -7696,7 +7889,7 @@ ${answer}` : action;
             const timeoutId = setTimeout(() => controller.abort(), 6000);
             let response;
             try {
-                response = await fetch('/.netlify/functions/ai-chat', {
+                response = await protectedApiFetch('/.netlify/functions/ai-chat', {
                     method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: controller.signal,
                     body: JSON.stringify({
                         taskType: 'chat', selectedModel: 'groq', temperature: 0.2, maxTokens: 160,
@@ -8671,14 +8864,14 @@ ${answer}` : action;
                         fetchOptions.signal = controller.signal;
                         let proxyResponse;
                         try {
-                            proxyResponse = await fetch(fetchUrl, fetchOptions);
+                            proxyResponse = await protectedApiFetch(fetchUrl, fetchOptions);
                         } finally {
                             clearTimeout(timeoutId);
                         }
 
                         const jsonData = await proxyResponse.json().catch(() => null);
                         if (!proxyResponse.ok || !jsonData || !jsonData.ok) {
-                            lastErrorMessage = jsonData?.error
+                            lastErrorMessage = getAccessControlErrorMessage(jsonData, proxyResponse.status) || jsonData?.error
                                 || (proxyResponse.status === 401 || proxyResponse.status === 403 ? 'API anahtarı geçersiz veya yetkisiz.'
                                 : proxyResponse.status === 429 ? 'Kota/rate limit doldu, yedek sağlayıcı deneniyor.'
                                 : proxyResponse.status === 413 ? 'İstek çok büyük.'
@@ -9174,7 +9367,9 @@ ${answer}` : action;
 
                     chat.smartTitleGenerated = true; // Sadece 1 kere dene
 
-                    fetch(fetchUrl, smartFetchOptions).then(res => res.json()).then(data => {
+                    (fetchUrl === '/.netlify/functions/ai-chat'
+                        ? protectedApiFetch(fetchUrl, smartFetchOptions)
+                        : fetch(fetchUrl, smartFetchOptions)).then(res => res.json()).then(data => {
                         let titleText = "";
                         if (data.choices && data.choices[0] && data.choices[0].message) {
                             titleText = data.choices[0].message.content;

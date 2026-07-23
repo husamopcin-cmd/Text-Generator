@@ -164,6 +164,18 @@
         return cloudAuthClient;
     }
 
+    async function getAccessToken() {
+        try {
+            const client = await getCloudAuthClient();
+            if (!client || !client.auth || typeof client.auth.getSession !== 'function') return '';
+            const { data, error } = await client.auth.getSession();
+            if (error) return '';
+            return String(data && data.session && data.session.access_token || '').trim();
+        } catch (error) {
+            return '';
+        }
+    }
+
     function applyCloudAccount(user) {
         if (!user) return null;
         const metadata = user.user_metadata || {};
@@ -613,6 +625,7 @@
         localProfileExists,
         normalizeLocalProfileName,
         getCloudAuthClient,
+        getAccessToken,
         initializeAccountSession,
         signOutAccountSession,
         resetPassword,

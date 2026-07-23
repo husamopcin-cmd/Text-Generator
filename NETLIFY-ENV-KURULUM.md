@@ -36,6 +36,7 @@ Netlify Functions tarafından gerçekten okunan değişkenler:
 - [ ] `POLLINATIONS_API_KEY`
 - [ ] `SUPABASE_URL`
 - [ ] `SUPABASE_PUBLISHABLE_KEY`
+- [ ] `TURNSTILE_SITE_KEY`
 
 Kurulum notları:
 

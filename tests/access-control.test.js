@@ -107,7 +107,7 @@ test('authenticated access validates Supabase user then consumes an atomic quota
   const result = await access.authorizeUsage(event({ authorization: 'Bearer valid-user-token' }), 'chat');
   assert.equal(result.ok, true);
   assert.deepEqual(result.principal, { type: 'authenticated', id: 'user-123' });
-  assert.equal(result.quota.limit, 100);
+  assert.equal(result.quota.limit, 150);
   assert.equal(result.quota.remaining, 96);
   assert.equal(calls.length, 2);
 });
@@ -149,13 +149,13 @@ test('quota denial returns 429 without exposing the identity hash', async () => 
   configure();
   global.fetch = async (url) => {
     if (url.endsWith('/auth/v1/user')) return { ok: true, json: async () => ({ id: 'user-123' }) };
-    return { ok: true, json: async () => [{ allowed: false, used: 100, remaining: 0, reset_at: 'tomorrow' }] };
+    return { ok: true, json: async () => [{ allowed: false, used: 150, remaining: 0, reset_at: 'tomorrow' }] };
   };
   const result = await access.authorizeUsage(event({ authorization: 'Bearer valid-user-token' }), 'chat');
   const body = JSON.parse(result.response.body);
   assert.equal(result.response.statusCode, 429);
   assert.equal(body.error, 'daily_quota_exceeded');
-  assert.equal(body.limit, 100);
+  assert.equal(body.limit, 150);
   assert.equal(JSON.stringify(body).includes('identity'), false);
 });
 

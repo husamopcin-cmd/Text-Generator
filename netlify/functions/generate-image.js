@@ -235,7 +235,7 @@ async function tryRunware(prompt, width, height) {
     if (!key) return lastResult || { ok: false, error: 'missing_env' };
     triedKeys.add(key);
 
-    const taskUUID = Date.now().toString(36) + Math.random().toString(36).slice(2);
+    const taskUUID = crypto.randomUUID();
     let resp;
     try {
       resp = await fetchWithTimeout('https://api.runware.ai/v1', {

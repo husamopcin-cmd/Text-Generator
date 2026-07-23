@@ -39,8 +39,10 @@
 
     console.log("CINOCODE_VERSION_0afe80e_voicefix");
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistrations().then(rs => {
-        rs.forEach(r => r.unregister());
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js').catch(err => {
+          console.error('Service worker kaydedilemedi:', err);
+        });
       });
     }
     </script>
