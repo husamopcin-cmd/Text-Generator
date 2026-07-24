@@ -182,7 +182,7 @@
         if (window.professionsList) {
             const found = window.professionsList.find(p => p.id === personaValue);
             if (found) {
-                return `${found.emoji} GinoCode ${found.name} olarak sana yardımcı olmaya hazır. Hangi konuda danışmak istersin?`;
+                return `${found.emoji} CinoCode ${found.name} olarak sana yardımcı olmaya hazır. Hangi konuda danışmak istersin?`;
             }
         }
 
