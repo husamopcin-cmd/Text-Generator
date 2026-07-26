@@ -112,6 +112,38 @@ test('authenticated access validates Supabase user then consumes an atomic quota
   assert.equal(calls.length, 2);
 });
 
+test('quota RPC sends new Supabase secret keys only as apikey', async () => {
+  const secretKey = `sb_secret_${'s'.repeat(32)}`;
+  global.fetch = async (url, options) => {
+    assert.ok(url.endsWith('/rest/v1/rpc/consume_cinocode_quota'));
+    assert.equal(options.headers.apikey, secretKey);
+    assert.equal(Object.hasOwn(options.headers, 'Authorization'), false);
+    return { ok: true, json: async () => [{ allowed: true, used: 1, remaining: 2, reset_at: 'tomorrow' }] };
+  };
+
+  const result = await access.consumeQuota('a'.repeat(64), 'image', 3, {
+    supabaseUrl: 'https://project.supabase.co',
+    serviceRoleKey: secretKey
+  });
+  assert.equal(result.allowed, true);
+});
+
+test('quota RPC preserves Bearer authorization for legacy service-role JWTs', async () => {
+  const legacyKey = `${'a'.repeat(24)}.${'b'.repeat(24)}.${'c'.repeat(24)}`;
+  global.fetch = async (url, options) => {
+    assert.ok(url.endsWith('/rest/v1/rpc/consume_cinocode_quota'));
+    assert.equal(options.headers.apikey, legacyKey);
+    assert.equal(options.headers.Authorization, `Bearer ${legacyKey}`);
+    return { ok: true, json: async () => [{ allowed: true, used: 1, remaining: 19, reset_at: 'tomorrow' }] };
+  };
+
+  const result = await access.consumeQuota('a'.repeat(64), 'chat', 20, {
+    supabaseUrl: 'https://project.supabase.co',
+    serviceRoleKey: legacyKey
+  });
+  assert.equal(result.allowed, true);
+});
+
 test('anonymous access requires a valid device-bound guest token and applies the low quota', async () => {
   configure();
   const deviceId = 'device_1234567890';

@@ -132,13 +132,17 @@ async function verifySupabaseUser(accessToken, config) {
 
 async function consumeQuota(identityHash, usageKind, limit, config) {
   try {
+    const headers = {
+      apikey: config.serviceRoleKey,
+      'Content-Type': 'application/json'
+    };
+    // New sb_secret keys are opaque API keys, while legacy service_role keys are JWTs.
+    if (/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(config.serviceRoleKey)) {
+      headers.Authorization = `Bearer ${config.serviceRoleKey}`;
+    }
     const response = await fetch(`${config.supabaseUrl}/rest/v1/rpc/consume_cinocode_quota`, {
       method: 'POST',
-      headers: {
-        apikey: config.serviceRoleKey,
-        Authorization: `Bearer ${config.serviceRoleKey}`,
-        'Content-Type': 'application/json'
-      },
+      headers,
       body: JSON.stringify({
         p_identity_hash: identityHash,
         p_usage_kind: usageKind,
