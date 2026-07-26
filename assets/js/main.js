@@ -3839,6 +3839,18 @@ ${answer}` : action;
             div.style.background = "rgba(255,255,255,0.02)";
         }
         div.onclick = () => switchChat(id);
+        
+        // Sağ tık bağlamsal menü desteği (V24)
+        div.oncontextmenu = (e) => {
+            e.preventDefault();
+            if (typeof toggleChatMenu === 'function') toggleChatMenu(id, e);
+        };
+        
+        if (chat.color) {
+            div.style.borderLeft = `4px solid ${chat.color}`;
+            div.style.backgroundColor = `${chat.color}15`;
+        }
+
         const safeTitle = escapeSidebarHtml(chat.title || "Yeni Sohbet");
         const starLabel = chat.starred ? "Yıldızı kaldır" : "Yıldızla";
         const starIcon = chat.starred ? "★" : "☆";
@@ -3854,12 +3866,54 @@ ${answer}` : action;
             <div class="chat-action-menu" id="menu-${id}">
                 <button class="chat-menu-item" onclick="toggleStarChat('${id}', event)">${starLabel}</button>
                 <button class="chat-menu-item" onclick="renameChat('${id}', event)">Yeniden adlandır</button>
+                <button class="chat-menu-item" onclick="changeChatColor('${id}', event)">Renk seç</button>
                 <button class="chat-menu-item" onclick="assignChatToProject('${id}', event)">Projeye ekle</button>
                 <button class="chat-menu-item danger" onclick="deleteChat('${id}', event)">Sil</button>
             </div>
         `;
         return div;
     }
+
+    window.changeChatColor = function(id, event) {
+        event.stopPropagation();
+        if (typeof closeAllChatMenus === 'function') closeAllChatMenus();
+        const colors = [
+            { name: "Varsayılan", hex: "" },
+            { name: "Kırmızı", hex: "#ef4444" },
+            { name: "Mavi", hex: "#3b82f6" },
+            { name: "Yeşil", hex: "#10b981" },
+            { name: "Sarı", hex: "#f59e0b" },
+            { name: "Mor", hex: "#8b5cf6" }
+        ];
+        
+        let colorOptions = colors.map(c => 
+            `<button onclick="applyChatColor('${id}', '${c.hex}')" style="margin:4px; padding:8px; background:${c.hex || '#333'}; color:#fff; border:1px solid #555; border-radius:4px; cursor:pointer;">${c.name}</button>`
+        ).join("");
+        
+        const colorModal = document.createElement("div");
+        colorModal.style.position = "fixed";
+        colorModal.style.top = "50%"; colorModal.style.left = "50%";
+        colorModal.style.transform = "translate(-50%, -50%)";
+        colorModal.style.background = "#1e1e2e";
+        colorModal.style.padding = "20px";
+        colorModal.style.borderRadius = "8px";
+        colorModal.style.boxShadow = "0 10px 30px rgba(0,0,0,0.5)";
+        colorModal.style.zIndex = "10000";
+        colorModal.className = "color-modal-temp";
+        colorModal.innerHTML = `<h4>Sohbet Rengi Seç</h4><div style="display:flex; flex-wrap:wrap; gap:5px; margin-top:15px;">${colorOptions}</div>
+        <div style="margin-top:15px; text-align:right;"><button onclick="this.parentElement.parentElement.remove()" style="padding:6px 12px; background:#444; color:#fff; border:none; border-radius:4px; cursor:pointer;">Kapat</button></div>`;
+        document.body.appendChild(colorModal);
+    };
+
+    window.applyChatColor = function(id, hex) {
+        if (sessions[id]) {
+            sessions[id].color = hex;
+            saveDatabase();
+            renderSidebar();
+            const modals = document.querySelectorAll(".color-modal-temp");
+            modals.forEach(m => m.remove());
+        }
+    };
 
     function renderSidebar() {
         chatListDiv.innerHTML = "";
@@ -7966,6 +8020,65 @@ ${answer}` : action;
         };
     }
 
+    async function runDiagnostics(botId, chat) {
+        let log = [];
+        const addLog = (msg) => { log.push(msg); };
+        addLog("**CinoCode Sistem Teşhis Raporu**\n");
+
+        try {
+            localStorage.setItem('_diag_test', '1');
+            localStorage.getItem('_diag_test');
+            localStorage.removeItem('_diag_test');
+            addLog("✅ **LocalStorage:** Yazma/okuma başarılı.");
+        } catch(e) {
+            addLog("❌ **LocalStorage:** Erişilemiyor.");
+        }
+
+        if ('speechSynthesis' in window) {
+            const voices = window.speechSynthesis.getVoices();
+            if (voices.length > 0) addLog(`✅ **TTS:** Destekleniyor (${voices.length} ses).`);
+            else addLog("⚠️ **TTS:** Destekleniyor ama ses listesi boş/yükleniyor.");
+        } else {
+            addLog("❌ **TTS:** Desteklenmiyor.");
+        }
+
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            stream.getTracks().forEach(t => t.stop());
+            addLog("✅ **Mikrofon (STT):** İzin verildi ve çalışıyor.");
+        } catch(e) {
+            addLog("❌ **Mikrofon (STT):** İzin yok veya donanım yok.");
+        }
+
+        try {
+            const st = Date.now();
+            const res = await fetch('/.netlify/functions/guest-session', { method: 'POST' });
+            const dur = Date.now() - st;
+            if (res.ok || res.status === 429) addLog(`✅ **Backend API:** Bağlantı başarılı (${dur}ms).`);
+            else addLog(`⚠️ **Backend API:** Hata kodu (${res.status}).`);
+        } catch(e) {
+            addLog("❌ **Backend API:** Bağlantı hatası.");
+        }
+
+        if (window.CinoCodeAuth) {
+            const t = typeof window.CinoCodeAuth.getAccessToken === 'function' ? window.CinoCodeAuth.getAccessToken() : null;
+            addLog(t ? "✅ **Auth:** Supabase oturumu aktif." : "ℹ️ **Auth:** Oturum yok (Misafir mod).");
+        } else {
+            addLog("❌ **Auth:** Modül yüklenemedi.");
+        }
+
+        const finalReport = log.join("\n\n");
+        const typingDiv = document.getElementById(botId);
+        if (typingDiv) {
+            typingDiv.innerHTML = marked.parse(finalReport);
+            delete typingDiv.dataset.typingIndicator;
+            
+            chat.messages.push({ role: 'assistant', content: finalReport, meta: { ui: true } });
+            chat.updatedAt = Date.now();
+            saveDatabase();
+        }
+    }
+
     async function sendMessage() {
         clearTransientTypingIndicators();
         // Mobil cihazlarda TTS (Text-to-Speech) sesinin çalabilmesi için
@@ -7986,6 +8099,29 @@ ${answer}` : action;
         }
 
         const text = userInput.value.trim();
+
+        if (text === '/selftest' || text === '/diagnostics') {
+            userInput.value = ""; autoResize(userInput);
+            clearTransientTypingIndicators();
+            const chat = sessions[currentChatId];
+            if (!chat) return;
+            
+            chat.messages.push({ role: "user", content: text });
+            saveDatabase();
+            renderCurrentChat();
+            
+            const botId = "bot-" + Date.now();
+            window.activeGenerationBotId = botId;
+            const typingDiv = document.createElement("div");
+            typingDiv.className = "message bot"; typingDiv.id = botId;
+            typingDiv.innerHTML = getThinkingIndicatorHtml();
+            messagesDiv.appendChild(typingDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            
+            runDiagnostics(botId, chat);
+            return;
+        }
+
         // If generation is active, the send button works as Stop.
         if (window.isGenerating) {
             stopGeneration();
