@@ -34,6 +34,7 @@ const BLOCKED_PATTERNS = [
   /^\.claude($|\/)/,
   /^\.agents($|\/)/,
   /^\.codex($|\/)/,
+  /^\.windsurf($|\/)/,
   /^node_modules($|\/)/,
   /^venv($|\/)/,
   /^__pycache__($|\/)/,

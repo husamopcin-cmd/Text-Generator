@@ -11,8 +11,22 @@ const exporter = fs.readFileSync(path.join(root, 'scripts', 'export-safe.ps1'), 
 const { BLOCKED_PATTERNS } = require('../scripts/create-safe-zip');
 
 test('IDE workspace folders are ignored', () => {
-  assert.match(gitignore, /^\.idea\/$/m);
-  assert.match(gitignore, /^\.vs\/$/m);
+  for (const folder of ['.agents', '.claude', '.codex', '.idea', '.vs', '.vscode', '.windsurf']) {
+    assert.match(gitignore, new RegExp(`^\\${folder}/$`, 'm'));
+  }
+});
+
+test('local agent and IDE workspace folders are not tracked', () => {
+  const tracked = execSync('git ls-files', { cwd: root, encoding: 'utf8' })
+    .split(/\r?\n/)
+    .filter(Boolean);
+  for (const folder of ['.agents', '.claude', '.codex', '.idea', '.vs', '.vscode', '.windsurf']) {
+    assert.equal(
+      tracked.some(file => file === folder || file.startsWith(`${folder}/`)),
+      false,
+      `${folder} must remain local-only`
+    );
+  }
 });
 
 test('safe exporter archives only committed HEAD content', () => {
@@ -22,7 +36,20 @@ test('safe exporter archives only committed HEAD content', () => {
 });
 
 test('safe exporter blocks secret and workspace paths', () => {
-  for (const marker of ['\\.env', '\\.git', '\\.idea', '\\.vs', 'node_modules', 'service[-_]?', '\\.(pem|key|p12|pfx)']) {
+  for (const marker of [
+    '\\.env',
+    '\\.git',
+    '\\.agents',
+    '\\.claude',
+    '\\.codex',
+    '\\.idea',
+    '\\.vs',
+    '\\.vscode',
+    '\\.windsurf',
+    'node_modules',
+    'service[-_]?',
+    '\\.(pem|key|p12|pfx)'
+  ]) {
     assert.ok(exporter.includes(marker), `Missing blocked marker: ${marker}`);
   }
 });
@@ -37,6 +64,11 @@ test('BLOCKED_PATTERNS blocks sensitive paths', () => {
     'node_modules/pkg/index.js',
     '.netlify/state.json',
     '.vercel/project.json',
+    '.agents/local-state.json',
+    '.claude/settings.local.json',
+    '.codex/config.toml',
+    '.vscode/settings.json',
+    '.windsurf/workflows/auto-execution.md',
     'users.db',
     'debug.log',
     'playwright-report/index.html',

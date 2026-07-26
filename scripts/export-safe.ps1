@@ -20,8 +20,13 @@ if ($trackedChanges.Count -gt 0) {
 $blockedPatterns = @(
     '(^|/)\.env($|\.)',
     '(^|/)\.git(/|$)',
+    '(^|/)\.agents(/|$)',
+    '(^|/)\.claude(/|$)',
+    '(^|/)\.codex(/|$)',
     '(^|/)\.idea(/|$)',
     '(^|/)\.vs(/|$)',
+    '(^|/)\.vscode(/|$)',
+    '(^|/)\.windsurf(/|$)',
     '(^|/)node_modules(/|$)',
     '(^|/)venv(/|$)',
     '(^|/)(id_rsa|id_ed25519)($|\.)',

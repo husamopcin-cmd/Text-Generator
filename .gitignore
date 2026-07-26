@@ -12,11 +12,22 @@ test-results/
 users.db
 __pycache__/
 *.pyc
-.claude/
 deno.lock
-# IDE workspace data
+
+# Local agent and IDE workspace data
+.agents/
+.claude/
+.codex/
+.windsurf/
+.vscode/
 .idea/
 .vs/
+
+# Local build and test environments
+venv/
+.pytest_cache/
+coverage/
+
 .vercel
 .env*
 CinoCode-Netlify-deploy-*.zip
