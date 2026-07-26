@@ -1913,9 +1913,13 @@
         // bu istekler kod üretimi olarak normal sohbet modeline gitmeli.
         if (new RegExp(`${TR_WB_BEFORE}(svg|html|css|canvas|javascript|kod|kodu|koduyla|kodla|kodunu|code)${TR_WB_AFTER}`, "iu").test(normalized)) return false;
         // Açık "internetten bul/ara" isteği üretim değil, görsel aramasıdır.
-        if (isDirectImageSearchRequest(normalized)) return false;
+        // Ancak kullanıcı "internetten al çiz" gibi karmaşık şeyler yazdıysa (açık üretim fiili varsa) aramaya gönderme.
+        if (isDirectImageSearchRequest(normalized)) {
+            const hasStrongCreate = ["oluştur", "olustur", "çiz", "ciz", "üret", "uret", "tasarla"].some(v => new RegExp(`${TR_WB_BEFORE}${v}`, "iu").test(normalized));
+            if (!hasStrongCreate) return false;
+        }
 
-        const imageWords = ["resim", "görsel", "gorsel", "fotoğraf", "fotograf", "image", "picture", "illüstrasyon", "illustrasyon", "çizim", "cizim", "avatar", "logo", "poster", "afiş", "afis", "kapak", "manzara", "wallpaper"];
+        const imageWords = ["resim", "resmi", "resmini", "görsel", "gorsel", "görseli", "gorseli", "fotoğraf", "fotograf", "fotoğrafı", "fotografi", "image", "picture", "illüstrasyon", "illustrasyon", "çizim", "cizim", "çizimi", "cizimi", "avatar", "logo", "poster", "afiş", "afis", "kapak", "manzara", "wallpaper"];
         const createVerbs = ["oluştur", "olustur", "çiz", "ciz", "yap", "üret", "uret", "hazırla", "hazirla", "generate", "draw", "create", "paint", "tasarla"];
 
         const hasImageWord = imageWords.some(w => normalized.includes(w));
