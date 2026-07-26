@@ -642,6 +642,9 @@
         }
 
         let cleanText = text.replace(/```[\s\S]*?```/g, " kod parçası ").replace(/`.*?`/g, "").replace(/[#*_-]/g, "");
+        cleanText = cleanText.replace(/!\[.*?\]\(.*?\)/g, " [Görsel eklendi] ");
+        cleanText = cleanText.replace(/\[.*?\]\(.*?\)/g, " ");
+        cleanText = cleanText.replace(/https?:\/\/\S+/g, "");
         cleanText = cleanText.replace(/\[GENERATE_IMAGE:.*?\]/g, " Resmi hazırlıyorum. ");
         cleanText = cleanText.replace(/\[GENERATED_IMAGE:.*?\]/g, " Görsel hazır. ");
         cleanText = cleanText.replace(/CinoCode/gi, "Cinokod").trim();

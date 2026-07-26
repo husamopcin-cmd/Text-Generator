@@ -2378,9 +2378,35 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
             return addUnique(["Kısalt", "5 maddede özetle", "Quiz hazırla", "Ezber kartı yap", "Zor yerleri açıkla", "Örnek soru üret"]);
         }
         
-        // Kanka modundaysa ve spesifik bir teknik bağlam yoksa kalabalık yapmamak için boş veya çok temel bir seçenek döndür
+        // Kanka modundaysa ve spesifik bir teknik bağlam yoksa samimi/doğal seçenekler döndür
         if (isKanka) {
-            return [];
+            // Statik öneriler havuzu
+            const kankaPool = [
+                "Özet geç kanka", "Daha detaylı anlat", "Örneklerle açıkla", "Sıfırdan anlat"
+            ];
+            const shuffled = kankaPool.sort(() => 0.5 - Math.random());
+            let suggestions = shuffled.slice(0, 3);
+            
+            // Dinamik bağlam (Konu tahmini)
+            const stopWords = ["bir","ve","ile","için","gibi","bu","şu","o","ne","neden","nasıl","kim","nerede","hangi","da","de","ki","mı","mi","mu","mü","kanka","ya","tamam","evet","hayır","bana","sana","ona","biz","siz","onlar","benim","senin","onun","bizim","sizin","onların","çok","az","daha","en","göre","kadar","ise","gibi","olan","olarak","olduğunu","olduğu","oldukça"];
+            // userText öncelikli, yoksa assistantText (kelime karakterleri ve Türkçe harfler)
+            const textToAnalyze = (userText || "").length > 0 ? userText : assistantText;
+            if (textToAnalyze) {
+                const words = textToAnalyze.toLocaleLowerCase("tr-TR").replace(/[^\wığüşöç\s]/g, "").split(/\s+/);
+                const keywords = words.filter(w => w.length > 4 && !stopWords.includes(w));
+                if (keywords.length > 0) {
+                    // En son bahsedilen veya en belirgin 1-2 kelime
+                    const uniqueKeywords = [...new Set(keywords)].slice(-2);
+                    uniqueKeywords.forEach(kw => {
+                        const capitalized = kw.charAt(0).toLocaleUpperCase("tr-TR") + kw.slice(1);
+                        suggestions.push(`${capitalized} nedir?`);
+                        suggestions.push(`${capitalized} hakkında bilgi ver`);
+                    });
+                }
+            }
+            
+            // Havuzdan ve dinamik olanlardan rastgele 5-6 tanesini seç (ilk gelenler genelde dinamikler olabilir)
+            return addUnique(suggestions.sort(() => 0.5 - Math.random())).slice(0, 5);
         }
 
         return addUnique(["Kısalt", "Uzat", "Sadeleştir", "Farklı örnek ver", "Adım adım açıkla", "Bana bunu öğret"]);
