@@ -119,7 +119,10 @@ test('Projeler ve My Apps merkezleri açılır', async ({ page, isMobile }) => {
     await expect(page.locator('#projectsScreenTitle')).toContainText('Projeler');
     if (isMobile) await page.locator('#sidebarHamburgerBtn').click();
     await page.locator('#sidebarMyAppsBtn').click();
-    await expect(page.locator('#myAppsGrid .new-project-card')).toHaveCount(8);
+    const appCards = page.locator('#myAppsGrid .new-project-card');
+    await expect(appCards).toHaveCount(6);
+    await expect(appCards.filter({ hasText: 'Text Generator' })).toHaveCount(1);
+    await expect(appCards.filter({ hasText: 'Sesli Asistan' })).toHaveCount(1);
 });
 
 test('belge girişi Office, ZIP ve çoklu dosyayı destekler', async ({ page }) => {

@@ -6971,9 +6971,7 @@ ${answer}` : action;
         { id: "cinovidyo", title: "CinoVidyo", icon: "🎬", category: "Video", prompt: "Sen CinoVidyo'sun, profesyonel bir AI Video Stüdyosu yöneticisisin. Video senaryosu, kamera açıları ve promptları üret." },
         { id: "imagelab", title: "Görsel Üret", icon: "🖼️", category: "Design", prompt: "Görsel prompt ve stüdyo modu." },
         { id: "textgenerator", title: "Text Generator", icon: "💬", category: "Writing", prompt: "Sen efsanevi bir Metin Yazarısın. Makale, blog yazısı veya her türlü metin içeriğinde destek olursun." },
-        { id: "pdfstudio", title: "PDF / Dosya Analiz", icon: "📄", category: "Document", prompt: "Dosya yükleme ve özet/analiz yap." },
-        { id: "voice", title: "Sesli Asistan", icon: "🎙️", category: "Voice", prompt: "TTS ve mikrofon odaklı sohbet." },
-        { id: "aiagents", title: "AI Agents", icon: "🤖", category: "Agents", prompt: "Sen AI Ajanlarının orkestrasyonunu yapan ana lidersin. İstenilen görevleri alt-ajanlara dağıtıp koordine edersin." }
+        { id: "voice", title: "Sesli Asistan", icon: "🎙️", category: "Voice", prompt: "TTS ve mikrofon odaklı sohbet." }
     ];
 
     function openMyAppsHub() {
