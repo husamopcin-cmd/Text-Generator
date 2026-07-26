@@ -54,8 +54,7 @@ async function withFreshHandler(overrides, run, options = {}) {
   }
 }
 
-// TODO: Supabase auth bypass kaldırıldığında bu testi tekrar aktif et.
-test.skip('blocks an unauthenticated chat before any provider call', async () => {
+test('blocks an unauthenticated chat before any provider call', async () => {
   await withFreshHandler({ OPENAI_API_KEY: 'openai-test' }, async handler => {
     global.fetch = async () => assert.fail('provider fetch must not be called');
     const response = await handler({

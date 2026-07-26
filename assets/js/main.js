@@ -836,7 +836,7 @@
         // Teknik veya kod baglami iceriyorsa filtreleme
         if (low.includes('throw new error') || low.includes('catch (')) return false;
 
-        // Genişletilmiş pattern: GPT-5.5 model-level refuse kalıplarını da yakala
+        // Genişletilmiş pattern: model seviyesindeki refuse kalıplarını da yakala
         const refusalPattern = /(k[uü]f[uü]r edemem|sistemim izin vermiyor|etik kural|kodlar[iı]mda (b[oö]yle|k[uü]f[uü]r)|sayg[iı]l[iı] konu[sş]|bu sohbeti (burada )?sonland[iı]r|bu dille ilerlemeyelim|ben (bir )?yapay zek[aâ]|topluluk kurallar|saygı çerçevesinde|etkile[sş]ime girmeyece[gğ]im|iyi g[uü]nler\.|bu [uü]slupla devam edemem|bu tarz bir dil kullanam|bu [sş]ekilde (yardımcı olamam|devam edemem)|uygunsuz içerik|bu tür içeriklere yardımcı)/i;
         return refusalPattern.test(low);
     }
@@ -3273,8 +3273,7 @@ ${answer}` : action;
 
     const PROVIDER_MODEL_GROUPS = {
         openai: [
-            { value: 'openai', label: 'GPT-5.5', desc: 'En guclu genel zeka' },
-            { value: 'openai', label: 'GPT-5.5 Thinking', desc: 'Zor isler / uzun akil yurutme' },
+            { value: 'openai', label: 'GPT-4o mini', desc: 'OpenAI genel sohbet modeli' },
             { value: 'openai', label: 'Image', desc: 'Gorsel uretim' }
         ],
         xai: [

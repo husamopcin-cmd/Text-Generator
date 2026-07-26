@@ -517,10 +517,8 @@ exports.handler = async function(event) {
     if (!providerOrder.includes(provider)) providerOrder.push(provider);
   }
 
-  // TODO: Supabase yapılandırması tamamlandığında aşağıdaki bypass'ı kaldırıp gerçek authorizeUsage'ı aktif et.
-  // const access = await authorizeUsage(event, 'chat');
-  // if (!access.ok) return access.response;
-  const access = { ok: true, principal: { type: 'anonymous', id: 'bypass' }, quota: { allowed: true, used: 0, remaining: 99999, resetAt: '' } };
+  const access = await authorizeUsage(event, 'chat');
+  if (!access.ok) return access.response;
 
   const runProvider = async (provider) => {
     const model = resolveModelId(provider, parsedSelection, taskType);

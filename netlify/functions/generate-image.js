@@ -557,10 +557,8 @@ exports.handler = async function(event) {
     return corsJson(event, 400, { ok: false, error: 'unknown_provider', message: 'Bilinmeyen sağlayıcı: ' + forceProvider });
   }
 
-  // TODO: Supabase yapılandırması tamamlandığında aşağıdaki bypass'ı kaldırıp gerçek authorizeUsage'ı aktif et.
-  // const access = await authorizeUsage(event, 'image');
-  // if (!access.ok) return access.response;
-  const access = { ok: true, principal: { type: 'anonymous', id: 'bypass' }, quota: { allowed: true, used: 0, remaining: 99999, resetAt: '' } };
+  const access = await authorizeUsage(event, 'image');
+  if (!access.ok) return access.response;
 
   const attempts = [];
   for (const provider of chain) {

@@ -6,6 +6,7 @@ const vm = require('node:vm');
 
 const root = path.resolve(__dirname, '..');
 const html = fs.readFileSync(path.join(root, 'cinocode_chat.html'), 'utf8');
+const main = fs.readFileSync(path.join(root, 'assets/js/main.js'), 'utf8');
 
 test('Gelişmiş Ses Ayarları (voice name editor) is its own collapsed accordion, not buried inline', () => {
   const match = html.match(/<details[^>]*>\s*<summary[^>]*>Gelişmiş Ses Ayarları<\/summary>([\s\S]*?)<\/details>/);
@@ -37,6 +38,11 @@ test('Runware, NVIDIA, xAI and Azure API key fields each link to their official 
     assert.ok(linkMatch.length > 0, `${inputId}'s label must contain a help link`);
     assert.ok(linkMatch.some(a => a.includes(url)), `${inputId}'s help link must point to ${url}`);
   }
+});
+
+test('OpenAI model label matches the backend model instead of advertising GPT-5.5', () => {
+  assert.match(main, /label:\s*'GPT-4o mini'/);
+  assert.doesNotMatch(main, /GPT-5\.5/);
 });
 
 test('cloud TTS field explains that the default server is used when no override is saved', () => {

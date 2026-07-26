@@ -84,7 +84,7 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-The Node suite currently contains 240 deterministic tests. Playwright adds desktop and Pixel 7-sized mobile acceptance coverage for startup, local profiles, new chats, mocked cloud replies, smart titles, settings, all nine voices, TTS speed persistence, Projects, My Apps, supported document inputs, account UI, and Studios navigation. Browser tests fail on uncaught page errors.
+The Node suite currently contains 346 deterministic tests. Playwright adds desktop and Pixel 7-sized mobile acceptance coverage for startup, local profiles, new chats, mocked cloud replies, smart titles, settings, all nine voices, TTS speed persistence, Projects, My Apps, supported document inputs, account UI, and Studios navigation. Browser tests fail on uncaught page errors.
 
 GitHub Actions repeats the unit, syntax, security-contract, and Playwright gates on pushes and pull requests.
 
