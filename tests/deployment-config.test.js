@@ -11,6 +11,7 @@ const authConfig = fs.readFileSync(path.join(root, 'netlify', 'functions', 'auth
 const generateImage = fs.readFileSync(path.join(root, 'netlify', 'functions', 'generate-image.js'), 'utf8');
 const server = fs.readFileSync(path.join(root, 'server.py'), 'utf8');
 const checklist = fs.readFileSync(path.join(root, 'NETLIFY-ENV-KURULUM.md'), 'utf8');
+const netlifyConfig = fs.readFileSync(path.join(root, 'netlify.toml'), 'utf8');
 const vercelConfig = JSON.parse(fs.readFileSync(path.join(root, 'vercel.json'), 'utf8'));
 const vercelIgnore = fs.readFileSync(path.join(root, '.vercelignore'), 'utf8');
 
@@ -67,6 +68,29 @@ test('Vercel config preserves static assets and maps Netlify function routes', (
     { handle: 'filesystem' },
     { src: '/.*', dest: '/cinocode_chat.html' }
   ]);
+});
+
+test('deployment platforms apply the release security header baseline', () => {
+  const expectedHeaders = {
+    'Content-Security-Policy': "base-uri 'self'; object-src 'none'; frame-ancestors 'none'",
+    'Permissions-Policy': 'camera=(self), microphone=(self), geolocation=()',
+    'Referrer-Policy': 'strict-origin-when-cross-origin',
+    'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+    'X-Content-Type-Options': 'nosniff',
+    'X-Frame-Options': 'DENY'
+  };
+
+  assert.match(netlifyConfig, /\[\[headers\]\]\s+for = "\/\*"/);
+  for (const [key, value] of Object.entries(expectedHeaders)) {
+    assert.ok(netlifyConfig.includes(`${key} = "${value}"`), `Netlify must set ${key}`);
+  }
+
+  assert.equal(vercelConfig.headers.length, 1);
+  assert.equal(vercelConfig.headers[0].source, '/(.*)');
+  assert.deepEqual(
+    Object.fromEntries(vercelConfig.headers[0].headers.map(({ key, value }) => [key, value])),
+    expectedHeaders
+  );
 });
 
 test('Vercel upload excludes local secrets and development state', () => {
