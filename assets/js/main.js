@@ -2340,6 +2340,9 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
         const studyContext = /(pdf|sınav|sinav|quiz|ders|özet|ozet|flashcard|ezber|konu anlat|akademik|kaynak)/i.test(combined);
         const mediaFailureContext = /(üretilemedi|uret[iı]lemedi|network_error|network error|all_providers_failed|missing_env|sağlayıcı reddetti|saglayici reddetti)/i.test(combined);
 
+        const personaSelect = document.getElementById("personaSelect");
+        const isKanka = personaSelect ? (personaSelect.value === "kanka") : true; // Varsayılan Kanka
+        
         if (safetyContext) {
             return addUnique(["Kısalt", "Güvenli alternatif öner", "Riskleri açıkla", "Daha sakin yaz", "Uygun prompt yaz"]);
         }
@@ -2359,7 +2362,7 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
             return addUnique(["İnternetten benzerini bul", "Aynı promptla tekrar dene", "Promptu sadeleştir", "Kare formatta üret", "Sağlayıcı durumunu açıkla"]);
         }
         if (imageContext && !videoContext) {
-            return addUnique(["Promptu profesyonelleştir", "Sinematik hale getir", "Farklı kompozisyon dene", "Doğal ışık kullan", "Kare formatta üret", "İnternetten benzerini bul"]);
+            return addUnique(["Promptu profesyonelleştir", "Aynı konuyu sinematik çiz", "Rastgele fantastik bir konsept üret", "Tamamen farklı sürpriz bir şey çiz", "Kare formatta üret", "İnternetten benzerini bul"]);
         }
         if (videoContext) {
             return addUnique(["Sahne planı yap", "Daha sinematik yap", "Kısa video promptu yaz", "Kamera hareketi ekle", "Storyboard'u sadeleştir", "Varyasyon üret"]);
@@ -2368,12 +2371,19 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
             return addUnique(["Kısalt", "Hata nedenini açıkla", "Çözüm yolları öner", "Adım adım düzelt", "Neden kaynaklanıyor?"]);
         }
         if (writingContext) {
+            if (isKanka) return addUnique(["Devam et", "Sadede gel", "Daha komik yaz", "Olayı değiştir"]);
             return addUnique(["Devam et", "Daha vurucu yaz", "Başka bir son yaz", "Karakteri derinleştir", "Diyalog ekle", "Sadeleştir"]);
         }
         if (studyContext) {
             return addUnique(["Kısalt", "5 maddede özetle", "Quiz hazırla", "Ezber kartı yap", "Zor yerleri açıkla", "Örnek soru üret"]);
         }
-        return addUnique(["Kısalt", "Uzat", "Sadeleştir", "Farklı örnek ver", "Adım adım açıkla"]);
+        
+        // Kanka modundaysa ve spesifik bir teknik bağlam yoksa kalabalık yapmamak için boş veya çok temel bir seçenek döndür
+        if (isKanka) {
+            return [];
+        }
+
+        return addUnique(["Kısalt", "Uzat", "Sadeleştir", "Farklı örnek ver", "Adım adım açıkla", "Bana bunu öğret"]);
     }
 
     function appendSmartSuggestions(target, assistantText, userText = "") {
@@ -6070,6 +6080,14 @@ ${answer}` : action;
         } else {
             // userInput.value = ""; // İPTAL! Artık eski yazdıklarını veya dosya eklerini silmeyecek!
             isStarting = true;
+            
+            // KULLANICI MIKROFONA BASTIĞINDA TTS'İ VE SES ÇALMAYI DURDUR! (Barge-in / Interrupt)
+            if (typeof stopSpeaking === 'function') {
+                stopSpeaking();
+            } else if (window.speechSynthesis) {
+                window.speechSynthesis.cancel();
+            }
+
             try {
                 recognition.start();
             } catch(e) {
