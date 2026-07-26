@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 
 const originalUrl = process.env.SUPABASE_URL;
 const originalKey = process.env.SUPABASE_PUBLISHABLE_KEY;
+const originalNetlifyDev = process.env.NETLIFY_DEV;
 const modulePath = require.resolve('../netlify/functions/auth-config');
 
 function loadHandler() {
@@ -29,6 +30,8 @@ test.afterEach(() => {
   else process.env.SUPABASE_URL = originalUrl;
   if (originalKey === undefined) delete process.env.SUPABASE_PUBLISHABLE_KEY;
   else process.env.SUPABASE_PUBLISHABLE_KEY = originalKey;
+  if (originalNetlifyDev === undefined) delete process.env.NETLIFY_DEV;
+  else process.env.NETLIFY_DEV = originalNetlifyDev;
 });
 
 test('auth config only accepts POST', async () => {
@@ -71,4 +74,20 @@ test('auth config rejects untrusted origins', async () => {
     }
   }));
   assert.equal(response.statusCode, 403);
+});
+
+test('auth config exposes local bypass only to a loopback Netlify dev request', async () => {
+  process.env.NETLIFY_DEV = 'true';
+  const localBody = JSON.parse((await loadHandler()(event())).body);
+  assert.equal(localBody.isLocalDev, true);
+
+  const remoteBody = JSON.parse((await loadHandler()(event({
+    headers: {
+      origin: 'https://cinocode.example',
+      host: 'cinocode.example',
+      'x-forwarded-proto': 'https',
+      'x-nf-client-connection-ip': '198.51.100.20'
+    }
+  }))).body);
+  assert.equal(remoteBody.isLocalDev, false);
 });

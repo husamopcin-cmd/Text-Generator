@@ -1,7 +1,7 @@
 'use strict';
 
 const { createGuestToken, GUEST_TOKEN_TTL_SECONDS, getClientIp } = require('./_access-control');
-const { guardRequest, jsonResponse } = require('./_security');
+const { guardRequest, isTrustedLocalDevRequest, jsonResponse } = require('./_security');
 
 const TURNSTILE_VERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
 const DEVICE_ID_PATTERN = /^[A-Za-z0-9_-]{16,128}$/;
@@ -55,7 +55,11 @@ exports.handler = async event => {
     return jsonResponse(event, 503, { ok: false, error: 'guest_access_not_configured' });
   }
 
-  const verification = await verifyTurnstile(turnstileToken, getClientIp(event), turnstileSecret);
+  // Local bypass requires both the Netlify CLI marker and a loopback request.
+  const isLocalDev = isTrustedLocalDevRequest(event);
+  const verification = isLocalDev
+    ? { success: true, action: 'cinocode-guest' }
+    : await verifyTurnstile(turnstileToken, getClientIp(event), turnstileSecret);
   if (!verification) {
     return jsonResponse(event, 503, { ok: false, error: 'turnstile_unavailable' });
   }

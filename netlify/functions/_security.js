@@ -79,6 +79,15 @@ function getClientIp(event) {
   return forwarded ? forwarded.split(',')[0].trim() : '';
 }
 
+function isTrustedLocalDevRequest(event) {
+  if (process.env.NETLIFY_DEV !== 'true') return false;
+  const host = getHeader(event, 'x-forwarded-host') || getHeader(event, 'host');
+  const clientIp = getClientIp(event);
+  const localHost = /^(?:localhost|127\.0\.0\.1|\[::1\])(?::\d+)?$/i.test(host);
+  const loopbackClient = /^(?:127(?:\.\d{1,3}){3}|::1|::ffff:127(?:\.\d{1,3}){3})$/i.test(clientIp);
+  return localHost && loopbackClient;
+}
+
 function checkRateLimit(event, namespace, limit, windowMs) {
   const clientIp = getClientIp(event);
   if (!clientIp || !Number.isFinite(limit) || limit <= 0) return { allowed: true, retryAfter: 0 };
@@ -144,6 +153,7 @@ module.exports = {
   buildSecurityHeaders,
   checkOrigin,
   guardRequest,
+  isTrustedLocalDevRequest,
   jsonResponse,
   resetRateLimits
 };

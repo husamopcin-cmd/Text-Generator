@@ -8,18 +8,19 @@ const MODULE_PATH = require.resolve('../netlify/functions/guest-session');
 const DEVICE_ID = 'device_1234567890abcdef';
 const GUEST_SECRET = 'g'.repeat(32);
 
-function event(body, ip = '203.0.113.10') {
+function event(body, ip = '203.0.113.10', host = 'cinocode.example') {
   return {
     httpMethod: 'POST',
-    headers: { 'x-nf-client-connection-ip': ip },
+    headers: { host, 'x-nf-client-connection-ip': ip },
     body: typeof body === 'string' ? body : JSON.stringify(body)
   };
 }
 
 async function withHandler(environment, fetchImpl, callback) {
   const originalFetch = global.fetch;
+  const controlledEnvironment = { NETLIFY_DEV: undefined, ...environment };
   const previous = {};
-  for (const [key, value] of Object.entries(environment)) {
+  for (const [key, value] of Object.entries(controlledEnvironment)) {
     previous[key] = process.env[key];
     if (value === undefined) delete process.env[key];
     else process.env[key] = value;
@@ -86,6 +87,42 @@ test('guest session returns a bound token without exposing secrets', async () =>
       assert.match(verificationRequest.options.body, /response=challenge-token/);
       assert.match(verificationRequest.options.body, /remoteip=203\.0\.113\.10/);
     });
+});
+
+test('guest session bypasses Turnstile only for a loopback Netlify dev request', async () => {
+  await withHandler({
+    NETLIFY_DEV: 'true',
+    TURNSTILE_SECRET_KEY: 'turnstile-secret',
+    CINOCODE_GUEST_TOKEN_SECRET: GUEST_SECRET
+  }, async () => assert.fail('Turnstile fetch must not run for trusted local dev'), async handler => {
+    const response = await handler(event(
+      { turnstileToken: 'netlify-dev-local-bypass', deviceId: DEVICE_ID },
+      '127.0.0.1',
+      'localhost:8888'
+    ));
+    assert.equal(response.statusCode, 200);
+    assert.equal(JSON.parse(response.body).ok, true);
+  });
+});
+
+test('NETLIFY_DEV cannot bypass Turnstile for a non-loopback request', async () => {
+  let verificationCalls = 0;
+  await withHandler({
+    NETLIFY_DEV: 'true',
+    TURNSTILE_SECRET_KEY: 'turnstile-secret',
+    CINOCODE_GUEST_TOKEN_SECRET: GUEST_SECRET
+  }, async () => {
+    verificationCalls += 1;
+    return { ok: true, json: async () => ({ success: false }) };
+  }, async handler => {
+    const response = await handler(event(
+      { turnstileToken: 'netlify-dev-local-bypass', deviceId: DEVICE_ID },
+      '198.51.100.20',
+      'cinocode.example'
+    ));
+    assert.equal(response.statusCode, 401);
+    assert.equal(verificationCalls, 1);
+  });
 });
 
 test('guest session rate limits repeated attempts before Turnstile verification', async () => {

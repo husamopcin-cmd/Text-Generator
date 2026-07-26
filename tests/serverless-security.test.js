@@ -48,6 +48,29 @@ test('allows local development origins', () => {
   assert.equal(security.buildSecurityHeaders(request)['Access-Control-Allow-Origin'], 'http://localhost:8888');
 });
 
+test('local development bypass requires marker, loopback host and loopback client', () => {
+  const original = process.env.NETLIFY_DEV;
+  try {
+    process.env.NETLIFY_DEV = 'true';
+    assert.equal(security.isTrustedLocalDevRequest(event({
+      headers: { host: 'localhost:8888', 'x-nf-client-connection-ip': '127.0.0.1' }
+    })), true);
+    assert.equal(security.isTrustedLocalDevRequest(event({
+      headers: { host: 'cinocode.example', 'x-nf-client-connection-ip': '127.0.0.1' }
+    })), false);
+    assert.equal(security.isTrustedLocalDevRequest(event({
+      headers: { host: 'localhost:8888', 'x-nf-client-connection-ip': '198.51.100.20' }
+    })), false);
+    delete process.env.NETLIFY_DEV;
+    assert.equal(security.isTrustedLocalDevRequest(event({
+      headers: { host: 'localhost:8888', 'x-nf-client-connection-ip': '127.0.0.1' }
+    })), false);
+  } finally {
+    if (original === undefined) delete process.env.NETLIFY_DEV;
+    else process.env.NETLIFY_DEV = original;
+  }
+});
+
 test('rejects oversized bodies before handler parsing', () => {
   const response = security.guardRequest(event({ body: '123456' }), {
     namespace: 'test',

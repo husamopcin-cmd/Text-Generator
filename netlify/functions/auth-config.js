@@ -1,6 +1,6 @@
 'use strict';
 
-const { guardRequest, jsonResponse } = require('./_security');
+const { guardRequest, isTrustedLocalDevRequest, jsonResponse } = require('./_security');
 
 function normalizePublicUrl(value) {
   try {
@@ -41,6 +41,8 @@ exports.handler = async function(event) {
     publishableKey: configured ? publishableKey : '',
     guestAccessConfigured: Boolean(turnstileSiteKey),
     turnstileSiteKey,
+    // The bypass is exposed only for a loopback request handled by `netlify dev`.
+    isLocalDev: isTrustedLocalDevRequest(event),
     missing
   });
 };

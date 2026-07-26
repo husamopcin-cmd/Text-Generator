@@ -144,7 +144,9 @@
             throw new Error('Misafir erişimi henüz yapılandırılmadı. Lütfen giriş yap veya daha sonra tekrar dene.');
         }
         const deviceId = createAccessDeviceId();
-        const turnstileToken = await runTurnstileChallenge(config.turnstileSiteKey);
+        const turnstileToken = config.isLocalDev
+            ? 'netlify-dev-local-bypass'
+            : await runTurnstileChallenge(config.turnstileSiteKey);
         const response = await fetch('/.netlify/functions/guest-session', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

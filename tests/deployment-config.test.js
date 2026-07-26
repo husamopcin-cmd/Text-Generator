@@ -37,8 +37,15 @@ const expectedNetlifyKeys = [
   'XAI_API_KEY'
 ];
 
+// Set automatically by the Netlify CLI/platform itself; never something a
+// deployer configures, so it's excluded from the "must be documented in the
+// deployment checklist" scan below.
+const platformProvidedKeys = new Set(['NETLIFY_DEV']);
+
 function extractNodeEnvKeys(source) {
-  return [...source.matchAll(/process\.env\.([A-Z0-9_]+)/g)].map(match => match[1]);
+  return [...source.matchAll(/process\.env\.([A-Z0-9_]+)/g)]
+    .map(match => match[1])
+    .filter(key => !platformProvidedKeys.has(key));
 }
 
 test('deployment checklist covers every Netlify provider variable used by code', () => {
