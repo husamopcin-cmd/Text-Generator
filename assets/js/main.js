@@ -63,11 +63,28 @@
         if (window.turnstile && typeof window.turnstile.render === 'function') return Promise.resolve(window.turnstile);
         if (turnstileLoaderPromise) return turnstileLoaderPromise;
         turnstileLoaderPromise = new Promise((resolve, reject) => {
-            const finish = () => {
-                if (window.turnstile && typeof window.turnstile.render === 'function') resolve(window.turnstile);
-                else reject(new Error('Turnstile doğrulaması yüklenemedi.'));
-            };
+            let settled = false;
+            let timeoutId;
             let script = document.querySelector('script[data-cinocode-turnstile]');
+            const fail = message => {
+                if (settled) return;
+                settled = true;
+                clearTimeout(timeoutId);
+                // Başarısız veya yarım kalmış etiketi DOM'da tutmak retry'ı aynı ölü
+                // script'e bağlar. Kaldırınca sonraki deneme temiz bir yükleme başlatır.
+                if (!window.turnstile && script && script.parentNode) script.remove();
+                reject(new Error(message));
+            };
+            const finish = () => {
+                if (settled) return;
+                if (window.turnstile && typeof window.turnstile.render === 'function') {
+                    settled = true;
+                    clearTimeout(timeoutId);
+                    resolve(window.turnstile);
+                } else {
+                    fail('Turnstile doğrulaması yüklenemedi.');
+                }
+            };
             if (!script) {
                 script = document.createElement('script');
                 script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
@@ -77,8 +94,8 @@
                 document.head.appendChild(script);
             }
             script.addEventListener('load', finish, { once: true });
-            script.addEventListener('error', () => reject(new Error('Turnstile doğrulaması yüklenemedi.')), { once: true });
-            setTimeout(() => reject(new Error('Turnstile doğrulaması zaman aşımına uğradı.')), 15000);
+            script.addEventListener('error', () => fail('Turnstile doğrulaması yüklenemedi.'), { once: true });
+            timeoutId = setTimeout(() => fail('Turnstile doğrulaması zaman aşımına uğradı.'), 15000);
         }).catch(error => {
             turnstileLoaderPromise = null;
             throw error;
@@ -137,28 +154,36 @@
     }
 
     async function requestGuestSession() {
-        const config = window.CinoCodeAuth && typeof window.CinoCodeAuth.loadCloudAuthConfig === 'function'
-            ? await window.CinoCodeAuth.loadCloudAuthConfig()
-            : null;
-        if (!config || !config.guestAccessConfigured || !config.turnstileSiteKey) {
-            throw new Error('Misafir erişimi henüz yapılandırılmadı. Lütfen giriş yap veya daha sonra tekrar dene.');
+        try {
+            const config = window.CinoCodeAuth && typeof window.CinoCodeAuth.loadCloudAuthConfig === 'function'
+                ? await window.CinoCodeAuth.loadCloudAuthConfig()
+                : null;
+            if (!config || !config.guestAccessConfigured || !config.turnstileSiteKey) {
+                throw new Error('Misafir erişimi henüz yapılandırılmadı. Lütfen giriş yap veya daha sonra tekrar dene.');
+            }
+            const deviceId = createAccessDeviceId();
+            const turnstileToken = config.isLocalDev
+                ? 'netlify-dev-local-bypass'
+                : await runTurnstileChallenge(config.turnstileSiteKey);
+            const response = await fetch('/.netlify/functions/guest-session', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ turnstileToken, deviceId })
+            });
+            const data = await response.json().catch(() => null);
+            if (!response.ok || !data || !data.guestToken || !Number.isFinite(Number(data.expiresIn))) {
+                throw new Error('Misafir oturumu açılamadı. Lütfen doğrulamayı yeniden dene.');
+            }
+            const session = { token: data.guestToken, expiresAt: Date.now() + (Number(data.expiresIn) * 1000) };
+            sessionStorage.setItem(GUEST_SESSION_STORAGE_KEY, JSON.stringify(session));
+            return session;
+        } catch (error) {
+            // Misafir doğrulama hatası her sağlayıcı denemesinde aynı şekilde başarısız olur;
+            // bu işaret, mesaj gönderme döngüsünün Turnstile'ı sağlayıcı başına tekrar
+            // tekrar açmak yerine tek seferde net bir hata göstermesini sağlar.
+            error.guestAccessError = true;
+            throw error;
         }
-        const deviceId = createAccessDeviceId();
-        const turnstileToken = config.isLocalDev
-            ? 'netlify-dev-local-bypass'
-            : await runTurnstileChallenge(config.turnstileSiteKey);
-        const response = await fetch('/.netlify/functions/guest-session', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ turnstileToken, deviceId })
-        });
-        const data = await response.json().catch(() => null);
-        if (!response.ok || !data || !data.guestToken || !Number.isFinite(Number(data.expiresIn))) {
-            throw new Error('Misafir oturumu açılamadı. Lütfen doğrulamayı yeniden dene.');
-        }
-        const session = { token: data.guestToken, expiresAt: Date.now() + (Number(data.expiresIn) * 1000) };
-        sessionStorage.setItem(GUEST_SESSION_STORAGE_KEY, JSON.stringify(session));
-        return session;
     }
 
     async function getGuestSession() {
@@ -9238,6 +9263,13 @@ ${answer}` : action;
                     if (fetchErr.name === 'AbortError' && window.generationStopRequested) {
                         throw new Error("Yanıt durduruldu.");
                     }
+                    if (fetchErr.guestAccessError) {
+                        // Misafir doğrulaması (Turnstile) tüm sağlayıcılar için ortak bir ön
+                        // koşuldur; başarısızsa sağlayıcı başına yeniden denemek yalnızca
+                        // doğrulama penceresini art arda açıp kapatır. Gerçek nedeni göstererek
+                        // hemen dur.
+                        throw fetchErr;
+                    }
                     const timedOut = fetchErr.name === 'AbortError';
                     lastErrorMessage = timedOut ? `Model zaman aşımına uğradı (${provider || actualModel}).` : `Network veya CORS hatası oluştu (${provider || actualModel}).`;
                     if (window.location.protocol === "file:") {
@@ -9586,21 +9618,33 @@ ${answer}` : action;
                 try {
                     const botNode = document.getElementById(botId);
                     if (botNode && (!botNode.textContent || botNode.textContent.includes("CinoCode düşünüyor"))) {
+                        // cleanupGenerationUi() (finally bloğu) her hata sonrası
+                        // clearTransientTypingIndicators()'ı çağırır; bu bayrak temizlenmezse
+                        // az önce yazdığımız mesaj "hâlâ yükleniyor" balonu sanılıp komple silinir.
+                        botNode.removeAttribute('data-typing-indicator');
                         botNode.innerHTML = "<i>Yanıt durduruldu.</i>";
                     }
                 } catch(e) {}
             } else {
                 try {
+                    const botNode = document.getElementById(botId);
+                    if (botNode) botNode.removeAttribute('data-typing-indicator');
                     const rawMessage = String((error && error.message) || "Bilinmeyen hata");
+                    const isGuestAccess = Boolean(error && error.guestAccessError);
                     const isTimeout = /zaman aşımı|zaman asimi|timeout|aborted/i.test(rawMessage);
                     const isConfiguration = /api anahtar|environment variables|hiçbir uygun model|hicbir uygun model/i.test(rawMessage);
-                    const explanation = isTimeout
+                    const explanation = isGuestAccess
+                        ? "Kısa güvenlik doğrulaması tamamlanamadı. Sağlayıcı denemek yerine hemen durduk; aşağıdaki butonla tekrar deneyebilirsin."
+                        : isTimeout
                         ? "Yanıt beklenenden uzun sürdüğü için bağlantı zaman sınırına ulaştı. Mesajın kaybolmadı; tekrar deneyebilir veya daha sonra kaldığın yerden devam edebilirsin."
                         : isConfiguration
                             ? "Sohbet sağlayıcısı hazır değil. API anahtarı ve sağlayıcı yapılandırması kontrol edilmeli."
                             : "Yanıt tamamlanamadı. Bu otomatik bir içerik reddi değil; sağlayıcı veya bağlantı tarafında geçici bir sorun oluştu. Mesajın kaybolmadı, tekrar deneyebilirsin.";
                     const safeTechnicalMessage = escapeHtmlText(rawMessage).slice(0, 500);
-                    document.getElementById(botId).innerHTML = `<div class="chat-generation-error" style="border:1px solid #f38ba8;border-radius:var(--cc-radius);padding:12px;background:rgba(243,139,168,0.08);"><div style="font-weight:700;color:#f38ba8;margin-bottom:6px;">Yanıt tamamlanamadı</div><div style="line-height:1.5;">${explanation}</div><details style="margin-top:8px;color:var(--cc-text-muted);"><summary>Teknik ayrıntı</summary><div style="margin-top:6px;word-break:break-word;">${safeTechnicalMessage}</div></details></div>`;
+                    const retryButton = isGuestAccess
+                        ? `<button type="button" onclick="window.CinoCodeAccess && window.CinoCodeAccess.clearGuestSession && window.CinoCodeAccess.clearGuestSession(); regenerateMessage();" style="margin-top:10px;padding:7px 14px;border:1px solid #f38ba8;border-radius:8px;background:rgba(243,139,168,0.12);color:#f38ba8;cursor:pointer;font-weight:600;">Doğrulamayı tekrar dene</button>`
+                        : '';
+                    document.getElementById(botId).innerHTML = `<div class="chat-generation-error" style="border:1px solid #f38ba8;border-radius:var(--cc-radius);padding:12px;background:rgba(243,139,168,0.08);"><div style="font-weight:700;color:#f38ba8;margin-bottom:6px;">Yanıt tamamlanamadı</div><div style="line-height:1.5;">${explanation}</div>${retryButton}<details style="margin-top:8px;color:var(--cc-text-muted);"><summary>Teknik ayrıntı</summary><div style="margin-top:6px;word-break:break-word;">${safeTechnicalMessage}</div></details></div>`;
                 } catch(e) {}
             }
         } finally {
