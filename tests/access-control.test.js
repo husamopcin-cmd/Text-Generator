@@ -14,6 +14,9 @@ const ENV_KEYS = [
   'CINOCODE_QUOTA_HASH_SECRET',
   'CINOCODE_ANON_DAILY_CHAT_LIMIT',
   'CINOCODE_AUTH_DAILY_IMAGE_LIMIT',
+  'CINOCODE_GUEST_ABUSE_WINDOW_SECONDS',
+  'CINOCODE_GUEST_ABUSE_MAX_NEW_DEVICES',
+  'CINOCODE_GUEST_ABUSE_MAX_FAILED_VERIFICATIONS',
   'NODE_ENV',
   'CINOCODE_TEST_ACCESS_BYPASS'
 ];
@@ -78,6 +81,39 @@ test('quota defaults and environment overrides stay bounded', () => {
   process.env.CINOCODE_AUTH_DAILY_IMAGE_LIMIT = '-1';
   assert.equal(access.getQuotaLimit('anonymous', 'chat'), 25);
   assert.equal(access.getQuotaLimit('authenticated', 'image'), 10);
+});
+
+test('guest abuse limits remain short-lived and bounded, protecting shared networks from a daily IP quota', () => {
+  assert.deepEqual(access.getGuestAbuseLimits(), {
+    windowSeconds: 900,
+    maxNewDevices: 6,
+    maxFailedVerifications: 8
+  });
+  process.env.CINOCODE_GUEST_ABUSE_WINDOW_SECONDS = '60';
+  process.env.CINOCODE_GUEST_ABUSE_MAX_NEW_DEVICES = '2';
+  process.env.CINOCODE_GUEST_ABUSE_MAX_FAILED_VERIFICATIONS = '101';
+  assert.deepEqual(access.getGuestAbuseLimits(), {
+    windowSeconds: 900,
+    maxNewDevices: 6,
+    maxFailedVerifications: 8
+  });
+});
+
+test('guest abuse recording sends only namespace-separated hashes, never raw IP or device identifiers', async () => {
+  configure();
+  global.fetch = async (url, options) => {
+    assert.ok(url.endsWith('/rest/v1/rpc/record_cinocode_guest_abuse'));
+    const body = JSON.parse(options.body);
+    assert.match(body.p_ip_hash, /^[a-f0-9]{64}$/);
+    assert.match(body.p_device_hash, /^[a-f0-9]{64}$/);
+    assert.notEqual(body.p_ip_hash, '203.0.113.8');
+    assert.notEqual(body.p_device_hash, 'device_1234567890');
+    assert.equal(body.p_event_type, 'attempt');
+    return { ok: true, json: async () => [{ limited: false, retry_after: 900, reset_at: 'tomorrow' }] };
+  };
+
+  const result = await access.recordGuestAbuseEvent('203.0.113.8', 'device_1234567890', 'attempt');
+  assert.deepEqual(result, { available: true, limited: false, resetAt: 'tomorrow', retryAfter: 900 });
 });
 
 test('access control fails closed when server-side configuration is missing', async () => {

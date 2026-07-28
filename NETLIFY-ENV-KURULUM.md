@@ -22,6 +22,16 @@ Supabase production veritabanına
 `supabase/migrations/202607220001_cinocode_usage_quotas.sql` uygulanmış olmalıdır.
 Migration doğrulanmadan erişim/kota katmanı release-ready sayılmaz.
 
+Guest oturumu kötüye kullanım koruması için
+`supabase/migrations/202607280001_cinocode_guest_abuse_controls.sql` da uygulanmış
+olmalıdır. Bu migration yalnız HMAC hash'leriyle kısa ömürlü IP/cihaz anomali
+sayaçları tutar; ham IP, cihaz kimliği veya prompt kaydetmez. Varsayılan pencere
+15 dakikadır; gerekirse aşağıdaki sınırlandırılmış environment ayarları kullanılabilir:
+
+- `CINOCODE_GUEST_ABUSE_WINDOW_SECONDS` (300–3600, varsayılan 900)
+- `CINOCODE_GUEST_ABUSE_MAX_NEW_DEVICES` (3–50, varsayılan 6)
+- `CINOCODE_GUEST_ABUSE_MAX_FAILED_VERIFICATIONS` (3–100, varsayılan 8)
+
 ## 2. Netlify — misafir erişimi
 
 Yerel profil veya oturum açmadan kullanım sunulacaksa Cloudflare Turnstile

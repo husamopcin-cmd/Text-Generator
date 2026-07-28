@@ -9,6 +9,11 @@ const DEFAULT_LIMITS = Object.freeze({
   anonymous: { chat: 20, image: 3 },
   authenticated: { chat: 150, image: 10 }
 });
+const DEFAULT_GUEST_ABUSE_LIMITS = Object.freeze({
+  windowSeconds: 15 * 60,
+  maxNewDevices: 6,
+  maxFailedVerifications: 8
+});
 
 function getHeader(event, name) {
   const headers = event && event.headers && typeof event.headers === 'object' ? event.headers : {};
@@ -40,6 +45,11 @@ function parsePositiveLimit(value, fallback) {
   return Number.isInteger(parsed) && parsed > 0 && parsed <= 100000 ? parsed : fallback;
 }
 
+function parseBoundedInteger(value, fallback, minimum, maximum) {
+  const parsed = Number.parseInt(String(value || ''), 10);
+  return Number.isInteger(parsed) && parsed >= minimum && parsed <= maximum ? parsed : fallback;
+}
+
 function getQuotaLimit(audience, usageKind) {
   if (!DEFAULT_LIMITS[audience] || !DEFAULT_LIMITS[audience][usageKind]) return 0;
   const prefix = audience === 'authenticated' ? 'AUTH' : 'ANON';
@@ -48,6 +58,29 @@ function getQuotaLimit(audience, usageKind) {
     process.env[`CINOCODE_${prefix}_DAILY_${suffix}_LIMIT`],
     DEFAULT_LIMITS[audience][usageKind]
   );
+}
+
+function getGuestAbuseLimits() {
+  return {
+    windowSeconds: parseBoundedInteger(
+      process.env.CINOCODE_GUEST_ABUSE_WINDOW_SECONDS,
+      DEFAULT_GUEST_ABUSE_LIMITS.windowSeconds,
+      5 * 60,
+      60 * 60
+    ),
+    maxNewDevices: parseBoundedInteger(
+      process.env.CINOCODE_GUEST_ABUSE_MAX_NEW_DEVICES,
+      DEFAULT_GUEST_ABUSE_LIMITS.maxNewDevices,
+      3,
+      50
+    ),
+    maxFailedVerifications: parseBoundedInteger(
+      process.env.CINOCODE_GUEST_ABUSE_MAX_FAILED_VERIFICATIONS,
+      DEFAULT_GUEST_ABUSE_LIMITS.maxFailedVerifications,
+      3,
+      100
+    )
+  };
 }
 
 function getAccessConfig() {
@@ -164,6 +197,53 @@ async function consumeQuota(identityHash, usageKind, limit, config) {
   }
 }
 
+async function recordGuestAbuseEvent(clientIp, deviceId, eventType, config = getAccessConfig()) {
+  if (!config.ready || !clientIp || !deviceId || !['attempt', 'failure'].includes(eventType)) {
+    return { available: false, limited: false };
+  }
+
+  const limits = getGuestAbuseLimits();
+  const headers = {
+    apikey: config.serviceRoleKey,
+    'Content-Type': 'application/json'
+  };
+  if (/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(config.serviceRoleKey)) {
+    headers.Authorization = `Bearer ${config.serviceRoleKey}`;
+  }
+
+  try {
+    // Ham IP veya cihaz kimliği veritabanına gitmez. Bu değerler yalnızca
+    // kısa süreli anomali penceresini eşleştirmek için ayrı namespace'lerde
+    // HMAC ile hash'lenir.
+    const response = await fetch(`${config.supabaseUrl}/rest/v1/rpc/record_cinocode_guest_abuse`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        p_ip_hash: hashIdentity(`guest-ip:${clientIp}`, config.quotaHashSecret),
+        p_device_hash: hashIdentity(`guest-device:${deviceId}`, config.quotaHashSecret),
+        p_event_type: eventType,
+        p_window_seconds: limits.windowSeconds,
+        p_max_new_devices: limits.maxNewDevices,
+        p_max_failed_verifications: limits.maxFailedVerifications
+      })
+    });
+    if (!response.ok) return { available: false, limited: false };
+    const body = await response.json();
+    const result = Array.isArray(body) ? body[0] : body;
+    if (!result || typeof result.limited !== 'boolean') return { available: false, limited: false };
+    return {
+      available: true,
+      limited: result.limited,
+      resetAt: String(result.reset_at || result.resetAt || ''),
+      retryAfter: Math.max(1, Number(result.retry_after || result.retryAfter) || 1)
+    };
+  } catch (_) {
+    // Bu ikincil abuse sinyali geçici olarak erişilemezse mevcut imzalı token,
+    // Turnstile ve zorunlu kota katmanı çalışmaya devam eder.
+    return { available: false, limited: false };
+  }
+}
+
 function errorResponse(event, statusCode, error, extra = {}) {
   return jsonResponse(event, statusCode, { ok: false, error, ...extra });
 }
@@ -231,10 +311,12 @@ module.exports = {
   consumeQuota,
   createGuestToken,
   getAccessConfig,
+  getGuestAbuseLimits,
   getClientIp,
   getHeader,
   getQuotaLimit,
   hashIdentity,
+  recordGuestAbuseEvent,
   verifyGuestToken,
   verifySupabaseUser
 };
