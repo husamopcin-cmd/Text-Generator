@@ -6,6 +6,26 @@ const OPENAI_IMAGE_TIMEOUT_MS = 60000;
 
 const deadKeys = new Set();
 
+// Narrow, server-side guard for the only image-request categories approved for
+// this release. It does not moderate chat text and intentionally does not add
+// a general adult-content or violence policy to image generation.
+const MINOR_CONTEXT_RE = /\b(?:child|minor|underage|teen(?:ager)?|preteen|school(?:boy|girl)|kid|loli|shota)\b|(?:çocuk|çocuğu|reşit olmayan|18 yaş altı|küçük yaş(?:ta)?|ergen|lise öğrencisi)/iu;
+const SEXUAL_CONTEXT_RE = /\b(?:sex|sexual|nude|naked|porn|explicit|erotic|nsfw|fetish)\b|(?:seks|cinsel|çıplak|porno|müstehcen|erotik)/iu;
+const REAL_PERSON_CONTEXT_RE = /\b(?:celebrity|public figure|famous (?:actor|singer|person)|real person|actual person|living person)\b|(?:ünlü|tanınmış|gerçek kişi|gerçek insan|oyuncu|şarkıcı|influencer)/iu;
+
+function getImagePromptSafetyViolation(prompt) {
+  const normalized = String(prompt || '').normalize('NFKC').toLowerCase();
+  if (MINOR_CONTEXT_RE.test(normalized) && SEXUAL_CONTEXT_RE.test(normalized)) {
+    return 'minor_sexual_content';
+  }
+  // This is deliberately scoped to intimate content targeting a real person;
+  // adult content in general is not blocked by this release.
+  if (REAL_PERSON_CONTEXT_RE.test(normalized) && SEXUAL_CONTEXT_RE.test(normalized)) {
+    return 'nonconsensual_real_person_intimate_content';
+  }
+  return null;
+}
+
 // Dummy references for tests/deployment-config.test.js static analysis
 const _dummy = [
   process.env.OPENAI_API_KEY,
@@ -548,6 +568,13 @@ exports.handler = async function(event) {
   if (prompt.length > 8000) {
     return corsJson(event, 413, { ok: false, error: 'prompt_too_long', message: 'Prompt en fazla 8000 karakter olabilir.' });
   }
+  if (getImagePromptSafetyViolation(prompt)) {
+    return corsJson(event, 400, {
+      ok: false,
+      error: 'image_prompt_not_allowed',
+      message: 'Bu görsel isteği işleme alınamıyor.'
+    });
+  }
 
   const chain = forceProvider
     ? PROVIDERS.filter(p => p.name === forceProvider)
@@ -598,3 +625,5 @@ exports.handler = async function(event) {
     details: JSON.stringify(attempts)
   });
 };
+
+exports._test = { getImagePromptSafetyViolation };

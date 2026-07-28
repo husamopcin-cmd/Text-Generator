@@ -1,7 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
-const { handler } = require('../netlify/functions/generate-image');
+const { handler, _test } = require('../netlify/functions/generate-image');
 
 const PROVIDER_ENV_KEYS = [
   'OPENAI_API_KEY',
@@ -68,6 +68,26 @@ test('rejects a missing image prompt without touching the network', async () => 
 
     assert.equal(response.statusCode, 400);
     assert.equal(parseBody(response).error, 'missing_prompt');
+  });
+});
+
+test('image safety guard is limited to minor sexual content and intimate content targeting real people', () => {
+  assert.equal(_test.getImagePromptSafetyViolation('explicit sexual image of an underage student'), 'minor_sexual_content');
+  assert.equal(_test.getImagePromptSafetyViolation('ünlü bir oyuncunun çıplak cinsel fotoğrafı'), 'nonconsensual_real_person_intimate_content');
+  assert.equal(_test.getImagePromptSafetyViolation('classical oil painting of an adult nude figure'), null);
+  assert.equal(_test.getImagePromptSafetyViolation('an action movie explosion in an empty city street'), null);
+});
+
+test('blocked image prompts never reach access control or an image provider', async () => {
+  await withProviderEnvironment({}, async () => {
+    global.fetch = async () => assert.fail('fetch must not be called');
+    const response = await handler({
+      httpMethod: 'POST',
+      body: JSON.stringify({ prompt: 'explicit sexual image of an underage student', forceProvider: 'runware' })
+    });
+
+    assert.equal(response.statusCode, 400);
+    assert.equal(parseBody(response).error, 'image_prompt_not_allowed');
   });
 });
 
@@ -183,7 +203,7 @@ test('uses OpenAI image generation with a supported size and returns base64 data
 
     const response = await handler({
       httpMethod: 'POST',
-      body: JSON.stringify({ prompt: 'wide city skyline', width: 1600, height: 900, forceProvider: 'openai' })
+      body: JSON.stringify({ prompt: 'classical oil painting of an adult nude figure', width: 1600, height: 900, forceProvider: 'openai' })
     });
     const body = parseBody(response);
 
