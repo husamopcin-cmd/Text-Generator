@@ -2,11 +2,12 @@
 
 CinoCode is a Turkish-first AI workspace for chat, documents, voice, images, small apps, and project-based conversation history. The frontend is framework-free and modular; Netlify Functions keep provider keys on the server.
 
-> Release status: the technical core is tested locally, but no public production URL is declared here until deployment and manual acceptance are complete.
+> Release status: CinoCode v23.0.0 is the current production release. Production URL: [CinoCode Production](https://cinocode-final-v4.netlify.app/cinocode_chat.html).
+> Note: The `202607280001_cinocode_guest_abuse_controls.sql` Supabase migration must be applied for guest-abuse rate limiting to function correctly.
 
 ## Current capabilities
 
-- Multi-provider chat routing with OpenAI-compatible providers, Groq, Gemini 3.5 Flash, and optional local Ollama fallback.
+- Multi-provider chat routing with OpenAI-compatible providers, Groq, Gemini 3.5 Flash, OpenRouter (via serverless proxy), and optional local Ollama fallback.
 - Non-blocking AI conversation titles with a deterministic offline title fallback.
 - Bounded conversation history with background summaries for older messages.
 - Persona, tone, and Safe / Balanced / Free response-style controls.
@@ -84,7 +85,7 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-The Node suite currently contains 346 deterministic tests. Playwright adds desktop and Pixel 7-sized mobile acceptance coverage for startup, local profiles, new chats, mocked cloud replies, smart titles, settings, all nine voices, TTS speed persistence, Projects, My Apps, supported document inputs, account UI, and Studios navigation. Browser tests fail on uncaught page errors.
+The Node suite currently contains 377 deterministic tests. Playwright adds desktop and Pixel 7-sized mobile acceptance coverage for startup, local profiles, new chats, mocked cloud replies, smart titles, settings, all nine voices, TTS speed persistence, Projects, My Apps, supported document inputs, account UI, and Studios navigation. Browser tests fail on uncaught page errors.
 
 GitHub Actions repeats the unit, syntax, security-contract, and Playwright gates on pushes and pull requests.
 
@@ -96,6 +97,8 @@ At the last local service audit:
 
 - Groq chat succeeded with the configured key.
 - Gemini chat succeeded after routing was migrated to Gemini 3.5 Flash.
+- OpenRouter chat succeeded via the serverless proxy.
+- Turnstile guest bot verification succeeded in production.
 - No image provider was fully live: Runware reported insufficient credit, Fal reported unauthorized, and the legacy Hugging Face inference route reported that its model was deprecated.
 - Google OAuth, real voice quality across all nine choices, and production mobile layout still require a human acceptance pass against the deployed environment.
 
