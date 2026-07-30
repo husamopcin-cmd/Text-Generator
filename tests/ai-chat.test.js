@@ -141,6 +141,86 @@ test('tries the selected provider first and falls back after rate limiting', asy
     }
   );
 });
+
+test('routes a model-specific OpenRouter selection through the backend with its exact model id', async () => {
+  await withFreshHandler({ OPENROUTER_API_KEY: 'openrouter-test' }, async handler => {
+    let request;
+    global.fetch = async (url, options) => {
+      request = { url, body: JSON.parse(options.body), headers: options.headers };
+      return {
+        ok: true,
+        status: 200,
+        text: async () => JSON.stringify({ choices: [{ message: { content: 'openrouter ok' } }] })
+      };
+    };
+
+    const response = await handler({
+      httpMethod: 'POST',
+      body: JSON.stringify({
+        selectedModel: 'meta-llama/llama-3.3-70b-instruct:free-openrouter',
+        messages: [{ role: 'user', content: 'hello' }]
+      })
+    });
+
+    assert.equal(response.statusCode, 200);
+    assert.equal(parseBody(response).provider, 'openrouter');
+    assert.equal(request.url, 'https://openrouter.ai/api/v1/chat/completions');
+    assert.equal(request.body.model, 'meta-llama/llama-3.3-70b-instruct:free');
+    assert.equal(request.headers.Authorization, 'Bearer openrouter-test');
+  });
+});
+
+for (const [status, expectedMessage] of [
+  [401, /geçersiz veya yetkisiz/i],
+  [402, /kredisi yetersiz/i],
+  [429, /rate limit/i]
+]) {
+  test(`classifies an OpenRouter ${status} response without calling it a CORS error`, async () => {
+    await withFreshHandler({ OPENROUTER_API_KEY: 'openrouter-test' }, async handler => {
+      global.fetch = async () => ({
+        ok: false,
+        status,
+        text: async () => JSON.stringify({ error: { code: status, message: 'upstream failure' } })
+      });
+
+      const response = await handler({
+        httpMethod: 'POST',
+        body: JSON.stringify({
+          selectedModel: 'openrouter',
+          messages: [{ role: 'user', content: 'hello' }]
+        })
+      });
+      const body = parseBody(response);
+
+      assert.equal(response.statusCode, 502);
+      assert.equal(body.details.status, status);
+      assert.match(body.error, expectedMessage);
+      assert.doesNotMatch(body.error, /CORS/i);
+    });
+  });
+}
+
+test('classifies an OpenRouter network failure as an upstream provider failure', async () => {
+  await withFreshHandler({ OPENROUTER_API_KEY: 'openrouter-test' }, async handler => {
+    global.fetch = async () => {
+      throw new TypeError('fetch failed');
+    };
+
+    const response = await handler({
+      httpMethod: 'POST',
+      body: JSON.stringify({
+        selectedModel: 'openrouter',
+        messages: [{ role: 'user', content: 'hello' }]
+      })
+    });
+    const body = parseBody(response);
+
+    assert.equal(response.statusCode, 502);
+    assert.equal(body.details.error, 'network');
+    assert.equal(body.details.status, 'network');
+    assert.doesNotMatch(body.error, /CORS/i);
+  });
+});
 test('vision tasks use Gemini 3.5 Flash and cap image inputs at twenty', async () => {
   await withFreshHandler({ GEMINI_API_KEY: 'gemini-test' }, async (handler) => {
     let request;

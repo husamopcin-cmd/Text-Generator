@@ -8866,7 +8866,12 @@ ${answer}` : action;
                 if (triedModels.has(currentTryModel)) continue;
                 triedModels.add(currentTryModel);
                 const currentTryInfo = parseModelLabel(currentTryModel);
-                const isProxyCloud = isProxyCloudModel(currentTryModel);
+                // OpenRouter must always stay behind the serverless proxy. Legacy
+                // model-specific labels (for example "...-openrouter") used to
+                // bypass it and call openrouter.ai from the browser, exposing the
+                // request to browser CORS and relying on a client-side API key.
+                const isProxyCloud = isProxyCloudModel(currentTryModel)
+                    || currentTryInfo.provider === "openrouter";
                 isGroq = currentTryInfo.provider === "groq" && !isProxyCloud;
                 isGemini = false;
                 isNvidia = currentTryInfo.provider === "nvidia";
@@ -8906,7 +8911,9 @@ ${answer}` : action;
                         body: JSON.stringify({
                             messages: reqMessages,
                             taskType,
-                            selectedModel: currentTryInfo.provider,
+                            // Preserve a model-specific provider suffix so ai-chat
+                            // can route the exact model without a browser-side call.
+                            selectedModel: currentTryModel,
                             temperature: 0.7,
                             maxTokens: responseMaxTokens
                         })

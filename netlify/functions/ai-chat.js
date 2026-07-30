@@ -576,14 +576,16 @@ exports.handler = async function(event) {
 
     lastError = result;
     if (result.error === 'timeout') continue;
-    if (result.status === 401 || result.status === 403) continue;
+    if (result.status === 401 || result.status === 402 || result.status === 403) continue;
     if (result.status === 429) continue;
     if (result.status === 413) break;
   }
 
   const genericMessage = lastError?.status === 401 || lastError?.status === 403
     ? 'API anahtarı geçersiz veya yetkisiz.'
-    : lastError?.status === 429
+    : lastError?.status === 402
+      ? 'Sağlayıcı kredisi yetersiz.'
+      : lastError?.status === 429
       ? 'Kota/rate limit doldu, yedek sağlayıcı deneniyor.'
       : lastError?.status === 413
         ? 'İstek çok büyük.'

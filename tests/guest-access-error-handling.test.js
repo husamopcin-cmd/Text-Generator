@@ -137,6 +137,22 @@ test('the model fallback loop stops on the first guestAccessError instead of ret
   assert.ok(continueIdx === -1 || continueIdx > guestCheckIdx, 'the generic per-provider continue must come after the guestAccessError short-circuit');
 });
 
+test('model-specific OpenRouter labels stay behind ai-chat instead of calling OpenRouter from the browser', () => {
+  const loopSrc = main.slice(main.search(/for \(let i = 0; i < fallbackQueue\.length; i\+\+\) \{/));
+  const routeSrc = loopSrc.slice(0, loopSrc.search(/try \{/));
+
+  assert.match(
+    routeSrc,
+    /isProxyCloudModel\(currentTryModel\)\s*\|\|\s*currentTryInfo\.provider === "openrouter"/,
+    'every OpenRouter label, including legacy model-specific labels, must use the serverless proxy'
+  );
+  assert.match(
+    routeSrc,
+    /selectedModel:\s*currentTryModel/,
+    'the proxy request must preserve the exact model-specific label for backend routing'
+  );
+});
+
 test('the final error card gives guest-access failures a dedicated explanation and a working retry action', () => {
   const catchSrc = main.slice(main.search(/const isGuestAccess = Boolean\(error && error\.guestAccessError\);/));
   const snippet = catchSrc.slice(0, 2000);
