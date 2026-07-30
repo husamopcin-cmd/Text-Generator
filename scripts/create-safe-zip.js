@@ -64,6 +64,12 @@ const BLOCKED_PATTERNS = [
   /^\.pnpm($|\/)/,
 ];
 
+// Repository-owned operational files that are safe to keep in Git but must
+// never be published as static site assets.
+const DEPLOY_EXCLUDED_PATTERNS = [
+  /^supabase($|\/)/,
+];
+
 // Allowed file extensions (whitelist-based approach for extra safety)
 const ALLOWED_EXTENSIONS = new Set([
   '.js', '.mjs', '.cjs', '.ts', '.mts', '.cts',
@@ -152,6 +158,9 @@ function validateArchiveContents(zipPath, repoRoot) {
         if (BLOCKED_PATTERNS.some(pattern => pattern.test(normalizedPath))) {
           violations.push(`Blocked pattern: ${entry.fileName}`);
         }
+        if (DEPLOY_EXCLUDED_PATTERNS.some(pattern => pattern.test(normalizedPath))) {
+          violations.push(`Deploy-excluded path: ${entry.fileName}`);
+        }
 
         // Check for suspicious file names
         if (normalizedPath.includes('.env') || 
@@ -231,7 +240,7 @@ async function createSafeZip(outputPath) {
   // Create archive using git archive
   console.error(`Creating archive: ${outputPath}`);
   try {
-    exec(`git archive --format=zip --output="${outputPath}" HEAD`, { cwd: repoRoot });
+    exec(`git archive --format=zip --output="${outputPath}" HEAD -- . ":(exclude)supabase/**"`, { cwd: repoRoot });
   } catch (error) {
     throw new Error(`Git archive failed: ${error.message}`);
   }
@@ -275,4 +284,9 @@ if (require.main === module) {
   main();
 }
 
-module.exports = { createSafeZip, BLOCKED_PATTERNS, validateArchiveContents };
+module.exports = {
+  createSafeZip,
+  BLOCKED_PATTERNS,
+  DEPLOY_EXCLUDED_PATTERNS,
+  validateArchiveContents
+};

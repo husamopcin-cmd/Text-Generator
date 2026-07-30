@@ -8,7 +8,10 @@ const os = require('os');
 const root = path.resolve(__dirname, '..');
 const gitignore = fs.readFileSync(path.join(root, '.gitignore'), 'utf8');
 const exporter = fs.readFileSync(path.join(root, 'scripts', 'export-safe.ps1'), 'utf8');
-const { BLOCKED_PATTERNS } = require('../scripts/create-safe-zip');
+const {
+  BLOCKED_PATTERNS,
+  DEPLOY_EXCLUDED_PATTERNS
+} = require('../scripts/create-safe-zip');
 
 test('IDE workspace folders are ignored', () => {
   for (const folder of ['.agents', '.claude', '.codex', '.idea', '.vs', '.vscode', '.windsurf']) {
@@ -33,6 +36,17 @@ test('safe exporter archives only committed HEAD content', () => {
   assert.match(exporter, /status --porcelain --untracked-files=no/);
   assert.match(exporter, /git -C \$repoRoot archive --format=zip/);
   assert.doesNotMatch(exporter, /Compress-Archive/);
+});
+
+test('safe exporters exclude Supabase migrations from static production artifacts', () => {
+  assert.match(exporter, /:\(exclude\)supabase\/\*\*/);
+
+  const normalizedPath = 'supabase/migrations/202607280001_cinocode_guest_abuse_controls.sql';
+  assert.equal(
+    DEPLOY_EXCLUDED_PATTERNS.some(pattern => pattern.test(normalizedPath)),
+    true,
+    'Supabase operational files must remain in Git but stay out of deploy archives'
+  );
 });
 
 test('safe exporter blocks secret and workspace paths', () => {

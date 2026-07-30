@@ -60,7 +60,7 @@ if (-not (Test-Path -LiteralPath $outputDirectory)) {
     New-Item -ItemType Directory -Path $outputDirectory -Force | Out-Null
 }
 
-& git -C $repoRoot archive --format=zip --output=$fullOutputPath HEAD
+& git -C $repoRoot archive --format=zip --output=$fullOutputPath HEAD -- . ':(exclude)supabase/**'
 if ($LASTEXITCODE -ne 0 -or -not (Test-Path -LiteralPath $fullOutputPath)) {
     throw 'Git archive güvenli export dosyasını oluşturamadı.'
 }
