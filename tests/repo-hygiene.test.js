@@ -12,6 +12,10 @@ const {
   BLOCKED_PATTERNS,
   DEPLOY_EXCLUDED_PATTERNS
 } = require('../scripts/create-safe-zip');
+const {
+  runtimeEntries,
+  publishDir
+} = require('../scripts/prepare-netlify-publish');
 
 test('IDE workspace folders are ignored', () => {
   for (const folder of ['.agents', '.claude', '.codex', '.idea', '.vs', '.vscode', '.windsurf']) {
@@ -47,6 +51,22 @@ test('safe exporters exclude Supabase migrations from static production artifact
     true,
     'Supabase operational files must remain in Git but stay out of deploy archives'
   );
+});
+
+test('Netlify publish builder uses an explicit runtime allowlist', () => {
+  assert.deepEqual(runtimeEntries, [
+    'index.html',
+    'cinocode_chat.html',
+    'manifest.json',
+    'models.json',
+    'sw.js',
+    'assets',
+    'vendor'
+  ]);
+  assert.equal(path.basename(publishDir), 'dist');
+  for (const forbidden of ['supabase', 'tests', 'scripts', 'node_modules', '.env']) {
+    assert.equal(runtimeEntries.includes(forbidden), false);
+  }
 });
 
 test('safe exporter blocks secret and workspace paths', () => {

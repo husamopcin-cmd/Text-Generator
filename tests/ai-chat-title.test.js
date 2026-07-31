@@ -159,6 +159,7 @@ test('offline fallback generator and bad-title detector keep their existing cont
 
   assert.equal(vm.runInContext("isBadAutoTitle('Yeni Sohbet')", context), true);
   assert.equal(vm.runInContext("isBadAutoTitle('Sohbet 12')", context), true);
+  assert.equal(vm.runInContext("isBadAutoTitle('K\u0131sa Sohbet')", context), true);
   assert.equal(vm.runInContext("isBadAutoTitle('abc')", context), true, 'too-short titles are bad');
   assert.equal(vm.runInContext("isBadAutoTitle('Python Hata Çözümü')", context), false);
 });

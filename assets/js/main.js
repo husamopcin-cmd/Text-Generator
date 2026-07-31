@@ -1243,7 +1243,9 @@
                         width,
                         height,
                         numberResults: 1,
-                        outputType: ['URL']
+                        // Geçici Runware CDN adresini tarayıcıda hotlink etmek bazı
+                        // ağlarda image_display_failed üretiyor.
+                        outputType: 'dataURI'
                     }])
                 });
             }
@@ -1269,6 +1271,12 @@
                 return { success: false, error: proxyError, message: proxyMessage };
             } else {
                 const result = data.data && data.data[0];
+                if (result && result.imageDataURI) {
+                    return { success: true, url: result.imageDataURI };
+                }
+                if (result && result.imageBase64Data) {
+                    return { success: true, url: 'data:image/jpeg;base64,' + result.imageBase64Data };
+                }
                 if (result && result.imageURL) {
                     return { success: true, url: result.imageURL };
                 }
@@ -2357,10 +2365,9 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
             && /(görsel|gorsel|resim|fotoğraf|fotograf|image|foto|benzerini|benzeri)/i.test(userContext);
         const imageContext = assistantHasImageEvidence || userAsksImageCreation || userAsksImageSearch;
         const videoContext = /(\[generate_video|video|klip|film|storyboard|slideshow|webm|kamera hareketi|sahne planı)/i.test(userContext)
-            || currentMode === 'video'
             || /(\[generate_video|data-generated-video)/i.test(assistantContext);
         const gameTermPattern = /(?:^|[^\p{L}\p{N}_])(oyun(?:u|um|lar|larda|lardan|dan|a)?|game|canvas|skor|zıpla|engel)(?=$|[^\p{L}\p{N}_])/iu;
-        const gameContext = gameTermPattern.test(userContext) || currentMode === 'game';
+        const gameContext = gameTermPattern.test(userContext);
         const codeContext = (isProgrammer || combined.includes("```") || currentMode === 'webapp') && !gameContext;
         const bugContext = /(hata kodu|hata mesajı|bug|çalışmıyor|calismiyor|bozuk|debug|fix|patch|stack trace|exception|network error|timeout|cors hatası|kırpılmış|kirpilmis|taşıyor|tasiyor|görünmüyor|gorunmuyor|kaymış|kaymis|düzelt|duzelt|sorun var|hatalı)/i.test(combined);
         const writingContext = /(hikaye|öykü|oyku|senaryo|rol|roleplay|karakter|şiir|siir|metin|makale|başlık|baslik|içerik|icerik)/i.test(combined);
@@ -2414,26 +2421,9 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
             const shuffled = kankaPool.sort(() => 0.5 - Math.random());
             let suggestions = shuffled.slice(0, 3);
             
-            // Dinamik bağlam (Konu tahmini)
-            const stopWords = ["bir","ve","ile","için","gibi","bu","şu","o","ne","neden","nasıl","kim","nerede","hangi","da","de","ki","mı","mi","mu","mü","kanka","ya","tamam","evet","hayır","bana","sana","ona","biz","siz","onlar","benim","senin","onun","bizim","sizin","onların","çok","az","daha","en","göre","kadar","ise","gibi","olan","olarak","olduğunu","olduğu","oldukça"];
-            // userText öncelikli, yoksa assistantText (kelime karakterleri ve Türkçe harfler)
-            const textToAnalyze = (userText || "").length > 0 ? userText : assistantText;
-            if (textToAnalyze) {
-                const words = textToAnalyze.toLocaleLowerCase("tr-TR").replace(/[^\wığüşöç\s]/g, "").split(/\s+/);
-                const keywords = words.filter(w => w.length > 4 && !stopWords.includes(w));
-                if (keywords.length > 0) {
-                    // En son bahsedilen veya en belirgin 1-2 kelime
-                    const uniqueKeywords = [...new Set(keywords)].slice(-2);
-                    uniqueKeywords.forEach(kw => {
-                        const capitalized = kw.charAt(0).toLocaleUpperCase("tr-TR") + kw.slice(1);
-                        suggestions.push(`${capitalized} nedir?`);
-                        suggestions.push(`${capitalized} hakkında bilgi ver`);
-                    });
-                }
-            }
-            
-            // Havuzdan ve dinamik olanlardan rastgele 5-6 tanesini seç (ilk gelenler genelde dinamikler olabilir)
-            return addUnique(suggestions.sort(() => 0.5 - Math.random())).slice(0, 5);
+            // Tek kelimeyi bağlamdan koparıp "Adını nedir?" gibi bozuk Türkçe
+            // üretmek yerine küçük ama güvenilir devam eylemleri göster.
+            return addUnique(suggestions);
         }
 
         return addUnique(["Kısalt", "Uzat", "Sadeleştir", "Farklı örnek ver", "Adım adım açıkla", "Bana bunu öğret"]);
@@ -7819,6 +7809,7 @@ ${answer}` : action;
             t === "Buradan Devam" ||
             t === "Yeni Konuşma" ||
             t === "CinoCode Sohbeti" ||
+            t === "Kısa Sohbet" ||
             t === "Konu Başlığı" ||
             t.includes("Yeni Sohbet (Dallanmış)") ||
             /^\s*Viewed\b/i.test(t) ||

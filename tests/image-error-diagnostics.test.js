@@ -66,6 +66,13 @@ test('triggerRunwareImages stashes the backend failure message, not just the sho
   assert.match(triggerRunwareImagesSrc, /el\.setAttribute\('data-runware-message', result\.message\)/, 'the detailed server message must be preserved for later display, not discarded');
 });
 
+test('browser-side Runware requests prefer an inline data URI over a temporary CDN hotlink', () => {
+  assert.match(main, /outputType:\s*'dataURI'/);
+  assert.match(main, /result\.imageDataURI/);
+  assert.match(main, /result\.imageBase64Data/);
+  assert.doesNotMatch(main, /outputType:\s*\['URL'\]/);
+});
+
 test('handleGeneratedImageError shows the real stashed backend message instead of a hardcoded network_error label', () => {
   assert.doesNotMatch(handleGeneratedImageErrorSrc, /\|\|\s*'network_error'/, 'must not silently default the failure reason to a fake specific "network_error" diagnosis');
   assert.match(handleGeneratedImageErrorSrc, /data-runware-message/, 'must read the detailed backend message stashed by triggerRunwareImages');

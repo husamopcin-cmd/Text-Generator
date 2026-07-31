@@ -6,6 +6,7 @@
     "check:frontend": "node --check assets/js/auth-core.js && node --check assets/js/dil-kocu-core.js && node --check assets/js/main.js && node --check assets/js/professions.js && node --check assets/js/sinavkocu.js && node --check assets/js/tts-core.js",
     "check:serverless": "node --check netlify/functions/_security.js && node --check netlify/functions/_access-control.js && node --check netlify/functions/auth-config.js && node --check netlify/functions/guest-session.js && node --check netlify/functions/ai-chat.js && node --check netlify/functions/generate-image.js && node --check netlify/functions/image-search.js && node --check netlify/functions/web-search.js",
     "verify": "npm test && npm run check:frontend && npm run check:serverless && npm run test:e2e",
+    "build:netlify": "node scripts/prepare-netlify-publish.js",
     "create-safe-zip": "node scripts/create-safe-zip.js",
     "export:safe": "node scripts/create-safe-zip.js"
   },

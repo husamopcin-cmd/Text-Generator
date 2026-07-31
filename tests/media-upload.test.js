@@ -57,6 +57,26 @@ test('smart suggestions do not confuse oyuncu with oyun or assistant prose with 
   assert.ok(!suggestions.includes('Sahne planı yap'));
 });
 
+test('smart suggestions stay attached to message context after switching studios', () => {
+  const source = extractFunction(/function getSmartSuggestions/, /\n\s*function appendSmartSuggestions/);
+  const context = {
+    document: { getElementById: (id) => id === 'personaSelect' ? { value: 'kanka' } : null },
+    currentMode: 'video',
+    result: null
+  };
+  vm.runInNewContext(`${source}\nresult = getSmartSuggestions('Ankara', 'Turkiye baskenti nedir?');`, context);
+  const suggestions = Array.from(context.result);
+
+  assert.ok(!suggestions.includes('Sahne plan\u0131 yap'));
+  assert.ok(!suggestions.some(item => /Ad\u0131n\u0131 nedir|Ad\u0131n\u0131 hakk\u0131nda/i.test(item)));
+});
+
+test('video entry describes storyboard capability instead of promising real AI video', () => {
+  assert.match(html, /Video tasla\u011f\u0131 olu\u015ftur/);
+  assert.match(html, /Storyboard\/slideshow tasla\u011f\u0131 haz\u0131rla/);
+  assert.doesNotMatch(html, />Yapay zek\u00e2 ile video \u00fcret</);
+});
+
 test('vision backend uses current multimodal models', () => {
   assert.doesNotMatch(aiChat, /gemini-2\.0-flash/);
   assert.match(aiChat, /gemini-2\.5-flash/);

@@ -93,6 +93,12 @@ test('deployment platforms apply the release security header baseline', () => {
   );
 });
 
+test('Netlify publishes only the prepared runtime artifact', () => {
+  assert.match(netlifyConfig, /command = "npm run build:netlify"/);
+  assert.match(netlifyConfig, /publish = "dist"/);
+  assert.doesNotMatch(netlifyConfig, /publish = "\."/);
+});
+
 test('Vercel upload excludes local secrets and development state', () => {
   for (const entry of ['.env', '.netlify', '.git', 'node_modules', 'users.db']) {
     assert.match(vercelIgnore, new RegExp(`^${entry.replace('.', '\\.')}$`, 'm'));
