@@ -2398,6 +2398,7 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
             return [];
         }
         if (safetyContext) {
+            if (isKanka) return addUnique(["O zaman başka anlat", "Kısalt", "Aşırıya kaçma", "Risk ne?"]);
             return addUnique(["Kısalt", "Güvenli alternatif öner", "Riskleri açıkla", "Daha sakin yaz", "Uygun prompt yaz"]);
         }
         if (isTeacher && studyContext) {
@@ -2410,6 +2411,7 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
             return addUnique(["Kısalt", "Hata nedenini açıkla", "Çözüm patch'i yaz", "Test adımlarını çıkar", "Codex prompt'una çevir", "Riskleri sırala"]);
         }
         if (codeContext) {
+            if (isKanka) return addUnique(["Kodu açıkla", "Çözüm yaz", "Özet geç kanka", "Çalışır mı bu?"]);
             return addUnique(["Kısalt", "Kodu açıkla", "Çözüm patch'i yaz", "Optimize et", "Riskleri sırala"]);
         }
         if (imageContext && !videoContext && mediaFailureContext) {
@@ -2422,6 +2424,7 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
             return addUnique(["Sahne planı yap", "Daha sinematik yap", "Kısa video promptu yaz", "Kamera hareketi ekle", "Storyboard'u sadeleştir", "Varyasyon üret"]);
         }
         if (bugContext) {
+            if (isKanka) return addUnique(["Çöz şunu kanka", "Neden patladı?", "Adım adım anlat", "Bozuk bu"]);
             return addUnique(["Kısalt", "Hata nedenini açıkla", "Çözüm yolları öner", "Adım adım düzelt", "Neden kaynaklanıyor?"]);
         }
         if (writingContext) {
