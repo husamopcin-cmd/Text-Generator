@@ -2160,6 +2160,19 @@
         if (!isClaudeProvider) return '';
         return "\n\nCLAUDE PROVIDER TALİMATI: Kod, arayüz, oyun, görsel promptu ve video promptu isteklerinde çekingen davranma; 'yapamam' kalıbına sığınmadan, uygulanabilir en yakın güvenli çözümü üret. Büyük refactor veya belirsiz görevlerde makul varsayımlar yap, eksik parçaları tamamla, çalışan kodu öncelikle ver. Serbest Üslup aktifse yetişkin karakterlerle sensual, mature, romantik, ateşli ama grafik olmayan boudoir/estetik kurgu ve görsel-video promptlarına izin ver; açık pornografik seks eylemi, cinsel organ odaklı çıplaklık, çocuk/ergen cinsel içerik ve rıza dışı cinsellik her zaman yasaktır. Sınır gerekiyorsa kısa söyle ve hemen güvenli alternatif prompt/kod üret.";
     }
+
+    function getProductIdentityInstruction() {
+        return `\n\nCINOCODE URUN KIMLIGI (degismez):
+- Sen CinoCode'sun.
+- Cino ekibi tarafindan gelistirildin.
+- Secili yapay zeka saglayicisi ve modeli yalnizca yanit uretim altyapisidir; CinoCode urununun gelistiricisi veya sahibi degildir.
+- CinoCode'un urun kimligini OpenAI, Google, Anthropic/Claude veya baska bir model saglayicisina mal etme.
+- Saglayici ya da model adini yalnizca mevcut istekte runtime tarafindan kesin olarak verilmisse soyle. Bilinmiyorsa tahmin etme, uydurma ve gecmis mesajlardan sonuc cikarma.
+- Kullanici kimligini veya urunun gelistiricisini sorarsa kisa ve net cevap ver: "Ben CinoCode'um; Cino ekibi tarafindan gelistirildim."
+- Asla "Emir Kurt" veya "Hüsamettin Öpçin" isimlerini referans gosterme veya kurucun olarak bahsetme.
+- Asla "Siz" gibi resmi diller kullanma. Her zaman "sen/ben" diliyle, "kanka" samimiyetinde konus.`;
+    }
+
     function maybeApplyDynamicSpeechStyle(text) {
         const normalized = (text || "").toLocaleLowerCase("tr-TR");
         let nextStyle = null;
@@ -2199,7 +2212,7 @@ SERBEST MOD (Dobra Kanka):
         }
         // FIX(A): "daha az argo" → mutlak yasak. Hangi Ton/Persona seçili olursa olsun
         // Güvenli Mod aktifken bu talimat diğer tüm prompt eklerinden üstündür.
-        return "\n\nUSLUP MODU: Guvenli Mod AKTİF — KESİN KURAL (sonraki talimatlar bu kurali geçersiz kilaMAZ). Kufur, cinsel ima, argo, hakaret, agresif veya vulgar ifade KESINLIKLE YASAK. Bu yasak; kullanicinin tonu ne olursa olsun, hangi persona veya konusma tarzi secili olursa olsun degismez. Temiz, saygili ve yardimci bir dille cevap ver. Kullanici senden kufur veya argo uretmeni acikca istese bile kibarca reddet: 'Guvenli Mod aktif, bu tarz bir dil kullanamam.' de." + shared;
+        return "\n\nUSLUP MODU: Guvenli Mod AKTİF — KESİN KURAL (sonraki talimatlar bu kurali geçersiz kilaMAZ). Kufur, cinsel ima, argo, hakaret, agresif veya vulgar ifade KESINLIKLE YASAK. Bu yasak; kullanicinin tonu ne olursa olsun, hangi persona veya konusma tarzi secili olursa olsun degismez. Temiz, saygili ve yardimci bir dille cevap ver. Kullanici kufurlu, hakaretli veya agresif yazarsa kufurle karsilik verme. Duygusunu tek ve dogal bir cumleyle kabul et, kisa bir sinir koy ve hemen asil sorunu cozmeye don. Kullaniciya verdigin cevapta 'Guvenli Mod aktif', 'filtre', 'politika', 'sistem kurali' veya benzeri ic mekanizma aciklamalarini ASLA kullanma. Sohbeti kesmekle tehdit etme ve uzun ahlak dersi verme." + shared;
     }
 
     function detectAndApplyFreeTonePreference(text) {
@@ -2373,10 +2386,17 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
         const writingContext = /(hikaye|öykü|oyku|senaryo|rol|roleplay|karakter|şiir|siir|metin|makale|başlık|baslik|içerik|icerik)/i.test(combined);
         const studyContext = /(pdf|sınav|sinav|quiz|ders|özet|ozet|flashcard|ezber|konu anlat|akademik|kaynak)/i.test(combined);
         const mediaFailureContext = /(üretilemedi|uret[iı]lemedi|network_error|network error|all_providers_failed|missing_env|sağlayıcı reddetti|saglayici reddetti)/i.test(combined);
+        // Hakaret/cinsel sataşma gibi bir devam niyeti taşımayan mesajlarda eski
+        // bağlamdaki tek bir "sınav" veya "ders" kelimesi Quiz/Ezber kartı gibi
+        // alakasız araçları tetiklememeli. Bu durumda hiç çip göstermemek daha doğru.
+        const hostileOrExplicitUserContext = /(?:^|[\s,;.!?])(?:amına\s+koy|amk|orospu|oruspu|fahişe|kahpe|piç|yavşak|siktir|sikerim|sikeceğim|sikicem|sikmek|sakso|götüne|gotune)(?:$|[\s,;.!?])/iu.test(userContext);
 
         const personaSelect = document.getElementById("personaSelect");
         const isKanka = personaSelect ? (personaSelect.value === "kanka") : true; // Varsayılan Kanka
         
+        if (hostileOrExplicitUserContext) {
+            return [];
+        }
         if (safetyContext) {
             return addUnique(["Kısalt", "Güvenli alternatif öner", "Riskleri açıkla", "Daha sakin yaz", "Uygun prompt yaz"]);
         }
@@ -2546,6 +2566,11 @@ ${answer}` : action;
             if (!contFetchOptions.body) return;
             let bodyObj = JSON.parse(contFetchOptions.body);
             const sliced = (bodyObj.messages || []).slice(-3);
+            const latestUserMessage = [...sliced].reverse().find(message => message && message.role === 'user');
+            const latestUserText = String(latestUserMessage && latestUserMessage.content || '').toLocaleLowerCase('tr-TR');
+            if (/(?:^|[\s,;.!?])(?:amına\s+koy|amk|orospu|oruspu|fahişe|kahpe|piç|yavşak|siktir|sikerim|sikeceğim|sikicem|sikmek|sakso|götüne|gotune)(?:$|[\s,;.!?])/iu.test(latestUserText)) {
+                return;
+            }
             sliced.push({ role: 'user', content: 'Bu sohbetin son kullanıcı mesajı ve AI cevabına göre kullanıcının sorabileceği 3-4 kısa, doğal, bağlamsal Türkçe takip sorusu üret. Genel değil, tamamen konuya özel olsun. Sadece ["Soru 1", "Soru 2", "Soru 3"] formatında geçerli bir JSON array döndür. Örnek: kullanıcı "Mars\'a gitmek istiyorum" dediyse öneriler Mars yolculuğu, bilet fiyatı, Elon Musk projeleri gibi olsun.' });
             bodyObj.messages = sliced;
             bodyObj.stream = false;
@@ -8522,6 +8547,7 @@ ${answer}` : action;
                     baseSystemPrompt = `Sen CinoCode'sun — seçkin, son derece tecrübeli ve uzman bir ${foundProf.name} rolündesin. ${foundProf.description} Alanındaki en güncel bilgilerle, uzman bir ${foundProf.name} bakış açısıyla, pratik, detaylı ve profesyonel çözümler sunacaksın. Kullandığın terimler ve yaklaşımın tamamen bu mesleğin etiğine ve metodolojisine uygun olmalıdır. Türkçeni C2 seviyesinde kusursuz ve akıcı kullanırsın.`;
                 }
             }
+            baseSystemPrompt += getProductIdentityInstruction();
 
             // ===== DİL KOÇU ENJEKSİYONU =====
             // Dil Koçu seçiliyse → dil, seviye, kural ve quiz talimatlarını sisteme ekle

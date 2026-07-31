@@ -71,6 +71,19 @@ test('smart suggestions stay attached to message context after switching studios
   assert.ok(!suggestions.some(item => /Ad\u0131n\u0131 nedir|Ad\u0131n\u0131 hakk\u0131nda/i.test(item)));
 });
 
+test('smart suggestions hide irrelevant study tools during hostile or explicit chatter', () => {
+  const source = extractFunction(/function getSmartSuggestions/, /\n\s*function appendSmartSuggestions/);
+  const context = {
+    document: { getElementById: (id) => id === 'personaSelect' ? { value: 'kanka' } : null },
+    currentMode: 'chat',
+    result: null
+  };
+  vm.runInNewContext(`${source}\nresult = getSmartSuggestions('Sınavın nasıl geçtiğini anlat.', 'Geçen sınav amk, seni sikeceğim.');`, context);
+  const suggestions = Array.from(context.result);
+
+  assert.deepEqual(suggestions, []);
+});
+
 test('video entry describes storyboard capability instead of promising real AI video', () => {
   assert.match(html, /Video tasla\u011f\u0131 olu\u015ftur/);
   assert.match(html, /Storyboard\/slideshow tasla\u011f\u0131 haz\u0131rla/);

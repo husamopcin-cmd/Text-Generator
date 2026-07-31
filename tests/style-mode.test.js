@@ -33,7 +33,29 @@ test('safe mode keeps its strict language contract', () => {
   assert.match(instruction, /Guvenli Mod/);
   assert.match(instruction, /KESINLIKLE YASAK/);
   assert.match(instruction, /HER MODDA DEGISMEYEN KESIN SINIRLAR/);
+  assert.match(instruction, /Duygusunu tek ve dogal bir cumleyle kabul et/);
+  assert.match(instruction, /'Guvenli Mod aktif'.*ASLA kullanma/);
+  assert.match(instruction, /hemen asil sorunu cozmeye don/);
   assert.doesNotMatch(instruction, /Dogal kelime havuzu/);
+});
+
+test('CinoCode product identity stays separate from the runtime model provider', () => {
+  const instruction = runStyleFunction('getProductIdentityInstruction', 'safe');
+
+  assert.match(instruction, /Sen CinoCode'sun/);
+  assert.match(instruction, /Cino ekibi tarafindan gelistirildin/);
+  assert.match(instruction, /yalnizca yanit uretim altyapisidir/);
+  assert.match(instruction, /runtime tarafindan kesin olarak verilmisse/);
+  assert.match(instruction, /Bilinmiyorsa tahmin etme/);
+});
+
+test('every request appends the fixed product identity before style instructions', () => {
+  const identityCall = html.indexOf('baseSystemPrompt += getProductIdentityInstruction()');
+  const styleCall = html.indexOf('baseSystemPrompt += getStyleModeInstruction()');
+
+  assert.notEqual(identityCall, -1);
+  assert.notEqual(styleCall, -1);
+  assert.ok(identityCall < styleCall);
 });
 
 test('balanced mode permits only light banter', () => {
