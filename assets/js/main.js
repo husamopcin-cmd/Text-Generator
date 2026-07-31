@@ -2429,6 +2429,7 @@ CINOCODE TON SOZLESMESI (provider bagimsiz, son oncelikli):
             return addUnique(["Devam et", "Daha vurucu yaz", "Başka bir son yaz", "Karakteri derinleştir", "Diyalog ekle", "Sadeleştir"]);
         }
         if (studyContext) {
+            if (isKanka) return addUnique(["Özet geç kanka", "Örneklerle açıkla", "Daha detaylı anlat"]);
             return addUnique(["Kısalt", "5 maddede özetle", "Quiz hazırla", "Ezber kartı yap", "Zor yerleri açıkla", "Örnek soru üret"]);
         }
         
