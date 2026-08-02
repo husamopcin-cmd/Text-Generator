@@ -21,7 +21,7 @@ function getButton(id) {
   return match[0];
 }
 
-test('sidebar studio grid exposes exactly four stable actions', () => {
+test('sidebar studio grid exposes exactly two stable actions', () => {
   const section = html.match(/<details id="sidebarStudiosDetails"[\s\S]*?<\/details>/);
   assert.ok(section, 'Missing sidebar studios section');
   const grid = section[0].match(/<div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">([\s\S]*?)<\/div>/);
@@ -29,8 +29,6 @@ test('sidebar studio grid exposes exactly four stable actions', () => {
 
   const expectedIds = [
     'sidebarImageStudioBtn',
-    'sidebarVideoStudioBtn',
-    'sidebarGameStudioBtn',
     'sidebarDocStudioBtn'
   ];
   for (const id of expectedIds) {
@@ -41,8 +39,6 @@ test('sidebar studio grid exposes exactly four stable actions', () => {
 
 test('existing studio handlers remain unchanged and document upload is wired', () => {
   assert.match(getButton('sidebarImageStudioBtn'), /onclick="setAppMode\('image'\); triggerImageGeneration\(\);"/);
-  assert.match(getButton('sidebarVideoStudioBtn'), /onclick="setAppMode\('video'\); triggerVideoGeneration\(\);"/);
-  assert.match(getButton('sidebarGameStudioBtn'), /onclick="setAppMode\('game'\); triggerGameGeneration\(\);"/);
   assert.match(getButton('sidebarDocStudioBtn'), /onclick="closeMobileSidebar\(\); triggerFileInput\('docUpload'\)"/);
   assert.match(main, /function closeMobileSidebar\(\)/);
   assert.match(getButton('sidebarDocStudioBtn'), />Belge<\/span>/);
@@ -216,8 +212,6 @@ test('discovery tour covers the complete primary workflow', () => {
   assert.ok(tour, 'Missing discovery tour steps');
   const requiredTargets = [
     'sidebarImageStudioBtn',
-    'sidebarVideoStudioBtn',
-    'sidebarGameStudioBtn',
     'sidebarDocStudioBtn',
     'sidebarProjectsBtn',
     'sidebarMyAppsBtn',

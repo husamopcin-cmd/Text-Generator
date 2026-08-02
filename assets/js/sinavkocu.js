@@ -630,7 +630,7 @@ function buildExamCoachSuffix() {
         } catch (e) {}
     }
     function toggleTheme() {
-        openThemeStudio();
+        toggleSimpleDarkLight();
     }
     function toggleSimpleDarkLight() {
         try {
@@ -643,136 +643,7 @@ function buildExamCoachSuffix() {
     applyStoredTheme();
 
 
-    // ===== FAZ 20: GELİŞMİŞ TEMA VE DÜZEN MOTORU =====
-    const FZ20_PRESETS = {
-        mocha: {
-            '--cc-bg-main': '#11111b',
-            '--cc-bg-surface': '#181825',
-            '--cc-bg-elevated': '#1e1e2e',
-            '--cc-border': '#313244',
-            '--cc-text-primary': '#cdd6f4',
-            '--cc-accent-brand': '#89b4fa'
-        },
-        latte: {
-            '--cc-bg-main': '#eff1f5',
-            '--cc-bg-surface': '#e6e9ef',
-            '--cc-bg-elevated': '#dce0e8',
-            '--cc-border': '#ccd0da',
-            '--cc-text-primary': '#4c4f69',
-            '--cc-accent-brand': '#1e66f5'
-        },
-        saas: {
-            '--cc-bg-main': '#0B0C10',
-            '--cc-bg-surface': '#1C1E26',
-            '--cc-bg-elevated': '#282A36',
-            '--cc-border': '#2D303E',
-            '--cc-text-primary': '#E2E8F0',
-            '--cc-accent-brand': '#6366F1'
-        }
-    };
 
-    function openThemeStudio() {
-        if (typeof closeSettings === 'function') closeSettings();
-        document.getElementById('fz20ThemeStudioOverlay').style.display = 'block';
-        const menu = document.getElementById('fz20ThemeStudioMenu');
-        menu.style.display = 'block';
-        setTimeout(() => menu.style.opacity = '1', 50);
-
-        // Load current custom colors into pickers
-        const rootStyles = getComputedStyle(document.documentElement);
-        document.getElementById('fz20ColorMain').value = rgbToHex(rootStyles.getPropertyValue('--cc-bg-main').trim());
-        document.getElementById('fz20ColorSurface').value = rgbToHex(rootStyles.getPropertyValue('--cc-bg-surface').trim());
-        document.getElementById('fz20ColorText').value = rgbToHex(rootStyles.getPropertyValue('--cc-text-primary').trim());
-        document.getElementById('fz20ColorAccent').value = rgbToHex(rootStyles.getPropertyValue('--cc-accent-brand').trim());
-        document.getElementById('fz20ColorBorder').value = rgbToHex(rootStyles.getPropertyValue('--cc-border').trim());
-    }
-
-    function closeThemeStudio() {
-        document.getElementById('fz20ThemeStudioMenu').style.opacity = '0';
-        setTimeout(() => {
-            document.getElementById('fz20ThemeStudioOverlay').style.display = 'none';
-            document.getElementById('fz20ThemeStudioMenu').style.display = 'none';
-        }, 300);
-    }
-
-    function fz20SwitchTab(tab) {
-        document.getElementById('fz20TabContentTheme').style.display = tab === 'theme' ? 'block' : 'none';
-        document.getElementById('fz20TabContentLayout').style.display = tab === 'layout' ? 'block' : 'none';
-
-        document.getElementById('fz20TabTheme').style.borderColor = tab === 'theme' ? '#cba6f7' : 'transparent';
-        document.getElementById('fz20TabTheme').style.color = tab === 'theme' ? '#cdd6f4' : '#6c7086';
-
-        document.getElementById('fz20TabLayout').style.borderColor = tab === 'layout' ? '#cba6f7' : 'transparent';
-        document.getElementById('fz20TabLayout').style.color = tab === 'layout' ? '#cdd6f4' : '#6c7086';
-    }
-
-    function fz20ApplyPreset(presetName) {
-        const preset = FZ20_PRESETS[presetName];
-        if(!preset) return;
-        Object.keys(preset).forEach(key => {
-            document.documentElement.style.setProperty(key, preset[key]);
-        });
-        // Update color pickers to reflect preset
-        document.getElementById('fz20ColorMain').value = preset['--cc-bg-main'];
-        document.getElementById('fz20ColorSurface').value = preset['--cc-bg-surface'];
-        document.getElementById('fz20ColorText').value = preset['--cc-text-primary'];
-        document.getElementById('fz20ColorAccent').value = preset['--cc-accent-brand'];
-        document.getElementById('fz20ColorBorder').value = preset['--cc-border'];
-    }
-
-    function fz20PreviewCustomColor() {
-        document.documentElement.style.setProperty('--cc-bg-main', document.getElementById('fz20ColorMain').value);
-        document.documentElement.style.setProperty('--cc-bg-surface', document.getElementById('fz20ColorSurface').value);
-        document.documentElement.style.setProperty('--cc-text-primary', document.getElementById('fz20ColorText').value);
-        document.documentElement.style.setProperty('--cc-accent-brand', document.getElementById('fz20ColorAccent').value);
-        document.documentElement.style.setProperty('--cc-border', document.getElementById('fz20ColorBorder').value);
-    }
-
-    function fz20SaveTheme() {
-        const customTheme = {
-            '--cc-bg-main': document.getElementById('fz20ColorMain').value,
-            '--cc-bg-surface': document.getElementById('fz20ColorSurface').value,
-            '--cc-text-primary': document.getElementById('fz20ColorText').value,
-            '--cc-accent-brand': document.getElementById('fz20ColorAccent').value,
-            '--cc-border': document.getElementById('fz20ColorBorder').value
-        };
-        localStorage.setItem('cinocode_custom_theme', JSON.stringify(customTheme));
-        showNonBlockingToast("🎨 Özel tema kaydedildi ve uygulandı!");
-        closeThemeStudio();
-    }
-
-    function fz20ResetToDefault() {
-        localStorage.removeItem('cinocode_custom_theme');
-        fz20ApplyPreset('mocha');
-        showNonBlockingToast("↩ Varsayılan temaya dönüldü.");
-        closeThemeStudio();
-    }
-
-    function fz20LoadSavedTheme() {
-        const saved = localStorage.getItem('cinocode_custom_theme');
-        if(saved) {
-            try {
-                const customTheme = JSON.parse(saved);
-                Object.keys(customTheme).forEach(key => {
-                    document.documentElement.style.setProperty(key, customTheme[key]);
-                });
-            } catch(e) {}
-        }
-    }
-
-    // Yardımcı fonksiyon: hex'e çevirme
-    function rgbToHex(color) {
-        if (!color || color.indexOf("rgb") !== 0) return color.startsWith("#") ? color : "#11111b";
-        let a = color.split("(")[1].split(")")[0].split(",");
-        let b = a.map(x => {
-            x = parseInt(x).toString(16);
-            return (x.length === 1) ? "0"+x : x;
-        });
-        return "#" + b.join("");
-    }
-
-    // Uygulama başlangıcında temayı yükle
-    fz20LoadSavedTheme();
 
 
     // ===== YEREL PROFİL / HESAP YÖNETİMİ =====

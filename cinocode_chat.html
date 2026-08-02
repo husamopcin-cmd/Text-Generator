@@ -98,8 +98,6 @@
                 <button class="new-chat-btn" onclick="setAppMode('chat'); createNewChat();" style="background:var(--cc-accent-brand); color:var(--cc-bg-main); font-weight:600; justify-content:center; font-size:12px; padding: 6px;">💬 <span class="sidebar-text">Standart Sohbet</span></button>
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
                     <button class="new-chat-btn" id="sidebarImageStudioBtn" onclick="setAppMode('image'); triggerImageGeneration();" style="border-color:#fab387; color:#fab387; font-size:12px; padding: 6px; justify-content:center;">🎨 <span class="sidebar-text">Görsel</span></button>
-                    <button class="new-chat-btn" id="sidebarVideoStudioBtn" onclick="setAppMode('video'); triggerVideoGeneration();" style="border-color:#cba6f7; color:#cba6f7; font-size:12px; padding: 6px; justify-content:center;">🎬 <span class="sidebar-text">Video</span></button>
-                    <button class="new-chat-btn" id="sidebarGameStudioBtn" onclick="setAppMode('game'); triggerGameGeneration();" style="border-color:#a6e3a1; color:#a6e3a1; font-size:12px; padding: 6px; justify-content:center;">🎮 <span class="sidebar-text">Oyun</span></button>
                     <button class="new-chat-btn" id="sidebarDocStudioBtn" onclick="closeMobileSidebar(); triggerFileInput('docUpload')" style="border-color:var(--cc-accent-brand); color:var(--cc-accent-brand); font-size:12px; padding: 6px; justify-content:center;">📄 <span class="sidebar-text">Belge</span></button>
                 </div>
                 <button class="new-chat-btn" id="sidebarProjectsBtn" onclick="closeMobileSidebar(); openProjectsScreen()" style="background:rgba(249,226,175,0.1); border-color:#f9e2af; color:#f9e2af; font-weight:600; justify-content:center; font-size:12px; padding: 6px; margin-top:4px;">📁 <span class="sidebar-text">Projeler</span></button>
@@ -1107,11 +1105,6 @@
             </div>
         </div>
 
-        <!-- YENI: Tema Stüdyosu Yönlendirme Köprüsü -->
-        <div style="margin-top:15px; margin-bottom:15px; padding:15px; background:rgba(137,180,250,0.1); border:1px solid var(--cc-blue); border-radius:var(--cc-radius); text-align:center;">
-            <div style="font-size:12px; color:var(--cc-text-primary); margin-bottom:10px;">Renkleri ve arayüz temasını (Catppuccin Mocha vb.) değiştirmek mi istiyorsun?</div>
-            <button onclick="closeFz19Editor(); openThemeStudio();" style="width:100%; padding:10px; border-radius:var(--cc-radius); background:var(--cc-blue); color:var(--cc-base); border:none; font-weight:bold; cursor:pointer; box-shadow: 0 4px 15px rgba(137,180,250,0.3); transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">🎨 Gelişmiş Tema Stüdyosu'nu Aç</button>
-        </div>
 
         <div style="height:1px; background:var(--cc-border); margin:10px 0 14px;"></div>
 
@@ -1162,6 +1155,7 @@
 
 <script src="assets/js/dil-kocu-core.js"></script>
 <script src="assets/js/auth-core.js"></script>
+<script src="assets/js/modules/audio.js"></script>
 <script src="assets/js/main.js"></script>
 <script src="assets/js/tts-core.js"></script>
 
@@ -1513,79 +1507,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     </div>
 
 
-    <!-- FAZ 20: Arayüz ve Tema Stüdyosu Overlay -->
-    <div class="cc-backdrop" id="fz20ThemeStudioOverlay" onclick="closeThemeStudio()"></div>
-    <div class="attach-menu" id="fz20ThemeStudioMenu" style="bottom: 50%; transform: translate(-50%, 50%); display: none; opacity: 0; pointer-events: auto; max-height: 90vh; width: 95%; max-width: 600px; overflow-y: auto;" onclick="event.stopPropagation()">
-        <button class="attach-menu-close" onclick="closeThemeStudio()" style="top:15px; right:15px;">×</button>
-        <div class="attach-menu-title" style="display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:20px; color:#cba6f7;">
-            🎨 Arayüz ve Tema Stüdyosu
-        </div>
 
-        <!-- Sekmeler -->
-        <div style="display:flex; border-bottom:1px solid #313244; margin-bottom:15px;">
-            <button id="fz20TabTheme" onclick="fz20SwitchTab('theme')" style="flex:1; background:none; border:none; color:#cdd6f4; padding:10px; font-weight:bold; cursor:pointer; border-bottom:2px solid #cba6f7;">Tema ve Renkler</button>
-            <button id="fz20TabLayout" onclick="fz20SwitchTab('layout')" style="flex:1; background:none; border:none; color:#6c7086; padding:10px; font-weight:bold; cursor:pointer; border-bottom:2px solid transparent;">Arayüz Düzeni (Layout)</button>
-        </div>
-
-        <!-- TEMA SEKME İÇERİĞİ -->
-        <div id="fz20TabContentTheme">
-            <div style="font-size:11px; color:#a6adc8; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:10px;">Hazır Şablonlar</div>
-            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:20px;">
-                <div onclick="fz20ApplyPreset('mocha')" class="fz19-theme-card" style="background:#1e1e2e; border:2px solid #313244; border-radius:8px; padding:15px; cursor:pointer; text-align:center;">
-                    <div style="width:24px; height:24px; border-radius:50%; background:#11111b; margin:0 auto 8px; border:1px solid #cba6f7;"></div>
-                    <div style="color:#cdd6f4; font-size:12px; font-weight:bold;">Catppuccin Mocha</div>
-                    <div style="color:#a6adc8; font-size:10px;">(Orijinal Koyu)</div>
-                </div>
-                <div onclick="fz20ApplyPreset('latte')" class="fz19-theme-card" style="background:#eff1f5; border:2px solid #ccd0da; border-radius:8px; padding:15px; cursor:pointer; text-align:center;">
-                    <div style="width:24px; height:24px; border-radius:50%; background:#e6e9ef; margin:0 auto 8px; border:1px solid #1e66f5;"></div>
-                    <div style="color:#4c4f69; font-size:12px; font-weight:bold;">Catppuccin Latte</div>
-                    <div style="color:#8c8fa1; font-size:10px;">(Orijinal Açık)</div>
-                </div>
-                <div onclick="fz20ApplyPreset('saas')" class="fz19-theme-card" style="background:#1C1E26; border:2px solid #2D303E; border-radius:8px; padding:15px; cursor:pointer; text-align:center;">
-                    <div style="width:24px; height:24px; border-radius:50%; background:#0B0C10; margin:0 auto 8px; border:1px solid #6366F1;"></div>
-                    <div style="color:#E2E8F0; font-size:12px; font-weight:bold;">Premium SaaS</div>
-                    <div style="color:#848D97; font-size:10px;">(Gece Mavisi)</div>
-                </div>
-            </div>
-
-            <div style="font-size:11px; color:#a6adc8; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:10px;">Özel Renk Paleti (Custom)</div>
-            <div style="background:#181825; border:1px solid #313244; border-radius:8px; padding:15px; display:flex; flex-direction:column; gap:12px;">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <span style="color:#cdd6f4; font-size:13px;">Ana Arka Plan (--cc-bg-main)</span>
-                    <input type="color" id="fz20ColorMain" value="#11111b" onchange="fz20PreviewCustomColor()" style="cursor:pointer; background:none; border:none; padding:0; width:30px; height:30px;">
-                </div>
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <span style="color:#cdd6f4; font-size:13px;">Yüzey Rengi (--cc-bg-surface)</span>
-                    <input type="color" id="fz20ColorSurface" value="#181825" onchange="fz20PreviewCustomColor()" style="cursor:pointer; background:none; border:none; padding:0; width:30px; height:30px;">
-                </div>
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <span style="color:#cdd6f4; font-size:13px;">Ana Metin (--cc-text-primary)</span>
-                    <input type="color" id="fz20ColorText" value="#cdd6f4" onchange="fz20PreviewCustomColor()" style="cursor:pointer; background:none; border:none; padding:0; width:30px; height:30px;">
-                </div>
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <span style="color:#cdd6f4; font-size:13px;">Vurgu / Marka Rengi (--cc-accent-brand)</span>
-                    <input type="color" id="fz20ColorAccent" value="#89b4fa" onchange="fz20PreviewCustomColor()" style="cursor:pointer; background:none; border:none; padding:0; width:30px; height:30px;">
-                </div>
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <span style="color:#cdd6f4; font-size:13px;">Kenarlıklar (--cc-border)</span>
-                    <input type="color" id="fz20ColorBorder" value="#313244" onchange="fz20PreviewCustomColor()" style="cursor:pointer; background:none; border:none; padding:0; width:30px; height:30px;">
-                </div>
-            </div>
-        </div>
-
-        <!-- DÜZEN SEKME İÇERİĞİ -->
-        <div id="fz20TabContentLayout" style="display:none;">
-            <div style="background:rgba(243,139,168,0.1); border:1px solid #f38ba8; border-radius:8px; padding:10px; margin-bottom:15px; color:#f38ba8; font-size:12px; display:flex; align-items:center; gap:8px;">
-                <span>⚠️</span> <span>Arayüz elemanlarını buradan gizleyebilir veya mevcut arayüz düzenleyiciye (Faz 19) gidebilirsiniz. Gelişmiş sürükle-bırak yakında eklenecektir.</span>
-            </div>
-            <button onclick="closeThemeStudio(); openFz19Editor();" class="run-code-btn" style="width:100%; padding:12px; background:#45475a; color:#cdd6f4; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">🛠️ Faz 19: Buton/Panel Gizleme Seçenekleri'ne Git</button>
-        </div>
-
-        <div style="margin-top:20px; border-top:1px solid #313244; padding-top:15px; display:flex; justify-content:flex-end; gap:10px;">
-            <button onclick="fz20ResetToDefault()" style="padding:10px 15px; border-radius:8px; border:1px solid #45475a; background:transparent; color:#f38ba8; font-size:13px; font-weight:600; cursor:pointer;">↩ Sıfırla</button>
-            <button onclick="fz20SaveTheme()" style="padding:10px 15px; border-radius:8px; border:none; background:linear-gradient(135deg,#a6e3a1,#89b4fa); color:#11111b; font-weight:700; font-size:13px; cursor:pointer;">💾 Kaydet ve Çık</button>
-        </div>
-    </div>
 
     <!-- FAZ 19: Keşfet Turu Overlay -->
     <div id="fz19TourOverlay">
