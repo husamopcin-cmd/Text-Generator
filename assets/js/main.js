@@ -3518,7 +3518,28 @@ ${answer}` : action;
 
     let sessions = {}; // Tüm sohbetleri tutan obje
     let currentChatId = null;
-    let projects = {}; // Projeler (sohbet gruplama) objesi
+    
+window.CinoCodeState = {
+  project: {
+    projects: {},
+    activeProjectId: null
+  },
+  workspace: {
+    workspaces: {},
+    activeWorkspaceId: null
+  },
+  emit: function(eventName, payload) {
+    window.dispatchEvent(new CustomEvent(eventName, { detail: payload }));
+  }
+};
+
+// Map legacy global 'projects' to CinoCodeState
+Object.defineProperty(window, 'projects', {
+    get: function() { return window.CinoCodeState.project.projects; },
+    set: function(val) { window.CinoCodeState.project.projects = val; },
+    configurable: true
+});
+
     let activeProjectId = null;
     let currentProjectTab = 'sohbetler';
     window.switchProjectTab = function(tab) {
@@ -4016,20 +4037,7 @@ ${answer}` : action;
         return Object.keys(projects).sort((a, b) => (Number(projects[b]?.updatedAt) || 0) - (Number(projects[a]?.updatedAt) || 0));
     }
 
-    function createProjectRecord(name, description) {
-        const id = "proj_" + Date.now();
-        projects[id] = {
-            id,
-            name: name,
-            description: description || "",
-            createdAt: Date.now(),
-            updatedAt: Date.now(),
-            starred: false,
-            archived: false
-        };
-        saveDatabase();
-        return id;
-    }
+    
 
 
     function cinocodeAsyncPrompt(titleText, defaultValue = "", placeholderText = "") {
@@ -6870,6 +6878,11 @@ ${answer}` : action;
     }
 
     window.onload = async () => {
+    window.addEventListener('cinocode:projectChanged', () => {
+        if(typeof saveDatabase === 'function') saveDatabase();
+        if(typeof updateProjectList === 'function') updateProjectList();
+    });
+
         renderMyApps();
         fz22ApplyColorPrefs();
         if (window.CinoCodeAuth && typeof window.CinoCodeAuth.initializeAccountSession === 'function') {
