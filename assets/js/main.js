@@ -4093,7 +4093,7 @@ Object.defineProperty(window, 'projects', {
         const description = await cinocodeAsyncPrompt("Proje açıklaması (opsiyonel):", "") || "";
         const id = createProjectRecord(name.trim(), description.trim());
         activeProjectId = id;
-        renderProjectsScreen();
+        window.CinoCodeState.emit('cinocode:project-created', { id });
     }
 
     function toggleProjectMenu(id, event) {
@@ -4107,11 +4107,7 @@ Object.defineProperty(window, 'projects', {
 
     function toggleStarProject(id, event) {
         event.stopPropagation();
-        if (!projects[id]) return;
-        projects[id].starred = !projects[id].starred;
-        projects[id].updatedAt = Date.now();
-        saveDatabase();
-        renderProjectsScreen();
+        toggleStarProjectRecord(id);
     }
 
     async function editProjectDetails(id, event) {
@@ -4120,20 +4116,12 @@ Object.defineProperty(window, 'projects', {
         const newName = prompt("Proje adı:", projects[id].name);
         if (newName === null || !newName.trim()) return;
         const newDesc = prompt("Proje açıklaması:", projects[id].description || "");
-        projects[id].name = newName.trim();
-        projects[id].description = (newDesc || "").trim();
-        projects[id].updatedAt = Date.now();
-        saveDatabase();
-        renderProjectsScreen();
+        updateProjectRecord(id, { name: newName.trim(), description: (newDesc || "").trim() });
     }
 
     function archiveProject(id, event) {
         event.stopPropagation();
-        if (!projects[id]) return;
-        projects[id].archived = !projects[id].archived;
-        projects[id].updatedAt = Date.now();
-        saveDatabase();
-        renderProjectsScreen();
+        archiveProjectRecord(id);
     }
 
     function deleteProject(id, event) {
@@ -4145,10 +4133,10 @@ Object.defineProperty(window, 'projects', {
                 sessions[cid].projectId = null;
             }
         });
-        delete projects[id];
+        deleteProjectRecord(id);
         if (activeProjectId === id) activeProjectId = null;
-        saveDatabase();
-        renderProjectsScreen();
+        // Sesssions updated, so we still need to trigger a save manually here
+        if(typeof saveDatabase === 'function') saveDatabase();
     }
 
     function assignChatToProject(id, event) {
@@ -6881,6 +6869,20 @@ Object.defineProperty(window, 'projects', {
     window.addEventListener('cinocode:projectChanged', () => {
         if(typeof saveDatabase === 'function') saveDatabase();
         if(typeof updateProjectList === 'function') updateProjectList();
+    });
+    
+    // Phase 2C Granular Events
+    window.addEventListener('cinocode:project-created', () => {
+        if(typeof saveDatabase === 'function') saveDatabase();
+        if(typeof renderProjectsScreen === 'function') renderProjectsScreen();
+    });
+    window.addEventListener('cinocode:project-updated', () => {
+        if(typeof saveDatabase === 'function') saveDatabase();
+        if(typeof renderProjectsScreen === 'function') renderProjectsScreen();
+    });
+    window.addEventListener('cinocode:project-deleted', () => {
+        // sessions might also have changed, so UI needs updating
+        if(typeof renderProjectsScreen === 'function') renderProjectsScreen();
     });
 
         renderMyApps();

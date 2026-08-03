@@ -20,3 +20,40 @@ function createProjectRecord(name, description) {
 
 window.getSortedProjectIds = typeof getSortedProjectIds !== 'undefined' ? getSortedProjectIds : null;
 window.createProjectRecord = typeof createProjectRecord !== 'undefined' ? createProjectRecord : null;
+
+
+function updateProjectRecord(id, updates) {
+    const projects = window.CinoCodeState.project.projects;
+    if (!projects[id]) return;
+    Object.assign(projects[id], updates);
+    projects[id].updatedAt = Date.now();
+    window.CinoCodeState.emit('cinocode:project-updated', { id });
+}
+
+function toggleStarProjectRecord(id) {
+    const projects = window.CinoCodeState.project.projects;
+    if (!projects[id]) return;
+    projects[id].starred = !projects[id].starred;
+    projects[id].updatedAt = Date.now();
+    window.CinoCodeState.emit('cinocode:project-updated', { id });
+}
+
+function archiveProjectRecord(id) {
+    const projects = window.CinoCodeState.project.projects;
+    if (!projects[id]) return;
+    projects[id].archived = !projects[id].archived;
+    projects[id].updatedAt = Date.now();
+    window.CinoCodeState.emit('cinocode:project-updated', { id });
+}
+
+function deleteProjectRecord(id) {
+    const projects = window.CinoCodeState.project.projects;
+    if (!projects[id]) return;
+    delete projects[id];
+    window.CinoCodeState.emit('cinocode:project-deleted', { id });
+}
+
+window.updateProjectRecord = updateProjectRecord;
+window.toggleStarProjectRecord = toggleStarProjectRecord;
+window.archiveProjectRecord = archiveProjectRecord;
+window.deleteProjectRecord = deleteProjectRecord;
