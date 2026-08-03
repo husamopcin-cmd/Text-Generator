@@ -564,6 +564,53 @@ function getRemainingDocumentContextChars() {
         return state.activeProjectId ? getProjectDocuments(state.activeProjectId) : [];
     }
 
+    function getDocumentChunkPayload(fullText, selectedModel, isExamMode) {
+        if (!fullText) return { chunk: null, docNameSuffix: '', note: '', done: false };
+
+        const weakModelLimit = 12000;
+        const normalLimit = isExamMode ? 25000 : 20000;
+        const proxyCloudIds = ['groq', 'gemini', 'openai', 'anthropic', 'deepseek']; // Example proxy cloud IDs, you might need to adjust based on PROXY_CLOUD_MODELS if it's external
+        // In main.js it was PROXY_CLOUD_MODELS, we can assume it's global or we just pass limit directly. 
+        // Wait, main.js has PROXY_CLOUD_MODELS global. We can just use window.PROXY_CLOUD_MODELS.
+        const proxyCloudIdsList = window.PROXY_CLOUD_MODELS || [];
+        const strongModel = proxyCloudIdsList.includes((selectedModel || '').toLowerCase()) || (selectedModel || '').includes("-nvidia") || (selectedModel || '').includes("-openrouter") || (selectedModel || '').toLowerCase().includes("llava") || (selectedModel || '').toLowerCase().includes("vision") || (selectedModel || '').toLowerCase().includes("scout") || (selectedModel || '').toLowerCase().includes("maverick");
+        const limit = strongModel ? normalLimit : Math.min(normalLimit, weakModelLimit);
+
+        if (window.activeDocCursor == null || window.activeDocCursor < 0) window.activeDocCursor = 0;
+        if (window.activeDocCursor >= fullText.length) {
+            return { chunk: null, docNameSuffix: '', note: '', done: true };
+        }
+
+        const start = window.activeDocCursor;
+        let end = Math.min(fullText.length, start + limit);
+        let chunk = fullText.slice(start, end);
+
+        const lastSpace = chunk.lastIndexOf(' ');
+        if (lastSpace > Math.floor(chunk.length * 0.7)) {
+            chunk = chunk.slice(0, lastSpace);
+            end = start + chunk.length;
+        }
+
+        window.activeDocCursor = end;
+        const totalChunks = Math.max(1, Math.ceil(fullText.length / limit));
+        const currentChunkIndex = Math.floor(start / limit) + 1;
+        const remainingChars = fullText.length - end;
+
+        const note = remainingChars > 0
+            ? `Bu belgenin ${currentChunkIndex}. parçasını (yaklaşık ${chunk.length} karakter) kullandım. Daha fazlasına devam etmek için lütfen "devam et" yaz.`
+            : `Bu belgenin son parçasını kullandım.`;
+        const docNameSuffix = remainingChars > 0
+            ? ` [PDF Parça ${currentChunkIndex}/${totalChunks}]`
+            : ` [PDF Son Parça]`;
+
+        return {
+            chunk,
+            docNameSuffix,
+            note,
+            done: false
+        };
+    }
+
     /* ──────────────────────────────────────────────
      *  EXPOSE PUBLIC API
      * ────────────────────────────────────────────── */
@@ -574,6 +621,7 @@ function getRemainingDocumentContextChars() {
         getActiveDocuments: getActiveDocuments,
         clearProjectDocuments: clearProjectDocuments,
         setActiveProject: setActiveProject,
-        parseAndAddDocument: parseAndAddDocument
+        parseAndAddDocument: parseAndAddDocument,
+        getDocumentChunkPayload: getDocumentChunkPayload
     };
 })();

@@ -7566,49 +7566,7 @@ Object.defineProperty(window, 'projects', {
         });
     }
 
-    function getDocumentChunkPayload(fullText, selectedModel, isExamMode) {
-        if (!fullText) return { chunk: null, docNameSuffix: '', note: '', done: false };
 
-        const weakModelLimit = 12000;
-        const normalLimit = isExamMode ? 25000 : 20000;
-        const proxyCloudIds = PROXY_CLOUD_MODELS;
-        const strongModel = proxyCloudIds.includes(selectedModel.toLowerCase()) || selectedModel.includes("-nvidia") || selectedModel.includes("-openrouter") || selectedModel.toLowerCase().includes("llava") || selectedModel.toLowerCase().includes("vision") || selectedModel.toLowerCase().includes("scout") || selectedModel.toLowerCase().includes("maverick");
-        const limit = strongModel ? normalLimit : Math.min(normalLimit, weakModelLimit);
-
-        if (window.activeDocCursor == null || window.activeDocCursor < 0) window.activeDocCursor = 0;
-        if (window.activeDocCursor >= fullText.length) {
-            return { chunk: null, docNameSuffix: '', note: '', done: true };
-        }
-
-        const start = window.activeDocCursor;
-        let end = Math.min(fullText.length, start + limit);
-        let chunk = fullText.slice(start, end);
-
-        const lastSpace = chunk.lastIndexOf(' ');
-        if (lastSpace > Math.floor(chunk.length * 0.7)) {
-            chunk = chunk.slice(0, lastSpace);
-            end = start + chunk.length;
-        }
-
-        window.activeDocCursor = end;
-        const totalChunks = Math.max(1, Math.ceil(fullText.length / limit));
-        const currentChunkIndex = Math.floor(start / limit) + 1;
-        const remainingChars = fullText.length - end;
-
-        const note = remainingChars > 0
-            ? `Bu belgenin ${currentChunkIndex}. parçasını (yaklaşık ${chunk.length} karakter) kullandım. Daha fazlasına devam etmek için lütfen "devam et" yaz.`
-            : `Bu belgenin son parçasını kullandım.`;
-        const docNameSuffix = remainingChars > 0
-            ? ` [PDF Parça ${currentChunkIndex}/${totalChunks}]`
-            : ` [PDF Son Parça]`;
-
-        return {
-            chunk,
-            docNameSuffix,
-            note,
-            done: false
-        };
-    }
 
     async function runDiagnostics(botId, chat) {
         let log = [];
@@ -7731,12 +7689,9 @@ Object.defineProperty(window, 'projects', {
             return;
         }
 
-        let documents = [];
-        if (window.CinoCodeDocuments && typeof window.CinoCodeDocuments.getActiveDocuments === 'function') {
-            documents = window.CinoCodeDocuments.getActiveDocuments();
-        } else {
-            documents = window.selectedFiles ? window.selectedFiles.filter(f => f.rawType === 'document') : [];
-        }
+        let documents = window.CinoCodeDocuments && typeof window.CinoCodeDocuments.getActiveDocuments === 'function'
+            ? window.CinoCodeDocuments.getActiveDocuments()
+            : [];
         let docTextToUse = null;
         let docNameToUse = "Belge";
         if (documents.length > 0) {
@@ -7824,7 +7779,7 @@ Object.defineProperty(window, 'projects', {
         if (docTextToUse) {
             const srcVal = document.getElementById('skp-source') ? document.getElementById('skp-source').value : 'pdf';
             if (srcVal !== 'chat') {
-                const chunkInfo = getDocumentChunkPayload(docTextToUse, selectedModel, window.isExamMode || isAkademikKocNow);
+                const chunkInfo = window.CinoCodeDocuments.getDocumentChunkPayload(docTextToUse, selectedModel, window.isExamMode || isAkademikKocNow);
                 if (chunkInfo.done) {
                     // PDF chunkları bittiğinde kullanıcı mesajına otomatik ekleme yapmayalım.
                     // Gerekirse bu uyarıyı bot tarafında göster.
@@ -7863,7 +7818,9 @@ Object.defineProperty(window, 'projects', {
         userInput.value = ""; autoResize(userInput);
         clearComposerDraft();
 
-        window.selectedFiles = [];
+        if (window.selectedFiles) {
+            window.selectedFiles = window.selectedFiles.filter(f => f.rawType === 'document');
+        }
         renderFilePreviews();
 
         const botId = "bot-" + Date.now();

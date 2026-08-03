@@ -17,7 +17,7 @@ function extract(startPattern, endPattern) {
 
 const digestSrc = extract(/function fz22HistorySummaryDigest/, /\n\s*async function fz22GenerateHistorySummary/);
 const generatorSrc = extract(/async function fz22GenerateHistorySummary/, /\n\s*function fz22ScheduleHistorySummary/);
-const schedulerSrc = extract(/function fz22ScheduleHistorySummary/, /\n\s*function getDocumentChunkPayload/);
+const schedulerSrc = extract(/function fz22ScheduleHistorySummary/, /\n\s*async function runDiagnostics/);
 
 function contextFor(fetchImpl) {
   const calls = [];
