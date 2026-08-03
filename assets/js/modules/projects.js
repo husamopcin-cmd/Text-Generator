@@ -2,19 +2,22 @@
 // assets/js/modules/projects.js
 
 function createProjectRecord(name, description) {
-        const id = "proj_" + Date.now();
-        projects[id] = {
-            id,
-            name: name,
-            description: description || "",
-            createdAt: Date.now(),
-            updatedAt: Date.now(),
-            starred: false,
-            archived: false
-        };
-        window.CinoCodeState.emit('cinocode:projectChanged');
-        return id;
-    }
+    const id = 'proj_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+    const projects = window.CinoCodeState.project.projects;
+    projects[id] = {
+        id: id,
+        name: name,
+        description: description || "",
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        starred: false,
+        archived: false,
+        memory: (typeof window.CinoCodeMemory !== 'undefined') ? window.CinoCodeMemory.getDefaultMemoryTemplate() : undefined
+    };
+    
+    window.CinoCodeState.emit('cinocode:project-created', { id });
+    return id;
+}
 
 
 

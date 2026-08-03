@@ -8406,6 +8406,14 @@ Object.defineProperty(window, 'projects', {
             const docSource = document.getElementById('skp-source') ? document.getElementById('skp-source').value : 'pdf';
             const isPdfTask = !!docTextToUse && docSource !== 'chat';
             const taskType = isVisionTask ? 'vision' : isPdfTask ? 'pdf' : 'chat';
+            // ===== PROJE HAFIZA ENJEKSİYONU (Faz 3) =====
+            if (typeof window.CinoCodeMemory !== 'undefined' && typeof activeProjectId !== 'undefined' && activeProjectId) {
+                const memCtx = window.CinoCodeMemory.getProjectContext(activeProjectId);
+                if (memCtx) {
+                    baseSystemPrompt += "\n\n" + memCtx;
+                }
+            }
+            
             // Always include system prompt, but limit conversation history for normal chat to avoid huge requests
             if (isDebugMode()) console.log("CINOCODE_DEBUG_STYLEMODE:", getFeatureValue('styleMode'));
             if (isDebugMode()) console.log("CINOCODE_DEBUG_FULL_SYSTEM_PROMPT:", baseSystemPrompt);
