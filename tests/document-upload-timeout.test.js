@@ -5,7 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const root = path.resolve(__dirname, '..');
-const main = fs.readFileSync(path.join(root, 'assets', 'js', 'main.js'), 'utf8');
+const main = fs.readFileSync(path.join(root, 'assets', 'js', 'main.js'), 'utf8') + '\n' + fs.readFileSync(path.join(root, 'assets', 'js', 'modules', 'documents.js'), 'utf8');
 
 function extractFunction(startPattern, endPattern) {
   const start = main.search(startPattern);
@@ -16,8 +16,8 @@ function extractFunction(startPattern, endPattern) {
   return tail.slice(0, end);
 }
 
-const helperSource = extractFunction(/const DOC_PROCESSING_TIMEOUT_MS/, /\n\s*async function handleDocSelect/);
-const handleDocSelectSource = extractFunction(/async function handleDocSelect/, /\n\s*function isPlainTextDocument/);
+const helperSource = extractFunction(/const DOC_PROCESSING_TIMEOUT_MS/, /\n\s*async function parseAndAddDocument/);
+const handleDocSelectSource = extractFunction(/async function parseAndAddDocument/, /\n\s*function isPlainTextDocument/);
 
 function runHelpers(code) {
   const context = { setTimeout, clearTimeout, Promise, Error, result: null };

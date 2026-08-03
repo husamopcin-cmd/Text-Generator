@@ -6,7 +6,7 @@ const vm = require('node:vm');
 
 const root = path.join(__dirname, '..');
 const html = fs.readFileSync(path.join(root, 'cinocode_chat.html'), 'utf8');
-const main = fs.readFileSync(path.join(root, 'assets', 'js', 'main.js'), 'utf8');
+const main = fs.readFileSync(path.join(root, 'assets', 'js', 'main.js'), 'utf8') + '\n' + fs.readFileSync(path.join(root, 'assets', 'js', 'modules', 'documents.js'), 'utf8');
 const coach = fs.readFileSync(path.join(root, 'assets', 'js', 'sinavkocu.js'), 'utf8');
 const authCore = fs.readFileSync(path.join(root, 'assets', 'js', 'auth-core.js'), 'utf8');
 const css = fs.readFileSync(path.join(root, 'assets', 'css', 'main.css'), 'utf8');

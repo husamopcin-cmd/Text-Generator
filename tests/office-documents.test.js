@@ -5,7 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const root = path.resolve(__dirname, '..');
-const main = fs.readFileSync(path.join(root, 'assets', 'js', 'main.js'), 'utf8');
+const main = fs.readFileSync(path.join(root, 'assets', 'js', 'main.js'), 'utf8') + '\n' + fs.readFileSync(path.join(root, 'assets', 'js', 'modules', 'documents.js'), 'utf8');
 const html = fs.readFileSync(path.join(root, 'cinocode_chat.html'), 'utf8');
 
 function extractFunction(startPattern, endPattern) {
@@ -83,7 +83,7 @@ test('xlsx section collector respects the remaining context budget', () => {
 });
 
 test('doc dispatcher routes xlsx and pptx before the generic zip branch', () => {
-  const handler = extractFunction(/async function handleDocSelect/, /\n\s*function isPlainTextDocument/);
+  const handler = extractFunction(/async function parseAndAddDocument/, /\n\s*function isPlainTextDocument/);
   const xlsxIndex = handler.indexOf('isXlsxDocument(file)');
   const pptxIndex = handler.indexOf('isPptxDocument(file)');
   const zipIndex = handler.indexOf('isZipDocument(file)');

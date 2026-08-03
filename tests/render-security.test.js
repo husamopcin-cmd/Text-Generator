@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const htmlPath = path.join(__dirname, '..', 'cinocode_chat.html');
-const html = fs.readFileSync(htmlPath, 'utf8') + (fs.existsSync(path.join(__dirname, '..', 'assets', 'js')) ? fs.readdirSync(path.join(__dirname, '..', 'assets', 'js'), {withFileTypes: true}).filter(dirent => dirent.isFile() && dirent.name.endsWith('.js')).map(dirent => fs.readFileSync(path.join(__dirname, '..', 'assets', 'js', dirent.name), 'utf8')).join('\n') : '');
+const html = fs.readFileSync(htmlPath, 'utf8') + (fs.existsSync(path.join(__dirname, '..', 'assets', 'js')) ? fs.readdirSync(path.join(__dirname, '..', 'assets', 'js'), {withFileTypes: true}).filter(dirent => dirent.isFile() && dirent.name.endsWith('.js')).map(dirent => fs.readFileSync(path.join(__dirname, '..', 'assets', 'js', dirent.name), 'utf8')).join('\n') : '') + '\n' + (fs.existsSync(path.join(__dirname, '..', 'assets', 'js', 'modules')) ? fs.readdirSync(path.join(__dirname, '..', 'assets', 'js', 'modules'), {withFileTypes: true}).filter(dirent => dirent.isFile() && dirent.name.endsWith('.js')).map(dirent => fs.readFileSync(path.join(__dirname, '..', 'assets', 'js', 'modules', dirent.name), 'utf8')).join('\n') : '');
 
 test('DOMPurify is loaded locally before Markdown rendering libraries', () => {
   const purifierIndex = html.indexOf('vendor/dompurify-3.4.7.min.js');
