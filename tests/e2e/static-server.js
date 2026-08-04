@@ -3,7 +3,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const host = '127.0.0.1';
-const port = 4173;
+const port = 4174;
 const root = path.resolve(__dirname, '..', '..');
 const contentTypes = {
     '.css': 'text/css; charset=utf-8',

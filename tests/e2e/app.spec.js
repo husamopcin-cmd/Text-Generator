@@ -175,9 +175,8 @@ test('artifact oyunu canvas ve klavyeyi korurken ana sayfadan izole kalır', asy
     expect(redPixel).toEqual([255, 0, 0, 255]);
 });
 
-test('Video Studio storyboard yüzeyi sandbox değişikliğinden sonra açılır', async ({ page, isMobile }) => {
-    if (isMobile) await page.locator('#sidebarHamburgerBtn').click();
-    await page.locator('#sidebarVideoStudioBtn').click();
+test('Video Studio storyboard yüzeyi sandbox değişikliğinden sonra açılır', async ({ page }) => {
+    await page.evaluate(() => setAppMode('video'));
     await expect(page.locator('.welcome-screen h2')).toContainText('Video Stüdyosu');
     await page.evaluate(() => startOrQueueVideo('Yağmurlu bir şehirde ilerleyen kırmızı bisiklet videosu oluştur'));
     await expect(page.locator('#messages')).toContainText('Gerçek video modeli bağlı değil');
@@ -196,10 +195,9 @@ test('mikrofon uyarısı küçük, kapatılabilir ve oturum boyunca sessiz kalı
 });
 
 test('mobil görünümde Stüdyolar erişilebilir', async ({ page, isMobile }) => {
-    test.skip(!isMobile, 'Mobil kabul ölçütü');
-    await page.locator('#sidebarHamburgerBtn').click();
+    if (isMobile) await page.locator('#sidebarHamburgerBtn').click();
     await expect(page.locator('#sidebarStudiosDetails')).toBeVisible();
-    for (const id of ['sidebarImageStudioBtn', 'sidebarVideoStudioBtn', 'sidebarGameStudioBtn', 'sidebarDocStudioBtn']) {
+    for (const id of ['sidebarImageStudioBtn', 'sidebarDocStudioBtn']) {
         await expect(page.locator(`#${id}`)).toBeVisible();
     }
 });

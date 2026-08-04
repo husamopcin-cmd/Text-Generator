@@ -465,6 +465,7 @@ function getRemainingDocumentContextChars() {
             setActiveProject(projectId);
         }
 
+        do {
             if (file.size > DOCUMENT_UPLOAD_MAX_BYTES) {
                 showNonBlockingToast(`"${file.name}" çok büyük. En fazla 25 MB yükleyebilirsiniz.`);
                 continue;
@@ -541,6 +542,7 @@ function getRemainingDocumentContextChars() {
             } else {
                 showNonBlockingToast(`"${file.name}" desteklenmiyor. PDF, DOCX, XLSX, PPTX, ZIP veya metin/kod dosyası seçin.`);
             }
+        } while (false);
     
         if (prevActive && prevActive !== state.activeProjectId) {
             setActiveProject(prevActive);
