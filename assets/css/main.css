@@ -2191,3 +2191,63 @@ body.cc-auth-open {
     opacity: 1;
     color: var(--cc-red);
 }
+
+
+/* UI Refactor: Glassmorphism Buttons */
+.btn-glass {
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: all 0.3s ease;
+}
+.btn-glass:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+}
+.btn-glass-green {
+    background: rgba(166,227,161,0.1) !important;
+    border-color: rgba(166,227,161,0.3) !important;
+    color: var(--cc-green) !important;
+}
+.btn-glass-green:hover { background: rgba(166,227,161,0.2) !important; }
+
+.btn-glass-mauve {
+    background: rgba(203,166,247,0.1) !important;
+    border-color: rgba(203,166,247,0.3) !important;
+    color: var(--cc-mauve) !important;
+}
+.btn-glass-mauve:hover { background: rgba(203,166,247,0.2) !important; }
+
+.btn-glass-blue {
+    background: rgba(137,180,250,0.1) !important;
+    border-color: rgba(137,180,250,0.3) !important;
+    color: var(--cc-accent-brand) !important;
+}
+.btn-glass-blue:hover { background: rgba(137,180,250,0.2) !important; }
+
+.btn-glass-yellow {
+    background: rgba(249,226,175,0.1) !important;
+    border-color: rgba(249,226,175,0.3) !important;
+    color: var(--cc-yellow) !important;
+}
+.btn-glass-yellow:hover { background: rgba(249,226,175,0.2) !important; }
+
+.btn-glass-red {
+    background: rgba(243,139,168,0.1) !important;
+    border-color: rgba(243,139,168,0.3) !important;
+    color: var(--cc-red) !important;
+}
+.btn-glass-red:hover { background: rgba(243,139,168,0.2) !important; }
+
+.btn-glass-peach {
+    background: rgba(250,179,135,0.1) !important;
+    border-color: rgba(250,179,135,0.3) !important;
+    color: var(--cc-peach) !important;
+}
+.btn-glass-peach:hover { background: rgba(250,179,135,0.2) !important; }
+
+/* My Apps Hub Container Glassmorphism */
+#myAppsScreen {
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    background: rgba(17, 17, 27, 0.85);
+}

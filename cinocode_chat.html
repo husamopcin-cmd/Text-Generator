@@ -85,10 +85,10 @@
         <details id="sidebarLibraryDetails" open="">
             <summary style="font-size: 11px; color:var(--cc-text-muted); font-weight:bold; letter-spacing: 1px; margin-bottom: 5px; cursor:pointer; outline:none; user-select:none;">KÜTÜPHANE</summary>
             <div style="display:flex; gap:5px; margin-top:4px;">
-                <button class="new-chat-btn lib-sidebar-btn" id="libNavImage" onclick="openLibrary('image')" style="flex:1; border-color:#a6e3a1; background:rgba(166,227,161,0.1); justify-content:center; padding: 6px; font-size:16px; transition:0.2s;" title="Resimler">🎨</button>
-                <button class="new-chat-btn lib-sidebar-btn" id="libNavVideo" onclick="openLibrary('video')" style="flex:1; border-color:#cba6f7; background:rgba(203,166,247,0.1); justify-content:center; padding: 6px; font-size:16px; transition:0.2s;" title="Videolar">🎬</button>
-                <button class="new-chat-btn lib-sidebar-btn" id="libNavDoc" onclick="openLibrary('doc')" style="flex:1; border-color:var(--cc-accent-brand); background:rgba(137,180,250,0.1); justify-content:center; padding: 6px; font-size:16px; transition:0.2s;" title="Belgeler">📄</button>
-                <button class="new-chat-btn lib-sidebar-btn" id="libNavGame" onclick="openLibrary('game')" style="flex:1; border-color:#f9e2af; background:rgba(249,226,175,0.1); justify-content:center; padding: 6px; font-size:16px; transition:0.2s;" title="Kod &amp; Oyun">💻</button>
+                <button class="new-chat-btn lib-sidebar-btn btn-glass btn-glass-green" style="flex:1; justify-content:center; padding: 6px; font-size:16px;" title="Resimler">🎨</button>
+                <button class="new-chat-btn lib-sidebar-btn btn-glass btn-glass-mauve" style="flex:1; justify-content:center; padding: 6px; font-size:16px;" title="Videolar">🎬</button>
+                <button class="new-chat-btn lib-sidebar-btn btn-glass btn-glass-blue" style="flex:1; justify-content:center; padding: 6px; font-size:16px;" title="Belgeler">📄</button>
+                <button class="new-chat-btn lib-sidebar-btn btn-glass btn-glass-yellow" style="flex:1; justify-content:center; padding: 6px; font-size:16px;" title="Kod &amp; Oyun">💻</button>
             </div>
         </details>
 
@@ -97,12 +97,12 @@
             <div style="display:flex; flex-direction:column; gap:4px; margin-top:4px;">
                 <button class="new-chat-btn" onclick="setAppMode('chat'); createNewChat();" style="background:var(--cc-accent-brand); color:var(--cc-bg-main); font-weight:600; justify-content:center; font-size:12px; padding: 6px;">💬 <span class="sidebar-text">Standart Sohbet</span></button>
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
-                    <button class="new-chat-btn" id="sidebarImageStudioBtn" onclick="setAppMode('image'); triggerImageGeneration();" style="border-color:#fab387; color:#fab387; font-size:12px; padding: 6px; justify-content:center;">🎨 <span class="sidebar-text">Görsel</span></button>
-                    <button class="new-chat-btn" id="sidebarDocStudioBtn" onclick="closeMobileSidebar(); triggerFileInput('docUpload')" style="border-color:var(--cc-accent-brand); color:var(--cc-accent-brand); font-size:12px; padding: 6px; justify-content:center;">📄 <span class="sidebar-text">Belge</span></button>
+                    <button class="new-chat-btn" id="sidebarImageStudioBtn" onclick="setAppMode('image'); triggerImageGeneration();" class="new-chat-btn btn-glass btn-glass-peach" style="font-size:12px; padding: 6px; justify-content:center;">🎨 <span class="sidebar-text">Görsel</span></button>
+                    <button class="new-chat-btn" id="sidebarDocStudioBtn" onclick="closeMobileSidebar(); triggerFileInput('docUpload')" class="new-chat-btn btn-glass btn-glass-blue" style="font-size:12px; padding: 6px; justify-content:center;">📄 <span class="sidebar-text">Belge</span></button>
                 </div>
-                <button class="new-chat-btn" id="sidebarProjectsBtn" onclick="closeMobileSidebar(); openProjectsScreen()" style="background:rgba(249,226,175,0.1); border-color:#f9e2af; color:#f9e2af; font-weight:600; justify-content:center; font-size:12px; padding: 6px; margin-top:4px;">📁 <span class="sidebar-text">Projeler</span></button>
-                <button class="new-chat-btn" id="sidebarMyAppsBtn" onclick="openMyAppsHub();" style="background:rgba(243,139,168,0.1); border-color:#f38ba8; color:#f38ba8; font-weight:600; justify-content:center; font-size:12px; padding: 6px; margin-top:4px;">📱 <span class="sidebar-text">My Apps</span></button>
-                <button class="new-chat-btn" id="sidebarSkillsBtn" onclick="openSkillsScreen()" style="background:rgba(203,166,247,0.1); border-color:#cba6f7; color:#cba6f7; font-weight:600; justify-content:center; font-size:12px; padding: 6px; margin-top:4px;">🧩 <span class="sidebar-text">Beceriler ve Bağlayıcılar</span></button>
+                <button class="new-chat-btn" id="sidebarProjectsBtn" onclick="closeMobileSidebar(); openProjectsScreen()" class="new-chat-btn btn-glass btn-glass-yellow" style="font-weight:600; justify-content:center; font-size:12px; padding: 6px; margin-top:4px;">📁 <span class="sidebar-text">Projeler</span></button>
+                <button class="new-chat-btn" id="sidebarMyAppsBtn" onclick="openMyAppsHub();" class="new-chat-btn btn-glass btn-glass-red" style="font-weight:600; justify-content:center; font-size:12px; padding: 6px; margin-top:4px;">📱 <span class="sidebar-text">My Apps</span></button>
+                <button class="new-chat-btn" id="sidebarSkillsBtn" onclick="openSkillsScreen()" class="new-chat-btn btn-glass btn-glass-mauve" style="font-weight:600; justify-content:center; font-size:12px; padding: 6px; margin-top:4px;">🧩 <span class="sidebar-text">Beceriler ve Bağlayıcılar</span></button>
             </div>
         </details>
     </div> <!-- Close sidebar-top-sections -->
@@ -488,7 +488,7 @@
                 <h2 style="color: #f38ba8; margin:0; font-size:24px; margin-top:15px;">🌐 My Apps Hub</h2>
                 <p style="color: var(--cc-text-muted); font-size: 13px; margin-top: 5px;">CinoCode API'sini kullanan dış uygulamalarınız ve sistem şablonları.</p>
             </div>
-            <button class="run-code-btn" onclick="alert('Yeni API Anahtarı oluşturma paneli yakında gelecek!')" style="background:#f38ba8; color:var(--cc-bg-main); width:auto; padding:8px 16px;">+ API Anahtarı</button>
+            <button class="run-code-btn" onclick="openApiKeyModal()" style="background:#f38ba8; color:var(--cc-bg-main); width:auto; padding:8px 16px;">+ API Anahtarı</button>
         </div>
         <div class="skills-tabs">
             <button class="skills-tab-btn active" id="tabMyAppsInternalBtn" onclick="switchMyAppsTab('internal')">Dahili Uygulamalar</button>
@@ -514,6 +514,29 @@
                     <button class="skill-action-btn primary" onclick="window.open('https://juno-life.com', '_blank')">Uygulamaya Git</button>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- API KEY MODAL -->
+    <div id="apiKeyModal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 500px; text-align:left;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                <h3 style="margin:0; color:#cba6f7;">🔑 Yeni API Anahtarı Oluştur</h3>
+                <button onclick="closeApiKeyModal()" style="background:transparent; border:none; color:var(--cc-text-muted); cursor:pointer; font-size:20px;">&times;</button>
+            </div>
+            <p style="color:var(--cc-text-primary); font-size:14px; margin-bottom:16px;">Bu anahtar, dış uygulamaların (örn. Juno Life) CinoCode hesabınıza güvenle erişmesini sağlar. Güvenliğiniz için anahtarı yalnızca bir kez görebileceksiniz.</p>
+            <div style="margin-bottom:15px;">
+                <label style="display:block; font-size:12px; font-weight:bold; color:var(--cc-text-muted); margin-bottom:6px;">Uygulama Adı (Örn: Juno Life)</label>
+                <input type="text" id="apiKeyAppName" placeholder="Uygulama Adı" style="width:100%; box-sizing:border-box; background:var(--cc-bg-surface); border:1px solid rgba(255,255,255,0.08); color:var(--cc-text-primary); padding:10px; border-radius:var(--cc-radius); outline:none;">
+            </div>
+            <div id="generatedApiKeyContainer" style="display:none; margin-bottom:16px; background:rgba(166,227,161,0.1); border:1px solid #a6e3a1; padding:12px; border-radius:var(--cc-radius);">
+                <div style="font-size:12px; color:#a6e3a1; margin-bottom:4px;">Üretilen Anahtar (Kopyalayın):</div>
+                <div style="display:flex; gap:8px;">
+                    <input type="text" id="generatedApiKeyValue" readonly style="flex:1; background:transparent; border:none; color:var(--cc-text-primary); outline:none; font-family:monospace;">
+                    <button onclick="copyGeneratedApiKey()" style="background:#a6e3a1; color:var(--cc-bg-main); border:none; border-radius:4px; padding:4px 8px; cursor:pointer; font-weight:bold;">Kopyala</button>
+                </div>
+            </div>
+            <button id="generateApiKeyBtn" onclick="generateApiKey()" class="run-code-btn" style="width:100%; justify-content:center; padding:10px; font-size:14px;">Anahtar Oluştur</button>
         </div>
     </div>
 

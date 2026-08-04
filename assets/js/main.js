@@ -6407,6 +6407,7 @@ Object.defineProperty(window, 'projects', {
         if (myAppsScreen) myAppsScreen.style.display = 'flex';
         
         renderMyApps();
+        if (typeof renderApiKeys === 'function') renderApiKeys();
     }
 
     function renderMyApps() {
@@ -9060,4 +9061,85 @@ Object.defineProperty(window, 'projects', {
     // Sayfa dışına çıkıldığında veya ESC basıldığında sıfırla
     window.addEventListener("blur", hideDropState);
     document.addEventListener("keydown", (e) => { if (e.key === "Escape") { hideDropState(); closeSinavKocuModal(); closeAttachMenu(); closeCameraModal(); } });
+
+// ==========================================
+// API KEY MANAGER (MY APPS HUB)
+// ==========================================
+let myApiKeys = JSON.parse(localStorage.getItem('cc_api_keys') || '[]');
+
+function openApiKeyModal() {
+    document.getElementById('apiKeyModal').classList.add('active');
+    document.getElementById('apiKeyAppName').value = '';
+    document.getElementById('generatedApiKeyContainer').style.display = 'none';
+}
+
+function closeApiKeyModal() {
+    document.getElementById('apiKeyModal').classList.remove('active');
+}
+
+function generateApiKey() {
+    const appName = document.getElementById('apiKeyAppName').value.trim() || 'İsimsiz Uygulama';
+    const randomHex = [...Array(32)].map(() => Math.floor(Math.random() * 16).toString(16)).join('');
+    const newKey = `cc_live_${randomHex}`;
+    
+    myApiKeys.push({
+        id: Date.now().toString(),
+        name: appName,
+        key: newKey,
+        createdAt: new Date().toISOString()
+    });
+    localStorage.setItem('cc_api_keys', JSON.stringify(myApiKeys));
+    
+    document.getElementById('generatedApiKeyValue').value = newKey;
+    document.getElementById('generatedApiKeyContainer').style.display = 'block';
+    
+    renderApiKeys();
+}
+
+function copyGeneratedApiKey() {
+    const input = document.getElementById('generatedApiKeyValue');
+    input.select();
+    document.execCommand('copy');
+    showToast('API Anahtarı panoya kopyalandı.', 'success');
+}
+
+function renderApiKeys() {
+    const container = document.getElementById("myAppsExternalList");
+    if (!container) return;
+    
+    const dynamicKeys = container.querySelectorAll('.dynamic-api-key');
+    dynamicKeys.forEach(el => el.remove());
+    
+    myApiKeys.forEach(app => {
+        const div = document.createElement('div');
+        div.className = 'skill-card dynamic-api-key';
+        div.style.borderColor = '#cba6f7';
+        div.innerHTML = `
+            <div class="skill-card-header">
+                <div class="skill-icon" style="background: rgba(203,166,247,0.2); color: #cba6f7;">🔑</div>
+                <div style="flex:1;">
+                    <h4 style="margin:0; font-size:16px; color:var(--cc-text-primary);">${app.name}</h4>
+                    <div style="font-size:11px; color:#cba6f7; margin-top:2px;">Özel API Anahtarı</div>
+                </div>
+                <button onclick="revokeApiKey('${app.id}')" style="background:transparent; border:none; color:var(--cc-red); cursor:pointer; font-size:18px;" title="İptal Et">&times;</button>
+            </div>
+            <p class="skill-card-desc" style="margin-top:12px;">Oluşturulma: ${new Date(app.createdAt).toLocaleDateString()}</p>
+            <div class="skill-card-footer" style="margin-top:16px;">
+                <span class="skill-status-badge active" style="background: rgba(203,166,247,0.2); color: #cba6f7;">Aktif</span>
+                <input type="password" value="********************************" readonly style="flex:1; background:transparent; border:1px solid rgba(255,255,255,0.1); padding:4px; border-radius:4px; font-size:11px; color:var(--cc-text-muted);">
+            </div>
+        `;
+        container.insertBefore(div, container.firstChild);
+    });
+}
+
+function revokeApiKey(id) {
+    if(confirm('Bu API anahtarını iptal etmek istediğinize emin misiniz?')) {
+        myApiKeys = myApiKeys.filter(k => k.id !== id);
+        localStorage.setItem('cc_api_keys', JSON.stringify(myApiKeys));
+        renderApiKeys();
+        showToast('API Anahtarı iptal edildi.', 'info');
+    }
+}
+
 
