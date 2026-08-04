@@ -102,7 +102,7 @@ test('My Apps opens its hub without creating a disposable chat', () => {
   assert.match(button, /onclick="openMyAppsHub\(\);"/);
   assert.doesNotMatch(button, /createNewChat/);
   assert.match(main, /function openMyAppsHub\(\)/);
-  assert.match(main, /document\.getElementById\('myAppsGrid'\)/);
+  assert.match(main, /getElementById\(['"]myAppsInternalList['"]\)/);
   assert.match(main, /renderMyApps\(\)/);
 });
 

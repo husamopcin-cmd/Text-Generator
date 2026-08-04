@@ -480,6 +480,43 @@
         </div>
     </div>
 
+    <!-- MY APPS EKRANI -->
+    <div class="library-screen" id="myAppsScreen" style="display:none; flex: 1; padding: 30px; overflow-y: auto; background: linear-gradient(135deg, var(--cc-bg-elevated), var(--cc-bg-main));">
+        <div class="library-screen-header">
+            <div>
+                <button onclick="closeMyAppsHub()" style="background:rgba(255,255,255,0.1); color:var(--cc-text-primary); border:none; border-radius: var(--cc-radius); padding:8px 12px; cursor:pointer; font-weight:bold; font-size:14px; transition:0.2s;">⬅ Geri</button>
+                <h2 style="color: #f38ba8; margin:0; font-size:24px; margin-top:15px;">🌐 My Apps Hub</h2>
+                <p style="color: var(--cc-text-muted); font-size: 13px; margin-top: 5px;">CinoCode API'sini kullanan dış uygulamalarınız ve sistem şablonları.</p>
+            </div>
+            <button class="run-code-btn" onclick="alert('Yeni API Anahtarı oluşturma paneli yakında gelecek!')" style="background:#f38ba8; color:var(--cc-bg-main); width:auto; padding:8px 16px;">+ API Anahtarı</button>
+        </div>
+        <div class="skills-tabs">
+            <button class="skills-tab-btn active" id="tabMyAppsInternalBtn" onclick="switchMyAppsTab('internal')">Dahili Uygulamalar</button>
+            <button class="skills-tab-btn" id="tabMyAppsExternalBtn" onclick="switchMyAppsTab('external')">API Uygulamaları</button>
+        </div>
+        
+        <div id="myAppsInternalList" class="library-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px;">
+            <!-- Internal apps will be rendered here by JS -->
+        </div>
+
+        <div id="myAppsExternalList" class="library-grid" style="display: none; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px;">
+            <div class="skill-card" style="border-color: #a6e3a1;">
+                <div class="skill-card-header">
+                    <div class="skill-icon" style="background: rgba(166,227,161,0.2); color: #a6e3a1;">🪐</div>
+                    <div style="flex:1;">
+                        <h4 style="margin:0; font-size:16px; color:var(--cc-text-primary);">Juno Life</h4>
+                        <div style="font-size:11px; color:#a6e3a1; margin-top:2px;">Durum: Bağlı (Sınırsız)</div>
+                    </div>
+                </div>
+                <p class="skill-card-desc" style="margin-top:12px;">CinoCode API Orchestration kullanan yaşam asistanı uygulaması.</p>
+                <div class="skill-card-footer" style="margin-top:16px;">
+                    <span class="skill-status-badge active" style="background: rgba(166,227,161,0.2); color: #a6e3a1;">Online</span>
+                    <button class="skill-action-btn primary" onclick="window.open('https://juno-life.com', '_blank')">Uygulamaya Git</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- PROJELER EKRANI -->
     <div class="library-screen" id="projectsScreen" style="display:none; flex: 1; padding: 30px; overflow-y: auto; background: linear-gradient(135deg, var(--cc-bg-elevated), var(--cc-bg-main));">
         <div class="library-screen-header">
@@ -625,6 +662,8 @@
     </div>
     <script>
         function openSkillsScreen() {
+            const myAppsScreen = document.getElementById('myAppsScreen');
+            if (myAppsScreen) myAppsScreen.style.display = 'none';
             document.getElementById('skillsScreen').style.display = 'flex';
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('sidebarDrawerOverlay');
@@ -648,6 +687,25 @@
             } else {
                 document.getElementById('tabIntegrationsBtn').classList.add('active');
                 document.getElementById('integrationsContent').style.display = 'grid';
+            }
+        }
+        
+        function closeMyAppsHub() {
+            document.getElementById('myAppsScreen').style.display = 'none';
+        }
+        
+        function switchMyAppsTab(tabId) {
+            document.getElementById('tabMyAppsInternalBtn').classList.remove('active');
+            document.getElementById('tabMyAppsExternalBtn').classList.remove('active');
+            document.getElementById('myAppsInternalList').style.display = 'none';
+            document.getElementById('myAppsExternalList').style.display = 'none';
+
+            if (tabId === 'internal') {
+                document.getElementById('tabMyAppsInternalBtn').classList.add('active');
+                document.getElementById('myAppsInternalList').style.display = 'grid';
+            } else {
+                document.getElementById('tabMyAppsExternalBtn').classList.add('active');
+                document.getElementById('myAppsExternalList').style.display = 'grid';
             }
         }
         function promptNewIntegration() {

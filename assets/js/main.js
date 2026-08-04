@@ -3745,6 +3745,8 @@ Object.defineProperty(window, 'projects', {
         document.getElementById('welcomeScreen').style.display = 'none';
         const libScreen = document.getElementById('libraryScreen');
         if (libScreen) libScreen.style.display = 'none';
+        const myAppsScreen = document.getElementById('myAppsScreen');
+        if (myAppsScreen) myAppsScreen.style.display = 'none';
         const sc = document.getElementById("suggestionChipsContainer");
         if (sc) sc.style.display = "none";
         document.getElementById('projectsScreen').style.display = 'flex';
@@ -6399,26 +6401,34 @@ Object.defineProperty(window, 'projects', {
         const messages = document.getElementById('messages');
         const welcome = document.getElementById('welcomeScreen');
         if (messages) messages.style.display = 'none';
-        if (welcome) welcome.style.display = 'flex';
+        if (welcome) welcome.style.display = 'none';
+        
+        const myAppsScreen = document.getElementById('myAppsScreen');
+        if (myAppsScreen) myAppsScreen.style.display = 'flex';
+        
         renderMyApps();
-        requestAnimationFrame(() => {
-            const grid = document.getElementById('myAppsGrid');
-            if (!grid) return;
-            grid.setAttribute('tabindex', '-1');
-            grid.focus({ preventScroll: true });
-            grid.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        });
     }
 
     function renderMyApps() {
-        const container = document.getElementById("myAppsGrid");
+        const container = document.getElementById("myAppsInternalList");
         if (!container) return;
         container.innerHTML = "";
         CINO_APPS.forEach(app => {
-            const btn = document.createElement("button");
-            btn.className = "new-project-card";
-            btn.innerHTML = `<strong>${app.icon} ${app.title}</strong><span>${app.category} Uygulaması</span>`;
-            btn.onclick = () => launchCinoApp(app.id);
+            const btn = document.createElement("div");
+            btn.className = "skill-card";
+            btn.innerHTML = `
+                <div class="skill-card-header">
+                    <div class="skill-icon" style="background: rgba(243,139,168,0.2); color: #f38ba8;">${app.icon}</div>
+                    <div style="flex:1;">
+                        <h4 style="margin:0; font-size:16px; color:var(--cc-text-primary);">${app.title}</h4>
+                        <div style="font-size:11px; color:var(--cc-text-muted); margin-top:2px;">${app.category} Uygulaması</div>
+                    </div>
+                </div>
+                <p class="skill-card-desc" style="margin-top:12px;">Bu CinoCode sistem şablonudur. Tıklayarak hızlıca başlatabilirsiniz.</p>
+                <div class="skill-card-footer" style="margin-top:16px;">
+                    <button class="skill-action-btn primary" onclick="closeMyAppsHub(); launchCinoApp('${app.id}')">Başlat</button>
+                </div>
+            `;
             container.appendChild(btn);
         });
     }
