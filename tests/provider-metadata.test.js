@@ -25,7 +25,7 @@ function extractCurrentServerMetadata() {
   assert.ok(metadataStart >= 0 && metadataEnd > metadataStart);
   assert.ok(fallbackStart >= 0 && fallbackEnd > fallbackStart);
 
-  const context = { process: { env: {} }, result: null };
+  const context = { process: { env: {} }, result: null, exports: {} };
   vm.runInNewContext(`${aiChatSource.slice(metadataStart, metadataEnd)}
 ${aiChatSource.slice(fallbackStart, fallbackEnd)}
 result = {

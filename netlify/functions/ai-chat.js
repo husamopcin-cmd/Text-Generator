@@ -445,34 +445,7 @@ function getFallbackOrder(taskType) {
   return ['openai', 'cerebras', 'deepseek', 'mistral', 'openrouter', 'gemini', 'groq', 'fireworks', 'together', 'xai', 'anthropic'];
 }
 
-exports.handler = async function(event) {
-  const securityResponse = guardRequest(event, {
-    namespace: 'ai-chat',
-    maxBodyBytes: 6 * 1024 * 1024,
-    rateLimit: 60,
-    windowMs: 60 * 1000
-  });
-  if (securityResponse) return securityResponse;
-
-  if (event.httpMethod !== 'POST') {
-    return {
-      statusCode: 405,
-      headers: buildSecurityHeaders(event),
-      body: JSON.stringify(makeError(405, 'Sadece POST desteklenir.'))
-    };
-  }
-
-  let body;
-  try {
-    body = JSON.parse(event.body || '{}');
-  } catch (err) {
-    return {
-      statusCode: 400,
-      headers: buildSecurityHeaders(event),
-      body: JSON.stringify(makeError(400, 'Geçersiz JSON.'))
-    };
-  }
-
+async function runLLM(body, event) {
   const taskType = body.taskType === 'pdf' ? 'pdf' : body.taskType === 'vision' ? 'vision' : 'chat';
   const messages = limitMessages(body.messages, taskType);
   const selectedModel = String(body.selectedModel || '').trim();
@@ -516,9 +489,6 @@ exports.handler = async function(event) {
   for (const provider of candidates) {
     if (!providerOrder.includes(provider)) providerOrder.push(provider);
   }
-
-  const access = await authorizeUsage(event, 'chat');
-  if (!access.ok) return access.response;
 
   const runProvider = async (provider) => {
     const model = resolveModelId(provider, parsedSelection, taskType);
@@ -605,4 +575,40 @@ exports.handler = async function(event) {
       error: lastError?.error
     }))
   };
+}
+
+exports.runLLM = runLLM;
+
+exports.handler = async function(event) {
+  const securityResponse = guardRequest(event, {
+    namespace: 'ai-chat',
+    maxBodyBytes: 6 * 1024 * 1024,
+    rateLimit: 60,
+    windowMs: 60 * 1000
+  });
+  if (securityResponse) return securityResponse;
+
+  if (event.httpMethod !== 'POST') {
+    return {
+      statusCode: 405,
+      headers: buildSecurityHeaders(event),
+      body: JSON.stringify(makeError(405, 'Sadece POST desteklenir.'))
+    };
+  }
+
+  let body;
+  try {
+    body = JSON.parse(event.body || '{}');
+  } catch (err) {
+    return {
+      statusCode: 400,
+      headers: buildSecurityHeaders(event),
+      body: JSON.stringify(makeError(400, 'Geçersiz JSON.'))
+    };
+  }
+
+  const access = await authorizeUsage(event, 'chat');
+  if (!access.ok) return access.response;
+
+  return await runLLM(body, event);
 };
