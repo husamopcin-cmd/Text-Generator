@@ -53,6 +53,40 @@ window.CinoCodeMemory = {
         }
     },
 
+    addItem: function(projectId, field, item) {
+        if (!window.projects || !window.projects[projectId]) return;
+        this.initProjectMemory(projectId);
+        
+        const memory = window.projects[projectId].memory;
+        if (Array.isArray(memory[field])) {
+            memory[field].push(item);
+            if (typeof window.updateProjectRecord === 'function') {
+                window.updateProjectRecord(projectId, { memory: memory });
+            }
+        }
+    },
+
+    removeItem: function(projectId, field, index) {
+        if (!window.projects || !window.projects[projectId]) return;
+        const memory = window.projects[projectId].memory;
+        if (memory && Array.isArray(memory[field]) && index >= 0 && index < memory[field].length) {
+            memory[field].splice(index, 1);
+            if (typeof window.updateProjectRecord === 'function') {
+                window.updateProjectRecord(projectId, { memory: memory });
+            }
+        }
+    },
+
+    updateNotes: function(projectId, notes) {
+        if (!window.projects || !window.projects[projectId]) return;
+        this.initProjectMemory(projectId);
+        const memory = window.projects[projectId].memory;
+        memory.notes = notes;
+        if (typeof window.updateProjectRecord === 'function') {
+            window.updateProjectRecord(projectId, { memory: memory });
+        }
+    },
+
     getProjectContext: function(projectId) {
         if (!window.projects || !window.projects[projectId]) return "";
         this.initProjectMemory(projectId);

@@ -158,6 +158,7 @@
 
         <!-- Bottom Row: Selects & Controls -->
         <div class="header-controls" style="display:flex; justify-content:center; align-items:center; flex-wrap:wrap; gap:8px; width:100%;">
+            <button id="memoryHeaderBtn" class="icon-btn" style="display:none; font-size:16px; background:var(--cc-bg-surface); border: 1px solid rgba(255, 255, 255, 0.08); padding:5px 8px; border-radius:var(--cc-radius);" onclick="window.CinoCodeMemoryUI.openModal()" title="Proje Hafızası">🧠 Hafıza</button>
             <div class="style-mode-badge" id="styleModeBadge" style="display:none;">Serbest Üslup Aktif</div>
             <select id="styleModeSelect" title="Üslup Modu" onchange="onStyleModeHeaderChange()" style="width:120px; background:var(--cc-bg-surface); color:var(--cc-text-primary); border: 1px solid rgba(255, 255, 255, 0.08); padding:5px; border-radius: var(--cc-radius); font-size:12px;">
                 <option value="safe">Güvenli Mod</option>
@@ -1159,6 +1160,9 @@
 <script src="assets/js/modules/memory-core.js"></script>
 <script src="assets/js/modules/projects.js"></script>
 <script src="assets/js/modules/documents.js"></script>
+<script src="assets/js/modules/chat-state.js"></script>
+<script src="assets/js/modules/chat-api.js"></script>
+<script src="assets/js/modules/memory-ui.js"></script>
     <script src="assets/js/main.js"></script>
 <script src="assets/js/tts-core.js"></script>
 
@@ -1544,6 +1548,63 @@ window.addEventListener('DOMContentLoaded', async () => {
                     🌈
                     <input type="color" id="ccContextColorPicker" style="position:absolute; opacity:0; width:0; height:0; border:0;">
                 </label>
+            </div>
+        </div>
+    </div>
+
+    </div>
+
+    <!-- ===== PROJE HAFIZASI MODALI ===== -->
+    <div class="cc-backdrop sk-overlay" id="memoryOverlay" onclick="if(event.target === this) window.CinoCodeMemoryUI.closeModal()" style="display:none;">
+        <div class="sk-modal" id="memoryModal" style="width:90%; max-width:800px; max-height:85vh; display:flex; flex-direction:column;">
+            <div class="sk-modal-header">
+                <h2 style="margin:0; font-size:18px;">🧠 Proje Hafızası</h2>
+                <button class="icon-btn" onclick="window.CinoCodeMemoryUI.closeModal()">✕</button>
+            </div>
+            <div class="sk-modal-body" style="flex:1; overflow-y:auto; padding:20px; display:flex; flex-direction:column; gap:20px;">
+                
+                <div class="memory-section">
+                    <h3>Mimari Kararlar</h3>
+                    <div id="memory-arch-list" class="memory-list"></div>
+                    <div class="memory-add-form" style="display:flex; gap:8px; margin-top:8px;">
+                        <input type="text" id="mem-new-arch-dec" placeholder="Karar..." style="flex:1; background:var(--cc-bg-main); border:1px solid rgba(255,255,255,0.1); color:white; padding:8px; border-radius:4px;">
+                        <input type="text" id="mem-new-arch-reason" placeholder="Neden (İsteğe bağlı)..." style="flex:1; background:var(--cc-bg-main); border:1px solid rgba(255,255,255,0.1); color:white; padding:8px; border-radius:4px;">
+                        <button onclick="window.CinoCodeMemoryUI.addArchitectureDecision()" style="background:var(--cc-accent-brand); color:white; border:none; padding:8px 12px; border-radius:4px; cursor:pointer;">Ekle</button>
+                    </div>
+                </div>
+
+                <div class="memory-section">
+                    <h3>Tamamlanan Aşamalar</h3>
+                    <div id="memory-miles-list" class="memory-list"></div>
+                    <div class="memory-add-form" style="display:flex; gap:8px; margin-top:8px;">
+                        <input type="text" id="mem-new-mile" placeholder="Aşama..." style="flex:1; background:var(--cc-bg-main); border:1px solid rgba(255,255,255,0.1); color:white; padding:8px; border-radius:4px;">
+                        <button onclick="window.CinoCodeMemoryUI.addSimpleItem('completedMilestones', 'mem-new-mile')" style="background:var(--cc-accent-brand); color:white; border:none; padding:8px 12px; border-radius:4px; cursor:pointer;">Ekle</button>
+                    </div>
+                </div>
+
+                <div class="memory-section">
+                    <h3>Açık Görevler</h3>
+                    <div id="memory-tasks-list" class="memory-list"></div>
+                    <div class="memory-add-form" style="display:flex; gap:8px; margin-top:8px;">
+                        <input type="text" id="mem-new-task" placeholder="Görev..." style="flex:1; background:var(--cc-bg-main); border:1px solid rgba(255,255,255,0.1); color:white; padding:8px; border-radius:4px;">
+                        <button onclick="window.CinoCodeMemoryUI.addSimpleItem('openTasks', 'mem-new-task')" style="background:var(--cc-accent-brand); color:white; border:none; padding:8px 12px; border-radius:4px; cursor:pointer;">Ekle</button>
+                    </div>
+                </div>
+
+                <div class="memory-section">
+                    <h3>Teknoloji Yığını</h3>
+                    <div id="memory-tech-list" class="memory-list"></div>
+                    <div class="memory-add-form" style="display:flex; gap:8px; margin-top:8px;">
+                        <input type="text" id="mem-new-tech" placeholder="Teknoloji..." style="flex:1; background:var(--cc-bg-main); border:1px solid rgba(255,255,255,0.1); color:white; padding:8px; border-radius:4px;">
+                        <button onclick="window.CinoCodeMemoryUI.addSimpleItem('techStack', 'mem-new-tech')" style="background:var(--cc-accent-brand); color:white; border:none; padding:8px 12px; border-radius:4px; cursor:pointer;">Ekle</button>
+                    </div>
+                </div>
+
+                <div class="memory-section">
+                    <h3>Genel Notlar</h3>
+                    <textarea id="memory-notes-input" oninput="window.CinoCodeMemoryUI.handleNotesInput()" onblur="window.CinoCodeMemoryUI.saveNotes()" style="width:100%; min-height:100px; background:var(--cc-bg-main); border:1px solid rgba(255,255,255,0.1); color:white; padding:8px; border-radius:4px; resize:vertical;" placeholder="Projeyle ilgili serbest notlar..."></textarea>
+                </div>
+
             </div>
         </div>
     </div>

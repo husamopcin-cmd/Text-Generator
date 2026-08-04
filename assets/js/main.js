@@ -2988,10 +2988,11 @@ ${answer}` : action;
         return keys[Math.floor(Math.random() * keys.length)];
     }
 
-    const PROXY_CLOUD_MODELS = ['openai', 'cerebras', 'deepseek', 'mistral', 'openrouter', 'gemini', 'groq', 'fireworks', 'together', 'anthropic'];
+    // Phase 2E: PROXY_CLOUD_MODELS ve isProxyCloudModel artık chat-api.js'te.
+    const PROXY_CLOUD_MODELS = window.CinoCodeApi ? window.CinoCodeApi.PROXY_CLOUD_MODELS : ['openai', 'cerebras', 'deepseek', 'mistral', 'openrouter', 'gemini', 'groq', 'fireworks', 'together', 'anthropic'];
 
     function isProxyCloudModel(modelValue) {
-        return PROXY_CLOUD_MODELS.includes(String(modelValue || '').trim().toLowerCase());
+        return (window.CinoCodeApi ? window.CinoCodeApi.isProxyCloudModel : function(v) { return PROXY_CLOUD_MODELS.includes(String(v || '').trim().toLowerCase()); })(modelValue);
     }
 
     function isVisionCapableModel(modelValue) {
@@ -3202,8 +3203,8 @@ ${answer}` : action;
         if(typeof showNonBlockingToast === 'function') showNonBlockingToast('Ayarlar kaydedildi!');
     }
 
-    let sessions = {}; // Tüm sohbetleri tutan obje
-    let currentChatId = null;
+    // Phase 2E: sessions ve currentChatId artık chat-state.js tarafından yönetiliyor.
+    // window.sessions ve window.currentChatId property bridge'leri üzerinden erişilebilir.
     
 window.CinoCodeState = {
   project: {
@@ -3300,150 +3301,38 @@ Object.defineProperty(window, 'projects', {
         }
     }
 
-    function normalizeChatMetadata(chat, fallbackTime = Date.now()) {
-        if (!chat || typeof chat !== "object") return false;
-        let changed = false;
-        if (!Array.isArray(chat.messages)) {
-            chat.messages = [{ role: "system", content: systemPrompt }];
-            changed = true;
-        }
-        if (!chat.title || typeof chat.title !== "string") {
-            chat.title = "Yeni Sohbet";
-            changed = true;
-        }
-        if (!Number.isFinite(Number(chat.createdAt))) {
-            chat.createdAt = Number(chat.updatedAt) || fallbackTime;
-            changed = true;
-        } else {
-            chat.createdAt = Number(chat.createdAt);
-        }
-        if (!Number.isFinite(Number(chat.updatedAt))) {
-            chat.updatedAt = Number(chat.createdAt) || fallbackTime;
-            changed = true;
-        } else {
-            chat.updatedAt = Number(chat.updatedAt);
-        }
-        if (typeof chat.starred !== "boolean") {
-            chat.starred = chat.isPinned === true;
-            changed = true;
-        }
-        if (typeof chat.manualTitle !== "boolean") {
-            chat.manualTitle = false;
-            changed = true;
-        }
-        if (chat.projectId !== null && typeof chat.projectId !== "string") {
-            chat.projectId = null;
-            changed = true;
-        }
-        if (chat.projectId && !projects[chat.projectId]) {
-            // Silinmiş bir projeye işaret ediyorsa sohbeti projesiz bırak.
-            chat.projectId = null;
-            changed = true;
-        }
-        if (!chat.freeToneState || typeof chat.freeToneState !== 'object') {
-            chat.freeToneState = { override: null, positiveHint: null };
-            changed = true;
-        }
-        return changed;
+    // Phase 2E: normalizeChatMetadata, normalizeAllChatMetadata, doSaveToIDB, saveDatabase
+    // artık chat-state.js modülünde. Delegasyon fonksiyonları:
+    function normalizeChatMetadata(chat, fallbackTime) {
+        return window.CinoCodeChat ? window.CinoCodeChat.normalizeChatMetadata(chat, fallbackTime) : false;
     }
-
     function normalizeAllChatMetadata() {
-        let changed = false;
-        const now = Date.now();
-        for (const id in sessions) {
-            changed = normalizeChatMetadata(sessions[id], now) || changed;
-        }
-        return changed;
+        return window.CinoCodeChat ? window.CinoCodeChat.normalizeAllChatMetadata() : false;
     }
-
-    let isSavingDB = false;
-    let pendingSave = false;
-
-    async function doSaveToIDB() {
-        if (isSavingDB) {
-            pendingSave = true;
-            return;
-        }
-        isSavingDB = true;
-        try {
-            const dbKey = "cinocode_db_" + (loggedUser || "default");
-            let clonedSessions = JSON.parse(JSON.stringify(sessions));
-            if (window.useLocalStorageFallback) {
-                localStorage.setItem(dbKey, JSON.stringify({ sessions: clonedSessions, currentChatId, projects }));
-            } else {
-                await CinoDB.put('workspaces', dbKey, { sessions: clonedSessions, currentChatId, projects });
-            }
-        } catch (e) {
-            console.error("IDB save error", e);
-            window.useLocalStorageFallback = true;
-            try {
-                const dbKey = "cinocode_db_" + (loggedUser || "default");
-                localStorage.setItem(dbKey, JSON.stringify({ sessions, currentChatId, projects }));
-            } catch(fallbackErr) {
-                console.error("IDB and LocalStorage save both failed", fallbackErr);
-            }
-        } finally {
-            isSavingDB = false;
-            if (pendingSave) {
-                pendingSave = false;
-                doSaveToIDB();
-            }
-        }
-    }
-
     function saveDatabase() {
-        normalizeAllChatMetadata();
-        doSaveToIDB();
+        if (window.CinoCodeChat) {
+            window.CinoCodeChat.saveDatabase();
+        }
         renderSidebar();
     }
 
+    // Phase 2E: loadDatabase artık chat-state.js'te.
+    // main.js'te event listener ile tetikleniyor (aşağıda window.onload'da).
     async function loadDatabase() {
-        const dbKey = "cinocode_db_" + (loggedUser || "default");
-        let rawLocal = localStorage.getItem(dbKey);
-        let dbData = null;
-        let migrated = false;
-
-        try {
-            await CinoDB.init();
-            let idbData = await CinoDB.get('workspaces', dbKey);
-
-            if (idbData) {
-                dbData = idbData;
-            } else if (rawLocal) {
-                // Migration
-                dbData = JSON.parse(rawLocal);
-                await CinoDB.put('workspaces', dbKey, dbData);
-                console.log("[CinoCode] Veritabanı IndexedDB'ye taşındı!");
-                // localStorage.removeItem(dbKey); // Gelecekte silinebilir. Şimdilik yedek amaçlı tutuyoruz.
-            }
-        } catch(e) {
-            console.error("IndexedDB load failed, falling back to localStorage", e);
-            window.useLocalStorageFallback = true;
-            if (rawLocal) {
-                try { dbData = JSON.parse(rawLocal); } catch(e) {}
-            }
+        if (window.CinoCodeChat) {
+            await window.CinoCodeChat.loadDatabase();
         }
-
-        if (dbData) {
-            sessions = (dbData.sessions && typeof dbData.sessions === "object") ? dbData.sessions : {};
-            currentChatId = dbData.currentChatId || null;
-            projects = (dbData.projects && typeof dbData.projects === "object") ? dbData.projects : {};
-            migrated = normalizeAllChatMetadata();
-        } else {
-            sessions = {};
-            currentChatId = null;
-            projects = {};
-        }
-
-        // Eğer hiç sohbet yoksa yeni oluştur
-        if (Object.keys(sessions).length === 0 || !currentChatId || !sessions[currentChatId]) {
+    }
+    // chat-state.js loadDatabase tamamlandığında bu event'i dispatch eder:
+    window.addEventListener('cinocode:chat-db-loaded', function(e) {
+        var detail = e.detail || {};
+        if (detail.needsNewChat) {
             createNewChat({ preserveComposer: true });
         } else {
-            if (migrated) saveDatabase();
             renderSidebar();
             renderCurrentChat();
         }
-    }
+    });
 
     function createNewChat(options = {}) {
         if (!options.preserveComposer) {
@@ -3594,7 +3483,7 @@ Object.defineProperty(window, 'projects', {
 
     // ----- UI RENDER İŞLEMLERİ -----
     function getSortedChatIds(ids) {
-        return ids.sort((a,b) => (Number(sessions[b]?.updatedAt) || 0) - (Number(sessions[a]?.updatedAt) || 0));
+        return window.CinoCodeChat ? window.CinoCodeChat.getSortedChatIds(ids) : ids.sort((a,b) => (Number(sessions[b]?.updatedAt) || 0) - (Number(sessions[a]?.updatedAt) || 0));
     }
 
     function renderChatSection(title, ids) {
@@ -8172,82 +8061,17 @@ Object.defineProperty(window, 'projects', {
             if (clearedInternalInstructions) saveDatabase();
             console.log("[CinoCode] reqMessages dolduruldu:", reqMessages.length, "mesaj");
 
-            function parseModelLabel(label) {
-                const normalized = String(label || '').trim();
-                const lower = normalized.toLowerCase();
-                if (PROXY_CLOUD_MODELS.includes(lower)) {
-                    return { provider: lower, modelId: lower, displayLabel: normalized };
-                }
-                const providerMatch = normalized.match(/(?:[-:])(openai|cerebras|deepseek|mistral|openrouter|gemini|groq|fireworks|together|nvidia|xai|anthropic)(?:\b|$)/i);
-                const provider = providerMatch ? providerMatch[1].toLowerCase() : null;
-                const modelId = provider ? normalized.replace(new RegExp(`(?:[-:])${provider}(?:\b|$)`, 'i'), '').trim() : normalized;
-                return { provider, modelId, displayLabel: normalized };
-            }
-
-            function isProxyCloudProvider(provider) {
-                return PROXY_CLOUD_MODELS.includes(provider);
-            }
-
-            // taskType and related flags computed earlier above the reqMessages builder
-
-            function getProviderApiKey(provider) {
-                if (!provider) return "";
-                const keyStr = (localStorage.getItem(provider + '_api_key') || "").trim();
-                if (!keyStr) return "";
-                const keys = keyStr.split(',').map(k => k.trim()).filter(Boolean);
-                return keys.length ? keys[Math.floor(Math.random() * keys.length)] : "";
-            }
-
-            function hasProviderApiKey(provider) {
-                if (!provider) return false;
-                if (isProxyCloudProvider(provider)) return true;
-                return !!getProviderApiKey(provider);
-            }
-
-            function getRequestTimeoutMs() {
-                if (taskType === 'vision') return 50000;
-                if (taskType === 'pdf') return 58000;
-                if (responseMaxTokens >= RESPONSE_LENGTH_TOKEN_LIMITS.long) return 58000;
-                if (responseMaxTokens >= RESPONSE_LENGTH_TOKEN_LIMITS.detailed) return 52000;
-                if (responseMaxTokens >= RESPONSE_LENGTH_TOKEN_LIMITS.normal) return 42000;
-                return 30000;
-            }
-
-            // Model cooldowns (store in localStorage to persist across reloads)
-            function getCooldowns() {
-                try { return JSON.parse(localStorage.getItem('cinocode_model_cooldowns') || '{}'); } catch(e) { return {}; }
-            }
-            function setCooldown(modelId, ttlMs) {
-                const cds = getCooldowns();
-                cds[modelId] = Date.now() + ttlMs;
-                localStorage.setItem('cinocode_model_cooldowns', JSON.stringify(cds));
-            }
-            function isModelOnCooldown(modelId) {
-                if (!modelId) return false;
-                const cds = getCooldowns();
-                const until = cds[modelId];
-                if (!until) return false;
-                if (Date.now() > until) {
-                    // expired
-                    delete cds[modelId];
-                    localStorage.setItem('cinocode_model_cooldowns', JSON.stringify(cds));
-                    return false;
-                }
-                return true;
-            }
-
-            function isVisionModel(modelValue) {
-                if (!modelValue) return false;
-                const v = modelValue.toLowerCase();
-                return v.includes('vision') || v.includes('scout') || v.includes('llava') || v.includes('nvidia') || v.includes('vision-instruct');
-            }
-
-            function isVisionRouteModel(modelValue) {
-                if (!modelValue) return false;
-                const parsed = parseModelLabel(modelValue);
-                if (parsed && isProxyCloudProvider(parsed.provider) && ['openai', 'gemini', 'openrouter', 'groq', 'anthropic'].includes(parsed.provider)) return true;
-                return isVisionModel(modelValue);
-            }
+            // Phase 2E: Delegate API routing and health functions to chat-api.js
+            const parseModelLabel = window.CinoCodeApi ? window.CinoCodeApi.parseModelLabel : function(label) { return { provider: null, modelId: label, displayLabel: label }; };
+            const isProxyCloudProvider = window.CinoCodeApi ? window.CinoCodeApi.isProxyCloudProvider : function() { return false; };
+            const getProviderApiKey = window.CinoCodeApi ? window.CinoCodeApi.getProviderApiKey : function() { return ""; };
+            const hasProviderApiKey = window.CinoCodeApi ? window.CinoCodeApi.hasProviderApiKey : function() { return false; };
+            const getRequestTimeoutMs = function() { return window.CinoCodeApi ? window.CinoCodeApi.getRequestTimeoutMs(taskType, responseMaxTokens) : 30000; };
+            const getCooldowns = window.CinoCodeApi ? window.CinoCodeApi.getCooldowns : function() { return {}; };
+            const setCooldown = window.CinoCodeApi ? window.CinoCodeApi.setCooldown : function() {};
+            const isModelOnCooldown = window.CinoCodeApi ? window.CinoCodeApi.isModelOnCooldown : function() { return false; };
+            const isVisionModel = window.CinoCodeApi ? window.CinoCodeApi.isVisionModel : function() { return false; };
+            const isVisionRouteModel = window.CinoCodeApi ? window.CinoCodeApi.isVisionRouteModel : function() { return false; };
 
             let fallbackQueue = [selectedModel];
 
@@ -8255,18 +8079,10 @@ Object.defineProperty(window, 'projects', {
             // Her modelin başarı/başarısızlık geçmişini localStorage'da puan olarak tutar.
             // Başarılı istek → +2 puan (maks 10). Başarısız istek → -3 puan (min 0).
             // Fallback kuyruğu puana göre yeniden sıralanır.
-            const MODEL_HEALTH_KEY = 'cinocode_model_health';
-            function getModelHealth() {
-                try { return JSON.parse(localStorage.getItem(MODEL_HEALTH_KEY) || '{}'); } catch(e) { return {}; }
-            }
-            function setModelScore(modelId, delta) {
-                const h = getModelHealth();
-                h[modelId] = Math.max(0, Math.min(10, (h[modelId] ?? 5) + delta));
-                localStorage.setItem(MODEL_HEALTH_KEY, JSON.stringify(h));
-            }
-            function getModelScore(modelId) {
-                return getModelHealth()[modelId] ?? 5; // Varsayılan: 5 (nötr)
-            }
+            // AI ROUTER — Model Health Scoring
+            const getModelHealth = window.CinoCodeApi ? window.CinoCodeApi.getModelHealth : function() { return {}; };
+            const setModelScore = window.CinoCodeApi ? window.CinoCodeApi.setModelScore : function() {};
+            const getModelScore = window.CinoCodeApi ? window.CinoCodeApi.getModelScore : function() { return 5; };
 
             // Fallback (Yedekleme) Kuyruğu Hazırlığı
             const hasAttachments = isVisionTask;

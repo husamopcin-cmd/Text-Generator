@@ -2142,3 +2142,52 @@ body.cc-auth-open {
     .cc-auth-modal h1 { font-size: 21px; }
     .cc-auth-name-grid { grid-template-columns: 1fr; gap: 0; }
 }
+
+/* Phase 3: Memory Modal UI Styles */
+.memory-section {
+    border-bottom: 1px solid var(--cc-border);
+    padding-bottom: 15px;
+}
+.memory-section:last-child {
+    border-bottom: none;
+}
+.memory-section h3 {
+    margin: 0 0 10px 0;
+    color: var(--cc-accent-brand);
+    font-size: 14px;
+    font-weight: 600;
+}
+.memory-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.memory-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 8px 12px;
+    border-radius: var(--cc-radius);
+}
+.memory-item-content {
+    flex: 1;
+    font-size: 13px;
+    line-height: 1.4;
+    color: var(--cc-text-primary);
+}
+.memory-item-reason {
+    font-size: 11px;
+    color: var(--cc-text-muted);
+    margin-top: 4px;
+}
+.delete-btn {
+    opacity: 0.6;
+    margin-left: 10px;
+    padding: 4px;
+}
+.delete-btn:hover {
+    opacity: 1;
+    color: var(--cc-red);
+}
